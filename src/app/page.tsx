@@ -1,142 +1,59 @@
 import Link from "next/link";
 
-function IconCalendar() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="4" width="18" height="18" rx="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
-    </svg>
-  );
-}
-
-function IconBell() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-    </svg>
-  );
-}
-
-function IconCreditCard() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="1" y="4" width="22" height="16" rx="2" />
-      <line x1="1" y1="10" x2="23" y2="10" />
-    </svg>
-  );
-}
-
-function IconUsers() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  );
-}
-
-function IconStar() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    </svg>
-  );
-}
-
-function IconPhone() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="5" y="2" width="14" height="20" rx="2" />
-      <line x1="12" y1="18" x2="12.01" y2="18" />
-    </svg>
-  );
-}
-
-function IconCheck() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-}
-
 const features = [
   {
-    icon: <IconCalendar />,
-    title: "Agendamento online 24h",
-    description: "Seus clientes agendam pelo link público, escolhem horário disponível e confirmam na hora — sem telefonema.",
+    title: "Agendamento 24h",
+    desc: "Link público. Cliente escolhe serviço, horário e confirma — sem telefonema, sem WhatsApp.",
+    icon: "📅",
   },
   {
-    icon: <IconBell />,
-    title: "Notificações push + e-mail",
-    description: "Confirmação na hora do agendamento. Lembrete no dia anterior. Seu cliente nunca mais vai \"esquecer\" que tem serviço.",
+    title: "Push + E-mail",
+    desc: "Confirmação na hora. Lembrete 24h e 2h antes. Seu cliente nunca mais esquece.",
+    icon: "🔔",
   },
   {
-    icon: <IconCreditCard />,
     title: "Pagamento integrado",
-    description: "Receba no cartão antes da visita via Stripe. Ou registre pagamento em dinheiro. Tudo rastreado.",
+    desc: "Cartão via Stripe ou dinheiro no dia. Tudo rastreado no painel.",
+    icon: "💳",
   },
   {
-    icon: <IconUsers />,
     title: "Gestão de equipe",
-    description: "Convide funcionários, defina agendas individuais, veja a agenda de toda a equipe no calendário.",
+    desc: "Convide funcionários, defina agendas individuais, acompanhe tudo no calendário.",
+    icon: "👥",
   },
   {
-    icon: <IconStar />,
     title: "Avaliações",
-    description: "Após cada serviço, o cliente avalia. Você acompanha a média e os comentários no painel.",
+    desc: "Após cada serviço o cliente avalia. Você acompanha média e comentários.",
+    icon: "⭐",
   },
   {
-    icon: <IconPhone />,
-    title: "App mobile para clientes",
-    description: "Seus clientes instalam o app, recebem push notifications e acompanham os agendamentos na palma da mão.",
+    title: "App mobile",
+    desc: "Seus clientes instalam, recebem push e acompanham agendamentos no celular.",
+    icon: "📱",
   },
 ];
 
 const steps = [
-  {
-    number: "01",
-    title: "Crie sua conta",
-    description: "Cadastre sua empresa em minutos. Adicione seus serviços, defina os horários e publique o link de agendamento.",
-  },
-  {
-    number: "02",
-    title: "Clientes agendam",
-    description: "Compartilhe o link. Clientes escolhem serviço, profissional, data e pagam — tudo no celular ou computador.",
-  },
-  {
-    number: "03",
-    title: "Você gerencia",
-    description: "Acompanhe agenda, pagamentos e avaliações no painel. A equipe recebe a agenda do dia direto no app.",
-  },
+  { n: "01", title: "Cadastre sua empresa", desc: "Adicione serviços, horários e publique seu link de agendamento." },
+  { n: "02", title: "Clientes agendam", desc: "Pelo link ou app — escolhem serviço, data, horário e pagam." },
+  { n: "03", title: "Você gerencia", desc: "Painel com calendário, equipe, financeiro e avaliações." },
 ];
 
 export default function HomePage() {
   return (
-    <div className="min-h-full flex flex-col bg-white">
-      {/* Navbar */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
+    <div className="min-h-full flex flex-col" style={{ background: "var(--warm-gray)" }}>
+      {/* Nav */}
+      <header className="sticky top-0 z-50 backdrop-blur-md border-b" style={{ background: "rgba(247,245,242,0.9)", borderColor: "var(--warm-gray-dark)" }}>
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <span className="text-xl font-bold text-gray-900 tracking-tight">
-            Agendei
+          <span className="text-xl font-extrabold tracking-tight" style={{ color: "var(--navy)" }}>
+            Agendei<span style={{ color: "var(--gold)" }}>.</span>
           </span>
-          <nav className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-3 py-2"
-            >
+          <nav className="flex items-center gap-2">
+            <Link href="/login" className="text-sm font-medium px-4 py-2 rounded-lg transition-colors hover:bg-white/60" style={{ color: "var(--navy)" }}>
               Entrar
             </Link>
-            <Link
-              href="/register"
-              className="text-sm font-semibold bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Criar conta grátis
+            <Link href="/register" className="text-sm font-semibold text-white px-5 py-2.5 rounded-lg transition-all hover:opacity-90" style={{ background: "var(--navy)" }}>
+              Criar conta
             </Link>
           </nav>
         </div>
@@ -144,53 +61,68 @@ export default function HomePage() {
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="max-w-6xl mx-auto px-6 pt-20 pb-24 text-center">
-          <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-            App mobile com push notifications — em breve
+        <section className="relative overflow-hidden noise-bg" style={{ background: "var(--navy)" }}>
+          <div className="mesh-gradient absolute inset-0" />
+          <div className="relative z-10 max-w-6xl mx-auto px-6 pt-24 pb-28 lg:pt-32 lg:pb-36">
+            <div className="max-w-3xl">
+              <div className="animate-fade-up delay-1">
+                <div className="gold-line mb-8" />
+              </div>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight text-white animate-fade-up delay-2">
+                Seu cliente agendou.
+                <br />
+                <span style={{ color: "var(--gold)" }}>Ele vai lembrar.</span>
+              </h1>
+              <p className="mt-6 text-lg sm:text-xl leading-relaxed animate-fade-up delay-3" style={{ color: "rgba(255,255,255,0.6)" }}>
+                Agendamentos online, pagamentos integrados e notificações push que chegam antes da visita — para empresas que não podem se dar ao luxo de clientes esquecidos.
+              </p>
+              <div className="mt-10 flex flex-col sm:flex-row gap-4 animate-fade-up delay-4">
+                <Link href="/register" className="text-center font-bold px-8 py-4 rounded-xl text-lg transition-all hover:scale-[1.02]" style={{ background: "var(--gold)", color: "var(--navy)" }}>
+                  Começar grátis
+                </Link>
+                <Link href="/login" className="text-center font-medium px-8 py-4 rounded-xl text-lg border transition-colors hover:bg-white/5" style={{ borderColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.7)" }}>
+                  Já tenho conta
+                </Link>
+              </div>
+              <p className="mt-5 text-sm animate-fade-up delay-5" style={{ color: "rgba(255,255,255,0.35)" }}>
+                Sem cartão de crédito · Pronto em 5 minutos
+              </p>
+            </div>
+
+            {/* Decorative floating card */}
+            <div className="hidden lg:block absolute right-12 top-1/2 -translate-y-1/2 animate-float" style={{ animationDelay: "1s" }}>
+              <div className="rounded-2xl p-6 w-72 shadow-2xl" style={{ background: "var(--navy-light)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: "var(--gold)", color: "var(--navy)" }}>M</div>
+                  <div>
+                    <p className="text-white text-sm font-semibold">Maria Silva</p>
+                    <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Confirmado para amanhã</p>
+                  </div>
+                </div>
+                <div className="rounded-xl p-4 mb-3" style={{ background: "rgba(212,168,83,0.1)", border: "1px solid rgba(212,168,83,0.15)" }}>
+                  <p className="text-xs font-medium" style={{ color: "var(--gold)" }}>Limpeza residencial</p>
+                  <p className="text-white text-sm font-bold mt-1">08/05 às 09:00</p>
+                  <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>R$ 180,00 · Cartão</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-green-400" />
+                  <span className="text-xs text-green-400 font-medium">Push enviado ✓</span>
+                </div>
+              </div>
+            </div>
           </div>
-
-          <h1 className="text-5xl font-extrabold text-gray-900 leading-tight tracking-tight max-w-3xl mx-auto">
-            Seu cliente agendou.{" "}
-            <span className="text-blue-600">Ele vai lembrar.</span>
-          </h1>
-
-          <p className="mt-6 text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
-            Agendamentos online, pagamentos integrados e notificações push que chegam antes da visita —
-            para empresas de serviços que não podem se dar ao luxo de clientes esquecidos.
-          </p>
-
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/register"
-              className="w-full sm:w-auto text-base font-semibold bg-blue-600 text-white px-8 py-3.5 rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
-            >
-              Começar grátis
-            </Link>
-            <Link
-              href="/login"
-              className="w-full sm:w-auto text-base font-medium text-gray-700 border border-gray-200 px-8 py-3.5 rounded-xl hover:bg-gray-50 transition-colors"
-            >
-              Já tenho conta
-            </Link>
-          </div>
-
-          <p className="mt-4 text-sm text-gray-400">
-            Sem cartão de crédito · Configuração em 5 minutos
-          </p>
         </section>
 
-        {/* Pain point banner */}
-        <section className="bg-amber-50 border-y border-amber-100">
-          <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center gap-6">
-            <div className="text-4xl">😤</div>
+        {/* Pain point */}
+        <section className="border-b" style={{ background: "#fef9ee", borderColor: "#f5e6c4" }}>
+          <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-start gap-6">
+            <div className="text-4xl shrink-0">😤</div>
             <div>
-              <p className="font-semibold text-gray-900 text-lg">
-                "Mandei e-mail de confirmação, fui lá e o cliente não sabia de nada."
+              <p className="font-bold text-lg" style={{ color: "var(--navy)" }}>
+                &ldquo;Mandei e-mail, fui lá e o cliente não sabia de nada.&rdquo;
               </p>
-              <p className="text-gray-600 mt-1">
-                E-mail vai para spam. Push notification chega na tela de bloqueio. Com o app Agendei,
-                o cliente recebe confirmação + lembrete no dia anterior — e você não bate na porta no escuro.
+              <p className="mt-2 text-sm leading-relaxed" style={{ color: "#6b6352" }}>
+                E-mail vai para spam. Push notification chega na tela de bloqueio. Com o Agendei, o cliente recebe confirmação + lembrete 24h e 2h antes — você não bate na porta no escuro.
               </p>
             </div>
           </div>
@@ -198,75 +130,76 @@ export default function HomePage() {
 
         {/* Features */}
         <section className="max-w-6xl mx-auto px-6 py-24">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl font-bold text-gray-900">Tudo que você precisa, em um só lugar</h2>
-            <p className="text-gray-500 mt-3 text-lg">Para empresas de limpeza, beleza, saúde, manutenção e mais.</p>
+          <div className="text-center mb-16">
+            <div className="gold-line mx-auto mb-6" />
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight" style={{ color: "var(--navy)" }}>
+              Tudo em um só lugar
+            </h2>
+            <p className="mt-3 text-lg" style={{ color: "#8a8478" }}>
+              Para empresas de limpeza, beleza, saúde, manutenção e mais.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {features.map((f) => (
-              <div key={f.title} className="p-6 rounded-2xl border border-gray-100 bg-white hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 mb-4">
-                  {f.icon}
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{f.description}</p>
+              <div key={f.title} className="card-lift bg-white rounded-2xl p-7 border" style={{ borderColor: "var(--warm-gray-dark)" }}>
+                <span className="text-3xl mb-4 block">{f.icon}</span>
+                <h3 className="font-bold text-lg mb-2" style={{ color: "var(--navy)" }}>{f.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: "#8a8478" }}>{f.desc}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* How it works */}
-        <section className="bg-gray-50 border-y border-gray-100">
-          <div className="max-w-6xl mx-auto px-6 py-24">
-            <div className="text-center mb-14">
-              <h2 className="text-3xl font-bold text-gray-900">Como funciona</h2>
-            </div>
+        <section className="border-y" style={{ background: "var(--navy)", borderColor: "var(--navy-light)" }}>
+          <div className="noise-bg relative">
+            <div className="relative z-10 max-w-6xl mx-auto px-6 py-24">
+              <div className="text-center mb-16">
+                <div className="gold-line mx-auto mb-6" />
+                <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Como funciona</h2>
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-              {steps.map((s) => (
-                <div key={s.number} className="flex flex-col items-center text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-bold text-lg mb-5">
-                    {s.number}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {steps.map((s) => (
+                  <div key={s.n} className="text-center">
+                    <div className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center font-extrabold text-xl" style={{ background: "var(--gold)", color: "var(--navy)" }}>
+                      {s.n}
+                    </div>
+                    <h3 className="text-white font-bold text-lg mb-2">{s.title}</h3>
+                    <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>{s.desc}</p>
                   </div>
-                  <h3 className="font-semibold text-gray-900 text-lg mb-2">{s.title}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">{s.description}</p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Checklist CTA */}
+        {/* CTA */}
         <section className="max-w-6xl mx-auto px-6 py-24">
-          <div className="bg-blue-600 rounded-3xl px-8 py-14 md:px-16 flex flex-col md:flex-row items-center gap-10">
-            <div className="flex-1 text-white">
-              <h2 className="text-3xl font-bold mb-4">Pronto para sair do papel?</h2>
-              <ul className="space-y-2 text-blue-100 text-sm">
+          <div className="rounded-3xl p-10 md:p-16 flex flex-col md:flex-row items-center gap-12" style={{ background: "var(--navy)" }}>
+            <div className="flex-1">
+              <div className="gold-line mb-6" />
+              <h2 className="text-3xl font-extrabold text-white mb-4">Pronto para sair do papel?</h2>
+              <ul className="space-y-3 text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>
                 {[
-                  "Link de agendamento público pronto em minutos",
-                  "Clientes recebem push + e-mail de confirmação",
+                  "Link de agendamento pronto em minutos",
+                  "Push + e-mail de confirmação e lembrete",
                   "Painel com calendário, equipe e financeiro",
-                  "App mobile para seus clientes (em breve)",
+                  "App mobile para seus clientes",
                 ].map((item) => (
-                  <li key={item} className="flex items-center gap-2">
-                    <span className="text-blue-300"><IconCheck /></span>
+                  <li key={item} className="flex items-center gap-3">
+                    <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0" style={{ background: "var(--gold)", color: "var(--navy)" }}>✓</span>
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="flex flex-col gap-3 shrink-0 w-full md:w-auto">
-              <Link
-                href="/register"
-                className="text-center font-semibold bg-white text-blue-600 px-8 py-3.5 rounded-xl hover:bg-blue-50 transition-colors"
-              >
+            <div className="flex flex-col gap-3 w-full md:w-auto shrink-0">
+              <Link href="/register" className="text-center font-bold px-10 py-4 rounded-xl text-lg transition-all hover:scale-[1.02]" style={{ background: "var(--gold)", color: "var(--navy)" }}>
                 Criar minha conta grátis
               </Link>
-              <Link
-                href="/login"
-                className="text-center text-sm font-medium text-blue-200 hover:text-white transition-colors py-2"
-              >
+              <Link href="/login" className="text-center text-sm font-medium py-2 transition-colors" style={{ color: "rgba(255,255,255,0.4)" }}>
                 Já tenho conta → Entrar
               </Link>
             </div>
@@ -275,10 +208,10 @@ export default function HomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-100 bg-white">
+      <footer className="border-t" style={{ borderColor: "var(--warm-gray-dark)" }}>
         <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="font-bold text-gray-900">Agendei</span>
-          <p className="text-sm text-gray-400">© {new Date().getFullYear()} Agendei. Todos os direitos reservados.</p>
+          <span className="font-extrabold" style={{ color: "var(--navy)" }}>Agendei<span style={{ color: "var(--gold)" }}>.</span></span>
+          <p className="text-sm" style={{ color: "#a09a90" }}>© {new Date().getFullYear()} Agendei. Todos os direitos reservados.</p>
         </div>
       </footer>
     </div>
