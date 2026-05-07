@@ -1,0 +1,624 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum BusinessType {
+  HOME_CLEANING
+  PET_GROOMER
+  CAR_WASH
+  POOL_CLEANING
+  LAWN_CARE
+  BARBER
+  HAIR_SALON
+  PHOTOGRAPHER
+  OTHER
+}
+
+enum PlanTier {
+  STARTER
+  NORMAL
+  ADVANCED
+}
+
+enum CompanyUserRole {
+  OWNER
+  MANAGER
+  EMPLOYEE
+}
+
+enum AgendaStatus {
+  DRAFT
+  ACTIVE
+  CANCELLED
+}
+
+enum BookingConfigStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum ScheduleEventType {
+  APPOINTMENT
+  EVENT
+  ESTIMATE
+}
+
+enum EstimateStatus {
+  DRAFT
+  PENDING
+  CONVERTED
+  CANCELLED
+}
+
+enum EstimateFrequency {
+  ONCE
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+}
+
+enum PaymentMethod {
+  CARD
+  CASH_CHECK
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+// ─── Auth (better-auth) ───────────────────────────────────────────────────────
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // better-auth admin plugin
+  role          String?
+  banned        Boolean?  @default(false)
+  banReason     String?
+  banExpires    DateTime?
+
+  // perfil customizado
+  bio           String?
+  location      String?
+
+  sessions              Session[]
+  accounts              Account[]
+  companyUsers          CompanyUser[]
+  professionals         Professional[]
+  createdAgendas        Agenda[]         @relation("AgendaCreatedBy")
+  cancelledAgendas      Agenda[]         @relation("AgendaCancelledBy")
+  createdBookingConfigs  BookingConfig[]   @relation("BookingConfigCreatedBy")
+  createdScheduleEvents ScheduleEvent[]  @relation("ScheduleEventCreatedBy")
+  estimatesAsCustomer   Estimate[]       @relation("EstimateCustomer")
+  cancelledBookings     Booking[]        @relation("BookingCancelledBy")
+  pushTokens            PushToken[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id             String   @id
+  expiresAt      DateTime
+  token          String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  ipAddress      String?
+  userAgent      String?
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  impersonatedBy String?
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ─── Plans ────────────────────────────────────────────────────────────────────
+
+model Plan {
+  id           String        @id @default(cuid())
+  tier         PlanTier      @unique
+  displayName  String
+  description  String?
+  priceMonthly Decimal       @db.Decimal(10, 2)
+  priceYearly  Decimal       @db.Decimal(10, 2)
+  isActive     Boolean       @default(true)
+  order        Int           @default(0)
+  features     PlanFeature[]
+  companies    Company[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("plan")
+}
+
+model PlanFeature {
+  id           String  @id @default(cuid())
+  planId       String
+  plan         Plan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  featureKey   String
+  featureLabel String
+  enabled      Boolean @default(true)
+  limitValue   Int?
+
+  @@unique([planId, featureKey])
+  @@index([planId])
+  @@map("plan_feature")
+}
+
+// ─── Tenant ───────────────────────────────────────────────────────────────────
+
+model Company {
+  id            String          @id @default(cuid())
+  name          String
+  slug          String          @unique
+  businessType  BusinessType
+  planId        String
+  plan          Plan            @relation(fields: [planId], references: [id])
+  logoUrl       String?
+  phone         String?
+  address       String?
+  isActive      Boolean         @default(true)
+  members         CompanyUser[]
+  services        Service[]
+  serviceTypes    ServiceType[]
+  extraServices   ExtraService[]
+  professionals   Professional[]
+  agendas         Agenda[]
+  bookingConfigs  BookingConfig[]
+  scheduleEvents  ScheduleEvent[]
+  estimates       Estimate[]
+  bookings        Booking[]
+  reviews         Review[]
+  createdAt       DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@map("company")
+}
+
+model CompanyUser {
+  id        String          @id @default(cuid())
+  companyId String
+  company   Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      CompanyUserRole @default(EMPLOYEE)
+  isActive  Boolean         @default(true)
+  joinedAt  DateTime        @default(now())
+
+  @@unique([companyId, userId])
+  @@index([companyId])
+  @@index([userId])
+  @@map("company_user")
+}
+
+// ─── Catalog ──────────────────────────────────────────────────────────────────
+
+model Service {
+  id           String        @id @default(cuid())
+  companyId    String
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name         String
+  description  String?
+  isActive     Boolean       @default(true)
+  order        Int           @default(0)
+  serviceTypes ServiceType[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([companyId])
+  @@index([companyId, isActive])
+  @@map("service")
+}
+
+model ServiceType {
+  id               String   @id @default(cuid())
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  serviceId        String
+  service          Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  name             String
+  description      String?
+  price            Decimal  @db.Decimal(10, 2)
+  estimatedMinutes Int
+  isActive         Boolean  @default(true)
+  order            Int      @default(0)
+  bookingConfigs   BookingConfigServiceType[]
+  estimateItems    EstimateServiceType[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([serviceId])
+  @@index([companyId, isActive])
+  @@map("service_type")
+}
+
+model ExtraService {
+  id               String   @id @default(cuid())
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name             String
+  description      String?
+  price            Decimal  @db.Decimal(10, 2)
+  estimatedMinutes Int
+  isActive         Boolean  @default(true)
+  order            Int      @default(0)
+  bookingConfigs   BookingConfigExtraService[]
+  estimateItems    EstimateExtraService[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([companyId, isActive])
+  @@map("extra_service")
+}
+
+model Professional {
+  id        String   @id @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name      String
+  email     String?
+  phone     String?
+  bio       String?
+  avatarUrl String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agendas        AgendaProfessional[]
+  scheduleEvents ScheduleEvent[]
+  bookings       Booking[]
+
+  @@index([companyId])
+  @@index([companyId, isActive])
+  @@map("professional")
+}
+
+// ─── Agendas ──────────────────────────────────────────────────────────────────
+
+model Agenda {
+  id                 String               @id @default(cuid())
+  companyId          String
+  company            Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name               String
+  status             AgendaStatus         @default(DRAFT)
+  startDate          String               // "YYYY-MM-DD"
+  endDate            String?              // "YYYY-MM-DD"
+  workingDays        Int[]
+  startTime          String               // "HH:MM"
+  endTime            String               // "HH:MM"
+  intervalMinutes    Int
+  cancelledAt        DateTime?
+  cancelledById      String?
+  cancelledBy        User?                @relation("AgendaCancelledBy", fields: [cancelledById], references: [id])
+  cancellationReason String?
+  createdById        String
+  createdBy          User                 @relation("AgendaCreatedBy", fields: [createdById], references: [id])
+  professionals  AgendaProfessional[]
+  bookingConfigs BookingConfig[]
+  bookings       Booking[]
+  bookingSlots   BookingSlot[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@index([companyId, status])
+  @@index([companyId, startDate])
+  @@map("agenda")
+}
+
+model AgendaProfessional {
+  agendaId       String
+  agenda         Agenda       @relation(fields: [agendaId], references: [id], onDelete: Cascade)
+  professionalId String
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@id([agendaId, professionalId])
+  @@index([agendaId])
+  @@index([professionalId])
+  @@map("agenda_professional")
+}
+
+// ─── Booking Config ───────────────────────────────────────────────────────────
+
+model BookingConfig {
+  id                  String                      @id @default(cuid())
+  companyId           String
+  company             Company                     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  agendaId            String
+  agenda              Agenda                      @relation(fields: [agendaId], references: [id])
+  name                String
+  status              BookingConfigStatus         @default(DRAFT)
+  allowPartialService Boolean                     @default(false)
+  createdById         String
+  createdBy           User                        @relation("BookingConfigCreatedBy", fields: [createdById], references: [id])
+  serviceTypes        BookingConfigServiceType[]
+  extraServices       BookingConfigExtraService[]
+  estimates           Estimate[]
+  bookings            Booking[]
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
+
+  @@index([companyId, status])
+  @@index([agendaId])
+  @@map("booking_config")
+}
+
+model BookingConfigServiceType {
+  bookingConfigId String
+  bookingConfig   BookingConfig @relation(fields: [bookingConfigId], references: [id], onDelete: Cascade)
+  serviceTypeId   String
+  serviceType     ServiceType   @relation(fields: [serviceTypeId], references: [id], onDelete: Cascade)
+
+  @@id([bookingConfigId, serviceTypeId])
+  @@index([bookingConfigId])
+  @@index([serviceTypeId])
+  @@map("booking_config_service_type")
+}
+
+model BookingConfigExtraService {
+  bookingConfigId String
+  bookingConfig   BookingConfig @relation(fields: [bookingConfigId], references: [id], onDelete: Cascade)
+  extraServiceId  String
+  extraService    ExtraService  @relation(fields: [extraServiceId], references: [id], onDelete: Cascade)
+
+  @@id([bookingConfigId, extraServiceId])
+  @@index([bookingConfigId])
+  @@index([extraServiceId])
+  @@map("booking_config_extra_service")
+}
+
+// ─── Schedule ─────────────────────────────────────────────────────────────────
+
+model ScheduleEvent {
+  id             String            @id @default(cuid())
+  companyId      String
+  company        Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  professionalId String?
+  professional   Professional?     @relation(fields: [professionalId], references: [id], onDelete: SetNull)
+  title          String
+  type           ScheduleEventType @default(EVENT)
+  date           String            // "YYYY-MM-DD"
+  startTime      String            // "HH:MM"
+  endTime        String            // "HH:MM"
+  notes          String?
+  createdById    String
+  createdBy      User              @relation("ScheduleEventCreatedBy", fields: [createdById], references: [id])
+  createdAt      DateTime          @default(now())
+
+  @@index([companyId, date])
+  @@index([professionalId, date])
+  @@map("schedule_event")
+}
+
+// ─── Estimate ─────────────────────────────────────────────────────────────────
+
+model Estimate {
+  id              String              @id @default(cuid())
+  companyId       String
+  company         Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  bookingConfigId String
+  bookingConfig   BookingConfig       @relation(fields: [bookingConfigId], references: [id])
+  customerId      String?
+  customer        User?               @relation("EstimateCustomer", fields: [customerId], references: [id], onDelete: SetNull)
+  customerEmail   String?
+  customerName    String?
+  status          EstimateStatus      @default(DRAFT)
+  frequency       EstimateFrequency   @default(ONCE)
+  subtotal        Decimal             @db.Decimal(10, 2)
+  total           Decimal             @db.Decimal(10, 2)
+  notes           String?
+  serviceTypes    EstimateServiceType[]
+  extraServices   EstimateExtraService[]
+  booking         Booking?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([bookingConfigId, status])
+  @@index([customerId, status])
+  @@map("estimate")
+}
+
+model EstimateServiceType {
+  id            String      @id @default(cuid())
+  estimateId    String
+  estimate      Estimate    @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  serviceTypeId String
+  serviceType   ServiceType @relation(fields: [serviceTypeId], references: [id])
+  quantity      Int
+  unitPrice     Decimal     @db.Decimal(10, 2)
+  subtotal      Decimal     @db.Decimal(10, 2)
+
+  @@index([estimateId])
+  @@map("estimate_service_type")
+}
+
+model EstimateExtraService {
+  id             String       @id @default(cuid())
+  estimateId     String
+  estimate       Estimate     @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  extraServiceId String
+  extraService   ExtraService @relation(fields: [extraServiceId], references: [id])
+  quantity       Int
+  unitPrice      Decimal      @db.Decimal(10, 2)
+  subtotal       Decimal      @db.Decimal(10, 2)
+
+  @@index([estimateId])
+  @@map("estimate_extra_service")
+}
+
+// ─── Booking ──────────────────────────────────────────────────────────────────
+
+model Booking {
+  id                    String          @id @default(cuid())
+  companyId             String
+  company               Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  estimateId            String          @unique
+  estimate              Estimate        @relation(fields: [estimateId], references: [id])
+  bookingConfigId       String
+  bookingConfig         BookingConfig   @relation(fields: [bookingConfigId], references: [id])
+  agendaId              String
+  agenda                Agenda          @relation(fields: [agendaId], references: [id])
+  professionalId        String?
+  professional          Professional?   @relation(fields: [professionalId], references: [id], onDelete: SetNull)
+  scheduledDate         String          // "YYYY-MM-DD"
+  scheduledStartTime    String          // "HH:MM"
+  scheduledEndTime      String          // "HH:MM"
+  status                BookingStatus   @default(PENDING)
+  paymentMethod         PaymentMethod
+  paymentStatus         PaymentStatus   @default(PENDING)
+  stripePaymentIntentId String?
+  cancelledAt           DateTime?
+  cancelledById         String?
+  cancelledBy           User?           @relation("BookingCancelledBy", fields: [cancelledById], references: [id])
+  cancellationReason    String?
+  slot                  BookingSlot?
+  customerDetail        BookingCustomerDetail?
+  homeAccess            BookingHomeAccess?
+  review                Review?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  @@index([companyId, scheduledDate])
+  @@index([agendaId, scheduledDate])
+  @@map("booking")
+}
+
+model BookingSlot {
+  id        String   @id @default(cuid())
+  bookingId String   @unique
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  agendaId  String
+  agenda    Agenda   @relation(fields: [agendaId], references: [id])
+  date      String   // "YYYY-MM-DD"
+  startTime String   // "HH:MM"
+  endTime   String   // "HH:MM"
+
+  @@unique([agendaId, date, startTime])
+  @@index([agendaId, date])
+  @@map("booking_slot")
+}
+
+model BookingCustomerDetail {
+  id            String   @id @default(cuid())
+  bookingId     String   @unique
+  booking       Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  firstName     String
+  lastName      String
+  email         String
+  phone         String
+  sendReminders Boolean  @default(true)
+  address       String
+  aptNo         String?
+  city          String
+  zip           String
+
+  @@map("booking_customer_detail")
+}
+
+model BookingHomeAccess {
+  id                  String   @id @default(cuid())
+  bookingId           String   @unique
+  booking             Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  accessType          String   // "someone_home" | "hide_keys"
+  keepKeyWithProvider Boolean  @default(false)
+  accessNote          String?  // AES-256-GCM encrypted
+  additionalNote      String?
+
+  @@map("booking_home_access")
+}
+
+// ─── Reviews ──────────────────────────────────────────────────────────────────
+
+model Review {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  bookingId   String   @unique
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  rating      Int      // 1–5
+  comment     String?
+  reviewerName String? // customer name snapshot
+  createdAt   DateTime @default(now())
+
+  @@index([companyId])
+  @@index([companyId, rating])
+  @@map("review")
+}
+
+// ─── Push Tokens ──────────────────────────────────────────────────────────────
+
+model PushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String
+  platform  String   // "ios" | "android"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, token])
+  @@index([userId])
+  @@map("push_token")
+}
