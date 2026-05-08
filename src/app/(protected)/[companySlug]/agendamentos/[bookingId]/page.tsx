@@ -6,6 +6,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { CancelDialog } from "./_components/cancel-dialog";
 import { StatusActions } from "./_components/status-actions";
+import { RescheduleDialog } from "./_components/reschedule-dialog";
+import { RefundButton } from "./_components/refund-button";
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Pendente",
@@ -48,6 +50,8 @@ export default async function BookingDetailPage({
 
   const { customerDetail: customer, homeAccess, estimate } = booking;
   const canCancel = booking.status === "PENDING" || booking.status === "CONFIRMED";
+  const canReschedule = booking.status === "CONFIRMED" || booking.status === "PENDING";
+  const canRefund = booking.paymentMethod === "CARD" && booking.paymentStatus === "PAID";
   const reviewUrl = `/book/${companySlug}/review/${bookingId}`;
 
   return (
@@ -70,7 +74,7 @@ export default async function BookingDetailPage({
               {booking.scheduledStartTime} – {booking.scheduledEndTime}
             </p>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-3 shrink-0 flex-wrap">
             <span
               className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${STATUS_COLORS[booking.status] ?? "bg-gray-100 text-gray-600"}`}
             >
@@ -81,11 +85,21 @@ export default async function BookingDetailPage({
               companySlug={companySlug}
               currentStatus={booking.status}
             />
+            {canReschedule && (
+              <RescheduleDialog
+                bookingId={bookingId}
+                companySlug={companySlug}
+                agendaId={booking.agendaId}
+              />
+            )}
             {canCancel && (
               <CancelDialog
                 bookingId={bookingId}
                 companySlug={companySlug}
               />
+            )}
+            {canRefund && (
+              <RefundButton bookingId={bookingId} companySlug={companySlug} />
             )}
           </div>
         </div>

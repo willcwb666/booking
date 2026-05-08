@@ -232,6 +232,104 @@ export async function cancelBookingAction(formData: FormData): Promise<CancelRes
   return { success: true };
 }
 
+// ─── Refund ───────────────────────────────────────────────────────────────────
+
+export async function refundBookingAction(
+  bookingId: string,
+  companySlug: string
+): Promise<StatusResult> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { success: false, error: "Não autenticado" };
+
+  const member = await db.companyUser.findFirst({
+    where: { userId: session.user.id, company: { slug: companySlug }, isActive: true },
+  });
+  if (!member || (member.role !== "OWNER" && member.role !== "MANAGER")) {
+    return { success: false, error: "Sem permissão" };
+  }
+
+  const booking = await db.booking.findFirst({
+    where: { id: bookingId, company: { slug: companySlug } },
+  });
+  if (!booking) return { success: false, error: "Agendamento não encontrado" };
+  if (!booking.stripePaymentIntentId) return { success: false, error: "Pagamento não foi por cartão" };
+  if (booking.paymentStatus !== "PAID") return { success: false, error: "Pagamento não confirmado" };
+  if ((booking.paymentStatus as string) === "REFUNDED") return { success: false, error: "Já reembolsado" };
+
+  const refund = await stripe.refunds.create({ payment_intent: booking.stripePaymentIntentId });
+
+  await db.booking.update({
+    where: { id: bookingId },
+    data: {
+      paymentStatus: "REFUNDED",
+      refundAmount: refund.amount / 100,
+      refundedAt: new Date(),
+    },
+  });
+
+  return { success: true };
+}
+
+// ─── Reschedule ───────────────────────────────────────────────────────────────
+
+export async function rescheduleBookingAction(
+  bookingId: string,
+  companySlug: string,
+  newDate: string,
+  newStartTime: string,
+  newEndTime: string
+): Promise<StatusResult> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { success: false, error: "Não autenticado" };
+
+  const member = await db.companyUser.findFirst({
+    where: { userId: session.user.id, company: { slug: companySlug }, isActive: true },
+  });
+  if (!member) return { success: false, error: "Acesso negado" };
+
+  const booking = await db.booking.findFirst({
+    where: { id: bookingId, company: { slug: companySlug } },
+  });
+  if (!booking) return { success: false, error: "Agendamento não encontrado" };
+  if (booking.status !== "CONFIRMED" && booking.status !== "PENDING") {
+    return { success: false, error: "Somente agendamentos confirmados podem ser reagendados" };
+  }
+
+  try {
+    await db.$transaction(async (tx) => {
+      // Release old slot
+      await tx.bookingSlot.deleteMany({ where: { bookingId } });
+      // Create new slot (throws P2002 if taken)
+      await tx.bookingSlot.create({
+        data: {
+          bookingId,
+          agendaId: booking.agendaId,
+          date: newDate,
+          startTime: newStartTime,
+          endTime: newEndTime,
+        },
+      });
+      await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          scheduledDate: newDate,
+          scheduledStartTime: newStartTime,
+          scheduledEndTime: newEndTime,
+          rescheduledAt: new Date(),
+          status: "CONFIRMED",
+        },
+      });
+    });
+  } catch (e: unknown) {
+    if ((e as { code?: string })?.code === "P2002") {
+      return { success: false, error: "Horário já ocupado. Escolha outro horário." };
+    }
+    throw e;
+  }
+
+  return { success: true };
+}
+
 // ─── Status lifecycle ─────────────────────────────────────────────────────────
 
 type StatusResult = { success: true } | { success: false; error: string };
