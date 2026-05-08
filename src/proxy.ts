@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 
 // Rotas completamente públicas (sem auth)
-const FULLY_PUBLIC = ["/", "/book"];
+const FULLY_PUBLIC = ["/", "/book", "/empresas"];
 // Rotas de autenticação (redireciona para fora se já logado)
 const AUTH_ROUTES = ["/login", "/register"];
 // Rotas que exigem role "admin" do better-auth
