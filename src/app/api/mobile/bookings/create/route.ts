@@ -3,11 +3,17 @@ import { db } from "@/lib/db";
 import { encrypt } from "@/lib/encrypt";
 import { notifyBookingConfirmed, notifyCompanyNewBooking } from "@/lib/notifications";
 import { getMobileSession } from "../../_auth";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   const session = await getMobileSession(req);
   if (!session) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+  }
+
+  const rl = await rateLimit(`booking:mobile:${session.user.id}`, 10, 60);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Muitas tentativas. Aguarde um momento." }, { status: 429 });
   }
 
   let body: {

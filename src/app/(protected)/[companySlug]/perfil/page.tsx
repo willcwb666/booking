@@ -8,9 +8,17 @@ export default async function PerfilPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = await db.user.findUnique({
     where: { id: session!.user.id },
-    select: { name: true, email: true, bio: true, location: true },
+    select: {
+      name: true,
+      email: true,
+      bio: true,
+      location: true,
+      notificationPrefs: true,
+    },
   });
   if (!user) notFound();
+
+  const prefs = user.notificationPrefs;
 
   return (
     <PerfilClient
@@ -18,6 +26,14 @@ export default async function PerfilPage() {
       email={user.email}
       bio={user.bio ?? ""}
       location={user.location ?? ""}
+      notifPrefs={{
+        enableEmail:    prefs?.enableEmail    ?? true,
+        enablePush:     prefs?.enablePush     ?? true,
+        enableWhatsApp: prefs?.enableWhatsApp ?? false,
+        enableSms:      prefs?.enableSms      ?? false,
+        whatsappPhone:  prefs?.whatsappPhone  ?? "",
+        smsPhone:       prefs?.smsPhone       ?? "",
+      }}
     />
   );
 }

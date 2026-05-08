@@ -15,15 +15,14 @@ export async function submitReviewAction(formData: FormData): Promise<SubmitResu
   if (!bookingId) return { success: false, error: "ID do agendamento inválido" };
   if (ratingRaw < 1 || ratingRaw > 5) return { success: false, error: "Avaliação deve ser entre 1 e 5" };
 
-  // Verify user is authenticated
+  // Auth check must come before rate limit to avoid wasting quota for unauthenticated requests
   const hdrs = await headers();
   const session = await auth.api.getSession({ headers: hdrs });
-
-  // Rate limit: 5 reviews per minute
-  const ip = hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  const rl = await rateLimit(`review:${ip}`, 5, 60);
-  if (!rl.allowed) return { success: false, error: "Muitas tentativas. Aguarde um momento." };
   if (!session) return { success: false, error: "Você precisa estar logado para avaliar" };
+
+  // Rate limit: 5 reviews per minute per user
+  const rl = await rateLimit(`review:${session.user.id}`, 5, 60);
+  if (!rl.allowed) return { success: false, error: "Muitas tentativas. Aguarde um momento." };
 
   const booking = await db.booking.findFirst({
     where: { id: bookingId, status: "COMPLETED" },

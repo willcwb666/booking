@@ -76,6 +76,32 @@ enum BookingStatus {
 enum PaymentMethod {
   CARD
   CASH_CHECK
+  PIX
+}
+
+enum AgendaExceptionType {
+  BLOCKED_DAY
+  CUSTOM_HOURS
+}
+
+enum WaitlistStatus {
+  WAITING
+  NOTIFIED
+  BOOKED
+  EXPIRED
+}
+
+enum CalendarProvider {
+  GOOGLE
+  APPLE
+}
+
+enum WebhookEvent {
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  BOOKING_COMPLETED
+  BOOKING_RESCHEDULED
+  REVIEW_SUBMITTED
 }
 
 enum PaymentStatus {
@@ -117,6 +143,8 @@ model User {
   estimatesAsCustomer   Estimate[]       @relation("EstimateCustomer")
   cancelledBookings     Booking[]        @relation("BookingCancelledBy")
   pushTokens            PushToken[]
+  notificationPrefs     UserNotificationPreference?
+  calendarIntegrations  CalendarIntegration[]
 
   @@unique([email])
   @@map("user")
@@ -228,8 +256,11 @@ model Company {
   estimates       Estimate[]
   bookings        Booking[]
   reviews         Review[]
+  paymentSettings CompanyPaymentSettings?
+  waitlistEntries WaitlistEntry[]
+  webhooks        CompanyWebhook[]
   createdAt       DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  updatedAt       DateTime        @updatedAt
 
   @@map("company")
 }
@@ -360,6 +391,8 @@ model Agenda {
   bookingConfigs BookingConfig[]
   bookings       Booking[]
   bookingSlots   BookingSlot[]
+  exceptions     AgendaException[]
+  waitlistEntries WaitlistEntry[]
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
 
@@ -397,6 +430,7 @@ model BookingConfig {
   extraServices       BookingConfigExtraService[]
   estimates           Estimate[]
   bookings            Booking[]
+  waitlistEntries     WaitlistEntry[]
   createdAt           DateTime                    @default(now())
   updatedAt           DateTime                    @updatedAt
 
@@ -533,6 +567,17 @@ model Booking {
   cancelledById         String?
   cancelledBy           User?           @relation("BookingCancelledBy", fields: [cancelledById], references: [id])
   cancellationReason    String?
+  refundAmount          Decimal?        @db.Decimal(10, 2)
+  refundedAt            DateTime?
+  // Rescheduling
+  rescheduledFromId     String?
+  rescheduledFrom       Booking?        @relation("RescheduledFrom", fields: [rescheduledFromId], references: [id], onDelete: SetNull)
+  rescheduledTo         Booking[]       @relation("RescheduledFrom")
+  rescheduledAt         DateTime?
+  // Recurrence
+  recurrenceGroupId     String?
+  recurrenceFrequency   EstimateFrequency?
+  recurrenceEndDate     String?
   slot                  BookingSlot?
   customerDetail        BookingCustomerDetail?
   homeAccess            BookingHomeAccess?
@@ -621,4 +666,120 @@ model PushToken {
   @@unique([userId, token])
   @@index([userId])
   @@map("push_token")
+}
+
+// ─── User Notification Preferences ───────────────────────────────────────────
+
+model UserNotificationPreference {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enableEmail    Boolean  @default(true)
+  enablePush     Boolean  @default(true)
+  enableWhatsApp Boolean  @default(false)
+  enableSms      Boolean  @default(false)
+  whatsappPhone  String?
+  smsPhone       String?
+  updatedAt      DateTime @updatedAt
+
+  @@map("user_notification_preference")
+}
+
+// ─── Company Payment Settings ─────────────────────────────────────────────────
+
+model CompanyPaymentSettings {
+  id              String   @id @default(cuid())
+  companyId       String   @unique
+  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  enableCard      Boolean  @default(true)
+  enableCashCheck Boolean  @default(true)
+  enablePix       Boolean  @default(false)
+  pixKey          String?
+  pixKeyType      String?  // "cpf" | "cnpj" | "email" | "phone" | "random"
+  mercadoPagoAccessToken String? // encrypted
+  updatedAt       DateTime @updatedAt
+
+  @@map("company_payment_settings")
+}
+
+// ─── Agenda Exceptions ────────────────────────────────────────────────────────
+
+model AgendaException {
+  id        String              @id @default(cuid())
+  agendaId  String
+  agenda    Agenda              @relation(fields: [agendaId], references: [id], onDelete: Cascade)
+  date      String              // "YYYY-MM-DD"
+  type      AgendaExceptionType @default(BLOCKED_DAY)
+  reason    String?
+  startTime String?             // only for CUSTOM_HOURS
+  endTime   String?             // only for CUSTOM_HOURS
+  createdAt DateTime            @default(now())
+
+  @@unique([agendaId, date])
+  @@index([agendaId])
+  @@map("agenda_exception")
+}
+
+// ─── Waitlist ─────────────────────────────────────────────────────────────────
+
+model WaitlistEntry {
+  id              String         @id @default(cuid())
+  companyId       String
+  company         Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  agendaId        String
+  agenda          Agenda         @relation(fields: [agendaId], references: [id], onDelete: Cascade)
+  bookingConfigId String
+  bookingConfig   BookingConfig  @relation(fields: [bookingConfigId], references: [id], onDelete: Cascade)
+  preferredDate   String         // "YYYY-MM-DD"
+  preferredStartTime String?     // "HH:MM"
+  customerName    String
+  customerEmail   String
+  customerPhone   String?
+  status          WaitlistStatus @default(WAITING)
+  notifiedAt      DateTime?
+  expiresAt       DateTime?
+  createdAt       DateTime       @default(now())
+
+  @@index([companyId, status])
+  @@index([agendaId, preferredDate])
+  @@map("waitlist_entry")
+}
+
+// ─── Outbound Webhooks ────────────────────────────────────────────────────────
+
+model CompanyWebhook {
+  id              String         @id @default(cuid())
+  companyId       String
+  company         Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  url             String
+  secret          String         // HMAC-SHA256 signing secret
+  events          WebhookEvent[]
+  isActive        Boolean        @default(true)
+  lastTriggeredAt DateTime?
+  lastStatusCode  Int?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([companyId, isActive])
+  @@map("company_webhook")
+}
+
+// ─── Calendar Integrations ────────────────────────────────────────────────────
+
+model CalendarIntegration {
+  id           String           @id @default(cuid())
+  userId       String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider     CalendarProvider
+  accessToken  String           // AES-256-GCM encrypted
+  refreshToken String?          // AES-256-GCM encrypted
+  expiresAt    DateTime?
+  calendarId   String?
+  isActive     Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@unique([userId, provider])
+  @@index([userId])
+  @@map("calendar_integration")
 }

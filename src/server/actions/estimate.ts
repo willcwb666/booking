@@ -3,6 +3,12 @@
 import { db } from "@/lib/db";
 import { headers } from "next/headers";
 import { rateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
+
+const serviceItemSchema = z.array(
+  z.object({ serviceTypeId: z.string().uuid(), quantity: z.number().int().positive() })
+);
+const extraIdsSchema = z.array(z.string().uuid());
 
 type UpsertResult =
   | { success: true; estimateId: string }
@@ -95,8 +101,10 @@ export async function upsertEstimateAction(formData: FormData): Promise<UpsertRe
   let serviceItems: { serviceTypeId: string; quantity: number }[] = [];
   let extraServiceIds: string[] = [];
   try {
-    serviceItems = JSON.parse((formData.get("serviceItems") as string) || "[]");
-    extraServiceIds = JSON.parse((formData.get("extraServiceIds") as string) || "[]");
+    const rawItems = JSON.parse((formData.get("serviceItems") as string) || "[]");
+    const rawExtras = JSON.parse((formData.get("extraServiceIds") as string) || "[]");
+    serviceItems = serviceItemSchema.parse(rawItems);
+    extraServiceIds = extraIdsSchema.parse(rawExtras);
   } catch {
     return { success: false, errors: { _: ["Dados inválidos"] } };
   }
@@ -173,8 +181,10 @@ export async function submitEstimateAction(formData: FormData): Promise<SubmitRe
   let serviceItems: { serviceTypeId: string; quantity: number }[] = [];
   let extraServiceIds: string[] = [];
   try {
-    serviceItems = JSON.parse((formData.get("serviceItems") as string) || "[]");
-    extraServiceIds = JSON.parse((formData.get("extraServiceIds") as string) || "[]");
+    const rawItems = JSON.parse((formData.get("serviceItems") as string) || "[]");
+    const rawExtras = JSON.parse((formData.get("extraServiceIds") as string) || "[]");
+    serviceItems = serviceItemSchema.parse(rawItems);
+    extraServiceIds = extraIdsSchema.parse(rawExtras);
   } catch {
     return { success: false, errors: { _: ["Dados inválidos"] } };
   }

@@ -31,9 +31,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Selecione pelo menos um serviço" }, { status: 400 });
   }
 
-  // Load config (must be PUBLISHED)
+  // Load config (must be PUBLISHED and company must be active)
   const config = await db.bookingConfig.findFirst({
-    where: { id: bookingConfigId, status: "PUBLISHED" },
+    where: {
+      id: bookingConfigId,
+      status: "PUBLISHED",
+      company: { isActive: true },
+    },
     include: {
       serviceTypes: {
         include: { serviceType: { select: { id: true, price: true } } },

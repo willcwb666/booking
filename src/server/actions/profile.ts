@@ -51,7 +51,40 @@ export async function changePasswordAction(formData: FormData): Promise<Result> 
       body: { currentPassword, newPassword, revokeOtherSessions: false },
     });
     return { success: true };
-  } catch {
-    return { success: false, error: "Senha atual incorreta" };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "";
+    if (msg.toLowerCase().includes("password")) {
+      return { success: false, error: "Senha atual incorreta" };
+    }
+    throw e;
   }
+}
+
+export async function updateNotificationPrefsAction(formData: FormData): Promise<Result> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { success: false, error: "Não autenticado" };
+
+  const enableEmail    = formData.get("enableEmail")    === "on";
+  const enablePush     = formData.get("enablePush")     === "on";
+  const enableWhatsApp = formData.get("enableWhatsApp") === "on";
+  const enableSms      = formData.get("enableSms")      === "on";
+  const whatsappPhone  = (formData.get("whatsappPhone") as string)?.trim() || null;
+  const smsPhone       = (formData.get("smsPhone") as string)?.trim()      || null;
+
+  await db.userNotificationPreference.upsert({
+    where: { userId: session.user.id },
+    update: { enableEmail, enablePush, enableWhatsApp, enableSms, whatsappPhone, smsPhone },
+    create: {
+      userId: session.user.id,
+      enableEmail,
+      enablePush,
+      enableWhatsApp,
+      enableSms,
+      whatsappPhone,
+      smsPhone,
+    },
+  });
+
+  revalidatePath("/", "layout");
+  return { success: true };
 }

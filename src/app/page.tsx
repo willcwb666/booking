@@ -1,217 +1,338 @@
 import Link from "next/link";
 
-const features = [
-  {
-    title: "Agendamento 24h",
-    desc: "Link público. Cliente escolhe serviço, horário e confirma — sem telefonema, sem WhatsApp.",
-    icon: "📅",
-  },
-  {
-    title: "Push + E-mail",
-    desc: "Confirmação na hora. Lembrete 24h e 2h antes. Seu cliente nunca mais esquece.",
-    icon: "🔔",
-  },
-  {
-    title: "Pagamento integrado",
-    desc: "Cartão via Stripe ou dinheiro no dia. Tudo rastreado no painel.",
-    icon: "💳",
-  },
-  {
-    title: "Gestão de equipe",
-    desc: "Convide funcionários, defina agendas individuais, acompanhe tudo no calendário.",
-    icon: "👥",
-  },
-  {
-    title: "Avaliações",
-    desc: "Após cada serviço o cliente avalia. Você acompanha média e comentários.",
-    icon: "⭐",
-  },
-  {
-    title: "App mobile",
-    desc: "Seus clientes instalam, recebem push e acompanham agendamentos no celular.",
-    icon: "📱",
-  },
-];
-
-const steps = [
-  { n: "01", title: "Cadastre sua empresa", desc: "Adicione serviços, horários e publique seu link de agendamento." },
-  { n: "02", title: "Clientes agendam", desc: "Pelo link ou app — escolhem serviço, data, horário e pagam." },
-  { n: "03", title: "Você gerencia", desc: "Painel com calendário, equipe, financeiro e avaliações." },
-];
-
 export default function HomePage() {
   return (
-    <div className="min-h-full flex flex-col" style={{ background: "var(--warm-gray)" }}>
-      {/* Nav */}
-      <header className="sticky top-0 z-50 backdrop-blur-md border-b" style={{ background: "rgba(247,245,242,0.9)", borderColor: "var(--warm-gray-dark)" }}>
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <span className="text-xl font-extrabold tracking-tight" style={{ color: "var(--navy)" }}>
-            Agendei<span style={{ color: "var(--gold)" }}>.</span>
-          </span>
-          <nav className="flex items-center gap-2">
-            <Link href="/login" className="text-sm font-medium px-4 py-2 rounded-lg transition-colors hover:bg-white/60" style={{ color: "var(--navy)" }}>
+    <div className="min-h-full bg-stone-50 text-stone-900">
+      {/* ── Nav ── */}
+      <header className="fixed top-0 inset-x-0 z-50 bg-stone-50/80 backdrop-blur-lg border-b border-stone-200/60">
+        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+          <Link href="/" className="text-lg font-semibold tracking-tight">
+            agendei<span className="text-amber-500">.</span>
+          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/login"
+              className="text-sm text-stone-600 hover:text-stone-900 transition-colors"
+            >
               Entrar
             </Link>
-            <Link href="/register" className="text-sm font-semibold text-white px-5 py-2.5 rounded-lg transition-all hover:opacity-90" style={{ background: "var(--navy)" }}>
+            <Link
+              href="/register"
+              className="text-sm font-medium bg-stone-900 text-white px-4 py-2 rounded-full hover:bg-stone-800 transition-colors"
+            >
               Criar conta
             </Link>
-          </nav>
+          </div>
         </div>
       </header>
 
-      <main className="flex-1">
-        {/* Hero */}
-        <section className="relative overflow-hidden noise-bg" style={{ background: "var(--navy)" }}>
-          <div className="mesh-gradient absolute inset-0" />
-          <div className="relative z-10 max-w-6xl mx-auto px-6 pt-24 pb-28 lg:pt-32 lg:pb-36">
-            <div className="max-w-3xl">
-              <div className="animate-fade-up delay-1">
-                <div className="gold-line mb-8" />
-              </div>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight text-white animate-fade-up delay-2">
-                Seu cliente agendou.
-                <br />
-                <span style={{ color: "var(--gold)" }}>Ele vai lembrar.</span>
-              </h1>
-              <p className="mt-6 text-lg sm:text-xl leading-relaxed animate-fade-up delay-3" style={{ color: "rgba(255,255,255,0.6)" }}>
-                Agendamentos online, pagamentos integrados e notificações push que chegam antes da visita — para empresas que não podem se dar ao luxo de clientes esquecidos.
-              </p>
-              <div className="mt-10 flex flex-col sm:flex-row gap-4 animate-fade-up delay-4">
-                <Link href="/register" className="text-center font-bold px-8 py-4 rounded-xl text-lg transition-all hover:scale-[1.02]" style={{ background: "var(--gold)", color: "var(--navy)" }}>
-                  Começar grátis
-                </Link>
-                <Link href="/login" className="text-center font-medium px-8 py-4 rounded-xl text-lg border transition-colors hover:bg-white/5" style={{ borderColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.7)" }}>
-                  Já tenho conta
-                </Link>
-              </div>
-              <p className="mt-5 text-sm animate-fade-up delay-5" style={{ color: "rgba(255,255,255,0.35)" }}>
-                Sem cartão de crédito · Pronto em 5 minutos
-              </p>
+      <main>
+        {/* ── Hero ── */}
+        <section className="pt-32 pb-20 md:pt-44 md:pb-32 px-6">
+          <div className="max-w-4xl mx-auto text-center">
+            <p className="text-sm font-medium text-amber-600 tracking-wide uppercase mb-6">
+              Agendamentos online
+            </p>
+            <h1
+              className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-normal leading-[0.95] tracking-tight"
+              style={{ fontFamily: "var(--font-serif)" }}
+            >
+              Seu cliente agendou.
+              <br />
+              <span className="italic text-amber-500">Ele vai lembrar.</span>
+            </h1>
+            <p className="mt-8 text-lg md:text-xl text-stone-500 max-w-2xl mx-auto leading-relaxed">
+              Link de agendamento, pagamentos integrados e notificações push
+              que chegam antes da visita. Sem telefonema, sem esquecimento.
+            </p>
+            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link
+                href="/register"
+                className="w-full sm:w-auto text-center font-medium bg-stone-900 text-white px-8 py-3.5 rounded-full text-base hover:bg-stone-800 transition-colors"
+              >
+                Comece grátis
+              </Link>
+              <Link
+                href="/login"
+                className="w-full sm:w-auto text-center font-medium text-stone-500 px-8 py-3.5 rounded-full text-base border border-stone-300 hover:border-stone-400 hover:text-stone-700 transition-colors"
+              >
+                Já tenho conta
+              </Link>
             </div>
-
-            {/* Decorative floating card */}
-            <div className="hidden lg:block absolute right-12 top-1/2 -translate-y-1/2 animate-float" style={{ animationDelay: "1s" }}>
-              <div className="rounded-2xl p-6 w-72 shadow-2xl" style={{ background: "var(--navy-light)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: "var(--gold)", color: "var(--navy)" }}>M</div>
-                  <div>
-                    <p className="text-white text-sm font-semibold">Maria Silva</p>
-                    <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Confirmado para amanhã</p>
-                  </div>
-                </div>
-                <div className="rounded-xl p-4 mb-3" style={{ background: "rgba(212,168,83,0.1)", border: "1px solid rgba(212,168,83,0.15)" }}>
-                  <p className="text-xs font-medium" style={{ color: "var(--gold)" }}>Limpeza residencial</p>
-                  <p className="text-white text-sm font-bold mt-1">08/05 às 09:00</p>
-                  <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>R$ 180,00 · Cartão</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-green-400" />
-                  <span className="text-xs text-green-400 font-medium">Push enviado ✓</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Pain point */}
-        <section className="border-b" style={{ background: "#fef9ee", borderColor: "#f5e6c4" }}>
-          <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-start gap-6">
-            <div className="text-4xl shrink-0">😤</div>
-            <div>
-              <p className="font-bold text-lg" style={{ color: "var(--navy)" }}>
-                &ldquo;Mandei e-mail, fui lá e o cliente não sabia de nada.&rdquo;
-              </p>
-              <p className="mt-2 text-sm leading-relaxed" style={{ color: "#6b6352" }}>
-                E-mail vai para spam. Push notification chega na tela de bloqueio. Com o Agendei, o cliente recebe confirmação + lembrete 24h e 2h antes — você não bate na porta no escuro.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Features */}
-        <section className="max-w-6xl mx-auto px-6 py-24">
-          <div className="text-center mb-16">
-            <div className="gold-line mx-auto mb-6" />
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight" style={{ color: "var(--navy)" }}>
-              Tudo em um só lugar
-            </h2>
-            <p className="mt-3 text-lg" style={{ color: "#8a8478" }}>
-              Para empresas de limpeza, beleza, saúde, manutenção e mais.
+            <p className="mt-5 text-xs text-stone-400">
+              Sem cartão de crédito &middot; Pronto em 5 minutos
             </p>
           </div>
+        </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {features.map((f) => (
-              <div key={f.title} className="card-lift bg-white rounded-2xl p-7 border" style={{ borderColor: "var(--warm-gray-dark)" }}>
-                <span className="text-3xl mb-4 block">{f.icon}</span>
-                <h3 className="font-bold text-lg mb-2" style={{ color: "var(--navy)" }}>{f.title}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: "#8a8478" }}>{f.desc}</p>
+        {/* ── Social proof strip ── */}
+        <section className="border-y border-stone-200/60 bg-stone-100/50">
+          <div className="max-w-7xl mx-auto px-6 py-8 flex flex-wrap items-center justify-center gap-x-12 gap-y-4 text-center">
+            {[
+              ["2.400+", "agendamentos"],
+              ["98%", "presença"],
+              ["4.9", "avaliação média"],
+              ["< 2min", "para agendar"],
+            ].map(([num, label]) => (
+              <div key={label} className="flex items-baseline gap-2">
+                <span className="text-2xl font-semibold text-stone-900 tabular-nums">
+                  {num}
+                </span>
+                <span className="text-sm text-stone-500">{label}</span>
               </div>
             ))}
           </div>
         </section>
 
-        {/* How it works */}
-        <section className="border-y" style={{ background: "var(--navy)", borderColor: "var(--navy-light)" }}>
-          <div className="noise-bg relative">
-            <div className="relative z-10 max-w-6xl mx-auto px-6 py-24">
-              <div className="text-center mb-16">
-                <div className="gold-line mx-auto mb-6" />
-                <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Como funciona</h2>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {steps.map((s) => (
-                  <div key={s.n} className="text-center">
-                    <div className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center font-extrabold text-xl" style={{ background: "var(--gold)", color: "var(--navy)" }}>
-                      {s.n}
+        {/* ── Demo card ── */}
+        <section className="py-20 md:py-28 px-6">
+          <div className="max-w-5xl mx-auto">
+            <div className="rounded-2xl bg-white border border-stone-200 shadow-sm overflow-hidden">
+              <div className="p-6 md:p-10 grid md:grid-cols-2 gap-8 md:gap-12">
+                {/* Left: mock booking */}
+                <div>
+                  <p className="text-xs font-medium text-stone-400 uppercase tracking-wider mb-4">
+                    Como seu cliente vê
+                  </p>
+                  <div className="space-y-3">
+                    {[
+                      {
+                        service: "Limpeza residencial",
+                        time: "09:00 — 11:00",
+                        price: "R$ 180",
+                      },
+                      {
+                        service: "Limpeza de vidros",
+                        time: "Adicional",
+                        price: "+ R$ 40",
+                      },
+                    ].map((item) => (
+                      <div
+                        key={item.service}
+                        className="flex items-center justify-between p-4 rounded-xl bg-stone-50 border border-stone-100"
+                      >
+                        <div>
+                          <p className="font-medium text-sm">{item.service}</p>
+                          <p className="text-xs text-stone-400 mt-0.5">
+                            {item.time}
+                          </p>
+                        </div>
+                        <span className="text-sm font-semibold text-stone-700">
+                          {item.price}
+                        </span>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-amber-50 border border-amber-200/60">
+                      <span className="text-sm font-medium text-amber-700">
+                        Total
+                      </span>
+                      <span className="text-base font-bold text-amber-700">
+                        R$ 220
+                      </span>
                     </div>
-                    <h3 className="text-white font-bold text-lg mb-2">{s.title}</h3>
-                    <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>{s.desc}</p>
                   </div>
-                ))}
+                  <button className="mt-4 w-full bg-stone-900 text-white py-3 rounded-xl text-sm font-medium cursor-default">
+                    Confirmar agendamento
+                  </button>
+                </div>
+
+                {/* Right: notification timeline */}
+                <div>
+                  <p className="text-xs font-medium text-stone-400 uppercase tracking-wider mb-4">
+                    O que acontece depois
+                  </p>
+                  <div className="space-y-0">
+                    {[
+                      {
+                        time: "Agora",
+                        text: "Confirmação enviada por e-mail",
+                        dot: "bg-emerald-500",
+                      },
+                      {
+                        time: "24h antes",
+                        text: "Lembrete push no celular",
+                        dot: "bg-amber-500",
+                      },
+                      {
+                        time: "2h antes",
+                        text: "Último lembrete push",
+                        dot: "bg-amber-500",
+                      },
+                      {
+                        time: "Após serviço",
+                        text: "Pedido de avaliação",
+                        dot: "bg-blue-500",
+                      },
+                    ].map((step, i, arr) => (
+                      <div key={step.time} className="flex gap-4">
+                        <div className="flex flex-col items-center">
+                          <div
+                            className={`w-2.5 h-2.5 rounded-full mt-1.5 ${step.dot}`}
+                          />
+                          {i < arr.length - 1 && (
+                            <div className="w-px flex-1 bg-stone-200 my-1" />
+                          )}
+                        </div>
+                        <div className="pb-6">
+                          <p className="text-xs font-medium text-stone-400">
+                            {step.time}
+                          </p>
+                          <p className="text-sm font-medium text-stone-700 mt-0.5">
+                            {step.text}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* CTA */}
-        <section className="max-w-6xl mx-auto px-6 py-24">
-          <div className="rounded-3xl p-10 md:p-16 flex flex-col md:flex-row items-center gap-12" style={{ background: "var(--navy)" }}>
-            <div className="flex-1">
-              <div className="gold-line mb-6" />
-              <h2 className="text-3xl font-extrabold text-white mb-4">Pronto para sair do papel?</h2>
-              <ul className="space-y-3 text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>
-                {[
-                  "Link de agendamento pronto em minutos",
-                  "Push + e-mail de confirmação e lembrete",
-                  "Painel com calendário, equipe e financeiro",
-                  "App mobile para seus clientes",
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-3">
-                    <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0" style={{ background: "var(--gold)", color: "var(--navy)" }}>✓</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
+        {/* ── Features ── */}
+        <section className="py-20 md:py-28 px-6 bg-stone-100/50 border-y border-stone-200/60">
+          <div className="max-w-5xl mx-auto">
+            <p className="text-sm font-medium text-amber-600 tracking-wide uppercase mb-3">
+              Funcionalidades
+            </p>
+            <h2
+              className="text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight leading-tight"
+              style={{ fontFamily: "var(--font-serif)" }}
+            >
+              Tudo que seu negócio precisa.
+              <br />
+              <span className="text-stone-400">Nada que não precisa.</span>
+            </h2>
+
+            <div className="mt-14 grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-stone-200 rounded-2xl overflow-hidden border border-stone-200">
+              {[
+                {
+                  title: "Agendamento 24h",
+                  desc: "Link público. Cliente escolhe serviço, horário e confirma sozinho.",
+                },
+                {
+                  title: "Push + E-mail",
+                  desc: "Confirmação na hora. Lembrete 24h e 2h antes. Ninguém esquece.",
+                },
+                {
+                  title: "Pagamento integrado",
+                  desc: "Cartão via Stripe ou dinheiro no dia. Tudo rastreado no painel.",
+                },
+                {
+                  title: "Gestão de equipe",
+                  desc: "Convide funcionários, defina agendas individuais, acompanhe tudo.",
+                },
+                {
+                  title: "Avaliações",
+                  desc: "Após cada serviço o cliente avalia. Você acompanha média e comentários.",
+                },
+                {
+                  title: "App mobile",
+                  desc: "Seus clientes instalam, recebem push e acompanham no celular.",
+                },
+              ].map((f) => (
+                <div key={f.title} className="bg-white p-7 md:p-8">
+                  <h3 className="font-semibold text-base mb-2">{f.title}</h3>
+                  <p className="text-sm text-stone-500 leading-relaxed">
+                    {f.desc}
+                  </p>
+                </div>
+              ))}
             </div>
-            <div className="flex flex-col gap-3 w-full md:w-auto shrink-0">
-              <Link href="/register" className="text-center font-bold px-10 py-4 rounded-xl text-lg transition-all hover:scale-[1.02]" style={{ background: "var(--gold)", color: "var(--navy)" }}>
-                Criar minha conta grátis
-              </Link>
-              <Link href="/login" className="text-center text-sm font-medium py-2 transition-colors" style={{ color: "rgba(255,255,255,0.4)" }}>
-                Já tenho conta → Entrar
-              </Link>
+          </div>
+        </section>
+
+        {/* ── How it works ── */}
+        <section className="py-20 md:py-28 px-6">
+          <div className="max-w-5xl mx-auto">
+            <p className="text-sm font-medium text-amber-600 tracking-wide uppercase mb-3">
+              Como funciona
+            </p>
+            <h2
+              className="text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight leading-tight mb-16"
+              style={{ fontFamily: "var(--font-serif)" }}
+            >
+              Três passos. Cinco minutos.
+            </h2>
+
+            <div className="grid md:grid-cols-3 gap-12 md:gap-8">
+              {[
+                {
+                  n: "01",
+                  title: "Cadastre sua empresa",
+                  desc: "Adicione serviços, horários de atendimento e publique seu link de agendamento.",
+                },
+                {
+                  n: "02",
+                  title: "Clientes agendam",
+                  desc: "Pelo link ou app — escolhem serviço, data, horário e pagam online.",
+                },
+                {
+                  n: "03",
+                  title: "Você gerencia",
+                  desc: "Painel com calendário, equipe, financeiro e avaliações em tempo real.",
+                },
+              ].map((step) => (
+                <div key={step.n}>
+                  <span className="text-5xl font-light text-stone-200 block mb-4">
+                    {step.n}
+                  </span>
+                  <h3 className="font-semibold text-lg mb-2">{step.title}</h3>
+                  <p className="text-sm text-stone-500 leading-relaxed">
+                    {step.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── CTA ── */}
+        <section className="px-6 pb-20 md:pb-28">
+          <div className="max-w-5xl mx-auto">
+            <div className="rounded-2xl bg-stone-900 p-10 md:p-16 text-center">
+              <h2
+                className="text-3xl sm:text-4xl md:text-5xl font-normal text-white tracking-tight leading-tight"
+                style={{ fontFamily: "var(--font-serif)" }}
+              >
+                Pronto para parar de perder
+                <br />
+                <span className="italic text-amber-400">clientes esquecidos?</span>
+              </h2>
+              <p className="mt-5 text-stone-400 max-w-lg mx-auto">
+                Crie sua conta em 5 minutos. Sem cartão de crédito.
+                Seus clientes agendam hoje.
+              </p>
+              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link
+                  href="/register"
+                  className="w-full sm:w-auto text-center font-medium bg-amber-400 text-stone-900 px-8 py-3.5 rounded-full text-base hover:bg-amber-300 transition-colors"
+                >
+                  Criar minha conta grátis
+                </Link>
+                <Link
+                  href="/login"
+                  className="text-sm text-stone-500 hover:text-stone-300 transition-colors"
+                >
+                  Já tenho conta
+                </Link>
+              </div>
             </div>
           </div>
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t" style={{ borderColor: "var(--warm-gray-dark)" }}>
-        <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="font-extrabold" style={{ color: "var(--navy)" }}>Agendei<span style={{ color: "var(--gold)" }}>.</span></span>
-          <p className="text-sm" style={{ color: "#a09a90" }}>© {new Date().getFullYear()} Agendei. Todos os direitos reservados.</p>
+      {/* ── Footer ── */}
+      <footer className="border-t border-stone-200/60 mt-auto">
+        <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <span className="text-sm font-semibold">
+            agendei<span className="text-amber-500">.</span>
+          </span>
+          <p className="text-xs text-stone-400">
+            &copy; {new Date().getFullYear()} Agendei. Todos os direitos
+            reservados.
+          </p>
         </div>
       </footer>
     </div>

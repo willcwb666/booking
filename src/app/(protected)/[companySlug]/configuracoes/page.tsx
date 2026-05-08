@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { getCompanyBySlugForUser } from "@/server/queries/companies";
+import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { SettingsClient } from "./settings-client";
 
@@ -17,6 +18,10 @@ export default async function ConfiguracoesPage({
   const role = company.members[0].role;
   const canEdit = role === "OWNER" || role === "MANAGER";
 
+  const paymentSettings = await db.companyPaymentSettings.findUnique({
+    where: { companyId: company.id },
+  });
+
   return (
     <SettingsClient
       companySlug={companySlug}
@@ -27,6 +32,13 @@ export default async function ConfiguracoesPage({
         address: company.address ?? "",
       }}
       bookingBaseUrl={`/book/${companySlug}`}
+      paymentSettings={{
+        enableCard: paymentSettings?.enableCard ?? true,
+        enableCashCheck: paymentSettings?.enableCashCheck ?? true,
+        enablePix: paymentSettings?.enablePix ?? false,
+        pixKey: paymentSettings?.pixKey ?? "",
+        pixKeyType: paymentSettings?.pixKeyType ?? "",
+      }}
     />
   );
 }
