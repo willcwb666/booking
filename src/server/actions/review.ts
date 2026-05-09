@@ -35,7 +35,7 @@ export async function submitReviewAction(formData: FormData): Promise<SubmitResu
   if (!booking) return { success: false, error: "Agendamento não encontrado ou não concluído" };
 
   // Verify the logged-in user is the customer who made this booking
-  if (booking.estimate.customerId !== session.user.id) {
+  if (booking.estimate?.customerId !== session.user.id) {
     return { success: false, error: "Você só pode avaliar seus próprios agendamentos" };
   }
 

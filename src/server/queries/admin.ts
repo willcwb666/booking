@@ -24,7 +24,7 @@ export async function getAdminStats(): Promise<AdminStats> {
 
   const totalRevenue =
     paidBookings.reduce(
-      (sum, b) => sum + Math.round(Number(b.estimate.total) * 100),
+      (sum, b) => sum + Math.round(Number(b.estimate?.total ?? 0) * 100),
       0
     ) / 100;
 

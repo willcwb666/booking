@@ -41,6 +41,11 @@ export default async function CheckoutPage({
   const { bookingConfig: config } = estimate;
   const agenda = config.agenda;
 
+  const paymentSettings = await db.companyPaymentSettings.findUnique({
+    where: { companyId: estimate.companyId },
+    select: { enableCard: true, enableCashCheck: true, enablePix: true },
+  });
+
   const orderItems = [
     ...estimate.serviceTypes.map((item) => ({
       label: `${item.serviceType.service.name} — ${item.serviceType.name}${item.quantity > 1 ? ` ×${item.quantity}` : ""}`,
@@ -70,6 +75,11 @@ export default async function CheckoutPage({
       frequency={FREQ_LABELS[estimate.frequency] ?? estimate.frequency}
       orderItems={orderItems}
       agendaId={agenda.id}
+      paymentSettings={{
+        enableCard: paymentSettings?.enableCard ?? true,
+        enableCashCheck: paymentSettings?.enableCashCheck ?? true,
+        enablePix: paymentSettings?.enablePix ?? false,
+      }}
       agendaConfig={{
         startDate: agenda.startDate,
         endDate: agenda.endDate,

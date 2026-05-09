@@ -3,14 +3,21 @@
 import { db } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import { encrypt } from "@/lib/encrypt";
+import { decrypt } from "@/lib/encrypt";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { notifyBookingConfirmed, notifyBookingCancelled, notifyStatusChanged, notifyCompanyNewBooking } from "@/lib/notifications";
 import { rateLimit } from "@/lib/rate-limit";
+import { createPixPayment } from "@/lib/mercadopago";
+import { triggerWebhooks } from "@/lib/webhooks";
+import { createCalendarEvent } from "@/lib/google-calendar";
+import { notifyWaitlistForDate } from "./waitlist";
+import { randomUUID } from "crypto";
 
 type CreateResult =
   | { success: true; bookingId: string; paymentMethod: "CASH_CHECK" }
   | { success: true; bookingId: string; paymentMethod: "CARD"; clientSecret: string }
+  | { success: true; bookingId: string; paymentMethod: "PIX"; pixQrCode: string; pixQrCodeBase64: string }
   | { success: false; errors: Record<string, string[]> };
 
 type CancelResult =
@@ -58,7 +65,10 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
     return { success: false, errors: { _: ["Preencha todos os campos obrigatórios"] } };
   }
 
-  const paymentMethod = paymentMethodRaw === "CARD" ? "CARD" : "CASH_CHECK";
+  const paymentMethod =
+    paymentMethodRaw === "CARD" ? "CARD" :
+    paymentMethodRaw === "PIX" ? "PIX" :
+    "CASH_CHECK";
 
   // Load estimate
   const estimate = await db.estimate.findFirst({
@@ -82,6 +92,21 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
   // Determine initial status
   const bookingStatus = paymentMethod === "CASH_CHECK" ? "CONFIRMED" : "PENDING";
 
+  // Fetch company payment settings (needed for PIX)
+  const paymentSettings = await db.companyPaymentSettings.findUnique({
+    where: { companyId: estimate.companyId },
+  });
+
+  // Validate PIX availability
+  if (paymentMethod === "PIX" && (!paymentSettings?.enablePix || !paymentSettings.mercadoPagoAccessToken)) {
+    return { success: false, errors: { _: ["PIX não disponível para esta empresa"] } };
+  }
+
+  // Recurrence setup
+  const rawFrequency = estimate.frequency;
+  const recurrenceGroupId = rawFrequency !== "ONCE" ? randomUUID() : null;
+  const recurrenceFrequency = rawFrequency !== "ONCE" ? rawFrequency : null;
+
   try {
     const booking = await db.$transaction(async (tx) => {
       const newBooking = await tx.booking.create({
@@ -95,7 +120,9 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
           scheduledEndTime,
           status: bookingStatus,
           paymentMethod,
-          paymentStatus: paymentMethod === "CASH_CHECK" ? "PENDING" : "PENDING",
+          paymentStatus: "PENDING",
+          recurrenceGroupId,
+          recurrenceFrequency,
         },
       });
 
@@ -143,11 +170,81 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
       return newBooking;
     });
 
+    // Create recurring series (additional slots for WEEKLY/BIWEEKLY/MONTHLY)
+    if (recurrenceGroupId && recurrenceFrequency) {
+      const COUNTS: Record<string, number> = { WEEKLY: 11, BIWEEKLY: 11, MONTHLY: 5 };
+      const DAYS: Record<string, number> = { WEEKLY: 7, BIWEEKLY: 14, MONTHLY: 30 };
+      const count = COUNTS[recurrenceFrequency] ?? 0;
+      const daysStep = DAYS[recurrenceFrequency] ?? 7;
+      const [baseY, baseM, baseD] = scheduledDate.split("-").map(Number);
+      const baseDate = new Date(Date.UTC(baseY, baseM - 1, baseD));
+
+      for (let i = 1; i <= count; i++) {
+        const nextDate = new Date(baseDate);
+        nextDate.setUTCDate(baseDate.getUTCDate() + daysStep * i);
+        const nextDateStr = nextDate.toISOString().split("T")[0];
+
+        try {
+          const recBooking = await db.booking.create({
+            data: {
+              companyId: estimate.companyId,
+              bookingConfigId: estimate.bookingConfigId,
+              agendaId,
+              scheduledDate: nextDateStr,
+              scheduledStartTime,
+              scheduledEndTime,
+              status: bookingStatus,
+              paymentMethod,
+              paymentStatus: "PENDING",
+              recurrenceGroupId,
+              recurrenceFrequency,
+            },
+          });
+          await db.bookingSlot.create({
+            data: {
+              bookingId: recBooking.id,
+              agendaId,
+              date: nextDateStr,
+              startTime: scheduledStartTime,
+              endTime: scheduledEndTime,
+            },
+          });
+        } catch {
+          // Slot taken for this date — skip
+        }
+      }
+    }
+
     if (paymentMethod === "CASH_CHECK") {
       // CASH_CHECK bookings are immediately CONFIRMED — notify now
       void notifyBookingConfirmed(booking.id);
       void notifyCompanyNewBooking(booking.id);
+      void triggerWebhooks(booking.companyId, "BOOKING_CONFIRMED", { bookingId: booking.id });
+      void syncToGoogleCalendar(booking.id);
       return { success: true, bookingId: booking.id, paymentMethod: "CASH_CHECK" };
+    }
+
+    if (paymentMethod === "PIX") {
+      const pixResult = await createPixPayment(paymentSettings!.mercadoPagoAccessToken!, {
+        bookingId: booking.id,
+        amount: Number(estimate.total),
+        description: `Agendamento #${booking.id.slice(-8)}`,
+        payerEmail: email,
+        payerName: `${firstName} ${lastName}`,
+      });
+
+      await db.booking.update({
+        where: { id: booking.id },
+        data: { mercadoPagoPaymentId: pixResult.id },
+      });
+
+      return {
+        success: true,
+        bookingId: booking.id,
+        paymentMethod: "PIX",
+        pixQrCode: pixResult.qrCode,
+        pixQrCodeBase64: pixResult.qrCodeBase64,
+      };
     }
 
     // Create Stripe PaymentIntent
@@ -178,6 +275,57 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
     }
     throw e;
   }
+}
+
+async function syncToGoogleCalendar(bookingId: string): Promise<void> {
+  try {
+    const booking = await db.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        company: {
+          include: {
+            members: {
+              where: { role: "OWNER", isActive: true },
+              select: { userId: true },
+            },
+          },
+        },
+        bookingConfig: { select: { name: true } },
+        customerDetail: { select: { address: true, city: true } },
+      },
+    });
+    if (!booking) return;
+
+    const ownerIds = booking.company.members.map((m) => m.userId);
+    for (const userId of ownerIds) {
+      const integration = await db.calendarIntegration.findUnique({
+        where: { userId_provider: { userId, provider: "GOOGLE" } },
+      });
+      if (!integration?.isActive) continue;
+
+      await createCalendarEvent(integration.accessToken, integration.refreshToken ?? null, {
+        summary: `${booking.bookingConfig.name} — ${booking.company.name}`,
+        description: `Agendamento #${bookingId}`,
+        date: booking.scheduledDate,
+        startTime: booking.scheduledStartTime,
+        endTime: booking.scheduledEndTime,
+        location: booking.customerDetail
+          ? `${booking.customerDetail.address}, ${booking.customerDetail.city}`
+          : undefined,
+        calendarId: integration.calendarId ?? "primary",
+      });
+    }
+  } catch (err) {
+    console.error("[syncToGoogleCalendar]", err);
+  }
+}
+
+export async function checkPixPaymentAction(bookingId: string): Promise<{ paid: boolean }> {
+  const booking = await db.booking.findUnique({
+    where: { id: bookingId },
+    select: { paymentStatus: true },
+  });
+  return { paid: booking?.paymentStatus === "PAID" };
 }
 
 export async function cancelBookingAction(formData: FormData): Promise<CancelResult> {
@@ -229,6 +377,9 @@ export async function cancelBookingAction(formData: FormData): Promise<CancelRes
   }
 
   void notifyBookingCancelled(bookingId);
+  void triggerWebhooks(booking.companyId, "BOOKING_CANCELLED", { bookingId });
+  // Notify waitlist entries for this date
+  void notifyWaitlistForDate(booking.agendaId, booking.scheduledDate, booking.companyId);
   return { success: true };
 }
 
@@ -372,5 +523,10 @@ export async function updateBookingStatusAction(
   });
 
   void notifyStatusChanged(bookingId, newStatus);
+  if (newStatus === "COMPLETED") {
+    void triggerWebhooks(booking.companyId, "BOOKING_COMPLETED", { bookingId });
+  } else if (newStatus === "CONFIRMED") {
+    void triggerWebhooks(booking.companyId, "BOOKING_CONFIRMED", { bookingId });
+  }
   return { success: true };
 }

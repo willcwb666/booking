@@ -505,7 +505,7 @@ model Estimate {
   notes           String?
   serviceTypes    EstimateServiceType[]
   extraServices   EstimateExtraService[]
-  booking         Booking?
+  bookings        Booking[]
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
 
@@ -548,8 +548,8 @@ model Booking {
   id                    String          @id @default(cuid())
   companyId             String
   company               Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  estimateId            String          @unique
-  estimate              Estimate        @relation(fields: [estimateId], references: [id])
+  estimateId            String?         @unique
+  estimate              Estimate?       @relation(fields: [estimateId], references: [id])
   bookingConfigId       String
   bookingConfig         BookingConfig   @relation(fields: [bookingConfigId], references: [id])
   agendaId              String
@@ -562,8 +562,9 @@ model Booking {
   status                BookingStatus   @default(PENDING)
   paymentMethod         PaymentMethod
   paymentStatus         PaymentStatus   @default(PENDING)
-  stripePaymentIntentId String?
-  cancelledAt           DateTime?
+  stripePaymentIntentId  String?
+  mercadoPagoPaymentId   String?
+  cancelledAt            DateTime?
   cancelledById         String?
   cancelledBy           User?           @relation("BookingCancelledBy", fields: [cancelledById], references: [id])
   cancellationReason    String?

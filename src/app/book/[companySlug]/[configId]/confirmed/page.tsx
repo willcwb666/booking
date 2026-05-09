@@ -49,6 +49,7 @@ export default async function ConfirmedPage({
   const isCardSuccess =
     redirect_status === "succeeded" || booking.paymentStatus === "PAID";
   const isCash = booking.paymentMethod === "CASH_CHECK";
+  const isPix = booking.paymentMethod === "PIX";
 
   if (isCardFailed) {
     return (
@@ -129,11 +130,15 @@ export default async function ConfirmedPage({
             </svg>
           </div>
           <h2 className="text-lg font-bold text-green-900 mb-1">
-            {isCash ? "Agendamento confirmado!" : isCardSuccess ? "Pagamento confirmado!" : "Agendamento recebido!"}
+            {isCash ? "Agendamento confirmado!" : isPix && isCardSuccess ? "PIX confirmado!" : isPix ? "Aguardando PIX" : isCardSuccess ? "Pagamento confirmado!" : "Agendamento recebido!"}
           </h2>
           <p className="text-sm text-green-700">
             {isCash
               ? "Seu agendamento foi confirmado. O pagamento será feito no dia do serviço."
+              : isPix && isCardSuccess
+              ? "Seu pagamento PIX foi confirmado e o agendamento está ativo."
+              : isPix
+              ? "Seu agendamento foi criado. Após a confirmação do PIX será ativado."
               : isCardSuccess
               ? "Seu pagamento foi processado e o agendamento está confirmado."
               : "Recebemos seu agendamento. Aguarde a confirmação do pagamento."}
@@ -165,7 +170,7 @@ export default async function ConfirmedPage({
             <div className="flex justify-between text-sm">
               <dt className="text-gray-500">Pagamento</dt>
               <dd className="font-medium text-gray-900">
-                {booking.paymentMethod === "CARD" ? "Cartão" : "Dinheiro / Cheque"}
+                {booking.paymentMethod === "CARD" ? "Cartão" : booking.paymentMethod === "PIX" ? "PIX" : "Dinheiro / Cheque"}
               </dd>
             </div>
             {customer && (
@@ -184,7 +189,7 @@ export default async function ConfirmedPage({
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <h2 className="text-sm font-semibold text-gray-900 mb-3">Serviços contratados</h2>
           <ul className="space-y-1.5 mb-3">
-            {booking.estimate.serviceTypes.map((item) => (
+            {(booking.estimate?.serviceTypes ?? []).map((item) => (
               <li key={item.id} className="flex justify-between text-sm">
                 <span className="text-gray-700">
                   {item.serviceType.service.name} — {item.serviceType.name}
@@ -200,7 +205,7 @@ export default async function ConfirmedPage({
                 </span>
               </li>
             ))}
-            {booking.estimate.extraServices.map((item) => (
+            {(booking.estimate?.extraServices ?? []).map((item) => (
               <li key={item.id} className="flex justify-between text-sm">
                 <span className="text-gray-700">{item.extraService.name}</span>
                 <span className="font-medium text-gray-900">
@@ -215,7 +220,7 @@ export default async function ConfirmedPage({
           <div className="border-t border-gray-100 pt-3 flex justify-between">
             <span className="text-sm font-semibold text-gray-700">Total</span>
             <span className="text-base font-bold text-gray-900">
-              {Number(booking.estimate.total).toLocaleString("pt-BR", {
+              {Number(booking.estimate?.total ?? 0).toLocaleString("pt-BR", {
                 style: "currency",
                 currency: "BRL",
               })}
@@ -223,7 +228,24 @@ export default async function ConfirmedPage({
           </div>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-6">
+        {/* Calendar download */}
+        <div className="flex flex-wrap gap-3 justify-center mt-4">
+          <a
+            href={`/api/ics/${bookingId}`}
+            download
+            className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            Adicionar ao calendário (.ics)
+          </a>
+        </div>
+
+        <p className="text-center text-xs text-gray-400 mt-4">
           Dúvidas? Entre em contato com {config.company.name}.
         </p>
       </div>

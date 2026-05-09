@@ -225,7 +225,7 @@ export default async function BookingDetailPage({
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <h2 className="text-sm font-semibold text-gray-900 mb-4">Serviços</h2>
           <ul className="space-y-2 mb-3">
-            {estimate.serviceTypes.map((item) => (
+            {(estimate?.serviceTypes ?? []).map((item) => (
               <li key={item.id} className="flex justify-between text-sm">
                 <span className="text-gray-700">
                   {item.serviceType.service.name} — {item.serviceType.name}
@@ -241,7 +241,7 @@ export default async function BookingDetailPage({
                 </span>
               </li>
             ))}
-            {estimate.extraServices.map((item) => (
+            {(estimate?.extraServices ?? []).map((item) => (
               <li key={item.id} className="flex justify-between text-sm">
                 <span className="text-gray-700">{item.extraService.name}</span>
                 <span className="font-medium text-gray-900">
@@ -256,14 +256,14 @@ export default async function BookingDetailPage({
           <div className="border-t border-gray-100 pt-3 flex justify-between">
             <span className="text-sm font-semibold text-gray-700">Total</span>
             <span className="text-base font-bold text-gray-900">
-              {Number(estimate.total).toLocaleString("pt-BR", {
+              {Number(estimate?.total ?? 0).toLocaleString("pt-BR", {
                 style: "currency",
                 currency: "BRL",
               })}
             </span>
           </div>
           <p className="text-xs text-gray-400 mt-1">
-            Frequência: {estimate.frequency}
+            Frequência: {estimate?.frequency ?? "—"}
           </p>
         </div>
 

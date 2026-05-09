@@ -41,7 +41,7 @@ export default async function ReviewPage({
       companyName={booking.company.name}
       customerFirstName={booking.customerDetail?.firstName ?? null}
       scheduledDate={booking.scheduledDate}
-      serviceLabels={booking.estimate.serviceTypes.map(
+      serviceLabels={(booking.estimate?.serviceTypes ?? []).map(
         (s) => `${s.serviceType.service.name} — ${s.serviceType.name}`
       )}
       alreadyReviewed={alreadyReviewed}

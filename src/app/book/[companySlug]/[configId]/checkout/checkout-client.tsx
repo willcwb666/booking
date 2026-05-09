@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef, useCallback } from "react";
+import { useState, useTransition, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -10,7 +10,7 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import { getAvailableSlotsAction } from "@/server/actions/booking-slots";
-import { createBookingAction } from "@/server/actions/booking";
+import { createBookingAction, checkPixPaymentAction } from "@/server/actions/booking";
 import type { TimeSlot } from "@/lib/agenda";
 import Link from "next/link";
 
@@ -27,6 +27,12 @@ type AgendaConfig = {
 
 type OrderItem = { label: string; subtotal: number };
 
+type PaymentSettings = {
+  enableCard: boolean;
+  enableCashCheck: boolean;
+  enablePix: boolean;
+};
+
 type Props = {
   companySlug: string;
   configId: string;
@@ -38,9 +44,10 @@ type Props = {
   orderItems: OrderItem[];
   agendaId: string;
   agendaConfig: AgendaConfig;
+  paymentSettings: PaymentSettings;
 };
 
-type Step = "datetime" | "details" | "payment";
+type Step = "datetime" | "details" | "payment" | "pix";
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 
@@ -122,6 +129,75 @@ function StripePaymentForm({ returnUrl }: { returnUrl: string }) {
   );
 }
 
+// ─── PIX QR Code step ────────────────────────────────────────────────────────
+
+function PixStep({
+  qrCode,
+  qrCodeBase64,
+  bookingId,
+  companySlug,
+  configId,
+}: {
+  qrCode: string;
+  qrCodeBase64: string;
+  bookingId: string;
+  companySlug: string;
+  configId: string;
+}) {
+  const router = useRouter();
+  const [copied, setCopied] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval>>(null);
+
+  useEffect(() => {
+    intervalRef.current = setInterval(async () => {
+      const { paid } = await checkPixPaymentAction(bookingId);
+      if (paid) {
+        clearInterval(intervalRef.current!);
+        router.push(`/book/${companySlug}/${configId}/confirmed?booking=${bookingId}`);
+      }
+    }, 5000);
+    return () => clearInterval(intervalRef.current!);
+  }, [bookingId, companySlug, configId, router]);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(qrCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-6 text-center space-y-4">
+      <h2 className="text-sm font-semibold text-gray-900">Pague via PIX</h2>
+      <p className="text-xs text-gray-500">Escaneie o QR code ou copie o código abaixo. O agendamento será confirmado automaticamente após o pagamento.</p>
+
+      {qrCodeBase64 && (
+        <img
+          src={`data:image/png;base64,${qrCodeBase64}`}
+          alt="QR Code PIX"
+          className="w-48 h-48 mx-auto border border-gray-200 rounded-lg p-2"
+        />
+      )}
+
+      <div className="flex items-center gap-2">
+        <input
+          readOnly
+          value={qrCode}
+          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 bg-gray-50 truncate"
+        />
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="shrink-0 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          {copied ? "Copiado!" : "Copiar"}
+        </button>
+      </div>
+
+      <p className="text-xs text-gray-400">Aguardando confirmação do pagamento…</p>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function CheckoutClient({
@@ -135,6 +211,7 @@ export function CheckoutClient({
   orderItems,
   agendaId,
   agendaConfig,
+  paymentSettings,
 }: Props) {
   const router = useRouter();
 
@@ -153,6 +230,7 @@ export function CheckoutClient({
   // Booking state
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [pixData, setPixData] = useState<{ qrCode: string; qrCodeBase64: string } | null>(null);
   const [submitting, startSubmitTransition] = useTransition();
   const [formErrors, setFormErrors] = useState<Record<string, string[]>>({});
 
@@ -239,9 +317,12 @@ export function CheckoutClient({
       }
       setBookingId(result.bookingId);
       if (result.paymentMethod === "CASH_CHECK") {
-        router.push(
-          `/book/${companySlug}/${configId}/confirmed?booking=${result.bookingId}`
-        );
+        router.push(`/book/${companySlug}/${configId}/confirmed?booking=${result.bookingId}`);
+        return;
+      }
+      if (result.paymentMethod === "PIX") {
+        setPixData({ qrCode: result.pixQrCode, qrCodeBase64: result.pixQrCodeBase64 });
+        setStep("pix");
         return;
       }
       setStripeClientSecret(result.clientSecret);
@@ -637,19 +718,39 @@ export function CheckoutClient({
                   <h2 className="text-sm font-semibold text-gray-900 mb-3">Forma de pagamento</h2>
                   <fieldset className="space-y-2">
                     <legend className="sr-only">Selecione a forma de pagamento</legend>
-                    <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="CARD"
-                        defaultChecked
-                      />
-                      <span className="text-sm text-gray-700">Cartão de crédito / débito</span>
-                    </label>
-                    <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
-                      <input type="radio" name="paymentMethod" value="CASH_CHECK" />
-                      <span className="text-sm text-gray-700">Dinheiro / Cheque (no dia do serviço)</span>
-                    </label>
+                    {paymentSettings.enableCard && (
+                      <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="CARD"
+                          defaultChecked={paymentSettings.enableCard}
+                        />
+                        <span className="text-sm text-gray-700">Cartão de crédito / débito</span>
+                      </label>
+                    )}
+                    {paymentSettings.enablePix && (
+                      <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="PIX"
+                          defaultChecked={!paymentSettings.enableCard}
+                        />
+                        <span className="text-sm text-gray-700">PIX</span>
+                      </label>
+                    )}
+                    {paymentSettings.enableCashCheck && (
+                      <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="CASH_CHECK"
+                          defaultChecked={!paymentSettings.enableCard && !paymentSettings.enablePix}
+                        />
+                        <span className="text-sm text-gray-700">Dinheiro / Cheque (no dia do serviço)</span>
+                      </label>
+                    )}
                   </fieldset>
                 </div>
 
@@ -676,6 +777,17 @@ export function CheckoutClient({
                   </button>
                 </div>
               </form>
+            )}
+
+            {/* ── Step: PIX QR Code ── */}
+            {step === "pix" && pixData && bookingId && (
+              <PixStep
+                qrCode={pixData.qrCode}
+                qrCodeBase64={pixData.qrCodeBase64}
+                bookingId={bookingId}
+                companySlug={companySlug}
+                configId={configId}
+              />
             )}
 
             {/* ── Step: payment (Stripe) ── */}

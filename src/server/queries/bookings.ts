@@ -90,8 +90,8 @@ export async function getBookings(filters: GetBookingsFilters) {
       : null,
     customerEmail: b.customerDetail?.email ?? null,
     professionalName: b.professional?.name ?? null,
-    estimateTotal: b.estimate.total.toString(),
-    serviceLabels: b.estimate.serviceTypes.map(
+    estimateTotal: b.estimate?.total.toString() ?? "0",
+    serviceLabels: (b.estimate?.serviceTypes ?? []).map(
       (s) => `${s.serviceType.service.name} — ${s.serviceType.name}`
     ),
     createdAt: b.createdAt,
@@ -171,7 +171,7 @@ export async function getBookingDashboardStats(
 
   const monthRevenue =
     paidThisMonth.reduce(
-      (sum, b) => sum + Math.round(Number(b.estimate.total) * 100),
+      (sum, b) => sum + Math.round(Number(b.estimate?.total ?? 0) * 100),
       0
     ) / 100;
 

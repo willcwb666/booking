@@ -172,6 +172,11 @@ export function AppSidebar({ userName }: { userName: string }) {
       icon: <IconBookings />,
     },
     {
+      href: `/${company.slug}/waitlist`,
+      label: "Lista de espera",
+      icon: <IconBookings />,
+    },
+    {
       href: `/${company.slug}/avaliacoes`,
       label: "Avaliações",
       icon: <IconStar />,

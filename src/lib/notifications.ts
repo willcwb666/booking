@@ -2,6 +2,11 @@ import "server-only";
 import { db } from "./db";
 import { sendBookingConfirmationEmail, sendBookingReminderEmail, sendBookingCancelledEmail } from "./email";
 import { sendPushNotifications } from "./push";
+import {
+  sendBookingConfirmedWhatsapp,
+  sendBookingReminderWhatsapp,
+  sendBookingCancelledWhatsapp,
+} from "./whatsapp";
 
 async function getUserPushTokens(customerId: string | null | undefined): Promise<string[]> {
   if (!customerId) return [];
@@ -39,7 +44,16 @@ export async function notifyBookingConfirmed(bookingId: string) {
       address,
     });
 
-    const tokens = await getUserPushTokens(booking.estimate.customerId);
+    void sendBookingConfirmedWhatsapp({
+      phone: cd.phone,
+      customerName,
+      companyName: company.name,
+      serviceName: bookingConfig.name,
+      date: booking.scheduledDate,
+      startTime: booking.scheduledStartTime,
+    });
+
+    const tokens = await getUserPushTokens(booking.estimate?.customerId);
     await sendPushNotifications(
       tokens,
       "Agendamento confirmado! ✅",
@@ -81,7 +95,16 @@ export async function notifyBookingReminder(bookingId: string) {
       address,
     });
 
-    const tokens = await getUserPushTokens(booking.estimate.customerId);
+    void sendBookingReminderWhatsapp({
+      phone: cd.phone,
+      customerName,
+      companyName: company.name,
+      serviceName: bookingConfig.name,
+      date: booking.scheduledDate,
+      startTime: booking.scheduledStartTime,
+    });
+
+    const tokens = await getUserPushTokens(booking.estimate?.customerId);
     await sendPushNotifications(
       tokens,
       "🔔 Lembrete para amanhã",
@@ -107,15 +130,23 @@ export async function notifyBookingCancelled(bookingId: string) {
 
     const { customerDetail: cd, company } = booking;
 
+    const customerName = `${cd.firstName} ${cd.lastName}`;
     await sendBookingCancelledEmail({
       to: cd.email,
-      customerName: `${cd.firstName} ${cd.lastName}`,
+      customerName,
       companyName: company.name,
       date: booking.scheduledDate,
       startTime: booking.scheduledStartTime,
     });
 
-    const tokens = await getUserPushTokens(booking.estimate.customerId);
+    void sendBookingCancelledWhatsapp({
+      phone: cd.phone,
+      customerName,
+      companyName: company.name,
+      date: booking.scheduledDate,
+    });
+
+    const tokens = await getUserPushTokens(booking.estimate?.customerId);
     await sendPushNotifications(
       tokens,
       "Agendamento cancelado",
@@ -186,7 +217,7 @@ export async function notifyStatusChanged(bookingId: string, newStatus: string) 
     if (!booking) return;
 
     const { company, bookingConfig } = booking;
-    const tokens = await getUserPushTokens(booking.estimate.customerId);
+    const tokens = await getUserPushTokens(booking.estimate?.customerId);
 
     await sendPushNotifications(
       tokens,

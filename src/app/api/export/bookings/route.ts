@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
 
   const rows = bookings.map((b) => {
     const cd = b.customerDetail;
-    const services = b.estimate.serviceTypes.map((s) => s.serviceType.name).join(", ");
+    const services = (b.estimate?.serviceTypes ?? []).map((s) => s.serviceType.name).join(", ");
     const cols = [
       b.id,
       b.scheduledDate.split("-").reverse().join("/"),
@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
       STATUS_LABELS[b.status]  ?? b.status,
       PAYMENT_LABELS[b.paymentMethod] ?? b.paymentMethod,
       PSTATUS_LABELS[b.paymentStatus] ?? b.paymentStatus,
-      Number(b.estimate.total).toFixed(2).replace(".", ","),
+      Number(b.estimate?.total ?? 0).toFixed(2).replace(".", ","),
       cd ? `${cd.firstName} ${cd.lastName}` : "",
       cd?.email ?? "",
       cd?.phone ?? "",
@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
       cd?.city ?? "",
       cd?.zip  ?? "",
       services,
-      b.estimate.frequency,
+      b.estimate?.frequency ?? "",
     ];
     return cols.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";");
   });
