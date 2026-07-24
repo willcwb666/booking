@@ -23,7 +23,7 @@ export default async function CheckoutPage({
     include: {
       bookingConfig: {
         include: {
-          company: { select: { name: true, logoUrl: true } },
+          company: { select: { name: true, logoUrl: true, currency: true, locale: true } },
           agenda: true,
         },
       },
@@ -41,10 +41,32 @@ export default async function CheckoutPage({
   const { bookingConfig: config } = estimate;
   const agenda = config.agenda;
 
-  const paymentSettings = await db.companyPaymentSettings.findUnique({
-    where: { companyId: estimate.companyId },
-    select: { enableCard: true, enableCashCheck: true, enablePix: true },
+  // Formas de pagamento configuradas pela empresa (tabela nova).
+  // Fallback: empresas sem registros usam o comportamento legado dos flags.
+  const configuredMethods = await db.companyPaymentMethod.findMany({
+    where: { companyId: estimate.companyId, isActive: true },
+    orderBy: { displayOrder: "asc" },
+    select: { id: true, kind: true, label: true, handle: true, instructions: true },
   });
+
+  let paymentMethods = configuredMethods;
+  if (paymentMethods.length === 0) {
+    const settings = await db.companyPaymentSettings.findUnique({
+      where: { companyId: estimate.companyId },
+      select: { enableCard: true, enableCashCheck: true, enablePix: true, mercadoPagoAccessToken: true },
+    });
+    const legacy: typeof configuredMethods = [];
+    if (settings?.enableCard ?? true) {
+      legacy.push({ id: "", kind: "STRIPE_CARD", label: "Cartão de crédito / débito", handle: null, instructions: null });
+    }
+    if (settings?.enablePix && settings.mercadoPagoAccessToken) {
+      legacy.push({ id: "", kind: "MERCADOPAGO_PIX", label: "PIX", handle: null, instructions: null });
+    }
+    if (settings?.enableCashCheck ?? true) {
+      legacy.push({ id: "", kind: "MANUAL", label: "Dinheiro / Cheque (no dia do serviço)", handle: null, instructions: null });
+    }
+    paymentMethods = legacy;
+  }
 
   const orderItems = [
     ...estimate.serviceTypes.map((item) => ({
@@ -52,7 +74,7 @@ export default async function CheckoutPage({
       subtotal: Number(item.subtotal),
     })),
     ...estimate.extraServices.map((item) => ({
-      label: item.extraService.name,
+      label: `${item.extraService.name}${item.quantity > 1 ? ` ×${item.quantity}` : ""}`,
       subtotal: Number(item.subtotal),
     })),
   ];
@@ -75,11 +97,9 @@ export default async function CheckoutPage({
       frequency={FREQ_LABELS[estimate.frequency] ?? estimate.frequency}
       orderItems={orderItems}
       agendaId={agenda.id}
-      paymentSettings={{
-        enableCard: paymentSettings?.enableCard ?? true,
-        enableCashCheck: paymentSettings?.enableCashCheck ?? true,
-        enablePix: paymentSettings?.enablePix ?? false,
-      }}
+      paymentMethods={paymentMethods}
+      currency={config.company.currency}
+      locale={config.company.locale}
       agendaConfig={{
         startDate: agenda.startDate,
         endDate: agenda.endDate,

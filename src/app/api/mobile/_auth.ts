@@ -11,7 +11,11 @@ export async function getMobileSession(req: NextRequest) {
 
   const session = await db.session.findUnique({
     where: { token },
-    include: { user: { select: { id: true, name: true, email: true, role: true, banned: true } } },
+    include: {
+      user: {
+        select: { id: true, name: true, email: true, emailVerified: true, role: true, banned: true },
+      },
+    },
   });
 
   if (!session) return null;

@@ -9,9 +9,12 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
+import { useTranslations, useLocale } from "next-intl";
 import { getAvailableSlotsAction } from "@/server/actions/booking-slots";
 import { createBookingAction, checkPixPaymentAction } from "@/server/actions/booking";
 import type { TimeSlot } from "@/lib/agenda";
+import { formatMoney } from "@/lib/format";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import Link from "next/link";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -27,10 +30,12 @@ type AgendaConfig = {
 
 type OrderItem = { label: string; subtotal: number };
 
-type PaymentSettings = {
-  enableCard: boolean;
-  enableCashCheck: boolean;
-  enablePix: boolean;
+type CheckoutPaymentMethod = {
+  id: string; // "" = método legado (sem registro em CompanyPaymentMethod)
+  kind: "STRIPE_CARD" | "MERCADOPAGO_PIX" | "MANUAL";
+  label: string;
+  handle: string | null;
+  instructions: string | null;
 };
 
 type Props = {
@@ -44,8 +49,17 @@ type Props = {
   orderItems: OrderItem[];
   agendaId: string;
   agendaConfig: AgendaConfig;
-  paymentSettings: PaymentSettings;
+  paymentMethods: CheckoutPaymentMethod[];
+  currency: string;
+  locale: string;
 };
+
+// Enum legado do fluxo de criação, derivado do kind
+function legacyEnumFor(kind: CheckoutPaymentMethod["kind"]): string {
+  if (kind === "STRIPE_CARD") return "CARD";
+  if (kind === "MERCADOPAGO_PIX") return "PIX";
+  return "CASH_CHECK";
+}
 
 type Step = "datetime" | "details" | "payment" | "pix";
 
@@ -93,6 +107,7 @@ function isDateDisabled(dateStr: string, config: AgendaConfig): boolean {
 function StripePaymentForm({ returnUrl }: { returnUrl: string }) {
   const stripe = useStripe();
   const elements = useElements();
+  const t = useTranslations("checkout");
   const [error, setError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
 
@@ -106,7 +121,7 @@ function StripePaymentForm({ returnUrl }: { returnUrl: string }) {
       confirmParams: { return_url: returnUrl },
     });
     if (error) {
-      setError(error.message ?? "Erro ao processar pagamento");
+      setError(error.message ?? t("payError"));
       setPaying(false);
     }
     // On success, Stripe redirects to returnUrl
@@ -123,7 +138,7 @@ function StripePaymentForm({ returnUrl }: { returnUrl: string }) {
         disabled={!stripe || paying}
         className="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        {paying ? "Processando…" : "Pagar agora"}
+        {paying ? t("processing") : t("payNow")}
       </button>
     </form>
   );
@@ -145,11 +160,22 @@ function PixStep({
   configId: string;
 }) {
   const router = useRouter();
+  const t = useTranslations("checkout");
   const [copied, setCopied] = useState(false);
+  const [expired, setExpired] = useState(false);
+  const [checking, setChecking] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval>>(null);
+  const attemptsRef = useRef(0);
+  const MAX_ATTEMPTS = 60; // 5 minutes at 5s intervals
 
   useEffect(() => {
     intervalRef.current = setInterval(async () => {
+      attemptsRef.current++;
+      if (attemptsRef.current >= MAX_ATTEMPTS) {
+        clearInterval(intervalRef.current!);
+        setExpired(true);
+        return;
+      }
       const { paid } = await checkPixPaymentAction(bookingId);
       if (paid) {
         clearInterval(intervalRef.current!);
@@ -165,15 +191,27 @@ function PixStep({
     setTimeout(() => setCopied(false), 2000);
   }
 
+  async function handleManualCheck() {
+    setChecking(true);
+    try {
+      const { paid } = await checkPixPaymentAction(bookingId);
+      if (paid) {
+        router.push(`/book/${companySlug}/${configId}/confirmed?booking=${bookingId}`);
+      }
+    } finally {
+      setChecking(false);
+    }
+  }
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 text-center space-y-4">
-      <h2 className="text-sm font-semibold text-gray-900">Pague via PIX</h2>
-      <p className="text-xs text-gray-500">Escaneie o QR code ou copie o código abaixo. O agendamento será confirmado automaticamente após o pagamento.</p>
+      <h2 className="text-sm font-semibold text-gray-900">{t("pixTitle")}</h2>
+      <p className="text-xs text-gray-500">{t("pixInstructions")}</p>
 
       {qrCodeBase64 && (
         <img
           src={`data:image/png;base64,${qrCodeBase64}`}
-          alt="QR Code PIX"
+          alt={t("pixAlt")}
           className="w-48 h-48 mx-auto border border-gray-200 rounded-lg p-2"
         />
       )}
@@ -189,11 +227,25 @@ function PixStep({
           onClick={handleCopy}
           className="shrink-0 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
         >
-          {copied ? "Copiado!" : "Copiar"}
+          {copied ? t("copied") : t("copy")}
         </button>
       </div>
 
-      <p className="text-xs text-gray-400">Aguardando confirmação do pagamento…</p>
+      {expired ? (
+        <div className="space-y-2">
+          <p className="text-xs text-yellow-600 font-medium">{t("pixExpired")}</p>
+          <button
+            type="button"
+            onClick={handleManualCheck}
+            disabled={checking}
+            className="px-4 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          >
+            {checking ? t("checking") : t("checkPayment")}
+          </button>
+        </div>
+      ) : (
+        <p className="text-xs text-gray-400">{t("pixWaiting")}</p>
+      )}
     </div>
   );
 }
@@ -211,9 +263,14 @@ export function CheckoutClient({
   orderItems,
   agendaId,
   agendaConfig,
-  paymentSettings,
+  paymentMethods,
+  currency,
+  locale,
 }: Props) {
   const router = useRouter();
+  const t = useTranslations("checkout");
+  const tb = useTranslations("booking");
+  const uiLocale = useLocale();
 
   // Step state
   const [step, setStep] = useState<Step>("datetime");
@@ -233,6 +290,7 @@ export function CheckoutClient({
   const [pixData, setPixData] = useState<{ qrCode: string; qrCodeBase64: string } | null>(null);
   const [submitting, startSubmitTransition] = useTransition();
   const [formErrors, setFormErrors] = useState<Record<string, string[]>>({});
+  const [selectedMethodIdx, setSelectedMethodIdx] = useState(0);
 
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -283,16 +341,20 @@ export function CheckoutClient({
 
   const cells = getMonthCells(calYear, calMonth);
   const todayStr = toDateStr(today);
-  const DAY_ABBREVS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-  const MONTH_NAMES = [
-    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
-  ];
+  // Nomes de dias/meses no idioma do visitante (2024-01-01 é segunda-feira)
+  const DAY_ABBREVS = Array.from({ length: 7 }, (_, i) =>
+    new Intl.DateTimeFormat(uiLocale, { weekday: "short", timeZone: "UTC" }).format(
+      new Date(Date.UTC(2024, 0, 1 + i))
+    )
+  );
+  const monthTitle = new Intl.DateTimeFormat(uiLocale, { month: "long", year: "numeric", timeZone: "UTC" }).format(
+    new Date(Date.UTC(calYear, calMonth, 1))
+  );
 
   function handleSubmitDetails(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedDate || !selectedSlot) {
-      setFormErrors({ _: ["Selecione data e horário"] });
+      setFormErrors({ _: [t("selectDateTime")] });
       return;
     }
     setFormErrors({});
@@ -302,12 +364,19 @@ export function CheckoutClient({
   function handleSubmitBooking(e: React.FormEvent) {
     e.preventDefault();
     if (!formRef.current) return;
+    const method = paymentMethods[selectedMethodIdx];
+    if (!method) {
+      setFormErrors({ _: [t("choosePaymentError")] });
+      return;
+    }
     const fd = new FormData(formRef.current);
     fd.set("estimateId", estimateId);
     fd.set("agendaId", agendaId);
     fd.set("scheduledDate", selectedDate!);
     fd.set("scheduledStartTime", selectedSlot!.startTime);
     fd.set("scheduledEndTime", selectedSlot!.endTime);
+    fd.set("companyPaymentMethodId", method.id);
+    fd.set("paymentMethod", legacyEnumFor(method.kind));
 
     startSubmitTransition(async () => {
       const result = await createBookingAction(fd);
@@ -345,40 +414,41 @@ export function CheckoutClient({
           >
             <span className="text-white font-bold">{companyName[0].toUpperCase()}</span>
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <h1 className="text-sm font-semibold text-gray-900">{companyName}</h1>
             <p className="text-xs text-gray-500">{configName}</p>
           </div>
+          <LanguageSwitcher />
         </div>
       </header>
 
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Step indicator */}
-        <nav aria-label="Etapas do agendamento" className="mb-8">
+        <nav aria-label={t("stepsAria")} className="mb-8">
           <ol className="flex items-center gap-2 text-sm">
             <li className="text-gray-400 line-through">
-              <Link href={`/book/${companySlug}/${configId}`}>Serviços</Link>
+              <Link href={`/book/${companySlug}/${configId}`}>{t("stepServices")}</Link>
             </li>
             <li className="text-gray-300" aria-hidden="true">›</li>
             <li
               className={step === "datetime" ? "font-semibold text-blue-600" : "text-gray-400"}
               aria-current={step === "datetime" ? "step" : undefined}
             >
-              Data e hora
+              {t("stepDatetime")}
             </li>
             <li className="text-gray-300" aria-hidden="true">›</li>
             <li
               className={step === "details" ? "font-semibold text-blue-600" : "text-gray-400"}
               aria-current={step === "details" ? "step" : undefined}
             >
-              Seus dados
+              {t("stepDetails")}
             </li>
             <li className="text-gray-300" aria-hidden="true">›</li>
             <li
               className={step === "payment" ? "font-semibold text-blue-600" : "text-gray-400"}
               aria-current={step === "payment" ? "step" : undefined}
             >
-              Pagamento
+              {t("stepPayment")}
             </li>
           </ol>
         </nav>
@@ -400,12 +470,12 @@ export function CheckoutClient({
                         else setCalMonth(m => m - 1);
                       }}
                       className="p-1.5 rounded hover:bg-gray-100"
-                      aria-label="Mês anterior"
+                      aria-label={t("prevMonth")}
                     >
                       ‹
                     </button>
-                    <h2 className="text-sm font-semibold text-gray-900">
-                      {MONTH_NAMES[calMonth]} {calYear}
+                    <h2 className="text-sm font-semibold text-gray-900 capitalize">
+                      {monthTitle}
                     </h2>
                     <button
                       type="button"
@@ -414,7 +484,7 @@ export function CheckoutClient({
                         else setCalMonth(m => m + 1);
                       }}
                       className="p-1.5 rounded hover:bg-gray-100"
-                      aria-label="Próximo mês"
+                      aria-label={t("nextMonth")}
                     >
                       ›
                     </button>
@@ -477,13 +547,13 @@ export function CheckoutClient({
                 {selectedDate && (
                   <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
                     <h2 className="text-sm font-semibold text-gray-900 mb-3">
-                      Horários disponíveis — {selectedDate.split("-").reverse().join("/")}
+                      {t("slotsTitle", { date: selectedDate.split("-").reverse().join("/") })}
                     </h2>
                     {loadingSlots ? (
-                      <p className="text-sm text-gray-500">Carregando horários…</p>
+                      <p className="text-sm text-gray-500">{t("loadingSlots")}</p>
                     ) : availableSlots.length === 0 ? (
                       <p className="text-sm text-gray-500">
-                        Nenhum horário disponível neste dia. Escolha outra data.
+                        {t("noSlots")}
                       </p>
                     ) : (
                       <>
@@ -492,12 +562,12 @@ export function CheckoutClient({
                           onClick={() => setSelectedSlot(availableSlots[0])}
                           className="text-xs text-blue-600 hover:underline mb-3 block"
                         >
-                          Selecionar primeiro disponível
+                          {t("firstAvailable")}
                         </button>
                         <div
                           className="grid grid-cols-3 sm:grid-cols-4 gap-2"
                           role="group"
-                          aria-label="Horários disponíveis"
+                          aria-label={t("slotsTitle", { date: selectedDate.split("-").reverse().join("/") })}
                         >
                           {availableSlots.map((slot) => {
                             const isSelected =
@@ -536,7 +606,7 @@ export function CheckoutClient({
                   disabled={!selectedDate || !selectedSlot}
                   className="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Continuar
+                  {t("continue")}
                 </button>
               </form>
             )}
@@ -546,11 +616,11 @@ export function CheckoutClient({
               <form ref={formRef} onSubmit={handleSubmitBooking} className="space-y-5">
                 {/* Customer info */}
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
-                  <h2 className="text-sm font-semibold text-gray-900 mb-4">Seus dados</h2>
+                  <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("yourDetails")}</h2>
                   <div className="grid grid-cols-2 gap-3 mb-3">
                     <div>
                       <label htmlFor="firstName" className="block text-xs text-gray-600 mb-1">
-                        Nome <span aria-hidden="true">*</span>
+                        {t("firstName")} <span aria-hidden="true">*</span>
                       </label>
                       <input
                         id="firstName"
@@ -561,7 +631,7 @@ export function CheckoutClient({
                     </div>
                     <div>
                       <label htmlFor="lastName" className="block text-xs text-gray-600 mb-1">
-                        Sobrenome <span aria-hidden="true">*</span>
+                        {t("lastName")} <span aria-hidden="true">*</span>
                       </label>
                       <input
                         id="lastName"
@@ -574,7 +644,7 @@ export function CheckoutClient({
                   <div className="grid grid-cols-2 gap-3 mb-3">
                     <div>
                       <label htmlFor="email" className="block text-xs text-gray-600 mb-1">
-                        E-mail <span aria-hidden="true">*</span>
+                        {t("email")} <span aria-hidden="true">*</span>
                       </label>
                       <input
                         id="email"
@@ -586,7 +656,7 @@ export function CheckoutClient({
                     </div>
                     <div>
                       <label htmlFor="phone" className="block text-xs text-gray-600 mb-1">
-                        Telefone <span aria-hidden="true">*</span>
+                        {t("phone")} <span aria-hidden="true">*</span>
                       </label>
                       <input
                         id="phone"
@@ -605,17 +675,17 @@ export function CheckoutClient({
                       defaultChecked
                       className="rounded"
                     />
-                    Receber lembretes por e-mail
+                    {t("reminders")}
                   </label>
                 </div>
 
                 {/* Address */}
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
-                  <h2 className="text-sm font-semibold text-gray-900 mb-4">Endereço do serviço</h2>
+                  <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("serviceAddress")}</h2>
                   <div className="space-y-3">
                     <div>
                       <label htmlFor="address" className="block text-xs text-gray-600 mb-1">
-                        Endereço <span aria-hidden="true">*</span>
+                        {t("address")} <span aria-hidden="true">*</span>
                       </label>
                       <input
                         id="address"
@@ -627,7 +697,7 @@ export function CheckoutClient({
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label htmlFor="aptNo" className="block text-xs text-gray-600 mb-1">
-                          Apto / Complemento
+                          {t("apt")}
                         </label>
                         <input
                           id="aptNo"
@@ -637,7 +707,7 @@ export function CheckoutClient({
                       </div>
                       <div>
                         <label htmlFor="zip" className="block text-xs text-gray-600 mb-1">
-                          CEP <span aria-hidden="true">*</span>
+                          {t("zip")} <span aria-hidden="true">*</span>
                         </label>
                         <input
                           id="zip"
@@ -649,7 +719,7 @@ export function CheckoutClient({
                     </div>
                     <div>
                       <label htmlFor="city" className="block text-xs text-gray-600 mb-1">
-                        Cidade <span aria-hidden="true">*</span>
+                        {t("city")} <span aria-hidden="true">*</span>
                       </label>
                       <input
                         id="city"
@@ -663,9 +733,9 @@ export function CheckoutClient({
 
                 {/* Home access */}
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
-                  <h2 className="text-sm font-semibold text-gray-900 mb-4">Acesso à propriedade</h2>
+                  <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("homeAccess")}</h2>
                   <fieldset className="space-y-2 mb-3">
-                    <legend className="text-xs text-gray-600 mb-2">Como a equipe entrará?</legend>
+                    <legend className="text-xs text-gray-600 mb-2">{t("howEnter")}</legend>
                     <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                       <input
                         type="radio"
@@ -673,11 +743,11 @@ export function CheckoutClient({
                         value="someone_home"
                         defaultChecked
                       />
-                      Alguém estará em casa
+                      {t("someoneHome")}
                     </label>
                     <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                       <input type="radio" name="accessType" value="hide_keys" />
-                      Deixarei as chaves em lugar combinado
+                      {t("hideKeys")}
                     </label>
                   </fieldset>
                   <label className="flex items-center gap-2 text-sm text-gray-700 mb-3">
@@ -686,23 +756,23 @@ export function CheckoutClient({
                       name="keepKeyWithProvider"
                       value="true"
                     />
-                    Manter chave com o prestador para próximas visitas
+                    {t("keepKey")}
                   </label>
                   <div className="mb-3">
                     <label htmlFor="accessNote" className="block text-xs text-gray-600 mb-1">
-                      Instruções de acesso (opcional)
+                      {t("accessNote")}
                     </label>
                     <textarea
                       id="accessNote"
                       name="accessNote"
                       rows={2}
-                      placeholder="Ex.: chaves debaixo do tapete, código do portão…"
+                      placeholder={t("accessNotePlaceholder")}
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                     />
                   </div>
                   <div>
                     <label htmlFor="additionalNote" className="block text-xs text-gray-600 mb-1">
-                      Observações adicionais (opcional)
+                      {t("additionalNote")}
                     </label>
                     <textarea
                       id="additionalNote"
@@ -715,43 +785,40 @@ export function CheckoutClient({
 
                 {/* Payment method */}
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
-                  <h2 className="text-sm font-semibold text-gray-900 mb-3">Forma de pagamento</h2>
-                  <fieldset className="space-y-2">
-                    <legend className="sr-only">Selecione a forma de pagamento</legend>
-                    {paymentSettings.enableCard && (
-                      <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="CARD"
-                          defaultChecked={paymentSettings.enableCard}
-                        />
-                        <span className="text-sm text-gray-700">Cartão de crédito / débito</span>
-                      </label>
-                    )}
-                    {paymentSettings.enablePix && (
-                      <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="PIX"
-                          defaultChecked={!paymentSettings.enableCard}
-                        />
-                        <span className="text-sm text-gray-700">PIX</span>
-                      </label>
-                    )}
-                    {paymentSettings.enableCashCheck && (
-                      <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="CASH_CHECK"
-                          defaultChecked={!paymentSettings.enableCard && !paymentSettings.enablePix}
-                        />
-                        <span className="text-sm text-gray-700">Dinheiro / Cheque (no dia do serviço)</span>
-                      </label>
-                    )}
-                  </fieldset>
+                  <h2 className="text-sm font-semibold text-gray-900 mb-3">{t("paymentMethod")}</h2>
+                  {paymentMethods.length === 0 ? (
+                    <p className="text-sm text-gray-500">
+                      {t("noPaymentMethods")}
+                    </p>
+                  ) : (
+                    <fieldset className="space-y-2">
+                      <legend className="sr-only">{t("selectPayment")}</legend>
+                      {paymentMethods.map((method, idx) => (
+                        <label
+                          key={`${method.id}-${idx}`}
+                          className="block p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50"
+                        >
+                          <span className="flex items-center gap-3">
+                            <input
+                              type="radio"
+                              name="paymentMethodChoice"
+                              checked={selectedMethodIdx === idx}
+                              onChange={() => setSelectedMethodIdx(idx)}
+                            />
+                            <span className="text-sm text-gray-700">{method.label}</span>
+                          </span>
+                          {selectedMethodIdx === idx && method.kind === "MANUAL" && (method.handle || method.instructions) && (
+                            <span className="block mt-2 ml-7 text-xs text-gray-500">
+                              {method.handle && (
+                                <span className="block font-medium text-gray-700">{method.handle}</span>
+                              )}
+                              {method.instructions && <span className="block mt-0.5">{method.instructions}</span>}
+                            </span>
+                          )}
+                        </label>
+                      ))}
+                    </fieldset>
+                  )}
                 </div>
 
                 {formErrors._ && (
@@ -766,14 +833,14 @@ export function CheckoutClient({
                     onClick={() => setStep("datetime")}
                     className="flex-1 py-3 px-4 border border-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
                   >
-                    Voltar
+                    {t("back")}
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
                     className="flex-1 py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    {submitting ? "Confirmando…" : "Confirmar agendamento"}
+                    {submitting ? t("confirming") : t("confirmBooking")}
                   </button>
                 </div>
               </form>
@@ -793,7 +860,7 @@ export function CheckoutClient({
             {/* ── Step: payment (Stripe) ── */}
             {step === "payment" && stripeClientSecret && (
               <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h2 className="text-sm font-semibold text-gray-900 mb-4">Pagamento</h2>
+                <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("payment")}</h2>
                 <Elements
                   stripe={stripePromise}
                   options={{ clientSecret: stripeClientSecret }}
@@ -807,12 +874,12 @@ export function CheckoutClient({
           {/* Order summary sidebar */}
           <aside>
             <div className="bg-white rounded-xl border border-gray-200 p-5 sticky top-6">
-              <h2 className="text-sm font-semibold text-gray-900 mb-3">Resumo</h2>
+              <h2 className="text-sm font-semibold text-gray-900 mb-3">{t("summary")}</h2>
               {selectedDate && selectedSlot && (
                 <div className="mb-3 pb-3 border-b border-gray-100">
-                  <p className="text-xs text-gray-500 mb-0.5">Data e horário</p>
+                  <p className="text-xs text-gray-500 mb-0.5">{t("dateTime")}</p>
                   <p className="text-sm font-medium text-gray-800">
-                    {selectedDate.split("-").reverse().join("/")} às {selectedSlot.startTime}
+                    {t("dateAt", { date: selectedDate.split("-").reverse().join("/"), time: selectedSlot.startTime })}
                   </p>
                 </div>
               )}
@@ -821,24 +888,26 @@ export function CheckoutClient({
                   <li key={i} className="flex justify-between text-xs text-gray-600">
                     <span className="flex-1 mr-2">{item.label}</span>
                     <span className="font-medium text-gray-800 shrink-0">
-                      {item.subtotal.toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      })}
+                      {formatMoney(item.subtotal, currency, locale)}
                     </span>
                   </li>
                 ))}
               </ul>
               <div className="border-t border-gray-100 pt-3 flex justify-between">
-                <span className="text-sm font-semibold text-gray-700">Total</span>
+                <span className="text-sm font-semibold text-gray-700">{t("total")}</span>
                 <span className="text-base font-bold text-gray-900">
-                  {estimateTotal.toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })}
+                  {formatMoney(estimateTotal, currency, locale)}
                 </span>
               </div>
-              <p className="text-xs text-gray-400 mt-1">Frequência: {frequency}</p>
+              <p className="text-xs text-gray-400 mt-1">
+                {t("frequencyLabel", {
+                  value:
+                    frequency === "WEEKLY" ? tb("freqWeekly")
+                    : frequency === "BIWEEKLY" ? tb("freqBiweekly")
+                    : frequency === "MONTHLY" ? tb("freqMonthly")
+                    : tb("freqOnce"),
+                })}
+              </p>
             </div>
           </aside>
         </div>

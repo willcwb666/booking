@@ -1,8 +1,10 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import { createCompanyAction } from "@/server/actions/company";
 import { BUSINESS_TYPES, generateSlug } from "@/schemas/company.schema";
+import { MARKETS, getMarket, findMarketByTimezone } from "@/lib/markets";
+import { LogoUpload } from "@/components/ui/logo-upload";
 
 type PlanFeature = {
   featureKey: string;
@@ -31,6 +33,28 @@ export function OnboardingClient({ plans, userName }: Props) {
   const [planId, setPlanId] = useState("");
   const [name, setName] = useState("");
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
+  const [country, setCountry] = useState("BR");
+  const [timezone, setTimezone] = useState("America/Sao_Paulo");
+  const [phone, setPhone] = useState("");
+
+  // Detecta o mercado pelo fuso do navegador (ex.: America/Denver → EUA).
+  // Em useEffect para não divergir do HTML renderizado no servidor.
+  useEffect(() => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const detected = findMarketByTimezone(tz);
+    if (detected) {
+      setCountry(detected.code);
+      setTimezone(tz);
+    }
+  }, []);
+
+  const market = getMarket(country) ?? MARKETS[0];
+
+  function handleCountryChange(code: string) {
+    setCountry(code);
+    const m = getMarket(code);
+    if (m) setTimezone(m.timezones[0].id);
+  }
 
   const [state, formAction] = useActionState(createCompanyAction, null);
   const [pending, startTransition] = useTransition();
@@ -189,7 +213,12 @@ export function OnboardingClient({ plans, userName }: Props) {
         {/* Step 2 — Company Details */}
         {step === 2 && (
           <form
-            action={(fd) => startTransition(() => formAction(fd))}
+            action={(fd) => {
+              // Telefone completo com DDI do país selecionado
+              const national = phone.trim();
+              fd.set("phone", national ? `${market.dialCode} ${national}` : "");
+              startTransition(() => formAction(fd));
+            }}
             className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6"
           >
             <input type="hidden" name="businessType" value={businessType} />
@@ -221,21 +250,72 @@ export function OnboardingClient({ plans, userName }: Props) {
                 )}
               </div>
 
+              <LogoUpload label="Logo da empresa (aparece nas telas de agendamento, orçamentos e e-mails)" />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
+                    País <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="country"
+                    name="country"
+                    value={country}
+                    onChange={(e) => handleCountryChange(e.target.value)}
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    {MARKETS.map((m) => (
+                      <option key={m.code} value={m.code}>{m.name}</option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs text-gray-400">
+                    Define moeda ({market.currency}) e idioma dos seus clientes.
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="timezone" className="block text-sm font-medium text-gray-700 mb-1">
+                    Fuso horário <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="timezone"
+                    name="timezone"
+                    value={timezone}
+                    onChange={(e) => setTimezone(e.target.value)}
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    {market.timezones.map((tz) => (
+                      <option key={tz.id} value={tz.id}>{tz.label}</option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs text-gray-400">
+                    Usado nas agendas e lembretes.
+                  </p>
+                </div>
+              </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
-                <input
-                  name="phone"
-                  type="tel"
-                  placeholder="(11) 99999-9999"
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                <div className="flex">
+                  <span className="inline-flex items-center px-3 border border-r-0 border-gray-300 rounded-l-lg bg-gray-50 text-sm text-gray-600 select-none">
+                    {market.dialCode}
+                  </span>
+                  <input
+                    id="phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder={market.phonePlaceholder}
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-r-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Endereço</label>
                 <input
                   name="address"
-                  placeholder="Rua, número, cidade"
+                  placeholder={country === "BR" ? "Rua, número, cidade" : "Street, number, city"}
                   className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>

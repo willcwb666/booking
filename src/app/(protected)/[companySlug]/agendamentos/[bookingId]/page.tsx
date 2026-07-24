@@ -8,6 +8,8 @@ import { CancelDialog } from "./_components/cancel-dialog";
 import { StatusActions } from "./_components/status-actions";
 import { RescheduleDialog } from "./_components/reschedule-dialog";
 import { RefundButton } from "./_components/refund-button";
+import { MarkPaidButton } from "./_components/mark-paid-button";
+import { formatMoney } from "@/lib/format";
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Pendente",
@@ -52,6 +54,8 @@ export default async function BookingDetailPage({
   const canCancel = booking.status === "PENDING" || booking.status === "CONFIRMED";
   const canReschedule = booking.status === "CONFIRMED" || booking.status === "PENDING";
   const canRefund = booking.paymentMethod === "CARD" && booking.paymentStatus === "PAID";
+  const canMarkPaid =
+    booking.paymentStatus === "PENDING" && booking.status !== "CANCELLED";
   const reviewUrl = `/book/${companySlug}/review/${bookingId}`;
 
   return (
@@ -101,6 +105,9 @@ export default async function BookingDetailPage({
             {canRefund && (
               <RefundButton bookingId={bookingId} companySlug={companySlug} />
             )}
+            {canMarkPaid && (
+              <MarkPaidButton bookingId={bookingId} companySlug={companySlug} />
+            )}
           </div>
         </div>
       </div>
@@ -135,7 +142,12 @@ export default async function BookingDetailPage({
             <div className="flex justify-between text-sm">
               <dt className="text-gray-500">Forma de pagamento</dt>
               <dd className="font-medium text-gray-900">
-                {booking.paymentMethod === "CARD" ? "Cartão" : "Dinheiro / Cheque"}
+                {booking.companyPaymentMethod?.label ??
+                  (booking.paymentMethod === "CARD"
+                    ? "Cartão"
+                    : booking.paymentMethod === "PIX"
+                      ? "PIX"
+                      : "Dinheiro / Cheque")}
               </dd>
             </div>
             <div className="flex justify-between text-sm">
@@ -144,6 +156,19 @@ export default async function BookingDetailPage({
                 {PAYMENT_STATUS_LABELS[booking.paymentStatus] ?? booking.paymentStatus}
               </dd>
             </div>
+            {booking.paidAt && (
+              <div className="flex justify-between text-sm">
+                <dt className="text-gray-500">Pago em</dt>
+                <dd className="font-medium text-gray-900">
+                  {new Date(booking.paidAt).toLocaleString("pt-BR")}
+                  {booking.paymentConfirmedBy && (
+                    <span className="text-gray-400 font-normal">
+                      {" "}· {booking.paymentConfirmedBy.name}
+                    </span>
+                  )}
+                </dd>
+              </div>
+            )}
             {booking.stripePaymentIntentId && (
               <div className="flex justify-between text-sm">
                 <dt className="text-gray-500">Payment Intent</dt>
@@ -234,10 +259,7 @@ export default async function BookingDetailPage({
                   )}
                 </span>
                 <span className="font-medium text-gray-900">
-                  {Number(item.subtotal).toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })}
+                  {formatMoney(Number(item.subtotal), company.currency, company.locale)}
                 </span>
               </li>
             ))}
@@ -245,10 +267,7 @@ export default async function BookingDetailPage({
               <li key={item.id} className="flex justify-between text-sm">
                 <span className="text-gray-700">{item.extraService.name}</span>
                 <span className="font-medium text-gray-900">
-                  {Number(item.subtotal).toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })}
+                  {formatMoney(Number(item.subtotal), company.currency, company.locale)}
                 </span>
               </li>
             ))}
@@ -256,10 +275,7 @@ export default async function BookingDetailPage({
           <div className="border-t border-gray-100 pt-3 flex justify-between">
             <span className="text-sm font-semibold text-gray-700">Total</span>
             <span className="text-base font-bold text-gray-900">
-              {Number(estimate?.total ?? 0).toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-              })}
+              {formatMoney(Number(estimate?.total ?? 0), company.currency, company.locale)}
             </span>
           </div>
           <p className="text-xs text-gray-400 mt-1">

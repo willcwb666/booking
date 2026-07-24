@@ -11,6 +11,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { createPixPayment } from "@/lib/mercadopago";
 import { triggerWebhooks } from "@/lib/webhooks";
 import { createCalendarEvent } from "@/lib/google-calendar";
+import { isSlotAvailable } from "@/lib/agenda";
 import { notifyWaitlistForDate } from "./waitlist";
 import { randomUUID } from "crypto";
 
@@ -39,6 +40,7 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
   const scheduledStartTime = formData.get("scheduledStartTime") as string;
   const scheduledEndTime = formData.get("scheduledEndTime") as string;
   const paymentMethodRaw = formData.get("paymentMethod") as string;
+  const chosenMethodId = (formData.get("companyPaymentMethodId") as string) || null;
 
   // Customer details
   const firstName = formData.get("firstName") as string;
@@ -65,26 +67,57 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
     return { success: false, errors: { _: ["Preencha todos os campos obrigatórios"] } };
   }
 
-  const paymentMethod =
-    paymentMethodRaw === "CARD" ? "CARD" :
-    paymentMethodRaw === "PIX" ? "PIX" :
-    "CASH_CHECK";
-
   // Load estimate
   const estimate = await db.estimate.findFirst({
     where: { id: estimateId, status: "PENDING" },
-    include: { bookingConfig: true },
+    include: { bookingConfig: true, company: { select: { currency: true } } },
   });
   if (!estimate) {
     return { success: false, errors: { _: ["Orçamento não encontrado ou expirado"] } };
   }
 
+  // Resolve a forma de pagamento configurada (nova) ou o enum legado.
+  // O fluxo (Stripe / MP PIX / manual) é derivado do kind do método — nunca
+  // de string livre do cliente.
+  let chosenMethod = null;
+  if (chosenMethodId) {
+    chosenMethod = await db.companyPaymentMethod.findFirst({
+      where: { id: chosenMethodId, companyId: estimate.companyId, isActive: true },
+    });
+    if (!chosenMethod) {
+      return { success: false, errors: { _: ["Forma de pagamento inválida"] } };
+    }
+  }
+
+  const paymentMethod = chosenMethod
+    ? chosenMethod.kind === "STRIPE_CARD"
+      ? "CARD"
+      : chosenMethod.kind === "MERCADOPAGO_PIX"
+        ? "PIX"
+        : "CASH_CHECK"
+    : paymentMethodRaw === "CARD"
+      ? "CARD"
+      : paymentMethodRaw === "PIX"
+        ? "PIX"
+        : "CASH_CHECK";
+
   // Verify agenda belongs to this booking config
+  if (estimate.bookingConfig.agendaId !== agendaId) {
+    return { success: false, errors: { _: ["Agenda inválida para este agendamento"] } };
+  }
   const agenda = await db.agenda.findFirst({
     where: { id: agendaId, status: "ACTIVE" },
   });
   if (!agenda) {
     return { success: false, errors: { _: ["Agenda não encontrada"] } };
+  }
+
+  // Server-side slot validation: o horário precisa coincidir com um slot
+  // disponível da grade (bloqueia horários arbitrários, overlaps, dias
+  // bloqueados e datas fora da agenda)
+  const slotOk = await isSlotAvailable(agendaId, scheduledDate, scheduledStartTime, scheduledEndTime);
+  if (!slotOk) {
+    return { success: false, errors: { _: ["Horário indisponível. Por favor, escolha outro horário."] } };
   }
 
   const accessNote = accessNotePlain ? encrypt(accessNotePlain) : null;
@@ -97,9 +130,13 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
     where: { companyId: estimate.companyId },
   });
 
-  // Validate PIX availability
-  if (paymentMethod === "PIX" && (!paymentSettings?.enablePix || !paymentSettings.mercadoPagoAccessToken)) {
-    return { success: false, errors: { _: ["PIX não disponível para esta empresa"] } };
+  // Validate PIX availability (PIX automático exige token do Mercado Pago;
+  // com método configurado o isActive já foi validado, senão vale o flag legado)
+  if (paymentMethod === "PIX") {
+    const pixEnabled = chosenMethod ? true : paymentSettings?.enablePix;
+    if (!pixEnabled || !paymentSettings?.mercadoPagoAccessToken) {
+      return { success: false, errors: { _: ["PIX não disponível para esta empresa"] } };
+    }
   }
 
   // Recurrence setup
@@ -121,6 +158,7 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
           status: bookingStatus,
           paymentMethod,
           paymentStatus: "PENDING",
+          companyPaymentMethodId: chosenMethod?.id ?? null,
           recurrenceGroupId,
           recurrenceFrequency,
         },
@@ -184,6 +222,11 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
         nextDate.setUTCDate(baseDate.getUTCDate() + daysStep * i);
         const nextDateStr = nextDate.toISOString().split("T")[0];
 
+        // Ocorrência só é criada se cair em slot válido da grade
+        // (respeita dias de funcionamento, exceções e horários ocupados)
+        const occurrenceOk = await isSlotAvailable(agendaId, nextDateStr, scheduledStartTime, scheduledEndTime);
+        if (!occurrenceOk) continue;
+
         try {
           const recBooking = await db.booking.create({
             data: {
@@ -196,6 +239,7 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
               status: bookingStatus,
               paymentMethod,
               paymentStatus: "PENDING",
+              companyPaymentMethodId: chosenMethod?.id ?? null,
               recurrenceGroupId,
               recurrenceFrequency,
             },
@@ -207,6 +251,30 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
               date: nextDateStr,
               startTime: scheduledStartTime,
               endTime: scheduledEndTime,
+            },
+          });
+          // Copy customer detail and home access from primary booking
+          await db.bookingCustomerDetail.create({
+            data: {
+              bookingId: recBooking.id,
+              firstName,
+              lastName,
+              email,
+              phone,
+              sendReminders,
+              address,
+              aptNo,
+              city,
+              zip,
+            },
+          });
+          await db.bookingHomeAccess.create({
+            data: {
+              bookingId: recBooking.id,
+              accessType,
+              keepKeyWithProvider,
+              accessNote,
+              additionalNote,
             },
           });
         } catch {
@@ -247,11 +315,11 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
       };
     }
 
-    // Create Stripe PaymentIntent
+    // Create Stripe PaymentIntent na moeda da empresa (multi-mercado)
     const amountCents = Math.round(Number(estimate.total) * 100);
     const pi = await stripe.paymentIntents.create({
       amount: amountCents,
-      currency: "brl",
+      currency: (estimate.company?.currency ?? "BRL").toLowerCase(),
       metadata: { bookingId: booking.id },
     });
 
@@ -321,11 +389,45 @@ async function syncToGoogleCalendar(bookingId: string): Promise<void> {
 }
 
 export async function checkPixPaymentAction(bookingId: string): Promise<{ paid: boolean }> {
+  // Action pública (checkout anônimo faz polling a cada 5s = 12/min) —
+  // 30/min por IP cobre o uso legítimo e barra enumeração/abuso da API do MP
+  const hdrs = await headers();
+  const ip = hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const rl = await rateLimit(`pix:check:${ip}`, 30, 60);
+  if (!rl.allowed) return { paid: false };
+
   const booking = await db.booking.findUnique({
     where: { id: bookingId },
-    select: { paymentStatus: true },
+    select: { paymentStatus: true, mercadoPagoPaymentId: true, companyId: true },
   });
-  return { paid: booking?.paymentStatus === "PAID" };
+  if (!booking) return { paid: false };
+  if (booking.paymentStatus === "PAID") return { paid: true };
+
+  // If still PENDING, verify directly with MP API
+  if (booking.mercadoPagoPaymentId && booking.paymentStatus === "PENDING") {
+    try {
+      const { getPixPaymentStatus } = await import("@/lib/mercadopago");
+      const settings = await db.companyPaymentSettings.findUnique({
+        where: { companyId: booking.companyId },
+      });
+      if (settings?.mercadoPagoAccessToken) {
+        const status = await getPixPaymentStatus(settings.mercadoPagoAccessToken, booking.mercadoPagoPaymentId);
+        if (status === "approved") {
+          await db.booking.update({
+            where: { id: bookingId },
+            data: { paymentStatus: "PAID", status: "CONFIRMED" },
+          });
+          void notifyBookingConfirmed(bookingId);
+          void notifyCompanyNewBooking(bookingId);
+          return { paid: true };
+        }
+      }
+    } catch (err) {
+      console.error("[checkPixPayment] MP API check failed:", err);
+    }
+  }
+
+  return { paid: false };
 }
 
 export async function cancelBookingAction(formData: FormData): Promise<CancelResult> {
@@ -421,6 +523,56 @@ export async function refundBookingAction(
   return { success: true };
 }
 
+// ─── Confirmação manual de recebimento ────────────────────────────────────────
+// Para métodos MANUAL (dinheiro, PIX por chave, Zelle, Venmo…) o gateway não
+// confirma nada — o dono/gerente marca o recebimento aqui.
+
+export async function markBookingPaidAction(
+  bookingId: string,
+  companySlug: string
+): Promise<StatusResult> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { success: false, error: "Não autenticado" };
+
+  const member = await db.companyUser.findFirst({
+    where: { userId: session.user.id, company: { slug: companySlug }, isActive: true },
+  });
+  if (!member || (member.role !== "OWNER" && member.role !== "MANAGER")) {
+    return { success: false, error: "Sem permissão" };
+  }
+
+  const booking = await db.booking.findFirst({
+    where: { id: bookingId, company: { slug: companySlug } },
+  });
+  if (!booking) return { success: false, error: "Agendamento não encontrado" };
+  if (booking.paymentStatus !== "PENDING") {
+    return { success: false, error: "Pagamento não está aguardando confirmação" };
+  }
+  if (booking.status === "CANCELLED") {
+    return { success: false, error: "Agendamento cancelado" };
+  }
+
+  const wasPending = booking.status === "PENDING";
+
+  await db.booking.update({
+    where: { id: bookingId },
+    data: {
+      paymentStatus: "PAID",
+      paidAt: new Date(),
+      paymentConfirmedById: session.user.id,
+      // Booking aguardando pagamento passa a confirmado
+      ...(wasPending ? { status: "CONFIRMED" } : {}),
+    },
+  });
+
+  if (wasPending) {
+    void notifyBookingConfirmed(bookingId);
+    void triggerWebhooks(booking.companyId, "BOOKING_CONFIRMED", { bookingId });
+  }
+
+  return { success: true };
+}
+
 // ─── Reschedule ───────────────────────────────────────────────────────────────
 
 export async function rescheduleBookingAction(
@@ -437,6 +589,9 @@ export async function rescheduleBookingAction(
     where: { userId: session.user.id, company: { slug: companySlug }, isActive: true },
   });
   if (!member) return { success: false, error: "Acesso negado" };
+  if (member.role !== "OWNER" && member.role !== "MANAGER") {
+    return { success: false, error: "Sem permissão para reagendar" };
+  }
 
   const booking = await db.booking.findFirst({
     where: { id: bookingId, company: { slug: companySlug } },
@@ -444,6 +599,12 @@ export async function rescheduleBookingAction(
   if (!booking) return { success: false, error: "Agendamento não encontrado" };
   if (booking.status !== "CONFIRMED" && booking.status !== "PENDING") {
     return { success: false, error: "Somente agendamentos confirmados podem ser reagendados" };
+  }
+
+  // Server-side slot validation (grade da agenda + exceções + ocupados)
+  const slotOk = await isSlotAvailable(booking.agendaId, newDate, newStartTime, newEndTime);
+  if (!slotOk) {
+    return { success: false, error: "Horário indisponível. Escolha outro horário." };
   }
 
   try {

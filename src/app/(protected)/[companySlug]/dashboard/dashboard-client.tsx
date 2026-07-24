@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCompany } from "@/lib/company-context";
+import { formatMoney } from "@/lib/format";
 import type { BookingDashboardStats } from "@/server/queries/bookings";
 
 type Props = {
@@ -37,10 +38,7 @@ export function DashboardClient({ userName, stats, reviewStats }: Props) {
     },
     {
       label: "Receita do mês",
-      value: stats.monthRevenue.toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }),
+      value: formatMoney(stats.monthRevenue, company.currency, company.locale),
       sub: "Pagamentos confirmados",
       href: `/${company.slug}/agendamentos`,
     },

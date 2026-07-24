@@ -146,6 +146,7 @@ export async function createServiceTypeAction(
     description: formData.get("description") || undefined,
     price: formData.get("price"),
     estimatedMinutes: formData.get("estimatedMinutes"),
+    allowQuantity: formData.get("allowQuantity") === "on",
   });
   if (!parsed.success)
     return { success: false, errors: parsed.error.flatten().fieldErrors };
@@ -182,6 +183,7 @@ export async function updateServiceTypeAction(
     description: formData.get("description") || undefined,
     price: formData.get("price"),
     estimatedMinutes: formData.get("estimatedMinutes"),
+    allowQuantity: formData.get("allowQuantity") === "on",
   });
   if (!parsed.success)
     return { success: false, errors: parsed.error.flatten().fieldErrors };
@@ -266,6 +268,7 @@ export async function createExtraServiceAction(
     description: formData.get("description") || undefined,
     price: formData.get("price"),
     estimatedMinutes: formData.get("estimatedMinutes"),
+    allowQuantity: formData.get("allowQuantity") === "on",
   });
   if (!parsed.success)
     return { success: false, errors: parsed.error.flatten().fieldErrors };
@@ -292,6 +295,7 @@ export async function updateExtraServiceAction(
     description: formData.get("description") || undefined,
     price: formData.get("price"),
     estimatedMinutes: formData.get("estimatedMinutes"),
+    allowQuantity: formData.get("allowQuantity") === "on",
   });
   if (!parsed.success)
     return { success: false, errors: parsed.error.flatten().fieldErrors };

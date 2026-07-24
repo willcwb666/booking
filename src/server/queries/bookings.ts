@@ -123,6 +123,8 @@ export async function getBookingDetail(companyId: string, bookingId: string) {
       },
       professional: { select: { id: true, name: true } },
       cancelledBy: { select: { name: true } },
+      paymentConfirmedBy: { select: { name: true } },
+      companyPaymentMethod: { select: { label: true, kind: true } },
       review: { select: { rating: true, comment: true, reviewerName: true } },
     },
   });

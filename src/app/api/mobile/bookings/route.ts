@@ -13,8 +13,15 @@ export async function GET(req: NextRequest) {
   });
   const estimateIds = estimates.map((e) => e.id);
 
+  // Matching por e-mail só com e-mail verificado — sem isso, qualquer um
+  // poderia criar conta com o e-mail de terceiro e ver os bookings dele
+  const ownershipFilters: object[] = [{ estimateId: { in: estimateIds } }];
+  if (session.user.emailVerified) {
+    ownershipFilters.push({ customerDetail: { email: session.user.email } });
+  }
+
   const bookings = await db.booking.findMany({
-    where: { estimateId: { in: estimateIds } },
+    where: { OR: ownershipFilters },
     include: {
       company: { select: { name: true, slug: true } },
       bookingConfig: { select: { name: true } },

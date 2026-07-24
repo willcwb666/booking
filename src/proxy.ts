@@ -8,22 +8,38 @@ const FULLY_PUBLIC = ["/", "/book", "/empresas"];
 const AUTH_ROUTES = ["/login", "/register"];
 // Rotas que exigem role "admin" do better-auth
 const ADMIN_ROUTES = ["/admin"];
+// Segmentos raiz reservados — nunca tratados como slug público de empresa
+const RESERVED_SEGMENTS = new Set([
+  "dashboard",
+  "onboarding",
+  "admin",
+  "login",
+  "register",
+  "empresas",
+  "book",
+  "orcamentos",
+]);
 
-function withSecurityHeaders(response: NextResponse): NextResponse {
-  response.headers.set("X-Frame-Options", "DENY");
-  response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("X-XSS-Protection", "1; mode=block");
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-  return response;
+// `/{slug}` (um único segmento, não reservado) é a página pública da empresa
+function isTenantLandingPage(pathname: string): boolean {
+  const segments = pathname.split("/").filter(Boolean);
+  return segments.length === 1 && !RESERVED_SEGMENTS.has(segments[0]);
 }
+
+// Security headers (CSP, X-Frame-Options etc.) são aplicados globalmente
+// via headers() no next.config.ts — cobrem também /api e redirects.
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Deixa passar rotas totalmente públicas
   if (FULLY_PUBLIC.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
-    return withSecurityHeaders(NextResponse.next());
+    return NextResponse.next();
+  }
+
+  // Página pública da empresa (/{slug})
+  if (isTenantLandingPage(pathname)) {
+    return NextResponse.next();
   }
 
   const isAuthRoute = AUTH_ROUTES.some((r) => pathname.startsWith(r));
@@ -34,7 +50,7 @@ export async function proxy(request: NextRequest) {
   // Auth routes: redireciona para onboarding se já está logado
   if (isAuthRoute) {
     if (session) return NextResponse.redirect(new URL("/onboarding", request.url));
-    return withSecurityHeaders(NextResponse.next());
+    return NextResponse.next();
   }
 
   // Tudo mais requer autenticação
@@ -49,7 +65,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/onboarding", request.url));
   }
 
-  return withSecurityHeaders(NextResponse.next());
+  return NextResponse.next();
 }
 
 export const config = {

@@ -11,15 +11,25 @@ export async function GET(
 
   const { id } = await params;
 
-  // Verify ownership via estimate
+  // Verify ownership via estimate or customerDetail email
   const estimates = await db.estimate.findMany({
     where: { customerId: session.user.id },
     select: { id: true },
   });
   const estimateIds = estimates.map((e) => e.id);
 
+  // Matching por e-mail só com e-mail verificado — sem isso, qualquer um
+  // poderia criar conta com o e-mail de terceiro e ver os bookings dele
+  const ownershipFilters: object[] = [{ estimateId: { in: estimateIds } }];
+  if (session.user.emailVerified) {
+    ownershipFilters.push({ customerDetail: { email: session.user.email } });
+  }
+
   const booking = await db.booking.findFirst({
-    where: { id, estimateId: { in: estimateIds } },
+    where: {
+      id,
+      OR: ownershipFilters,
+    },
     include: {
       company: { select: { name: true, slug: true, phone: true } },
       bookingConfig: { select: { name: true } },

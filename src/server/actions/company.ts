@@ -6,7 +6,17 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createCompanySchema, generateSlug, isReservedSlug } from "@/schemas/company.schema";
 import { ensureUniqueSlug } from "@/server/queries/companies";
+import { getMarket, isValidTimezoneForMarket } from "@/lib/markets";
 import type { ActionResult } from "@/types";
+
+// Só aceita URLs do bucket público próprio (R2) — impede gravar URL arbitrária
+function sanitizeLogoUrl(raw: string | null): string | null {
+  const url = raw?.trim();
+  if (!url) return null;
+  const publicBase = process.env.R2_PUBLIC_URL;
+  if (!publicBase) return null;
+  return url.startsWith(`${publicBase}/logo/`) ? url : null;
+}
 
 export async function createCompanyAction(
   _prev: ActionResult | null,
@@ -39,6 +49,18 @@ export async function createCompanyAction(
     return { success: false, errors: { name: ["Esse nome não pode ser usado como endereço"] } };
   }
 
+  // Mercado da empresa: país define moeda/idioma; fuso precisa pertencer ao país
+  const market = getMarket((formData.get("country") as string) ?? "");
+  if (!market) {
+    return { success: false, errors: { _: ["Selecione o país da empresa"] } };
+  }
+  const rawTz = (formData.get("timezone") as string) ?? "";
+  const timezone = isValidTimezoneForMarket(market.code, rawTz)
+    ? rawTz
+    : market.timezones[0].id;
+
+  const logoUrl = sanitizeLogoUrl(formData.get("logoUrl") as string | null);
+
   const slug = await ensureUniqueSlug(base);
 
   const company = await db.company.create({
@@ -49,8 +71,19 @@ export async function createCompanyAction(
       planId: parsed.data.planId,
       phone: parsed.data.phone ?? null,
       address: parsed.data.address ?? null,
+      logoUrl,
+      currency: market.currency,
+      locale: market.locale,
+      timezone,
       members: {
         create: { userId: session.user.id, role: "OWNER", isActive: true },
+      },
+      // Formas de pagamento padrão — o dono ajusta em Configurações
+      paymentMethods: {
+        create: [
+          { kind: "STRIPE_CARD", label: "Cartão de crédito/débito", displayOrder: 0 },
+          { kind: "MANUAL", label: "Dinheiro/Cheque", displayOrder: 10 },
+        ],
       },
     },
   });
@@ -86,9 +119,29 @@ export async function updateCompanyAction(
     return { success: false, errors: { name: ["Nome muito curto"] } };
   }
 
+  // País/fuso opcionais — enviados pela aba Empresa das configurações
+  const countryCode = (formData.get("country") as string) || null;
+  let marketData: { currency: string; locale: string; timezone: string } | Record<string, never> = {};
+  if (countryCode) {
+    const market = getMarket(countryCode);
+    if (!market) return { success: false, errors: { _: ["País inválido"] } };
+    const rawTz = (formData.get("timezone") as string) ?? "";
+    marketData = {
+      currency: market.currency,
+      locale: market.locale,
+      timezone: isValidTimezoneForMarket(market.code, rawTz) ? rawTz : market.timezones[0].id,
+    };
+  }
+
+  // Logo: campo presente no form → atualiza (string vazia remove)
+  let logoData: { logoUrl: string | null } | Record<string, never> = {};
+  if (formData.has("logoUrl")) {
+    logoData = { logoUrl: sanitizeLogoUrl(formData.get("logoUrl") as string) };
+  }
+
   await db.company.update({
     where: { id: member.company.id },
-    data: { name, phone, address },
+    data: { name, phone, address, ...marketData, ...logoData },
   });
 
   return { success: true };

@@ -3,20 +3,40 @@
 import { db } from "@/lib/db";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { sendBookingConfirmationEmail } from "@/lib/email";
+import { sendWaitlistNotificationEmail } from "@/lib/email";
+import { rateLimit } from "@/lib/rate-limit";
 
 type Result = { success: true } | { success: false; error: string };
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function joinWaitlistAction(formData: FormData): Promise<Result> {
+  // Action pública — limita spam/flood de entradas por IP
+  const hdrs = await headers();
+  const ip = hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const rl = await rateLimit(`waitlist:join:${ip}`, 5, 60);
+  if (!rl.allowed) {
+    return { success: false, error: "Muitas tentativas. Aguarde um momento." };
+  }
+
   const bookingConfigId = formData.get("bookingConfigId") as string;
   const preferredDate = formData.get("preferredDate") as string;
   const preferredStartTime = (formData.get("preferredStartTime") as string) || null;
-  const customerName = formData.get("customerName") as string;
-  const customerEmail = formData.get("customerEmail") as string;
+  const customerName = ((formData.get("customerName") as string) || "").trim();
+  const customerEmail = ((formData.get("customerEmail") as string) || "").trim().toLowerCase();
   const customerPhone = (formData.get("customerPhone") as string) || null;
 
   if (!bookingConfigId || !preferredDate || !customerName || !customerEmail) {
     return { success: false, error: "Preencha todos os campos obrigatórios" };
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(preferredDate)) {
+    return { success: false, error: "Data inválida" };
+  }
+  if (!EMAIL_REGEX.test(customerEmail) || customerEmail.length > 254) {
+    return { success: false, error: "E-mail inválido" };
+  }
+  if (customerName.length > 120) {
+    return { success: false, error: "Nome muito longo" };
   }
 
   const config = await db.bookingConfig.findFirst({
@@ -73,17 +93,12 @@ export async function notifyWaitlistForDate(
 
   await Promise.allSettled(
     entries.map(async (entry) => {
-      await sendBookingConfirmationEmail({
+      await sendWaitlistNotificationEmail({
         to: entry.customerEmail,
         customerName: entry.customerName,
         companyName: company?.name ?? "empresa",
-        serviceName: "serviço solicitado",
         date: entry.preferredDate,
-        startTime: entry.preferredStartTime ?? "horário a definir",
-        endTime: "",
-        address: "",
-        isWaitlistNotification: true,
-      } as Parameters<typeof sendBookingConfirmationEmail>[0]);
+      });
 
       await db.waitlistEntry.update({
         where: { id: entry.id },

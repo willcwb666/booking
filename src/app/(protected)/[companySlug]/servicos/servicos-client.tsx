@@ -2,6 +2,8 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useCompany } from "@/lib/company-context";
+import { formatMoney } from "@/lib/format";
 import {
   createServiceAction,
   updateServiceAction,
@@ -25,6 +27,7 @@ type ServiceType = {
   description: string | null;
   price: number;
   estimatedMinutes: number;
+  allowQuantity: boolean;
   order: number;
 };
 
@@ -42,6 +45,7 @@ type ExtraService = {
   description: string | null;
   price: number;
   estimatedMinutes: number;
+  allowQuantity: boolean;
   order: number;
 };
 
@@ -68,11 +72,8 @@ function formatDuration(minutes: number) {
   return m > 0 ? `${h}h ${m}min` : `${h}h`;
 }
 
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
+function formatCurrency(value: number, currency: string, locale: string) {
+  return formatMoney(value, currency, locale);
 }
 
 function FieldError({ errors, field }: { errors: Record<string, string[]> | null; field: string }) {
@@ -102,6 +103,7 @@ export function ServicosClient({
   extrasEnabled,
 }: Props) {
   const router = useRouter();
+  const company = useCompany();
   const [activeTab, setActiveTab] = useState<"services" | "extras">("services");
   const [expandedService, setExpandedService] = useState<string | null>(null);
   const [dialog, setDialog] = useState<DialogState>({ type: "none" });
@@ -353,7 +355,7 @@ export function ServicosClient({
                                 )}
                               </td>
                               <td className="py-2 text-right font-medium text-gray-800">
-                                {formatCurrency(st.price)}
+                                {formatCurrency(st.price, company.currency, company.locale)}
                               </td>
                               <td className="py-2 text-right text-gray-500">
                                 {formatDuration(st.estimatedMinutes)}
@@ -448,7 +450,7 @@ export function ServicosClient({
                           )}
                         </td>
                         <td className="px-4 py-3 text-right font-medium text-gray-800">
-                          {formatCurrency(extra.price)}
+                          {formatCurrency(extra.price, company.currency, company.locale)}
                         </td>
                         <td className="px-4 py-3 text-right text-gray-500">
                           {formatDuration(extra.estimatedMinutes)}
@@ -606,7 +608,7 @@ export function ServicosClient({
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
-                        Preço (R$) <span aria-hidden="true">*</span>
+                        Preço ({company.currency}) <span aria-hidden="true">*</span>
                       </label>
                       <input
                         id="price"
@@ -639,6 +641,20 @@ export function ServicosClient({
                       <FieldError errors={fieldErrors} field="estimatedMinutes" />
                     </div>
                   </div>
+                  <label className="flex items-start gap-2.5 cursor-pointer select-none pt-1">
+                    <input
+                      type="checkbox"
+                      name="allowQuantity"
+                      defaultChecked={dialog.type === "edit-service-type" ? dialog.item.allowQuantity : false}
+                      className="w-4 h-4 mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">
+                      Habilitar quantidade
+                      <span className="block text-xs text-gray-500">
+                        O cliente informa quantas unidades deseja (ex.: troca de pneus → nº de pneus)
+                      </span>
+                    </span>
+                  </label>
                 </>
               )}
 
@@ -675,7 +691,7 @@ export function ServicosClient({
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
-                        Preço (R$) <span aria-hidden="true">*</span>
+                        Preço ({company.currency}) <span aria-hidden="true">*</span>
                       </label>
                       <input
                         id="price"
@@ -706,6 +722,20 @@ export function ServicosClient({
                       <FieldError errors={fieldErrors} field="estimatedMinutes" />
                     </div>
                   </div>
+                  <label className="flex items-start gap-2.5 cursor-pointer select-none pt-1">
+                    <input
+                      type="checkbox"
+                      name="allowQuantity"
+                      defaultChecked={dialog.type === "edit-extra" ? dialog.item.allowQuantity : false}
+                      className="w-4 h-4 mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">
+                      Habilitar quantidade
+                      <span className="block text-xs text-gray-500">
+                        O cliente informa quantas unidades deseja ao selecionar este extra
+                      </span>
+                    </span>
+                  </label>
                 </>
               )}
             </div>

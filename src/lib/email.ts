@@ -4,6 +4,53 @@ import { Resend } from "resend";
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.RESEND_FROM_EMAIL ?? "Agendei <noreply@agendei.app>";
 
+/** Escapes user-controlled values interpolated into email HTML. */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+export async function sendVerificationEmail({
+  to,
+  userName,
+  url,
+}: {
+  to: string;
+  userName: string;
+  url: string;
+}) {
+  try {
+    await resend.emails.send({
+      from: FROM,
+      to,
+      subject: "Confirme seu e-mail — Agendei",
+      html: `
+        <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
+          <h2 style="color:#1d4ed8;margin-bottom:4px">Confirme seu e-mail</h2>
+          <p style="color:#6b7280;margin-top:0">Olá, ${escapeHtml(userName)}!</p>
+          <p style="color:#374151">
+            Clique no botão abaixo para confirmar que este e-mail é seu.
+            Isso libera todas as funcionalidades da sua conta.
+          </p>
+          <p style="margin:24px 0">
+            <a href="${url}" style="display:inline-block;background:#1d4ed8;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">
+              Confirmar e-mail
+            </a>
+          </p>
+          <p style="color:#9ca3af;font-size:12px">Se você não criou uma conta no Agendei, ignore este e-mail.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:32px">Agendei · Agendamentos online</p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("[email] verification failed:", err);
+  }
+}
+
 type BookingEmailData = {
   to: string;
   customerName: string;
@@ -29,14 +76,14 @@ export async function sendBookingConfirmationEmail(data: BookingEmailData) {
       html: `
         <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
           <h2 style="color:#1d4ed8;margin-bottom:4px">Agendamento confirmado!</h2>
-          <p style="color:#6b7280;margin-top:0">Olá, ${data.customerName}!</p>
+          <p style="color:#6b7280;margin-top:0">Olá, ${escapeHtml(data.customerName)}!</p>
 
           <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:20px;margin:24px 0">
-            <p style="margin:0 0 8px 0"><strong>Serviço:</strong> ${data.serviceName}</p>
-            <p style="margin:0 0 8px 0"><strong>Empresa:</strong> ${data.companyName}</p>
+            <p style="margin:0 0 8px 0"><strong>Serviço:</strong> ${escapeHtml(data.serviceName)}</p>
+            <p style="margin:0 0 8px 0"><strong>Empresa:</strong> ${escapeHtml(data.companyName)}</p>
             <p style="margin:0 0 8px 0"><strong>Data:</strong> ${formatDate(data.date)}</p>
             <p style="margin:0 0 8px 0"><strong>Horário:</strong> ${data.startTime} – ${data.endTime}</p>
-            <p style="margin:0"><strong>Endereço:</strong> ${data.address}</p>
+            <p style="margin:0"><strong>Endereço:</strong> ${escapeHtml(data.address)}</p>
           </div>
 
           <p style="color:#374151">Você receberá um lembrete no dia anterior. Em caso de dúvidas, entre em contato com a empresa.</p>
@@ -58,14 +105,14 @@ export async function sendBookingReminderEmail(data: BookingEmailData) {
       html: `
         <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
           <h2 style="color:#d97706;margin-bottom:4px">Lembrete de agendamento</h2>
-          <p style="color:#6b7280;margin-top:0">Olá, ${data.customerName}! Só um lembrete:</p>
+          <p style="color:#6b7280;margin-top:0">Olá, ${escapeHtml(data.customerName)}! Só um lembrete:</p>
 
           <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:20px;margin:24px 0">
-            <p style="margin:0 0 8px 0"><strong>Serviço:</strong> ${data.serviceName}</p>
-            <p style="margin:0 0 8px 0"><strong>Empresa:</strong> ${data.companyName}</p>
+            <p style="margin:0 0 8px 0"><strong>Serviço:</strong> ${escapeHtml(data.serviceName)}</p>
+            <p style="margin:0 0 8px 0"><strong>Empresa:</strong> ${escapeHtml(data.companyName)}</p>
             <p style="margin:0 0 8px 0"><strong>Data:</strong> ${formatDate(data.date)} <strong>amanhã</strong></p>
             <p style="margin:0 0 8px 0"><strong>Horário:</strong> ${data.startTime} – ${data.endTime}</p>
-            <p style="margin:0"><strong>Endereço:</strong> ${data.address}</p>
+            <p style="margin:0"><strong>Endereço:</strong> ${escapeHtml(data.address)}</p>
           </div>
 
           <p style="color:#374151">Esteja pronto! Em caso de imprevisto, cancele com antecedência.</p>
@@ -76,6 +123,132 @@ export async function sendBookingReminderEmail(data: BookingEmailData) {
   } catch (err) {
     console.error("[email] reminder failed:", err);
   }
+}
+
+export async function sendWaitlistNotificationEmail({
+  to,
+  customerName,
+  companyName,
+  date,
+}: Pick<BookingEmailData, "to" | "customerName" | "companyName" | "date">) {
+  try {
+    await resend.emails.send({
+      from: FROM,
+      to,
+      subject: `Vaga disponível — ${companyName}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
+          <h2 style="color:#2563eb;margin-bottom:4px">Vaga disponível!</h2>
+          <p style="color:#6b7280;margin-top:0">Olá, ${escapeHtml(customerName)}!</p>
+          <p style="color:#374151">
+            Uma vaga abriu em <strong>${escapeHtml(companyName)}</strong> no dia
+            <strong>${formatDate(date)}</strong>.
+          </p>
+          <p style="color:#374151">Acesse o link de agendamento para reservar o horário antes que outra pessoa pegue!</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:32px">Agendei · Agendamentos online</p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("[email] waitlist notification failed:", err);
+  }
+}
+
+type PromoItem = {
+  serviceName: string;
+  originalPrice: string; // já formatado (ex.: "R$ 120,00")
+  promoPrice: string;
+  endDate: string; // "YYYY-MM-DD"
+};
+
+type PromotionEmailData = {
+  to: string;
+  customerName: string;
+  companyName: string;
+  companySlug: string;
+  companyLogoUrl: string | null;
+  title: string; // título criado pelo gestor
+  description: string; // texto criado pelo gestor
+  items: PromoItem[];
+  validUntil: string; // "YYYY-MM-DD" — maior endDate entre as promoções
+};
+
+/**
+ * E-mail de promoções: logo à esquerda no cabeçalho, título centralizado,
+ * texto do gestor, lista de serviços em promoção e validade no rodapé.
+ */
+export async function sendPromotionEmail(data: PromotionEmailData) {
+  const appUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+
+  const itemsHtml = data.items
+    .map(
+      (item) => `
+        <tr>
+          <td style="padding:12px 16px;border-bottom:1px solid #d1fae5">
+            <p style="margin:0;font-size:15px;font-weight:bold;color:#111827">${escapeHtml(item.serviceName)}</p>
+            <p style="margin:4px 0 0 0">
+              <s style="color:#9ca3af;font-size:13px">${escapeHtml(item.originalPrice)}</s>
+              <strong style="color:#059669;font-size:16px;margin-left:8px">${escapeHtml(item.promoPrice)}</strong>
+            </p>
+          </td>
+          <td style="padding:12px 16px;border-bottom:1px solid #d1fae5;text-align:right;vertical-align:middle">
+            <span style="color:#6b7280;font-size:12px;white-space:nowrap">até ${formatDate(item.endDate)}</span>
+          </td>
+        </tr>`
+    )
+    .join("");
+
+  await resend.emails.send({
+    from: FROM,
+    to: data.to,
+    subject: `🏷️ ${data.title} — ${data.companyName}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
+        <!-- Cabeçalho: logo à esquerda -->
+        <table role="presentation" width="100%" style="border-bottom:1px solid #e5e7eb;padding-bottom:16px;margin-bottom:24px">
+          <tr>
+            ${
+              data.companyLogoUrl
+                ? `<td width="56" style="vertical-align:middle"><img src="${data.companyLogoUrl}" alt="" width="48" height="48" style="border-radius:10px;display:block;object-fit:cover" /></td>`
+                : ""
+            }
+            <td style="vertical-align:middle">
+              <p style="margin:0;font-size:16px;font-weight:bold;color:#111827">${escapeHtml(data.companyName)}</p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Título centralizado -->
+        <h1 style="text-align:center;color:#059669;font-size:22px;margin:0 0 16px 0">${escapeHtml(data.title)}</h1>
+
+        <!-- Texto do gestor -->
+        <p style="color:#374151;margin:0 0 8px 0">Olá, ${escapeHtml(data.customerName)}!</p>
+        <p style="color:#374151;margin:0 0 24px 0;white-space:pre-line">${escapeHtml(data.description)}</p>
+
+        <!-- Serviços em promoção -->
+        <table role="presentation" width="100%" style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;border-collapse:separate;overflow:hidden;margin-bottom:24px">
+          ${itemsHtml}
+        </table>
+
+        <p style="margin:0 0 24px 0;text-align:center">
+          <a href="${appUrl}/${encodeURIComponent(data.companySlug)}" style="display:inline-block;background:#059669;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">
+            Aproveitar ofertas
+          </a>
+        </p>
+
+        <!-- Validade no fim -->
+        <p style="text-align:center;color:#6b7280;font-size:13px;margin:0 0 24px 0">
+          Promoções válidas até <strong>${formatDate(data.validUntil)}</strong>.
+        </p>
+
+        <p style="color:#9ca3af;font-size:12px">
+          Você recebeu este e-mail porque aceitou receber ofertas.
+          Para não receber mais, desative "Ofertas e promoções" nas preferências do seu perfil.
+        </p>
+        <p style="color:#9ca3af;font-size:12px;margin-top:32px">Agendei · Agendamentos online</p>
+      </div>
+    `,
+  });
 }
 
 export async function sendBookingCancelledEmail({
@@ -93,9 +266,9 @@ export async function sendBookingCancelledEmail({
       html: `
         <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
           <h2 style="color:#dc2626;margin-bottom:4px">Agendamento cancelado</h2>
-          <p style="color:#6b7280;margin-top:0">Olá, ${customerName}.</p>
+          <p style="color:#6b7280;margin-top:0">Olá, ${escapeHtml(customerName)}.</p>
           <p style="color:#374151">
-            Seu agendamento em <strong>${companyName}</strong> no dia
+            Seu agendamento em <strong>${escapeHtml(companyName)}</strong> no dia
             <strong>${formatDate(date)}</strong> às <strong>${startTime}</strong> foi cancelado.
           </p>
           <p style="color:#374151">Se precisar reagendar, acesse o app ou o link de agendamento.</p>

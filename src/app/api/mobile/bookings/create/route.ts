@@ -4,6 +4,7 @@ import { encrypt } from "@/lib/encrypt";
 import { notifyBookingConfirmed, notifyCompanyNewBooking } from "@/lib/notifications";
 import { getMobileSession } from "../../_auth";
 import { rateLimit } from "@/lib/rate-limit";
+import { isSlotAvailable } from "@/lib/agenda";
 
 export async function POST(req: NextRequest) {
   const session = await getMobileSession(req);
@@ -85,12 +86,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
   }
 
+  // Verify agenda belongs to this booking config
+  if (estimate.bookingConfig.agendaId !== agendaId) {
+    return NextResponse.json({ error: "Agenda inválida para este agendamento" }, { status: 400 });
+  }
+
   // Verify agenda is active
   const agenda = await db.agenda.findFirst({
     where: { id: agendaId, status: "ACTIVE" },
   });
   if (!agenda) {
     return NextResponse.json({ error: "Agenda não encontrada" }, { status: 400 });
+  }
+
+  // Server-side slot validation: horário precisa ser um slot disponível da
+  // grade (bloqueia horários arbitrários, overlaps e dias bloqueados)
+  const slotOk = await isSlotAvailable(agendaId, scheduledDate, scheduledStartTime, scheduledEndTime);
+  if (!slotOk) {
+    return NextResponse.json(
+      { error: "Horário indisponível. Por favor, escolha outro horário." },
+      { status: 409 }
+    );
   }
 
   // Mobile only supports CASH_CHECK

@@ -1,5 +1,6 @@
 import "server-only";
 import { redis } from "@/lib/redis";
+import { db } from "@/lib/db";
 
 export type TimeSlot = {
   date: string;      // "YYYY-MM-DD"
@@ -16,25 +17,44 @@ type AgendaConfig = {
   intervalMinutes: number;
 };
 
+export type AgendaExceptionInfo = {
+  type: "BLOCKED_DAY" | "CUSTOM_HOURS";
+  startTime: string | null;
+  endTime: string | null;
+};
+
 function minutesToTime(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-export function generateSlots(config: AgendaConfig, targetDate: string): TimeSlot[] {
+export function generateSlots(
+  config: AgendaConfig,
+  targetDate: string,
+  exception?: AgendaExceptionInfo | null
+): TimeSlot[] {
   if (targetDate < config.startDate) return [];
   if (config.endDate && targetDate > config.endDate) return [];
+  if (exception?.type === "BLOCKED_DAY") return [];
 
-  // Parse day-of-week from "YYYY-MM-DD" without timezone issues
-  const [year, month, day] = targetDate.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  const dayOfWeek = date.getUTCDay(); // 0=Sun … 6=Sat
+  // CUSTOM_HOURS substitui o horário do dia (e abre o dia mesmo fora de workingDays)
+  const customHours =
+    exception?.type === "CUSTOM_HOURS" && exception.startTime && exception.endTime
+      ? { startTime: exception.startTime, endTime: exception.endTime }
+      : null;
 
-  if (!config.workingDays.includes(dayOfWeek)) return [];
+  if (!customHours) {
+    // Parse day-of-week from "YYYY-MM-DD" without timezone issues
+    const [year, month, day] = targetDate.split("-").map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    const dayOfWeek = date.getUTCDay(); // 0=Sun … 6=Sat
 
-  const [startH, startM] = config.startTime.split(":").map(Number);
-  const [endH, endM] = config.endTime.split(":").map(Number);
+    if (!config.workingDays.includes(dayOfWeek)) return [];
+  }
+
+  const [startH, startM] = (customHours?.startTime ?? config.startTime).split(":").map(Number);
+  const [endH, endM] = (customHours?.endTime ?? config.endTime).split(":").map(Number);
   const startMinutes = startH * 60 + startM;
   const endMinutes = endH * 60 + endM;
 
@@ -75,6 +95,73 @@ export async function getCachedSlots(
   }
 
   return slots;
+}
+
+/**
+ * Slots disponíveis de uma agenda ativa em uma data: grade da agenda,
+ * menos exceções (dia bloqueado / horário especial), menos slots já
+ * reservados, menos horários já passados (quando a data é hoje).
+ *
+ * Fonte única de disponibilidade — usada tanto para exibir slots quanto
+ * para validar no servidor o horário enviado pelo cliente ao criar booking.
+ */
+export async function getAvailableSlots(agendaId: string, date: string): Promise<TimeSlot[]> {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return [];
+
+  const agenda = await db.agenda.findFirst({
+    where: { id: agendaId, status: "ACTIVE" },
+  });
+  if (!agenda) return [];
+
+  const exception = await db.agendaException.findUnique({
+    where: { agendaId_date: { agendaId, date } },
+    select: { type: true, startTime: true, endTime: true },
+  });
+
+  const allSlots = generateSlots(
+    {
+      startDate: agenda.startDate,
+      endDate: agenda.endDate,
+      workingDays: agenda.workingDays,
+      startTime: agenda.startTime,
+      endTime: agenda.endTime,
+      intervalMinutes: agenda.intervalMinutes,
+    },
+    date,
+    exception
+  );
+  if (allSlots.length === 0) return [];
+
+  const booked = await db.bookingSlot.findMany({
+    where: { agendaId, date },
+    select: { startTime: true },
+  });
+  const bookedTimes = new Set(booked.map((s) => s.startTime));
+
+  const today = new Date().toISOString().split("T")[0];
+  const now = new Date();
+  const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+
+  return allSlots.filter((slot) => {
+    if (bookedTimes.has(slot.startTime)) return false;
+    if (date === today && slot.startTime <= currentTime) return false;
+    return true;
+  });
+}
+
+/**
+ * Valida no servidor um horário enviado pelo cliente: precisa coincidir
+ * exatamente com um slot disponível da grade (impede horários arbitrários,
+ * overlaps, dias bloqueados e datas fora da agenda).
+ */
+export async function isSlotAvailable(
+  agendaId: string,
+  date: string,
+  startTime: string,
+  endTime: string
+): Promise<boolean> {
+  const available = await getAvailableSlots(agendaId, date);
+  return available.some((s) => s.startTime === startTime && s.endTime === endTime);
 }
 
 export async function invalidateSlotCache(agendaId: string): Promise<void> {

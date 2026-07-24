@@ -2,6 +2,8 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { useCompany } from "@/lib/company-context";
+import { formatMoney } from "@/lib/format";
 import type { BookingListItem } from "@/server/queries/bookings";
 import type { BookingStatus } from "@/generated/prisma/client";
 
@@ -75,6 +77,7 @@ export function AgendamentosClient({
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
+  const company = useCompany();
 
   function buildUrl(updates: Partial<Filters> & { page?: number }) {
     const params = new URLSearchParams();
@@ -286,10 +289,7 @@ export function AgendamentosClient({
                       </td>
                       <td className="px-4 py-3 text-right whitespace-nowrap">
                         <span className="font-semibold text-gray-900">
-                          {Number(item.estimateTotal).toLocaleString("pt-BR", {
-                            style: "currency",
-                            currency: "BRL",
-                          })}
+                          {formatMoney(Number(item.estimateTotal), company.currency, company.locale)}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">

@@ -2,6 +2,8 @@
 
 import { useTransition, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useCompany } from "@/lib/company-context";
+import { formatMoney } from "@/lib/format";
 import {
   createBookingConfigAction,
   updateBookingConfigAction,
@@ -69,6 +71,7 @@ export function BookingConfigFormClient({
   existing,
 }: Props) {
   const router = useRouter();
+  const company = useCompany();
   const [isPending, startTransition] = useTransition();
   const [errors, setErrors] = useState<Record<string, string[]> | null>(null);
 
@@ -243,8 +246,7 @@ export function BookingConfigFormClient({
                               {st.name}
                             </span>
                             <span className="text-xs text-gray-400">
-                              {formatMinutes(st.estimatedMinutes)} · R${" "}
-                              {st.price.toFixed(2)}
+                              {formatMinutes(st.estimatedMinutes)} · {formatMoney(st.price, company.currency, company.locale)}
                             </span>
                           </label>
                         );

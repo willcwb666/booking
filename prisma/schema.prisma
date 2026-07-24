@@ -79,6 +79,16 @@ enum PaymentMethod {
   PIX
 }
 
+// Como o pagamento é processado/confirmado:
+// STRIPE_CARD / MERCADOPAGO_PIX → confirmação automática via webhook do gateway
+// MANUAL → cliente paga por fora (dinheiro, PIX por chave, Zelle, Venmo, …)
+//          e o dono confirma o recebimento no painel
+enum PaymentKind {
+  STRIPE_CARD
+  MERCADOPAGO_PIX
+  MANUAL
+}
+
 enum AgendaExceptionType {
   BLOCKED_DAY
   CUSTOM_HOURS
@@ -142,6 +152,7 @@ model User {
   createdScheduleEvents ScheduleEvent[]  @relation("ScheduleEventCreatedBy")
   estimatesAsCustomer   Estimate[]       @relation("EstimateCustomer")
   cancelledBookings     Booking[]        @relation("BookingCancelledBy")
+  confirmedPayments     Booking[]        @relation("BookingPaymentConfirmedBy")
   pushTokens            PushToken[]
   notificationPrefs     UserNotificationPreference?
   calendarIntegrations  CalendarIntegration[]
@@ -245,6 +256,10 @@ model Company {
   phone         String?
   address       String?
   isActive      Boolean         @default(true)
+  // Internacionalização — cada empresa opera em um mercado
+  currency      String          @default("BRL")               // ISO 4217 (BRL, USD, …)
+  timezone      String          @default("America/Sao_Paulo") // IANA
+  locale        String          @default("pt-BR")             // BCP 47
   members         CompanyUser[]
   services        Service[]
   serviceTypes    ServiceType[]
@@ -257,8 +272,10 @@ model Company {
   bookings        Booking[]
   reviews         Review[]
   paymentSettings CompanyPaymentSettings?
+  paymentMethods  CompanyPaymentMethod[]
   waitlistEntries WaitlistEntry[]
   webhooks        CompanyWebhook[]
+  promotions      Promotion[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
@@ -310,10 +327,13 @@ model ServiceType {
   description      String?
   price            Decimal  @db.Decimal(10, 2)
   estimatedMinutes Int
+  // Quando true, o cliente informa a quantidade ao selecionar (ex.: nº de pneus)
+  allowQuantity    Boolean  @default(false)
   isActive         Boolean  @default(true)
   order            Int      @default(0)
   bookingConfigs   BookingConfigServiceType[]
   estimateItems    EstimateServiceType[]
+  promotions       Promotion[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -331,6 +351,7 @@ model ExtraService {
   description      String?
   price            Decimal  @db.Decimal(10, 2)
   estimatedMinutes Int
+  allowQuantity    Boolean  @default(false)
   isActive         Boolean  @default(true)
   order            Int      @default(0)
   bookingConfigs   BookingConfigExtraService[]
@@ -562,6 +583,14 @@ model Booking {
   status                BookingStatus   @default(PENDING)
   paymentMethod         PaymentMethod
   paymentStatus         PaymentStatus   @default(PENDING)
+  // Forma de pagamento configurada escolhida no checkout (label/handle/kind).
+  // O enum paymentMethod permanece como discriminador de fluxo legado.
+  companyPaymentMethodId String?
+  companyPaymentMethod   CompanyPaymentMethod? @relation(fields: [companyPaymentMethodId], references: [id], onDelete: SetNull)
+  // Confirmação manual de recebimento (métodos MANUAL)
+  paidAt                 DateTime?
+  paymentConfirmedById   String?
+  paymentConfirmedBy     User?           @relation("BookingPaymentConfirmedBy", fields: [paymentConfirmedById], references: [id])
   stripePaymentIntentId  String?
   mercadoPagoPaymentId   String?
   cancelledAt            DateTime?
@@ -679,6 +708,8 @@ model UserNotificationPreference {
   enablePush     Boolean  @default(true)
   enableWhatsApp Boolean  @default(false)
   enableSms      Boolean  @default(false)
+  // Opt-in para e-mails de ofertas/promoções (padrão desligado — LGPD)
+  enableMarketing Boolean @default(false)
   whatsappPhone  String?
   smsPhone       String?
   updatedAt      DateTime @updatedAt
@@ -686,7 +717,50 @@ model UserNotificationPreference {
   @@map("user_notification_preference")
 }
 
+// ─── Promoções ────────────────────────────────────────────────────────────────
+
+model Promotion {
+  id            String      @id @default(cuid())
+  companyId     String
+  company       Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  serviceTypeId String
+  serviceType   ServiceType @relation(fields: [serviceTypeId], references: [id], onDelete: Cascade)
+  description   String
+  promoPrice    Decimal     @db.Decimal(10, 2)
+  startDate     String      // "YYYY-MM-DD"
+  endDate       String      // "YYYY-MM-DD"
+  isActive      Boolean     @default(true)
+  lastSentAt    DateTime?   // último envio de e-mail marketing
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([companyId, isActive])
+  @@index([serviceTypeId, startDate, endDate])
+  @@map("promotion")
+}
+
 // ─── Company Payment Settings ─────────────────────────────────────────────────
+
+// Formas de pagamento configuradas pela empresa — dados, não enum.
+// MANUAL com label/handle livres cobre qualquer mercado (PIX por chave,
+// Zelle, Venmo, Cash App, dinheiro…) sem mudança de código.
+model CompanyPaymentMethod {
+  id           String      @id @default(cuid())
+  companyId    String
+  company      Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  kind         PaymentKind
+  label        String      // "Cartão", "PIX", "Zelle", "Venmo", "Dinheiro"…
+  handle       String?     // chave PIX, e-mail/telefone Zelle, @username Venmo
+  instructions String?     // instruções exibidas no checkout para métodos manuais
+  isActive     Boolean     @default(true)
+  displayOrder Int         @default(0)
+  bookings     Booking[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([companyId, isActive])
+  @@map("company_payment_method")
+}
 
 model CompanyPaymentSettings {
   id              String   @id @default(cuid())

@@ -12,6 +12,7 @@ type NotifPrefs = {
   enablePush: boolean;
   enableWhatsApp: boolean;
   enableSms: boolean;
+  enableMarketing: boolean;
   whatsappPhone: string;
   smsPhone: string;
 };
@@ -185,7 +186,7 @@ function NotificacoesForm({ prefs }: { prefs: NotifPrefs }) {
             name="whatsappPhone"
             type="tel"
             defaultValue={prefs.whatsappPhone}
-            placeholder="+55 11 99999-9999"
+            placeholder="Com DDI — ex.: +55 11 99999-9999 ou +1 720 555 0123"
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -205,11 +206,20 @@ function NotificacoesForm({ prefs }: { prefs: NotifPrefs }) {
             name="smsPhone"
             type="tel"
             defaultValue={prefs.smsPhone}
-            placeholder="+55 11 99999-9999"
+            placeholder="Com DDI — ex.: +55 11 99999-9999 ou +1 720 555 0123"
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       ) : null,
+    },
+    {
+      key: "enableMarketing",
+      label: "Ofertas e promoções",
+      desc: "Receba por e-mail promoções das empresas parceiras.",
+      defaultChecked: prefs.enableMarketing,
+      badge: null,
+      onChange: undefined,
+      extra: null,
     },
   ];
 

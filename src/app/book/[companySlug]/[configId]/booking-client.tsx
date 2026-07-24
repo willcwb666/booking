@@ -2,14 +2,20 @@
 
 import { useReducer, useEffect, useRef, useTransition, useState } from "react";
 import { useRouter } from "next/navigation";
-import { upsertEstimateAction, submitEstimateAction } from "@/server/actions/estimate";
+import { useTranslations } from "next-intl";
+import { upsertEstimateAction, submitEstimateAction, saveEstimateAction } from "@/server/actions/estimate";
+import { formatMoney } from "@/lib/format";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 export type ServiceTypeData = {
   id: string;
   name: string;
   serviceName: string;
   price: number;
+  promoPrice: number | null;
+  promoDescription: string | null;
   estimatedMinutes: number;
+  allowQuantity: boolean;
 };
 
 export type ExtraServiceData = {
@@ -17,6 +23,7 @@ export type ExtraServiceData = {
   name: string;
   price: number;
   estimatedMinutes: number;
+  allowQuantity: boolean;
 };
 
 type Props = {
@@ -28,17 +35,20 @@ type Props = {
   allowPartialService: boolean;
   serviceTypes: ServiceTypeData[];
   extraServices: ExtraServiceData[];
+  currency: string;
+  locale: string;
+  isLoggedIn: boolean;
 };
 
 type State = {
   serviceItems: Record<string, number>; // id -> qty (0 = not selected)
-  extraItems: Record<string, boolean>;
+  extraItems: Record<string, number>; // id -> qty (0 = not selected)
   frequency: "ONCE" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
 };
 
 type Action =
   | { type: "SET_QTY"; id: string; qty: number }
-  | { type: "TOGGLE_EXTRA"; id: string }
+  | { type: "SET_EXTRA_QTY"; id: string; qty: number }
   | { type: "SET_FREQUENCY"; freq: State["frequency"] };
 
 function reducer(state: State, action: Action): State {
@@ -48,28 +58,32 @@ function reducer(state: State, action: Action): State {
         ...state,
         serviceItems: { ...state.serviceItems, [action.id]: Math.max(0, action.qty) },
       };
-    case "TOGGLE_EXTRA":
+    case "SET_EXTRA_QTY":
       return {
         ...state,
-        extraItems: { ...state.extraItems, [action.id]: !state.extraItems[action.id] },
+        extraItems: { ...state.extraItems, [action.id]: Math.max(0, action.qty) },
       };
     case "SET_FREQUENCY":
       return { ...state, frequency: action.freq };
   }
 }
 
-const FREQ_OPTIONS: { value: State["frequency"]; label: string }[] = [
-  { value: "ONCE", label: "Única vez" },
-  { value: "WEEKLY", label: "Semanal" },
-  { value: "BIWEEKLY", label: "Quinzenal" },
-  { value: "MONTHLY", label: "Mensal" },
+const FREQ_KEYS: { value: State["frequency"]; key: "freqOnce" | "freqWeekly" | "freqBiweekly" | "freqMonthly" }[] = [
+  { value: "ONCE", key: "freqOnce" },
+  { value: "WEEKLY", key: "freqWeekly" },
+  { value: "BIWEEKLY", key: "freqBiweekly" },
+  { value: "MONTHLY", key: "freqMonthly" },
 ];
 
-function fmt(price: number) {
-  return price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+function fmt(price: number, currency: string, locale: string) {
+  return formatMoney(price, currency, locale);
 }
 function fmtMin(m: number) {
   return m < 60 ? `${m}min` : `${(m / 60).toFixed(1).replace(".0", "")}h`;
+}
+
+function effectivePrice(st: ServiceTypeData) {
+  return st.promoPrice ?? st.price;
 }
 
 export function BookingClient({
@@ -81,9 +95,14 @@ export function BookingClient({
   allowPartialService,
   serviceTypes,
   extraServices,
+  currency,
+  locale,
+  isLoggedIn,
 }: Props) {
   const router = useRouter();
+  const t = useTranslations("booking");
   const [isPending, startTransition] = useTransition();
+  const [isSaving, startSaving] = useTransition();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const initServiceItems: Record<string, number> = {};
@@ -126,9 +145,11 @@ export function BookingClient({
       )
     );
     fd.set(
-      "extraServiceIds",
+      "extraItems",
       JSON.stringify(
-        Object.entries(s.extraItems).filter(([, v]) => v).map(([id]) => id)
+        Object.entries(s.extraItems)
+          .filter(([, q]) => q > 0)
+          .map(([extraServiceId, quantity]) => ({ extraServiceId, quantity }))
       )
     );
     return fd;
@@ -141,19 +162,50 @@ export function BookingClient({
       if (result.success) {
         router.push(`/book/${companySlug}/${configId}/checkout?estimate=${result.estimateId}`);
       } else {
-        setSubmitError(result.errors._?.[0] ?? "Erro ao processar");
+        setSubmitError(result.errors._?.[0] ?? t("processError"));
       }
     });
   }
 
-  // Client-side summary calc
+  // "Salvar orçamento": garante o rascunho no banco; logado → vincula à conta,
+  // anônimo → login/cadastro e o orçamento é reivindicado na volta
+  function handleSaveQuote() {
+    setSubmitError(null);
+    startSaving(async () => {
+      const upsert = await upsertEstimateAction(buildFd(state));
+      if (!upsert.success) {
+        setSubmitError(upsert.errors._?.[0] ?? t("saveError"));
+        return;
+      }
+      estimateIdRef.current = upsert.estimateId;
+
+      if (!isLoggedIn) {
+        const back = encodeURIComponent(`/orcamentos/claim?estimate=${upsert.estimateId}`);
+        router.push(`/login?callbackUrl=${back}`);
+        return;
+      }
+
+      const fd = new FormData();
+      fd.set("estimateId", upsert.estimateId);
+      const saved = await saveEstimateAction(fd);
+      if (saved.success) {
+        router.push("/orcamentos?salvo=1");
+      } else {
+        setSubmitError(saved.errors._?.[0] ?? t("saveError"));
+      }
+    });
+  }
+
+  // Client-side summary calc (usa preço promocional quando houver)
   const lineItems: { label: string; qty: number; unitPrice: number; subtotal: number }[] = [];
   for (const st of serviceTypes) {
     const qty = state.serviceItems[st.id] ?? 0;
-    if (qty > 0) lineItems.push({ label: `${st.serviceName} — ${st.name}`, qty, unitPrice: st.price, subtotal: st.price * qty });
+    const price = effectivePrice(st);
+    if (qty > 0) lineItems.push({ label: `${st.serviceName} — ${st.name}`, qty, unitPrice: price, subtotal: price * qty });
   }
   for (const es of extraServices) {
-    if (state.extraItems[es.id]) lineItems.push({ label: es.name, qty: 1, unitPrice: es.price, subtotal: es.price });
+    const qty = state.extraItems[es.id] ?? 0;
+    if (qty > 0) lineItems.push({ label: es.name, qty, unitPrice: es.price, subtotal: es.price * qty });
   }
   const total = lineItems.reduce((s, i) => s + i.subtotal, 0);
   const hasSelection = lineItems.length > 0;
@@ -165,10 +217,65 @@ export function BookingClient({
     grouped[st.serviceName].push(st);
   }
 
+  const freqLabel = (f: State["frequency"]) =>
+    t(FREQ_KEYS.find((o) => o.value === f)!.key);
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 print:bg-white">
+      {/* ── Versão de impressão (só aparece no print) ── */}
+      <div className="hidden print:block p-8 text-gray-900">
+        <div className="flex items-center gap-4 border-b border-gray-300 pb-4 mb-6">
+          {companyLogo && (
+            <img src={companyLogo} alt="" className="w-16 h-16 rounded-lg object-cover" />
+          )}
+          <div>
+            <p className="text-xl font-bold">{companyName}</p>
+            <p className="text-sm text-gray-600">{configName}</p>
+          </div>
+          <div className="ml-auto text-right text-sm text-gray-600">
+            <p className="font-semibold">{t("printTitle")}</p>
+            <p>{new Date().toLocaleDateString(locale)}</p>
+          </div>
+        </div>
+
+        <p className="text-sm mb-4">
+          <span className="font-semibold">{t("frequency")}:</span> {freqLabel(state.frequency)}
+        </p>
+
+        <table className="w-full text-sm mb-6">
+          <thead>
+            <tr className="border-b border-gray-300 text-left">
+              <th className="py-2 font-semibold">{t("printService")}</th>
+              <th className="py-2 font-semibold text-center w-16">{t("printQty")}</th>
+              <th className="py-2 font-semibold text-right w-28">{t("printUnit")}</th>
+              <th className="py-2 font-semibold text-right w-28">{t("printSubtotal")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lineItems.map((item, i) => (
+              <tr key={i} className="border-b border-gray-100">
+                <td className="py-2">{item.label}</td>
+                <td className="py-2 text-center">{item.qty}</td>
+                <td className="py-2 text-right">{fmt(item.unitPrice, currency, locale)}</td>
+                <td className="py-2 text-right">{fmt(item.subtotal, currency, locale)}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colSpan={3} className="py-3 text-right font-bold">{t("totalEstimated")}</td>
+              <td className="py-3 text-right font-bold text-base">{fmt(total, currency, locale)}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <p className="text-xs text-gray-500">
+          {t("printDisclaimer", { date: new Date().toLocaleString(locale) })}
+        </p>
+      </div>
+
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white border-b border-gray-200 print:hidden">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center shrink-0" aria-hidden="true">
             {companyLogo ? (
@@ -177,22 +284,23 @@ export function BookingClient({
               <span className="text-white font-bold">{companyName[0].toUpperCase()}</span>
             )}
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <h1 className="text-sm font-semibold text-gray-900">{companyName}</h1>
             <p className="text-xs text-gray-500">{configName}</p>
           </div>
+          <LanguageSwitcher />
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-4 py-8 lg:flex lg:gap-8 lg:items-start">
+      <div className="max-w-5xl mx-auto px-4 py-8 lg:flex lg:gap-8 lg:items-start print:hidden">
         {/* ── Left: Selection ── */}
         <div className="flex-1 min-w-0 space-y-6">
 
           {/* Frequency */}
           <section className="bg-white rounded-xl border border-gray-200 p-5">
-            <h2 className="text-sm font-semibold text-gray-900 mb-4">Frequência</h2>
-            <div role="group" aria-label="Frequência do serviço" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {FREQ_OPTIONS.map(({ value, label }) => (
+            <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("frequency")}</h2>
+            <div role="group" aria-label={t("frequency")} className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {FREQ_KEYS.map(({ value, key }) => (
                 <button
                   key={value}
                   type="button"
@@ -204,7 +312,7 @@ export function BookingClient({
                       : "bg-white text-gray-700 border-gray-200 hover:border-blue-300"
                   }`}
                 >
-                  {label}
+                  {t(key)}
                 </button>
               ))}
             </div>
@@ -212,12 +320,12 @@ export function BookingClient({
 
           {/* Services */}
           <section className="bg-white rounded-xl border border-gray-200 p-5">
-            <h2 className="text-sm font-semibold text-gray-900 mb-1">Serviços</h2>
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">{t("services")}</h2>
             {!allowPartialService && (
-              <p className="text-xs text-gray-500 mb-4">Todos os serviços estão incluídos. Ajuste as quantidades conforme necessário.</p>
+              <p className="text-xs text-gray-500 mb-4">{t("allIncluded")}</p>
             )}
             {allowPartialService && (
-              <p className="text-xs text-gray-500 mb-4">Selecione os serviços desejados.</p>
+              <p className="text-xs text-gray-500 mb-4">{t("selectServices")}</p>
             )}
 
             <div className="space-y-5">
@@ -228,6 +336,7 @@ export function BookingClient({
                     {types.map((st) => {
                       const qty = state.serviceItems[st.id] ?? 0;
                       const selected = qty > 0;
+                      const hasPromo = st.promoPrice != null && st.promoPrice < st.price;
                       return (
                         <div
                           key={st.id}
@@ -246,24 +355,41 @@ export function BookingClient({
                             />
                           )}
                           <label htmlFor={allowPartialService ? `st-${st.id}` : undefined} className="flex-1 min-w-0 cursor-pointer">
-                            <span className="text-sm font-medium text-gray-900 block">{st.name}</span>
-                            <span className="text-xs text-gray-500">{fmt(st.price)} · {fmtMin(st.estimatedMinutes)}</span>
+                            <span className="text-sm font-medium text-gray-900 block">
+                              {st.name}
+                              {hasPromo && (
+                                <span className="ml-2 inline-block text-[10px] font-bold uppercase tracking-wide bg-emerald-100 text-emerald-700 rounded-full px-2 py-0.5 align-middle">
+                                  {t("promoBadge")}
+                                </span>
+                              )}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {hasPromo ? (
+                                <>
+                                  <s className="text-gray-400">{fmt(st.price, currency, locale)}</s>{" "}
+                                  <span className="text-emerald-700 font-semibold">{fmt(st.promoPrice!, currency, locale)}</span>
+                                </>
+                              ) : (
+                                fmt(st.price, currency, locale)
+                              )}
+                              {" · "}{fmtMin(st.estimatedMinutes)}
+                            </span>
                           </label>
-                          {/* Qty counter */}
-                          {selected && (
-                            <div className="flex items-center gap-1" role="group" aria-label={`Quantidade de ${st.name}`}>
+                          {/* Qty counter — só quando o serviço permite quantidade */}
+                          {selected && st.allowQuantity && (
+                            <div className="flex items-center gap-1" role="group" aria-label={t("quantityOf", { name: st.name })}>
                               <button
                                 type="button"
                                 onClick={() => dispatch({ type: "SET_QTY", id: st.id, qty: qty - 1 })}
-                                aria-label={`Diminuir quantidade de ${st.name}`}
-                                disabled={allowPartialService ? qty <= 1 : qty <= 1}
+                                aria-label={t("decrease", { name: st.name })}
+                                disabled={qty <= 1}
                                 className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-40"
                               >−</button>
                               <span className="w-6 text-center text-sm font-medium" aria-live="polite" aria-atomic="true">{qty}</span>
                               <button
                                 type="button"
                                 onClick={() => dispatch({ type: "SET_QTY", id: st.id, qty: qty + 1 })}
-                                aria-label={`Aumentar quantidade de ${st.name}`}
+                                aria-label={t("increase", { name: st.name })}
                                 className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100"
                               >+</button>
                             </div>
@@ -280,26 +406,46 @@ export function BookingClient({
           {/* Extras */}
           {extraServices.length > 0 && (
             <section className="bg-white rounded-xl border border-gray-200 p-5">
-              <h2 className="text-sm font-semibold text-gray-900 mb-4">Serviços adicionais</h2>
-              <div className="space-y-2" role="group" aria-label="Serviços adicionais opcionais">
+              <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("extras")}</h2>
+              <div className="space-y-2" role="group" aria-label={t("extras")}>
                 {extraServices.map((es) => {
-                  const on = !!state.extraItems[es.id];
+                  const qty = state.extraItems[es.id] ?? 0;
+                  const on = qty > 0;
                   return (
                     <div key={es.id} className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${on ? "border-blue-300 bg-blue-50/50" : "border-gray-200"}`}>
                       <button
                         type="button"
                         role="switch"
                         aria-checked={on}
-                        onClick={() => dispatch({ type: "TOGGLE_EXTRA", id: es.id })}
-                        aria-label={`${on ? "Remover" : "Adicionar"} ${es.name}`}
+                        onClick={() => dispatch({ type: "SET_EXTRA_QTY", id: es.id, qty: on ? 0 : 1 })}
+                        aria-label={on ? t("remove", { name: es.name }) : t("add", { name: es.name })}
                         className={`relative w-10 h-6 rounded-full transition-colors shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${on ? "bg-blue-600" : "bg-gray-300"}`}
                       >
                         <span className={`block w-4 h-4 rounded-full bg-white shadow transition-transform absolute top-1 ${on ? "translate-x-5" : "translate-x-1"}`} aria-hidden="true" />
                       </button>
                       <div className="flex-1 min-w-0">
                         <span className="text-sm font-medium text-gray-900 block">{es.name}</span>
-                        <span className="text-xs text-gray-500">{fmt(es.price)} · {fmtMin(es.estimatedMinutes)}</span>
+                        <span className="text-xs text-gray-500">{fmt(es.price, currency, locale)} · {fmtMin(es.estimatedMinutes)}</span>
                       </div>
+                      {/* Qty counter — só quando o extra permite quantidade */}
+                      {on && es.allowQuantity && (
+                        <div className="flex items-center gap-1" role="group" aria-label={t("quantityOf", { name: es.name })}>
+                          <button
+                            type="button"
+                            onClick={() => dispatch({ type: "SET_EXTRA_QTY", id: es.id, qty: qty - 1 })}
+                            aria-label={t("decrease", { name: es.name })}
+                            disabled={qty <= 1}
+                            className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-40"
+                          >−</button>
+                          <span className="w-6 text-center text-sm font-medium" aria-live="polite" aria-atomic="true">{qty}</span>
+                          <button
+                            type="button"
+                            onClick={() => dispatch({ type: "SET_EXTRA_QTY", id: es.id, qty: qty + 1 })}
+                            aria-label={t("increase", { name: es.name })}
+                            className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100"
+                          >+</button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -310,31 +456,52 @@ export function BookingClient({
 
         {/* ── Right: Summary (desktop sticky) ── */}
         <aside className="hidden lg:block w-72 shrink-0 sticky top-6">
-          <Summary lineItems={lineItems} total={total} hasSelection={hasSelection} isPending={isPending} submitError={submitError} onSubmit={handleSubmit} />
+          <Summary
+            lineItems={lineItems}
+            total={total}
+            hasSelection={hasSelection}
+            isPending={isPending}
+            isSaving={isSaving}
+            submitError={submitError}
+            onSubmit={handleSubmit}
+            onSaveQuote={handleSaveQuote}
+            currency={currency}
+            locale={locale}
+          />
         </aside>
       </div>
 
       {/* Mobile: fixed bottom bar */}
-      <div className="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 px-4 py-3 flex items-center gap-3">
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-gray-500">Total estimado</p>
-          <p
-            className="text-base font-bold text-gray-900"
-            aria-live="polite"
-            aria-atomic="true"
-            aria-label={`Total: ${fmt(total)}`}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 px-4 py-3 print:hidden">
+        <div className="flex items-center gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-gray-500">{t("totalEstimated")}</p>
+            <p
+              className="text-base font-bold text-gray-900"
+              aria-live="polite"
+              aria-atomic="true"
+              aria-label={t("totalLabel", { value: fmt(total, currency, locale) })}
+            >
+              {fmt(total, currency, locale)}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleSaveQuote}
+            disabled={!hasSelection || isSaving}
+            className="px-3 py-2.5 text-sm font-semibold text-blue-700 border border-blue-200 rounded-xl hover:bg-blue-50 disabled:opacity-50 shrink-0"
           >
-            {fmt(total)}
-          </p>
+            {isSaving ? t("saving") : t("saveShort")}
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!hasSelection || isPending}
+            className="px-5 py-2.5 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 shrink-0"
+          >
+            {isPending ? t("saving") : t("continueShort")}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={!hasSelection || isPending}
-          className="px-5 py-2.5 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 shrink-0"
-        >
-          {isPending ? "Salvando..." : "Continuar →"}
-        </button>
       </div>
     </div>
   );
@@ -345,27 +512,36 @@ function Summary({
   total,
   hasSelection,
   isPending,
+  isSaving,
   submitError,
   onSubmit,
+  onSaveQuote,
+  currency,
+  locale,
 }: {
   lineItems: { label: string; qty: number; unitPrice: number; subtotal: number }[];
   total: number;
   hasSelection: boolean;
   isPending: boolean;
+  isSaving: boolean;
   submitError: string | null;
   onSubmit: () => void;
+  onSaveQuote: () => void;
+  currency: string;
+  locale: string;
 }) {
+  const t = useTranslations("booking");
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <h2 className="text-sm font-semibold text-gray-900 mb-4">Resumo do pedido</h2>
+      <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("summaryTitle")}</h2>
       {lineItems.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-4">Nenhum serviço selecionado</p>
+        <p className="text-sm text-gray-400 text-center py-4">{t("noneSelected")}</p>
       ) : (
         <ul
           className="space-y-2 mb-4"
           aria-live="polite"
           aria-atomic="false"
-          aria-label="Itens selecionados"
+          aria-label={t("summaryTitle")}
         >
           {lineItems.map((item, i) => (
             <li key={i} className="flex items-start justify-between gap-2 text-sm">
@@ -373,7 +549,7 @@ function Summary({
                 {item.label}
                 {item.qty > 1 && <span className="text-gray-400 ml-1">×{item.qty}</span>}
               </span>
-              <span className="text-gray-900 font-medium shrink-0">{item.subtotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+              <span className="text-gray-900 font-medium shrink-0">{formatMoney(item.subtotal, currency, locale)}</span>
             </li>
           ))}
         </ul>
@@ -381,14 +557,14 @@ function Summary({
 
       <div className="border-t border-gray-100 pt-3 mb-4">
         <div className="flex justify-between items-center">
-          <span className="text-sm font-semibold text-gray-700">Total estimado</span>
+          <span className="text-sm font-semibold text-gray-700">{t("totalEstimated")}</span>
           <span
             className="text-lg font-bold text-gray-900"
             aria-live="polite"
             aria-atomic="true"
-            aria-label={`Total: ${total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`}
+            aria-label={t("totalLabel", { value: formatMoney(total, currency, locale) })}
           >
-            {total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+            {formatMoney(total, currency, locale)}
           </span>
         </div>
       </div>
@@ -404,8 +580,29 @@ function Summary({
         aria-disabled={!hasSelection || isPending}
         className="w-full py-3 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
       >
-        {isPending ? "Salvando..." : "Continuar para agendamento →"}
+        {isPending ? t("saving") : t("continueBooking")}
       </button>
+
+      <button
+        type="button"
+        onClick={onSaveQuote}
+        disabled={!hasSelection || isSaving}
+        aria-disabled={!hasSelection || isSaving}
+        className="w-full mt-2 py-3 text-sm font-semibold text-blue-700 border border-blue-200 rounded-xl hover:bg-blue-50 disabled:opacity-50 transition-colors"
+      >
+        {isSaving ? t("saving") : t("saveQuote")}
+      </button>
+      <button
+        type="button"
+        onClick={() => window.print()}
+        disabled={!hasSelection}
+        className="w-full mt-2 py-2.5 text-sm font-medium text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-colors"
+      >
+        🖨 {t("printQuote")}
+      </button>
+      <p className="text-[11px] text-gray-400 mt-2 text-center">
+        {t("saveHint")}
+      </p>
     </div>
   );
 }

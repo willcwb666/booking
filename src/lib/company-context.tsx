@@ -10,6 +10,8 @@ export type CompanyContext = {
   planTier: string;
   planDisplayName: string;
   role: "OWNER" | "MANAGER" | "EMPLOYEE";
+  currency: string; // ISO 4217 (BRL, USD…)
+  locale: string;   // BCP 47 (pt-BR, en-US…)
 };
 
 const CompanyCtx = createContext<CompanyContext | null>(null);

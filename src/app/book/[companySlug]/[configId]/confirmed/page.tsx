@@ -1,6 +1,10 @@
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+import { generateIcsToken } from "@/lib/ics";
+import { formatMoney } from "@/lib/format";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 export default async function ConfirmedPage({
   params,
@@ -15,6 +19,7 @@ export default async function ConfirmedPage({
 }) {
   const { companySlug, configId } = await params;
   const { booking: bookingId, redirect_status } = await searchParams;
+  const t = await getTranslations("confirmed");
 
   if (!bookingId) notFound();
 
@@ -22,7 +27,7 @@ export default async function ConfirmedPage({
     where: { id: bookingId },
     include: {
       bookingConfig: {
-        include: { company: { select: { name: true, logoUrl: true } } },
+        include: { company: { select: { name: true, logoUrl: true, currency: true, locale: true } } },
       },
       customerDetail: true,
       estimate: {
@@ -38,6 +43,7 @@ export default async function ConfirmedPage({
         },
       },
       professional: { select: { name: true } },
+      companyPaymentMethod: { select: { kind: true, label: true, handle: true, instructions: true } },
     },
   });
 
@@ -73,15 +79,15 @@ export default async function ConfirmedPage({
               <line x1="9" y1="9" x2="15" y2="15" />
             </svg>
           </div>
-          <h1 className="text-lg font-bold text-gray-900 mb-2">Pagamento não concluído</h1>
+          <h1 className="text-lg font-bold text-gray-900 mb-2">{t("payFailedTitle")}</h1>
           <p className="text-sm text-gray-600 mb-6">
-            Houve um problema ao processar seu pagamento. Tente novamente.
+            {t("payFailedText")}
           </p>
           <Link
             href={`/book/${companySlug}/${configId}/checkout?estimate=${booking.estimateId}`}
             className="inline-block py-2 px-5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Tentar novamente
+            {t("tryAgain")}
           </Link>
         </div>
       </div>
@@ -103,10 +109,11 @@ export default async function ConfirmedPage({
               {config.company.name[0].toUpperCase()}
             </span>
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <h1 className="text-sm font-semibold text-gray-900">{config.company.name}</h1>
             <p className="text-xs text-gray-500">{config.name}</p>
           </div>
+          <LanguageSwitcher />
         </div>
       </header>
 
@@ -130,52 +137,72 @@ export default async function ConfirmedPage({
             </svg>
           </div>
           <h2 className="text-lg font-bold text-green-900 mb-1">
-            {isCash ? "Agendamento confirmado!" : isPix && isCardSuccess ? "PIX confirmado!" : isPix ? "Aguardando PIX" : isCardSuccess ? "Pagamento confirmado!" : "Agendamento recebido!"}
+            {isCash ? t("titleCash") : isPix && isCardSuccess ? t("titlePixPaid") : isPix ? t("titlePixWaiting") : isCardSuccess ? t("titleCardPaid") : t("titleReceived")}
           </h2>
           <p className="text-sm text-green-700">
             {isCash
-              ? "Seu agendamento foi confirmado. O pagamento será feito no dia do serviço."
+              ? t("textCash")
               : isPix && isCardSuccess
-              ? "Seu pagamento PIX foi confirmado e o agendamento está ativo."
+              ? t("textPixPaid")
               : isPix
-              ? "Seu agendamento foi criado. Após a confirmação do PIX será ativado."
+              ? t("textPixWaiting")
               : isCardSuccess
-              ? "Seu pagamento foi processado e o agendamento está confirmado."
-              : "Recebemos seu agendamento. Aguarde a confirmação do pagamento."}
+              ? t("textCardPaid")
+              : t("textReceived")}
           </p>
         </div>
 
+        {/* Instruções de pagamento — métodos manuais (PIX por chave, Zelle, Venmo…) */}
+        {booking.companyPaymentMethod?.kind === "MANUAL" &&
+          booking.paymentStatus === "PENDING" &&
+          (booking.companyPaymentMethod.handle || booking.companyPaymentMethod.instructions) && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-4">
+              <h2 className="text-sm font-semibold text-blue-900 mb-2">
+                {t("howToPay", { label: booking.companyPaymentMethod.label })}
+              </h2>
+              {booking.companyPaymentMethod.handle && (
+                <p className="text-sm font-mono font-medium text-blue-900 bg-white border border-blue-100 rounded-lg px-3 py-2 mb-2 break-all">
+                  {booking.companyPaymentMethod.handle}
+                </p>
+              )}
+              <p className="text-xs text-blue-700">
+                {booking.companyPaymentMethod.instructions ?? t("afterPay")}
+              </p>
+            </div>
+          )}
+
         {/* Booking details */}
         <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-          <h2 className="text-sm font-semibold text-gray-900 mb-4">Detalhes do agendamento</h2>
+          <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("detailsTitle")}</h2>
           <dl className="space-y-3">
             <div className="flex justify-between text-sm">
-              <dt className="text-gray-500">Data</dt>
+              <dt className="text-gray-500">{t("date")}</dt>
               <dd className="font-medium text-gray-900">
                 {booking.scheduledDate.split("-").reverse().join("/")}
               </dd>
             </div>
             <div className="flex justify-between text-sm">
-              <dt className="text-gray-500">Horário</dt>
+              <dt className="text-gray-500">{t("time")}</dt>
               <dd className="font-medium text-gray-900">
                 {booking.scheduledStartTime} – {booking.scheduledEndTime}
               </dd>
             </div>
             {booking.professional && (
               <div className="flex justify-between text-sm">
-                <dt className="text-gray-500">Profissional</dt>
+                <dt className="text-gray-500">{t("professional")}</dt>
                 <dd className="font-medium text-gray-900">{booking.professional.name}</dd>
               </div>
             )}
             <div className="flex justify-between text-sm">
-              <dt className="text-gray-500">Pagamento</dt>
+              <dt className="text-gray-500">{t("payment")}</dt>
               <dd className="font-medium text-gray-900">
-                {booking.paymentMethod === "CARD" ? "Cartão" : booking.paymentMethod === "PIX" ? "PIX" : "Dinheiro / Cheque"}
+                {booking.companyPaymentMethod?.label ??
+                  (booking.paymentMethod === "CARD" ? t("card") : booking.paymentMethod === "PIX" ? "PIX" : t("cashCheck"))}
               </dd>
             </div>
             {customer && (
               <div className="flex justify-between text-sm">
-                <dt className="text-gray-500">Endereço</dt>
+                <dt className="text-gray-500">{t("address")}</dt>
                 <dd className="font-medium text-gray-900 text-right">
                   {customer.address}
                   {customer.aptNo ? `, ${customer.aptNo}` : ""} — {customer.city}
@@ -187,7 +214,7 @@ export default async function ConfirmedPage({
 
         {/* Order summary */}
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-900 mb-3">Serviços contratados</h2>
+          <h2 className="text-sm font-semibold text-gray-900 mb-3">{t("servicesTitle")}</h2>
           <ul className="space-y-1.5 mb-3">
             {(booking.estimate?.serviceTypes ?? []).map((item) => (
               <li key={item.id} className="flex justify-between text-sm">
@@ -198,10 +225,7 @@ export default async function ConfirmedPage({
                   )}
                 </span>
                 <span className="font-medium text-gray-900">
-                  {Number(item.subtotal).toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })}
+                  {formatMoney(Number(item.subtotal), config.company.currency, config.company.locale)}
                 </span>
               </li>
             ))}
@@ -209,21 +233,15 @@ export default async function ConfirmedPage({
               <li key={item.id} className="flex justify-between text-sm">
                 <span className="text-gray-700">{item.extraService.name}</span>
                 <span className="font-medium text-gray-900">
-                  {Number(item.subtotal).toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })}
+                  {formatMoney(Number(item.subtotal), config.company.currency, config.company.locale)}
                 </span>
               </li>
             ))}
           </ul>
           <div className="border-t border-gray-100 pt-3 flex justify-between">
-            <span className="text-sm font-semibold text-gray-700">Total</span>
+            <span className="text-sm font-semibold text-gray-700">{t("total")}</span>
             <span className="text-base font-bold text-gray-900">
-              {Number(booking.estimate?.total ?? 0).toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-              })}
+              {formatMoney(Number(booking.estimate?.total ?? 0), config.company.currency, config.company.locale)}
             </span>
           </div>
         </div>
@@ -231,7 +249,7 @@ export default async function ConfirmedPage({
         {/* Calendar download */}
         <div className="flex flex-wrap gap-3 justify-center mt-4">
           <a
-            href={`/api/ics/${bookingId}`}
+            href={`/api/ics/${bookingId}?token=${generateIcsToken(bookingId)}`}
             download
             className="text-xs text-blue-600 hover:underline flex items-center gap-1"
           >
@@ -241,12 +259,12 @@ export default async function ConfirmedPage({
               <line x1="8" y1="2" x2="8" y2="6" />
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
-            Adicionar ao calendário (.ics)
+            {t("addToCalendar")}
           </a>
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-4">
-          Dúvidas? Entre em contato com {config.company.name}.
+          {t("questions", { name: config.company.name })}
         </p>
       </div>
     </div>

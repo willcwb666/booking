@@ -16,6 +16,7 @@ export const serviceTypeSchema = z.object({
     .number({ error: "Duração inválida" })
     .int("Deve ser número inteiro")
     .min(1, "Duração mínima é 1 minuto"),
+  allowQuantity: z.boolean().default(false),
 });
 
 export const extraServiceSchema = z.object({
@@ -28,6 +29,7 @@ export const extraServiceSchema = z.object({
     .number({ error: "Duração inválida" })
     .int("Deve ser número inteiro")
     .min(1, "Duração mínima é 1 minuto"),
+  allowQuantity: z.boolean().default(false),
 });
 
 export type ServiceInput = z.infer<typeof serviceSchema>;

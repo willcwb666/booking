@@ -32,6 +32,8 @@ export default async function CompanyLayout({
         planTier: company.plan.tier,
         planDisplayName: company.plan.displayName,
         role: member.role,
+        currency: company.currency,
+        locale: company.locale,
       }}
     >
       <div className="flex min-h-screen bg-gray-50">

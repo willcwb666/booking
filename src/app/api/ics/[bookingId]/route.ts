@@ -1,22 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { generateIcsToken } from "@/lib/ics";
 
 function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
 function toICSDate(dateStr: string, timeStr: string): string {
-  // dateStr: "YYYY-MM-DD", timeStr: "HH:MM"
   const [y, m, d] = dateStr.split("-").map(Number);
   const [h, min] = timeStr.split(":").map(Number);
   return `${y}${pad(m)}${pad(d)}T${pad(h)}${pad(min)}00`;
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ bookingId: string }> }
 ): Promise<NextResponse> {
   const { bookingId } = await params;
+
+  // Verify token to prevent unauthorized access
+  const token = request.nextUrl.searchParams.get("token");
+  const expected = generateIcsToken(bookingId);
+  if (!token || token !== expected) {
+    return NextResponse.json({ error: "Token inválido" }, { status: 403 });
+  }
 
   const booking = await db.booking.findUnique({
     where: { id: bookingId },

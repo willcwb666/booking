@@ -5,8 +5,11 @@ const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
 const API_VERSION = "v18.0";
 
 function formatPhone(phone: string): string {
-  // Remove non-digits, ensure starts with country code (55 for Brazil)
+  // Números com "+" já trazem o DDI (qualquer país) — só remove a formatação.
+  // Sem "+", assume legado brasileiro e prefixa 55.
+  const hasCountryCode = phone.trim().startsWith("+");
   const digits = phone.replace(/\D/g, "");
+  if (hasCountryCode) return digits;
   if (digits.startsWith("55")) return digits;
   return `55${digits}`;
 }

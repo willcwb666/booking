@@ -3,6 +3,15 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
 
+/**
+ * Previne formula injection no Excel/Sheets: valores controláveis pelo
+ * cliente (nome, endereço, etc.) que começam com =, +, -, @ ou tab/CR
+ * seriam interpretados como fórmula ao abrir o CSV.
+ */
+function sanitizeCsvCell(value: string): string {
+  return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+}
+
 export async function GET(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
@@ -15,7 +24,7 @@ export async function GET(req: NextRequest) {
 
   const member = await db.companyUser.findFirst({
     where: { userId: session.user.id, isActive: true, company: { slug: companySlug } },
-    include: { company: { select: { id: true, name: true } } },
+    include: { company: { select: { id: true, name: true, currency: true, locale: true } } },
   });
   if (!member) return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
 
@@ -51,9 +60,23 @@ export async function GET(req: NextRequest) {
     PENDING: "Aguardando", PAID: "Pago", FAILED: "Falhou", REFUNDED: "Reembolsado",
   };
 
+  const { currency, locale } = member.company;
+  // Separador decimal conforme o locale da empresa (vírgula pt-BR, ponto en-US)
+  const formatAmount = (value: number) => {
+    try {
+      return value.toLocaleString(locale, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+        useGrouping: false,
+      });
+    } catch {
+      return value.toFixed(2).replace(".", ",");
+    }
+  };
+
   const header = [
     "ID", "Data", "Início", "Fim", "Status", "Pagamento", "Status Pagamento",
-    "Valor (R$)", "Cliente", "E-mail", "Telefone", "Endereço", "Cidade", "CEP",
+    `Valor (${currency})`, "Cliente", "E-mail", "Telefone", "Endereço", "Cidade", "CEP",
     "Serviços", "Frequência",
   ].join(";");
 
@@ -68,7 +91,7 @@ export async function GET(req: NextRequest) {
       STATUS_LABELS[b.status]  ?? b.status,
       PAYMENT_LABELS[b.paymentMethod] ?? b.paymentMethod,
       PSTATUS_LABELS[b.paymentStatus] ?? b.paymentStatus,
-      Number(b.estimate?.total ?? 0).toFixed(2).replace(".", ","),
+      formatAmount(Number(b.estimate?.total ?? 0)),
       cd ? `${cd.firstName} ${cd.lastName}` : "",
       cd?.email ?? "",
       cd?.phone ?? "",
@@ -78,7 +101,7 @@ export async function GET(req: NextRequest) {
       services,
       b.estimate?.frequency ?? "",
     ];
-    return cols.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";");
+    return cols.map((v) => `"${sanitizeCsvCell(String(v)).replace(/"/g, '""')}"`).join(";");
   });
 
   const csv = [header, ...rows].join("\n");

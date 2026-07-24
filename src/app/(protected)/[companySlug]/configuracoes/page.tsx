@@ -18,8 +18,17 @@ export default async function ConfiguracoesPage({
   const role = company.members[0].role;
   const canEdit = role === "OWNER" || role === "MANAGER";
 
-  const paymentSettings = await db.companyPaymentSettings.findUnique({
+  const paymentMethods = await db.companyPaymentMethod.findMany({
     where: { companyId: company.id },
+    orderBy: { displayOrder: "asc" },
+    select: {
+      id: true,
+      kind: true,
+      label: true,
+      handle: true,
+      instructions: true,
+      isActive: true,
+    },
   });
 
   return (
@@ -30,15 +39,13 @@ export default async function ConfiguracoesPage({
         name: company.name,
         phone: company.phone ?? "",
         address: company.address ?? "",
+        timezone: company.timezone,
+        currency: company.currency,
+        locale: company.locale,
+        logoUrl: company.logoUrl,
       }}
       bookingBaseUrl={`/book/${companySlug}`}
-      paymentSettings={{
-        enableCard: paymentSettings?.enableCard ?? true,
-        enableCashCheck: paymentSettings?.enableCashCheck ?? true,
-        enablePix: paymentSettings?.enablePix ?? false,
-        pixKey: paymentSettings?.pixKey ?? "",
-        pixKeyType: paymentSettings?.pixKeyType ?? "",
-      }}
+      paymentMethods={paymentMethods}
     />
   );
 }

@@ -27,12 +27,13 @@ export default async function PerfilPage() {
       bio={user.bio ?? ""}
       location={user.location ?? ""}
       notifPrefs={{
-        enableEmail:    prefs?.enableEmail    ?? true,
-        enablePush:     prefs?.enablePush     ?? true,
-        enableWhatsApp: prefs?.enableWhatsApp ?? false,
-        enableSms:      prefs?.enableSms      ?? false,
-        whatsappPhone:  prefs?.whatsappPhone  ?? "",
-        smsPhone:       prefs?.smsPhone       ?? "",
+        enableEmail:     prefs?.enableEmail     ?? true,
+        enablePush:      prefs?.enablePush      ?? true,
+        enableWhatsApp:  prefs?.enableWhatsApp  ?? false,
+        enableSms:       prefs?.enableSms       ?? false,
+        enableMarketing: prefs?.enableMarketing ?? false,
+        whatsappPhone:   prefs?.whatsappPhone   ?? "",
+        smsPhone:        prefs?.smsPhone        ?? "",
       }}
     />
   );
