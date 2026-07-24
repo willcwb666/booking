@@ -27,6 +27,10 @@ export async function GET(req: NextRequest) {
     include: { company: { select: { id: true, name: true, currency: true, locale: true } } },
   });
   if (!member) return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+  // Export contém PII de todos os clientes — restrito a gestão da empresa
+  if (member.role !== "OWNER" && member.role !== "MANAGER") {
+    return NextResponse.json({ error: "Sem permissão para exportar dados" }, { status: 403 });
+  }
 
   const where: Record<string, unknown> = { companyId: member.company.id };
   if (status && status !== "ALL") where.status = status;

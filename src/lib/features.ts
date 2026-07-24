@@ -24,7 +24,7 @@ export async function checkFeature(
     },
   });
 
-  const feature = company?.plan.features[0];
+  const feature = company?.plan?.features?.[0];
   if (!feature) return { enabled: false, limit: null };
   return { enabled: feature.enabled, limit: feature.limitValue };
 }

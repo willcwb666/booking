@@ -1,7 +1,14 @@
 import "server-only";
 import { redis } from "./redis";
 
-type RateLimitResult = { allowed: boolean; remaining: number; resetInSeconds: number };
+type RateLimitResult = {
+  allowed: boolean;
+  remaining: number;
+  resetInSeconds: number;
+  // true quando o Redis está indisponível e o limite não pôde ser aplicado —
+  // o chamador decide o fallback (ex.: limiter em memória para autenticação)
+  degraded?: boolean;
+};
 
 /**
  * Sliding-window rate limiter using Redis.
@@ -30,9 +37,10 @@ export async function rateLimit(
       resetInSeconds: ttl > 0 ? ttl : windowSeconds,
     };
   } catch {
-    // If Redis is down, allow the request (fail open)
-    console.error("[rate-limit] Redis unavailable, failing open");
-    return { allowed: true, remaining: limit, resetInSeconds: windowSeconds };
+    // Redis indisponível: sinaliza degradação. Endpoints comuns seguem
+    // (fail-open), mas os sensíveis (auth) aplicam fallback em memória.
+    console.error("[rate-limit] Redis unavailable, failing open (degraded)");
+    return { allowed: true, remaining: limit, resetInSeconds: windowSeconds, degraded: true };
   }
 }
 

@@ -122,6 +122,10 @@ export async function removeWaitlistEntryAction(
     return { success: false, error: "Sem permissão" };
   }
 
-  await db.waitlistEntry.delete({ where: { id: entryId } });
+  // Escopa a exclusão à empresa do membro — evita IDOR cross-tenant
+  const deleted = await db.waitlistEntry.deleteMany({
+    where: { id: entryId, companyId: member.companyId },
+  });
+  if (deleted.count === 0) return { success: false, error: "Entrada não encontrada" };
   return { success: true };
 }

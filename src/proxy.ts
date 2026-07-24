@@ -46,11 +46,12 @@ export async function proxy(request: NextRequest) {
   const isAuthRoute = AUTH_ROUTES.some((r) => pathname.startsWith(r));
   const isAdminRoute = ADMIN_ROUTES.some((r) => pathname.startsWith(r));
 
+  // O rate limit de brute-force é aplicado no handler /api/auth (route.ts),
+  // pois este matcher exclui /api — verificar aqui seria código morto.
+
   const session = await auth.api.getSession({ headers: request.headers });
 
   // Auth routes: se já está logado, manda ao roteador pós-login (/dashboard),
-  // que decide o destino (admin → /admin, sem empresa → onboarding,
-  // 1 empresa → dashboard dela, 2+ → seletor de ambiente)
   if (isAuthRoute) {
     if (session) return NextResponse.redirect(new URL("/dashboard", request.url));
     return NextResponse.next();
