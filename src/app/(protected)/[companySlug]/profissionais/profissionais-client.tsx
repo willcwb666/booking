@@ -39,7 +39,7 @@ function FieldError({
   const msgs = errors?.[field];
   if (!msgs?.length) return null;
   return (
-    <p className="text-xs text-red-600 mt-1" role="alert">
+    <p className="text-xs text-[var(--color-danger)] mt-1" role="alert">
       {msgs[0]}
     </p>
   );
@@ -50,7 +50,7 @@ function GlobalError({ errors }: { errors: Record<string, string[]> | null }) {
   if (!msgs?.length) return null;
   return (
     <p
-      className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
+      className="alert alert-danger"
       role="alert"
     >
       {msgs[0]}
@@ -70,10 +70,10 @@ function Avatar({ name, avatarUrl }: { name: string; avatarUrl: string | null })
   }
   return (
     <div
-      className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0"
+      className="w-8 h-8 rounded-full bg-[var(--color-bg-muted)] flex items-center justify-center shrink-0"
       aria-hidden="true"
     >
-      <span className="text-xs font-semibold text-gray-500">
+      <span className="text-xs font-semibold text-[var(--color-text-muted)]">
         {name[0].toUpperCase()}
       </span>
     </div>
@@ -128,12 +128,13 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
   }
 
   return (
-    <div className="w-full max-w-7xl px-6 py-8 text-left">
+    <div className="page-container">
+     <div className="page-content">
       {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
+      <div className="page-header !mb-6 flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Profissionais</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="page-title">Profissionais</h1>
+          <p className="page-description">
             {limit !== null
               ? `${professionals.length} de ${limit} profissionais ativos`
               : `${professionals.length} profissional(is) ativo(s)`}
@@ -142,7 +143,7 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
         <button
           onClick={() => openDialog({ type: "create" })}
           disabled={atLimit}
-          className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="btn btn-primary shrink-0"
           aria-disabled={atLimit}
           title={atLimit ? `Limite de ${limit} profissionais atingido` : undefined}
         >
@@ -151,56 +152,48 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
       </div>
 
       {atLimit && (
-        <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-          <p className="text-sm text-amber-800">
+        <div className="mb-4 bg-[var(--color-warning-light)] border border-[var(--color-warning-border)] rounded-xl px-4 py-3">
+          <p className="text-sm text-[var(--color-warning)]">
             Limite de <strong>{limit}</strong> profissional(is) atingido no plano atual. Faça upgrade para adicionar mais.
           </p>
         </div>
       )}
 
       {professionals.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
-          <p className="text-sm text-gray-400">Nenhum profissional cadastrado ainda.</p>
+        <div className="card py-16 text-center">
+          <p className="text-sm text-[var(--color-text-subtle)]">Nenhum profissional cadastrado ainda.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="table-container">
+          <table className="table">
             <caption className="sr-only">Lista de profissionais</caption>
-            <thead className="border-b border-gray-100 bg-gray-50">
-              <tr className="text-xs text-gray-400 uppercase">
-                <th scope="col" className="text-left px-4 py-3 font-medium">
-                  Profissional
-                </th>
-                <th scope="col" className="text-left px-4 py-3 font-medium">
-                  Email
-                </th>
-                <th scope="col" className="text-left px-4 py-3 font-medium">
-                  Telefone
-                </th>
-                <th scope="col" className="text-right px-4 py-3 font-medium sr-only">
-                  Ações
-                </th>
+            <thead>
+              <tr>
+                <th scope="col">Profissional</th>
+                <th scope="col">Email</th>
+                <th scope="col">Telefone</th>
+                <th scope="col" className="!text-right sr-only">Ações</th>
               </tr>
             </thead>
             <tbody>
               {professionals.map((pro) => (
-                <tr key={pro.id} className="border-t border-gray-50 hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3">
+                <tr key={pro.id}>
+                  <td>
                     <div className="flex items-center gap-3">
                       <Avatar name={pro.name} avatarUrl={pro.avatarUrl} />
                       <div>
-                        <p className="font-medium text-gray-900">{pro.name}</p>
+                        <p className="font-medium text-[var(--color-text-heading)]">{pro.name}</p>
                         {pro.bio && (
-                          <p className="text-xs text-gray-400 truncate max-w-48">{pro.bio}</p>
+                          <p className="text-xs text-[var(--color-text-subtle)] truncate max-w-48">{pro.bio}</p>
                         )}
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
-                    {pro.email ?? <span className="text-gray-300">—</span>}
+                  <td className="px-4 py-3 text-[var(--color-text)]">
+                    {pro.email ?? <span className="text-[var(--color-text-subtle)]">—</span>}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
-                    {pro.phone ?? <span className="text-gray-300">—</span>}
+                  <td className="px-4 py-3 text-[var(--color-text)]">
+                    {pro.phone ?? <span className="text-[var(--color-text-subtle)]">—</span>}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div
@@ -210,13 +203,13 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
                     >
                       <button
                         onClick={() => openDialog({ type: "edit", item: pro })}
-                        className="px-3 py-1 text-xs text-gray-600 hover:text-gray-900 transition-colors"
+                        className="px-3 py-1 text-xs text-[var(--color-text)] hover:text-[var(--color-text-heading)] transition-colors"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => handleDelete(pro.id)}
-                        className="px-3 py-1 text-xs text-red-500 hover:text-red-700 transition-colors"
+                        className="px-3 py-1 text-xs text-[var(--color-danger)] hover:opacity-80 transition-colors"
                       >
                         Desativar
                       </button>
@@ -232,7 +225,7 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
       {/* Dialog */}
       <dialog
         ref={dialogRef}
-        className="rounded-xl shadow-xl border border-gray-200 p-0 w-full max-w-md backdrop:bg-black/40"
+        className="rounded-xl shadow-xl border border-[var(--color-border)] p-0 w-full max-w-md backdrop:bg-black/40"
         onClose={closeDialog}
         aria-labelledby="dialog-title"
       >
@@ -250,17 +243,17 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
               }
             }}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">
               <h2
                 id="dialog-title"
-                className="text-base font-semibold text-gray-900"
+                className="text-base font-semibold text-[var(--color-text-heading)]"
               >
                 {dialog.type === "edit" ? "Editar Profissional" : "Novo Profissional"}
               </h2>
               <button
                 type="button"
                 onClick={closeDialog}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-[var(--color-text-subtle)] hover:text-[var(--color-text)] transition-colors"
                 aria-label="Fechar"
               >
                 ✕
@@ -273,7 +266,7 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="input-label"
                 >
                   Nome <span aria-hidden="true">*</span>
                 </label>
@@ -284,7 +277,7 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
                   required
                   autoFocus
                   defaultValue={dialog.type === "edit" ? dialog.item.name : ""}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="input"
                   aria-describedby={fieldErrors?.name ? "name-error" : undefined}
                 />
                 <FieldError errors={fieldErrors} field="name" />
@@ -293,7 +286,7 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="input-label"
                 >
                   Email
                 </label>
@@ -302,7 +295,7 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
                   name="email"
                   type="email"
                   defaultValue={dialog.type === "edit" ? (dialog.item.email ?? "") : ""}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="input"
                   aria-describedby={fieldErrors?.email ? "email-error" : undefined}
                 />
                 <FieldError errors={fieldErrors} field="email" />
@@ -311,7 +304,7 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
               <div>
                 <label
                   htmlFor="phone"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="input-label"
                 >
                   Telefone
                 </label>
@@ -320,14 +313,14 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
                   name="phone"
                   type="tel"
                   defaultValue={dialog.type === "edit" ? (dialog.item.phone ?? "") : ""}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="input"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="bio"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="input-label"
                 >
                   Bio
                 </label>
@@ -336,25 +329,25 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
                   name="bio"
                   rows={3}
                   defaultValue={dialog.type === "edit" ? (dialog.item.bio ?? "") : ""}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="textarea resize-none"
                   aria-describedby={fieldErrors?.bio ? "bio-error" : undefined}
                 />
                 <FieldError errors={fieldErrors} field="bio" />
               </div>
             </div>
 
-            <div className="px-5 py-4 border-t border-gray-100 flex justify-end gap-2">
+            <div className="px-5 py-4 border-t border-[var(--color-border)] flex justify-end gap-2">
               <button
                 type="button"
                 onClick={closeDialog}
-                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                className="btn btn-ghost"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={isPending}
-                className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors"
+                className="btn btn-primary"
               >
                 {isPending ? "Salvando..." : "Salvar"}
               </button>
@@ -362,6 +355,7 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
           </form>
         )}
       </dialog>
+     </div>
     </div>
   );
 }

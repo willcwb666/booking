@@ -111,12 +111,13 @@ export function AgendamentosClient({
   }
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col">
+    <div className="page-container">
+     <div className="page-content space-y-4">
       {/* Page header */}
-      <div className="px-6 py-5 border-b border-[var(--color-border)] bg-[var(--color-bg)] flex items-center justify-between gap-4">
+      <div className="page-header !mb-0 flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-[var(--color-text-heading)]">Agendamentos</h1>
-          <p className="text-sm text-[var(--color-text-muted)] mt-0.5">{total} agendamento{total !== 1 ? "s" : ""} no total</p>
+          <h1 className="page-title">Agendamentos</h1>
+          <p className="page-description">{total} agendamento{total !== 1 ? "s" : ""} no total</p>
         </div>
         <a
           href={`/api/export/bookings?slug=${companySlug}${filters.status && filters.status !== "ALL" ? `&status=${filters.status}` : ""}${filters.from ? `&from=${filters.from}` : ""}${filters.to ? `&to=${filters.to}` : ""}`}
@@ -130,7 +131,7 @@ export function AgendamentosClient({
         </a>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div className="space-y-4">
         {/* Filters */}
         <div className="card card-body space-y-3">
           {/* Status tabs */}
@@ -314,6 +315,7 @@ export function AgendamentosClient({
           </div>
         )}
       </div>
+     </div>
     </div>
   );
 }
