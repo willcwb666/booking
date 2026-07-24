@@ -476,9 +476,14 @@ const LANG_LOCALE: Record<string, string> = {
   pt: "pt-BR", en: "en-US", es: "es-ES", it: "it-IT", fr: "fr-FR", de: "de-DE",
 };
 
-// Sufixo de período anual por idioma (o mensal vem das traduções existentes)
-const PERIOD_YEAR: Record<string, string> = {
-  pt: " / ano", en: " / year", es: " / año", it: " / anno", fr: " / an", de: " / Jahr",
+// Notas do modo anual por idioma
+const BILLED_ANNUALLY: Record<string, string> = {
+  pt: "cobrado anualmente", en: "billed annually", es: "facturado anualmente",
+  it: "fatturato annualmente", fr: "facturé annuellement", de: "jährlich abgerechnet",
+};
+const ECONOMY_LABEL: Record<string, string> = {
+  pt: "economize {n}%", en: "save {n}%", es: "ahorra {n}%",
+  it: "risparmia {n}%", fr: "économisez {n}%", de: "spare {n}%",
 };
 
 function formatPlanPrice(value: number, currency: string, lang: string): string {
@@ -999,17 +1004,19 @@ export default function LandingClient({
                 const featured = plans.length >= 3 ? idx === 1 : idx === 0;
                 const isFree = plan.priceMonthly <= 0 && plan.priceYearly <= 0;
                 const isAnnual = billingCycle === "annual";
-                // Mostra exatamente o valor cadastrado: mensal → priceMonthly,
-                // anual → priceYearly (total/ano)
-                const rawPrice = isAnnual ? plan.priceYearly : plan.priceMonthly;
+                // No anual, mostra o mensal-equivalente (priceYearly ÷ 12) com
+                // período "/ mês" e a nota "cobrado anualmente". No mensal,
+                // mostra priceMonthly.
+                const shownPrice = isAnnual ? plan.priceYearly / 12 : plan.priceMonthly;
                 const priceLabel = isFree
                   ? t.pricing.starter.price
-                  : formatPlanPrice(rawPrice, billingCurrency, lang);
-                const periodLabel = isFree
-                  ? t.pricing.starter.period
-                  : isAnnual
-                  ? PERIOD_YEAR[lang] ?? " / ano"
-                  : t.pricing.pro.period;
+                  : formatPlanPrice(shownPrice, billingCurrency, lang);
+                const periodLabel = isFree ? t.pricing.starter.period : t.pricing.pro.period;
+                // Desconto anual vs. 12x o mensal (só quando há economia real)
+                const annualDiscount =
+                  !isFree && plan.priceMonthly > 0 && plan.priceYearly < plan.priceMonthly * 12
+                    ? Math.round((1 - plan.priceYearly / (plan.priceMonthly * 12)) * 100)
+                    : 0;
 
                 return (
                   <div
@@ -1039,6 +1046,12 @@ export default function LandingClient({
                         <span className={`text-sm font-bold ${featured ? "text-stone-400" : "text-stone-500"}`}>
                           {periodLabel}
                         </span>
+                        {isAnnual && !isFree && (
+                          <span className={`block mt-1 text-xs font-medium ${featured ? "text-emerald-400" : "text-emerald-600"}`}>
+                            {BILLED_ANNUALLY[lang] ?? "cobrado anualmente"}
+                            {annualDiscount > 0 && ` · ${(ECONOMY_LABEL[lang] ?? "economize {n}%").replace("{n}", String(annualDiscount))}`}
+                          </span>
+                        )}
                       </div>
                       <ul className={`space-y-3.5 text-sm sm:text-base font-medium ${featured ? "text-stone-200" : "text-stone-700"}`}>
                         {plan.features.map((it, i) => (
