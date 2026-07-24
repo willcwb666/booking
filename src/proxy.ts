@@ -48,9 +48,11 @@ export async function proxy(request: NextRequest) {
 
   const session = await auth.api.getSession({ headers: request.headers });
 
-  // Auth routes: redireciona para onboarding se já está logado
+  // Auth routes: se já está logado, manda ao roteador pós-login (/dashboard),
+  // que decide o destino (admin → /admin, sem empresa → onboarding,
+  // 1 empresa → dashboard dela, 2+ → seletor de ambiente)
   if (isAuthRoute) {
-    if (session) return NextResponse.redirect(new URL("/onboarding", request.url));
+    if (session) return NextResponse.redirect(new URL("/dashboard", request.url));
     return NextResponse.next();
   }
 
@@ -61,9 +63,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Rotas admin: verifica role global do better-auth
+  // Rotas admin: verifica role global do better-auth. Não-admin vai ao
+  // roteador pós-login (não ao onboarding), que decide o destino correto.
   if (isAdminRoute && session.user.role !== "admin") {
-    return NextResponse.redirect(new URL("/onboarding", request.url));
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return NextResponse.next();
