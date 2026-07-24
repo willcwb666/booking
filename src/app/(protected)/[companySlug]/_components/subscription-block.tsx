@@ -69,29 +69,25 @@ export function SubscriptionBlock({
           </p>
         </div>
 
-        <div className="flex items-center justify-center gap-3 mb-6">
+        <div className="flex items-center justify-center gap-2 mb-6">
           <button
             type="button"
             onClick={() => setInterval("month")}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-              interval === "month" ? "bg-blue-600 text-white" : "bg-white text-gray-600 border border-gray-200"
-            }`}
+            className={interval === "month" ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"}
           >
             Mensal
           </button>
           <button
             type="button"
             onClick={() => setInterval("year")}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-              interval === "year" ? "bg-blue-600 text-white" : "bg-white text-gray-600 border border-gray-200"
-            }`}
+            className={interval === "year" ? "btn btn-primary btn-sm" : "btn btn-outline btn-sm"}
           >
             Anual
           </button>
         </div>
 
         {error && (
-          <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-4 text-center">
+          <p role="alert" className="alert alert-danger mb-4">
             {error}
           </p>
         )}
@@ -100,21 +96,21 @@ export function SubscriptionBlock({
           {plans.map((plan) => {
             const price = interval === "year" ? plan.priceYearly / 12 : plan.priceMonthly;
             return (
-              <div key={plan.id} className="bg-white rounded-2xl border border-gray-200 p-5 flex flex-col">
-                <p className="text-sm font-bold text-gray-900">{plan.displayName}</p>
-                <p className="text-xs text-gray-500 mb-3 min-h-[2rem]">{plan.description}</p>
-                <p className="text-2xl font-bold text-gray-900">
+              <div key={plan.id} className="card card-body flex flex-col">
+                <p className="text-sm font-bold text-[var(--color-text-heading)]">{plan.displayName}</p>
+                <p className="text-xs text-[var(--color-text-muted)] mb-3 min-h-[2rem]">{plan.description}</p>
+                <p className="text-2xl font-bold text-[var(--color-text-heading)]">
                   {money(price)}
-                  <span className="text-sm font-normal text-gray-400"> /mês</span>
+                  <span className="text-sm font-normal text-[var(--color-text-subtle)]"> /mês</span>
                 </p>
                 {interval === "year" && (
-                  <p className="text-xs text-emerald-600 mt-1">cobrado anualmente</p>
+                  <p className="text-xs text-[var(--color-success)] mt-1">cobrado anualmente</p>
                 )}
                 <button
                   type="button"
                   onClick={() => subscribe(plan.id)}
                   disabled={pendingId !== null}
-                  className="mt-4 px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60"
+                  className="btn btn-primary w-full mt-4"
                 >
                   {pendingId === plan.id ? "Redirecionando…" : "Assinar"}
                 </button>
@@ -122,7 +118,7 @@ export function SubscriptionBlock({
             );
           })}
           {plans.length === 0 && (
-            <p className="col-span-full text-center text-sm text-gray-500 py-8 bg-white rounded-2xl border border-gray-200">
+            <p className="col-span-full text-center text-sm text-[var(--color-text-muted)] py-8 card">
               Nenhum plano disponível no momento. Contate o suporte.
             </p>
           )}

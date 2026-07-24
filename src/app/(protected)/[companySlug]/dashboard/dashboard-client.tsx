@@ -29,7 +29,7 @@ export function DashboardClient({ userName, stats, reviewStats }: Props) {
       value: String(stats.todayCount),
       sub: "Confirmados e pendentes",
       href: `/${company.slug}/agendamentos`,
-      icon: <Calendar className="w-5 h-5 text-indigo-600" />,
+      icon: <Calendar className="w-5 h-5 text-[var(--color-primary)]" />,
     },
     {
       label: "Aguardando confirmação",
@@ -37,28 +37,28 @@ export function DashboardClient({ userName, stats, reviewStats }: Props) {
       sub: "Pagamento pendente",
       href: `/${company.slug}/agendamentos?status=PENDING`,
       highlight: stats.pendingCount > 0,
-      icon: <Clock className="w-5 h-5 text-amber-600" />,
+      icon: <Clock className="w-5 h-5 text-[var(--color-warning)]" />,
     },
     {
       label: "Receita do mês",
       value: formatMoney(stats.monthRevenue, company.currency, company.locale),
       sub: "Pagamentos confirmados",
       href: `/${company.slug}/agendamentos`,
-      icon: <DollarSign className="w-5 h-5 text-emerald-600" />,
+      icon: <DollarSign className="w-5 h-5 text-[var(--color-success)]" />,
     },
     {
       label: "Próximos 7 dias",
       value: String(stats.upcomingWeekCount),
       sub: "Agendamentos futuros",
       href: `/${company.slug}/agendamentos`,
-      icon: <CalendarRange className="w-5 h-5 text-indigo-600" />,
+      icon: <CalendarRange className="w-5 h-5 text-[var(--color-primary)]" />,
     },
     {
       label: "Avaliação média",
       value: reviewStats.average !== null ? `${reviewStats.average.toFixed(1)} ★` : "—",
       sub: reviewStats.count > 0 ? `${reviewStats.count} avaliação${reviewStats.count !== 1 ? "ões" : ""}` : "Sem avaliações ainda",
       href: `/${company.slug}/avaliacoes`,
-      icon: <Star className="w-5 h-5 text-amber-500" />,
+      icon: <Star className="w-5 h-5 text-[var(--color-warning)]" />,
     },
   ];
 
@@ -74,12 +74,13 @@ export function DashboardClient({ userName, stats, reviewStats }: Props) {
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 sm:p-8 w-full max-w-7xl text-left space-y-8">
+    <div className="page-container">
+     <div className="page-content space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Dashboard Geral</h1>
-        <p className="text-xs text-slate-500 mt-1">
-          Bem-vindo de volta, <strong className="text-slate-900">{userName}</strong>. Aqui está a visão rápida da sua empresa.
+      <div className="page-header !mb-0">
+        <h1 className="page-title">Dashboard Geral</h1>
+        <p className="page-description">
+          Bem-vindo de volta, <strong className="text-[var(--color-text-heading)]">{userName}</strong>. Aqui está a visão rápida da sua empresa.
         </p>
       </div>
 
@@ -89,20 +90,16 @@ export function DashboardClient({ userName, stats, reviewStats }: Props) {
           <Link
             key={card.label}
             href={card.href}
-            className={`bg-white rounded-3xl border p-5 transition-all block hover:shadow-md cursor-pointer ${
-              card.highlight
-                ? "border-amber-300 bg-amber-50/50 shadow-2xs"
-                : "border-slate-200/80 shadow-2xs hover:border-slate-300"
+            className={`stat-card block cursor-pointer ${
+              card.highlight ? "!border-[var(--color-warning-border)] bg-[var(--color-warning-light)]" : ""
             }`}
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{card.label}</span>
-              <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">{card.icon}</div>
+              <span className="stat-card-label">{card.label}</span>
+              <div className="p-2 rounded-xl bg-[var(--color-bg-subtle)] border border-[var(--color-border)]">{card.icon}</div>
             </div>
-            <p className={`text-2xl font-extrabold ${card.highlight ? "text-amber-900" : "text-slate-900"}`}>
-              {card.value}
-            </p>
-            <p className="text-[11px] text-slate-400 mt-1">{card.sub}</p>
+            <p className="stat-card-value">{card.value}</p>
+            <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">{card.sub}</p>
           </Link>
         ))}
       </div>
@@ -110,64 +107,62 @@ export function DashboardClient({ userName, stats, reviewStats }: Props) {
       {/* Seção Gráfica: Tendência Semanal & Resumo Financeiro */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Gráfico de Barras de Agendamentos da Semana */}
-        <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200/80 p-6 shadow-2xs space-y-6">
+        <div className="lg:col-span-2 card card-body space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-extrabold text-slate-900">Volume de Atendimentos da Semana</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Distribuição estimada de reservas nos 7 dias</p>
+              <h2 className="text-sm font-extrabold text-[var(--color-text-heading)]">Volume de Atendimentos da Semana</h2>
+              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Distribuição estimada de reservas nos 7 dias</p>
             </div>
-            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
-              Tendência Ativa
-            </span>
+            <span className="badge badge-primary">Tendência Ativa</span>
           </div>
 
           {/* Gráfico Visual */}
-          <div className="h-44 flex items-end justify-between gap-3 pt-6 px-2 border-b border-slate-100 pb-2">
+          <div className="h-44 flex items-end justify-between gap-3 pt-6 px-2 border-b border-[var(--color-border)] pb-2">
             {weeklyTrendData.map((d) => (
               <div key={d.day} className="flex-1 flex flex-col items-center gap-2 group cursor-pointer">
-                <span className="text-[10px] font-bold text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="text-[10px] font-bold text-[var(--color-text-muted)] opacity-0 group-hover:opacity-100 transition-opacity">
                   {d.count} agend.
                 </span>
-                <div className="w-full bg-slate-100 rounded-t-xl h-32 flex items-end p-1">
+                <div className="w-full bg-[var(--color-bg-muted)] rounded-t-xl h-32 flex items-end p-1">
                   <div
                     style={{ height: `${d.pct}%` }}
-                    className="w-full bg-[#635bff] group-hover:bg-[#544dc9] rounded-t-lg transition-all"
+                    className="w-full bg-[var(--color-primary)] group-hover:bg-[var(--color-primary-hover)] rounded-t-lg transition-all"
                   />
                 </div>
-                <span className="text-xs font-bold text-slate-700">{d.day}</span>
+                <span className="text-xs font-bold text-[var(--color-text)]">{d.day}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Resumo Rápido da Empresa */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-2xs flex flex-col justify-between space-y-4">
+        <div className="card card-body flex flex-col justify-between space-y-4">
           <div>
-            <span className="text-[10px] font-extrabold text-indigo-600 uppercase tracking-wider block">
+            <span className="text-[10px] font-extrabold text-[var(--color-primary)] uppercase tracking-wider block">
               Status da Assinatura
             </span>
-            <h2 className="text-base font-extrabold text-slate-900 mt-1">{company.planDisplayName}</h2>
-            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+            <h2 className="text-base font-extrabold text-[var(--color-text-heading)] mt-1">{company.planDisplayName}</h2>
+            <p className="text-xs text-[var(--color-text-muted)] mt-1 leading-relaxed">
               Sua empresa está operando com catálogo ativo e reservas habilitadas.
             </p>
           </div>
 
-          <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-2">
+          <div className="p-4 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-2xl space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-medium">Faturamento Estimado:</span>
-              <span className="font-extrabold text-emerald-700">
+              <span className="text-[var(--color-text-muted)] font-medium">Faturamento Estimado:</span>
+              <span className="font-extrabold text-[var(--color-success)]">
                 {formatMoney(stats.monthRevenue, company.currency, company.locale)}
               </span>
             </div>
-            <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-200/60">
-              <span className="text-slate-500 font-medium">Status do Catálogo:</span>
-              <span className="font-bold text-indigo-600">Restaurado / Ativo</span>
+            <div className="flex items-center justify-between text-xs pt-1 border-t border-[var(--color-border)]">
+              <span className="text-[var(--color-text-muted)] font-medium">Status do Catálogo:</span>
+              <span className="font-bold text-[var(--color-primary)]">Restaurado / Ativo</span>
             </div>
           </div>
 
           <Link
             href={`/${company.slug}/configuracoes`}
-            className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl text-center shadow-xs transition-all block"
+            className="btn btn-navy w-full"
           >
             Gerenciar Assinatura & Configurações
           </Link>
@@ -176,28 +171,29 @@ export function DashboardClient({ userName, stats, reviewStats }: Props) {
 
       {/* Quick Links */}
       <div>
-        <h2 className="text-sm font-extrabold text-slate-900 mb-3">Ações Rápidas</h2>
+        <h2 className="text-sm font-extrabold text-[var(--color-text-heading)] mb-3">Ações Rápidas</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <QuickLink
             href={`/${company.slug}/agendamentos`}
             title="Ver Agendamentos"
             description="Gerencie todas as reservas da empresa"
-            icon={<ClipboardList className="w-5 h-5 text-indigo-600" />}
+            icon={<ClipboardList className="w-5 h-5 text-[var(--color-primary)]" />}
           />
           <QuickLink
             href={`/${company.slug}/schedule`}
             title="Calendário de Atendimentos"
             description="Visualize a agenda por profissional e dia"
-            icon={<Calendar className="w-5 h-5 text-indigo-600" />}
+            icon={<Calendar className="w-5 h-5 text-[var(--color-primary)]" />}
           />
           <QuickLink
             href={`/${company.slug}/booking`}
             title="Página Pública de Agendamento"
             description="Configure o link e catálogo para seus clientes"
-            icon={<Globe className="w-5 h-5 text-indigo-600" />}
+            icon={<Globe className="w-5 h-5 text-[var(--color-primary)]" />}
           />
         </div>
       </div>
+     </div>
     </div>
   );
 }
@@ -216,14 +212,14 @@ function QuickLink({
   return (
     <Link
       href={href}
-      className="bg-white rounded-3xl border border-slate-200/80 p-5 hover:shadow-md hover:border-slate-300 transition-all flex gap-4 items-start shadow-2xs cursor-pointer group"
+      className="card card-body hover:shadow-[var(--shadow-md)] hover:border-[var(--color-border-strong)] transition-all flex gap-4 items-start cursor-pointer group"
     >
-      <div className="p-3 rounded-2xl bg-indigo-50 border border-indigo-100 shrink-0 group-hover:scale-105 transition-transform">
+      <div className="p-3 rounded-2xl bg-[var(--color-primary-light)] border border-[var(--color-border)] shrink-0 group-hover:scale-105 transition-transform">
         {icon}
       </div>
       <div>
-        <p className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{title}</p>
-        <p className="text-[11px] text-slate-500 mt-0.5">{description}</p>
+        <p className="text-xs font-bold text-[var(--color-text-heading)] group-hover:text-[var(--color-primary)] transition-colors">{title}</p>
+        <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">{description}</p>
       </div>
     </Link>
   );
