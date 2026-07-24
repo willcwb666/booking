@@ -476,6 +476,11 @@ const LANG_LOCALE: Record<string, string> = {
   pt: "pt-BR", en: "en-US", es: "es-ES", it: "it-IT", fr: "fr-FR", de: "de-DE",
 };
 
+// Sufixo de período anual por idioma (o mensal vem das traduções existentes)
+const PERIOD_YEAR: Record<string, string> = {
+  pt: " / ano", en: " / year", es: " / año", it: " / anno", fr: " / an", de: " / Jahr",
+};
+
 function formatPlanPrice(value: number, currency: string, lang: string): string {
   return new Intl.NumberFormat(LANG_LOCALE[lang] ?? "en-US", {
     style: "currency",
@@ -993,13 +998,17 @@ export default function LandingClient({
               {plans.map((plan, idx) => {
                 const featured = plans.length >= 3 ? idx === 1 : idx === 0;
                 const isFree = plan.priceMonthly <= 0 && plan.priceYearly <= 0;
-                const monthlyEq =
-                  billingCycle === "annual" ? plan.priceYearly / 12 : plan.priceMonthly;
+                const isAnnual = billingCycle === "annual";
+                // Mostra exatamente o valor cadastrado: mensal → priceMonthly,
+                // anual → priceYearly (total/ano)
+                const rawPrice = isAnnual ? plan.priceYearly : plan.priceMonthly;
                 const priceLabel = isFree
                   ? t.pricing.starter.price
-                  : formatPlanPrice(monthlyEq, billingCurrency, lang);
+                  : formatPlanPrice(rawPrice, billingCurrency, lang);
                 const periodLabel = isFree
                   ? t.pricing.starter.period
+                  : isAnnual
+                  ? PERIOD_YEAR[lang] ?? " / ano"
                   : t.pricing.pro.period;
 
                 return (
