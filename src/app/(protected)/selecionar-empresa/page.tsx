@@ -35,6 +35,9 @@ export default async function SelecionarEmpresaPage() {
     .map((m) => m.company);
 
   if (companies.length === 0) redirect("/onboarding");
+  if (!dbUser?.allowMultiCompany && companies.length > 0) {
+    redirect(`/${companies[0].slug}/dashboard`);
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 py-12">
@@ -51,8 +54,18 @@ export default async function SelecionarEmpresaPage() {
             href={`/${c.slug}/dashboard`}
             className="flex items-center gap-4 bg-white rounded-2xl border border-gray-200 p-5 hover:border-blue-400 hover:shadow-md transition-all group"
           >
-            <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shrink-0" aria-hidden="true">
-              <span className="text-white font-bold text-lg">{c.name[0].toUpperCase()}</span>
+            <div
+              className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 overflow-hidden border border-gray-200 ${
+                c.logoUrl ? "bg-white" : "bg-blue-600"
+              }`}
+              aria-hidden="true"
+            >
+              {c.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={c.logoUrl} alt={c.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-white font-bold text-lg">{c.name[0].toUpperCase()}</span>
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-gray-900 truncate">{c.name}</p>

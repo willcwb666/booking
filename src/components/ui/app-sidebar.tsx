@@ -244,37 +244,74 @@ export function AppSidebar({
 
   return (
     <aside className="w-64 shrink-0 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0">
-      {/* Company identity — clique volta ao seletor de ambiente */}
-      <Link
-        href="/selecionar-empresa"
-        title="Trocar de empresa"
-        className="block px-5 py-5 border-b border-gray-100 hover:bg-gray-50 transition-colors group"
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center shrink-0"
-            aria-hidden="true"
-          >
-            <span className="text-white font-bold text-sm">
-              {company.name[0].toUpperCase()}
+      {/* Company identity — só permite trocar de ambiente se multiEmpresas estiver ativo */}
+      {multiCompany ? (
+        <Link
+          href="/selecionar-empresa"
+          title="Trocar de empresa"
+          className="block px-5 py-5 border-b border-gray-100 hover:bg-gray-50 transition-colors group"
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 overflow-hidden border border-gray-200 ${
+                company.logoUrl ? "bg-white" : "bg-blue-600"
+              }`}
+              aria-hidden="true"
+            >
+              {company.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={company.logoUrl} alt={company.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-white font-bold text-sm">
+                  {company.name[0].toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-gray-900 truncate">
+                {company.name}
+              </p>
+              <span className="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-medium">
+                {company.planDisplayName}
+              </span>
+            </div>
+            <span
+              className="text-gray-300 group-hover:text-gray-500 transition-colors text-xs shrink-0"
+              aria-hidden="true"
+            >
+              ⇄
             </span>
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-gray-900 truncate">
-              {company.name}
-            </p>
-            <span className="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-medium">
-              {company.planDisplayName}
-            </span>
+        </Link>
+      ) : (
+        <div className="px-5 py-5 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 overflow-hidden border border-gray-200 ${
+                company.logoUrl ? "bg-white" : "bg-blue-600"
+              }`}
+              aria-hidden="true"
+            >
+              {company.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={company.logoUrl} alt={company.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-white font-bold text-sm">
+                  {company.name[0].toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-gray-900 truncate">
+                {company.name}
+              </p>
+              <span className="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-medium">
+                {company.planDisplayName}
+              </span>
+            </div>
           </div>
-          <span
-            className="text-gray-300 group-hover:text-gray-500 transition-colors text-xs shrink-0"
-            aria-hidden="true"
-          >
-            ⇄
-          </span>
         </div>
-      </Link>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 overflow-y-auto" aria-label="Navegação principal">

@@ -6,7 +6,7 @@ export async function getUserCompanies(userId: string) {
     where: { userId, isActive: true },
     include: {
       company: {
-        select: { id: true, name: true, slug: true, businessType: true, isActive: true },
+        select: { id: true, name: true, slug: true, logoUrl: true, businessType: true, isActive: true },
       },
     },
     orderBy: { joinedAt: "asc" },

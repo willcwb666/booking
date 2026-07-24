@@ -34,6 +34,7 @@ export default async function CompanyLayout({
         id: company.id,
         name: company.name,
         slug: company.slug,
+        logoUrl: company.logoUrl,
         businessType: company.businessType,
         planTier: company.plan.tier,
         planDisplayName: company.plan.displayName,

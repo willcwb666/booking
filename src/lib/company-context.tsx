@@ -6,6 +6,7 @@ export type CompanyContext = {
   id: string;
   name: string;
   slug: string;
+  logoUrl?: string | null;
   businessType: string;
   planTier: string;
   planDisplayName: string;

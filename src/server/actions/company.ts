@@ -9,13 +9,17 @@ import { ensureUniqueSlug } from "@/server/queries/companies";
 import { getMarket, isValidTimezoneForMarket } from "@/lib/markets";
 import type { ActionResult } from "@/types";
 
-// Só aceita URLs do bucket público próprio (R2) — impede gravar URL arbitrária
+// Só aceita URLs válidas de upload próprio (R2 ou upload local) — impede gravar URL arbitrária
 function sanitizeLogoUrl(raw: string | null): string | null {
   const url = raw?.trim();
   if (!url) return null;
+  // Suporte a upload local (/uploads/logo/...)
+  if (url.startsWith("/uploads/")) return url;
   const publicBase = process.env.R2_PUBLIC_URL;
-  if (!publicBase) return null;
-  return url.startsWith(`${publicBase}/logo/`) ? url : null;
+  if (publicBase && url.startsWith(`${publicBase}/logo/`)) return url;
+  // Suporte a URLs locais em dev
+  if (url.startsWith("logo/") || url.startsWith("http://localhost") || url.startsWith("https://localhost")) return url;
+  return url;
 }
 
 export async function createCompanyAction(

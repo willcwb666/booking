@@ -39,6 +39,15 @@ function IconUsers() {
   );
 }
 
+function IconCreditCard() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+      <line x1="1" y1="10" x2="23" y2="10" />
+    </svg>
+  );
+}
+
 function IconLogout() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -56,6 +65,7 @@ export function AdminSidebar({ userName }: { userName: string }) {
     { href: "/admin", label: "Visão geral", icon: <IconGrid /> },
     { href: "/admin/companies", label: "Empresas", icon: <IconBuilding /> },
     { href: "/admin/users", label: "Usuários", icon: <IconUsers /> },
+    { href: "/admin/plans", label: "Planos", icon: <IconCreditCard /> },
   ];
 
   return (

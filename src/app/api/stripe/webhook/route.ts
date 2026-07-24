@@ -52,5 +52,57 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // ─── Assinaturas de planos (Stripe Billing) ──────────────────────────────
+  if (event.type === "checkout.session.completed") {
+    const cs = event.data.object as Stripe.Checkout.Session;
+    if (cs.mode === "subscription" && cs.subscription) {
+      const subscriptionId = typeof cs.subscription === "string" ? cs.subscription : cs.subscription.id;
+      const sub = await stripe.subscriptions.retrieve(subscriptionId);
+      await applySubscription(sub);
+    }
+  }
+
+  if (
+    event.type === "customer.subscription.created" ||
+    event.type === "customer.subscription.updated" ||
+    event.type === "customer.subscription.deleted"
+  ) {
+    await applySubscription(event.data.object as Stripe.Subscription);
+  }
+
   return new Response("ok", { status: 200 });
+}
+
+/**
+ * Reflete o estado de uma assinatura do Stripe na empresa correspondente.
+ * A empresa é identificada por metadata.companyId (setado no checkout) ou,
+ * como fallback, pelo stripeCustomerId.
+ */
+async function applySubscription(sub: Stripe.Subscription): Promise<void> {
+  const companyId = sub.metadata?.companyId;
+  const planId = sub.metadata?.planId;
+  const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+
+  const company = companyId
+    ? await db.company.findUnique({ where: { id: companyId }, select: { id: true } })
+    : await db.company.findFirst({ where: { stripeCustomerId: customerId }, select: { id: true } });
+  if (!company) return;
+
+  const item = sub.items.data[0];
+  const interval = item?.price.recurring?.interval ?? null;
+  const periodEnd = item?.current_period_end ?? null;
+  const canceled = sub.status === "canceled";
+
+  await db.company.update({
+    where: { id: company.id },
+    data: {
+      stripeSubscriptionId: canceled ? null : sub.id,
+      stripeCustomerId: customerId,
+      subscriptionStatus: sub.status,
+      subscriptionInterval: interval,
+      subscriptionPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
+      // Só troca o plano da empresa quando a assinatura está vigente
+      ...(planId && !canceled ? { planId } : {}),
+    },
+  });
 }

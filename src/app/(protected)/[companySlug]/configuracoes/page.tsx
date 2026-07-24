@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { getCompanyBySlugForUser } from "@/server/queries/companies";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
+import { PLATFORM_BILLING_CURRENCY } from "@/lib/stripe-billing";
 import { SettingsClient } from "./settings-client";
 
 export default async function ConfiguracoesPage({
@@ -22,19 +23,41 @@ export default async function ConfiguracoesPage({
 
   const role = company.members[0].role;
   const canEdit = role === "OWNER" || role === "MANAGER";
+  const isOwner = role === "OWNER";
 
-  const paymentMethods = await db.companyPaymentMethod.findMany({
-    where: { companyId: company.id },
-    orderBy: { displayOrder: "asc" },
-    select: {
-      id: true,
-      kind: true,
-      label: true,
-      handle: true,
-      instructions: true,
-      isActive: true,
-    },
-  });
+  const [paymentMethods, fullCompany, availablePlans] = await Promise.all([
+    db.companyPaymentMethod.findMany({
+      where: { companyId: company.id },
+      orderBy: { displayOrder: "asc" },
+      select: {
+        id: true,
+        kind: true,
+        label: true,
+        handle: true,
+        instructions: true,
+        isActive: true,
+      },
+    }),
+    db.company.findUnique({
+      where: { id: company.id },
+      select: {
+        planId: true,
+        subscriptionStatus: true,
+        subscriptionInterval: true,
+        subscriptionPeriodEnd: true,
+        stripeCustomerId: true,
+      },
+    }),
+    db.plan.findMany({
+      where: { isActive: true },
+      orderBy: { order: "asc" },
+      select: {
+        id: true, displayName: true, description: true,
+        priceMonthly: true, priceYearly: true,
+        stripePriceMonthlyId: true, stripePriceYearlyId: true,
+      },
+    }),
+  ]);
 
   return (
     <SettingsClient
@@ -52,6 +75,23 @@ export default async function ConfiguracoesPage({
       bookingBaseUrl={`/book/${companySlug}`}
       paymentMethods={paymentMethods}
       multiCompany={dbUser?.allowMultiCompany ?? false}
+      billing={{
+        isOwner,
+        currency: PLATFORM_BILLING_CURRENCY,
+        currentPlanId: fullCompany?.planId ?? "",
+        subscriptionStatus: fullCompany?.subscriptionStatus ?? null,
+        subscriptionInterval: fullCompany?.subscriptionInterval ?? null,
+        subscriptionPeriodEnd: fullCompany?.subscriptionPeriodEnd?.toISOString() ?? null,
+        hasCustomer: Boolean(fullCompany?.stripeCustomerId),
+        plans: availablePlans.map((p) => ({
+          id: p.id,
+          displayName: p.displayName,
+          description: p.description ?? "",
+          priceMonthly: Number(p.priceMonthly),
+          priceYearly: Number(p.priceYearly),
+          billable: Boolean(p.stripePriceMonthlyId || p.stripePriceYearlyId),
+        })),
+      }}
     />
   );
 }

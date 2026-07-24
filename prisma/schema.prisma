@@ -225,6 +225,10 @@ model Plan {
   priceYearly  Decimal       @db.Decimal(10, 2)
   isActive     Boolean       @default(true)
   order        Int           @default(0)
+  // Stripe Billing — sincronizado ao salvar o plano no admin
+  stripeProductId      String?
+  stripePriceMonthlyId String?
+  stripePriceYearlyId  String?
   features     PlanFeature[]
   companies    Company[]
   createdAt    DateTime      @default(now())
@@ -264,6 +268,12 @@ model Company {
   currency      String          @default("BRL")               // ISO 4217 (BRL, USD, …)
   timezone      String          @default("America/Sao_Paulo") // IANA
   locale        String          @default("pt-BR")             // BCP 47
+  // Assinatura do plano (Stripe Billing) — cobrança individual por empresa
+  stripeCustomerId      String?
+  stripeSubscriptionId  String?
+  subscriptionStatus    String?   // active | trialing | past_due | canceled | …
+  subscriptionInterval  String?   // month | year
+  subscriptionPeriodEnd DateTime?
   members         CompanyUser[]
   services        Service[]
   serviceTypes    ServiceType[]

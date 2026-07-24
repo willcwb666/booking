@@ -2,6 +2,8 @@
 
 import { useActionState, useState, useTransition } from "react";
 import { updateCompanyAction, setMultiCompanyAction } from "@/server/actions/company";
+import { createPlanCheckoutAction, createBillingPortalAction } from "@/server/actions/subscription";
+import { formatMoney } from "@/lib/format";
 import {
   addPaymentMethodAction,
   togglePaymentMethodAction,
@@ -36,9 +38,30 @@ type Props = {
   bookingBaseUrl: string;
   paymentMethods: PaymentMethodItem[];
   multiCompany: boolean;
+  billing: BillingData;
 };
 
-type Tab = "empresa" | "pagamentos";
+type BillingPlan = {
+  id: string;
+  displayName: string;
+  description: string;
+  priceMonthly: number;
+  priceYearly: number;
+  billable: boolean;
+};
+
+type BillingData = {
+  isOwner: boolean;
+  currency: string;
+  currentPlanId: string;
+  subscriptionStatus: string | null;
+  subscriptionInterval: string | null;
+  subscriptionPeriodEnd: string | null;
+  hasCustomer: boolean;
+  plans: BillingPlan[];
+};
+
+type Tab = "empresa" | "pagamentos" | "plano";
 
 // ─── Tab: Empresa ─────────────────────────────────────────────────────────────
 
@@ -47,7 +70,7 @@ function EmpresaTab({
   canEdit,
   initial,
   bookingBaseUrl,
-}: Omit<Props, "paymentMethods" | "multiCompany">) {
+}: Omit<Props, "paymentMethods" | "multiCompany" | "billing">) {
   const company = useCompany();
   const [result, action, pending] = useActionState<ActionResult | null, FormData>(
     updateCompanyAction,
@@ -289,6 +312,172 @@ function MultiEmpresaSection({ initialEnabled }: { initialEnabled: boolean }) {
   );
 }
 
+// ─── Tab: Plano ───────────────────────────────────────────────────────────────
+
+const SUB_STATUS: Record<string, { label: string; className: string }> = {
+  active: { label: "Ativa", className: "bg-emerald-100 text-emerald-700" },
+  trialing: { label: "Em teste", className: "bg-blue-100 text-blue-700" },
+  past_due: { label: "Pagamento atrasado", className: "bg-amber-100 text-amber-700" },
+  unpaid: { label: "Não paga", className: "bg-red-100 text-red-700" },
+  canceled: { label: "Cancelada", className: "bg-gray-100 text-gray-600" },
+};
+
+function PlanoTab({ companySlug, billing }: { companySlug: string; billing: BillingData }) {
+  const [interval, setInterval] = useState<"month" | "year">("month");
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  const currentPlan = billing.plans.find((p) => p.id === billing.currentPlanId);
+  const hasActiveSub =
+    billing.subscriptionStatus === "active" || billing.subscriptionStatus === "trialing";
+  const statusInfo = billing.subscriptionStatus
+    ? SUB_STATUS[billing.subscriptionStatus] ?? { label: billing.subscriptionStatus, className: "bg-gray-100 text-gray-600" }
+    : null;
+
+  function price(plan: BillingPlan) {
+    const value = interval === "year" ? plan.priceYearly / 12 : plan.priceMonthly;
+    return formatMoney(value, billing.currency, billing.currency === "brl" ? "pt-BR" : "en-US");
+  }
+
+  function subscribe(planId: string) {
+    if (!billing.isOwner) return;
+    setError(null);
+    startTransition(async () => {
+      const result = await createPlanCheckoutAction(companySlug, planId, interval);
+      if (result.success) window.location.href = result.url;
+      else setError(result.error);
+    });
+  }
+
+  function openPortal() {
+    setError(null);
+    startTransition(async () => {
+      const result = await createBillingPortalAction(companySlug);
+      if (result.success) window.location.href = result.url;
+      else setError(result.error);
+    });
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* Plano atual */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-gray-900">Plano atual</h2>
+          {statusInfo && (
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusInfo.className}`}>
+              {statusInfo.label}
+            </span>
+          )}
+        </div>
+        <p className="text-2xl font-bold text-gray-900">{currentPlan?.displayName ?? "—"}</p>
+        {currentPlan?.description && (
+          <p className="text-sm text-gray-500 mt-0.5">{currentPlan.description}</p>
+        )}
+        {billing.subscriptionPeriodEnd && hasActiveSub && (
+          <p className="text-xs text-gray-400 mt-2">
+            Renova em {new Date(billing.subscriptionPeriodEnd).toLocaleDateString("pt-BR")}
+            {billing.subscriptionInterval === "year" ? " (anual)" : " (mensal)"}
+          </p>
+        )}
+        {!hasActiveSub && (
+          <p className="text-xs text-amber-700 mt-2">
+            Sem assinatura ativa. Escolha um plano abaixo para ativar a cobrança.
+          </p>
+        )}
+
+        {billing.hasCustomer && billing.isOwner && (
+          <button
+            type="button"
+            onClick={openPortal}
+            disabled={pending}
+            className="mt-4 px-4 py-2 text-sm font-medium border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-60"
+          >
+            Gerenciar assinatura e faturas
+          </button>
+        )}
+      </div>
+
+      {error && (
+        <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+          {error}
+        </p>
+      )}
+
+      {!billing.isOwner && (
+        <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
+          Apenas o dono (OWNER) da empresa pode gerenciar a assinatura.
+        </p>
+      )}
+
+      {/* Escolher plano */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-gray-900">Planos disponíveis</h2>
+          <div className="flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg text-xs">
+            <button
+              type="button"
+              onClick={() => setInterval("month")}
+              className={`px-3 py-1 rounded-md font-medium ${interval === "month" ? "bg-white shadow-sm text-gray-900" : "text-gray-500"}`}
+            >
+              Mensal
+            </button>
+            <button
+              type="button"
+              onClick={() => setInterval("year")}
+              className={`px-3 py-1 rounded-md font-medium ${interval === "year" ? "bg-white shadow-sm text-gray-900" : "text-gray-500"}`}
+            >
+              Anual
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {billing.plans.map((plan) => {
+            const isCurrent = plan.id === billing.currentPlanId && hasActiveSub;
+            const isFree = plan.priceMonthly <= 0 && plan.priceYearly <= 0;
+            return (
+              <div
+                key={plan.id}
+                className={`flex items-center justify-between gap-3 p-4 rounded-lg border ${
+                  isCurrent ? "border-blue-300 bg-blue-50/50" : "border-gray-200"
+                }`}
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-900">{plan.displayName}</p>
+                  <p className="text-xs text-gray-500">
+                    {isFree ? "Grátis" : `${price(plan)} / mês${interval === "year" ? " (cobrado anualmente)" : ""}`}
+                  </p>
+                </div>
+                {isCurrent ? (
+                  <span className="text-xs font-medium text-blue-700 shrink-0">Plano atual</span>
+                ) : isFree ? (
+                  <span className="text-xs text-gray-400 shrink-0">—</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => subscribe(plan.id)}
+                    disabled={pending || !billing.isOwner || !plan.billable}
+                    title={!plan.billable ? "Plano ainda não sincronizado com o Stripe" : undefined}
+                    className="px-4 py-2 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 shrink-0"
+                  >
+                    {hasActiveSub ? "Trocar para este" : "Assinar"}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="text-xs text-gray-400 mt-4">
+          Pagamento processado com segurança pelo Stripe. No modo multiempresas, cada
+          empresa tem sua própria assinatura, cobrada individualmente.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Tab: Pagamentos ──────────────────────────────────────────────────────────
 
 const KIND_BADGES: Record<PaymentMethodItem["kind"], { label: string; className: string }> = {
@@ -516,11 +705,13 @@ export function SettingsClient({
   bookingBaseUrl,
   paymentMethods,
   multiCompany,
+  billing,
 }: Props) {
   const [tab, setTab] = useState<Tab>("empresa");
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "empresa", label: "Empresa" },
+    { id: "plano", label: "Plano" },
     { id: "pagamentos", label: "Formas de pagamento" },
   ];
 
@@ -559,6 +750,8 @@ export function SettingsClient({
           <MultiEmpresaSection initialEnabled={multiCompany} />
         </>
       )}
+
+      {tab === "plano" && <PlanoTab companySlug={companySlug} billing={billing} />}
 
       {tab === "pagamentos" && (
         <PagamentosTab
