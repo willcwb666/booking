@@ -110,7 +110,7 @@ export function BookingConfigsClient({
   isOwner,
 }: Props) {
   return (
-    <div className="max-w-4xl mx-auto px-6 py-10">
+    <div className="w-full max-w-7xl px-6 py-8 text-left">
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>

@@ -4,6 +4,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useCompany } from "@/lib/company-context";
 import { formatMoney } from "@/lib/format";
+import { Phone } from "@/components/ui/icons";
 import type { BookingListItem } from "@/server/queries/bookings";
 import type { BookingStatus } from "@/generated/prisma/client";
 
@@ -292,13 +293,29 @@ export function AgendamentosClient({
                           {formatMoney(Number(item.estimateTotal), company.currency, company.locale)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <Link
-                          href={`/${companySlug}/agendamentos/${item.id}`}
-                          className="text-xs text-blue-600 hover:underline font-medium"
-                        >
-                          Ver
-                        </Link>
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-2">
+                          {item.customerPhone && (
+                            <a
+                              href={`https://wa.me/${item.customerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(
+                                `Olá ${item.customerName || ""}! Confirmamos o seu agendamento para ${item.scheduledDate.split("-").reverse().join("/")} às ${item.scheduledStartTime}.`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 px-2.5 py-1 rounded-lg transition-all"
+                              title="Enviar mensagem via WhatsApp"
+                            >
+                              <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>WhatsApp</span>
+                            </a>
+                          )}
+                          <Link
+                            href={`/${company.slug}/agendamentos/${item.id}`}
+                            className="text-xs font-semibold text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-slate-200/80 border border-slate-200/80 px-2.5 py-1 rounded-lg transition-colors"
+                          >
+                            Detalhes
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}

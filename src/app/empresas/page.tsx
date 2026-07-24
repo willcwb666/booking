@@ -1,15 +1,17 @@
 import { db } from "@/lib/db";
 import Link from "next/link";
+import { KreatorLogo } from "@/components/ui/kreator-logo";
 
 const BUSINESS_LABELS: Record<string, string> = {
   HOME_CLEANING: "Limpeza residencial",
   PET_GROOMER:   "Pet grooming",
-  CAR_WASH:      "Lavar carros",
+  CAR_WASH:      "Lava-rápido",
   POOL_CLEANING: "Limpeza de piscina",
   LAWN_CARE:     "Jardinagem",
   BARBER:        "Barbearia",
   HAIR_SALON:    "Salão de beleza",
   PHOTOGRAPHER:  "Fotografia",
+  MECHANIC:      "Oficina Mecânica",
   OTHER:         "Outros",
 };
 
@@ -22,29 +24,85 @@ export default async function EmpresasPage({
 }) {
   const { q, tipo } = await searchParams;
 
-  const companies = await db.company.findMany({
-    where: {
-      isActive: true,
-      ...(tipo ? { businessType: tipo as never } : {}),
-      ...(q ? { name: { contains: q, mode: "insensitive" } } : {}),
-    },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      businessType: true,
-      logoUrl: true,
-      address: true,
-      _count: {
-        select: {
-          bookings: { where: { status: "COMPLETED" } },
-          reviews: true,
+  let companies: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    businessType: string;
+    logoUrl: string | null;
+    address: string | null;
+    _count: { bookings: number; reviews: number };
+  }> = [];
+
+  try {
+    const rows = await db.company.findMany({
+      where: {
+        isActive: true,
+        ...(tipo ? { businessType: tipo as never } : {}),
+        ...(q ? { name: { contains: q, mode: "insensitive" } } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        businessType: true,
+        logoUrl: true,
+        address: true,
+        _count: {
+          select: {
+            bookings: { where: { status: "COMPLETED" } },
+            reviews: true,
+          },
         },
       },
-    },
-    orderBy: { createdAt: "desc" },
-    take: 60,
-  });
+      orderBy: { createdAt: "desc" },
+      take: 60,
+    });
+    companies = rows;
+  } catch {
+    let whereClause = `WHERE c."isActive" = true`;
+    if (tipo) {
+      whereClause += ` AND c."businessType" = '${tipo.replace(/'/g, "''")}'`;
+    }
+    if (q) {
+      whereClause += ` AND c.name ILIKE '%${q.replace(/'/g, "''")}%'`;
+    }
+
+    const sql = `
+      SELECT 
+        c.id, c.name, c.slug, c."businessType", c."logoUrl", c.address,
+        (SELECT COUNT(*)::int FROM "booking" b WHERE b."companyId" = c.id AND b.status = 'COMPLETED') as "bookingCount",
+        (SELECT COUNT(*)::int FROM "review" r WHERE r."companyId" = c.id) as "reviewCount"
+      FROM "company" c
+      ${whereClause}
+      ORDER BY c."createdAt" DESC
+      LIMIT 60
+    `;
+
+    const rawRows = await db.$queryRawUnsafe<Array<{
+      id: string;
+      name: string;
+      slug: string;
+      businessType: string;
+      logoUrl: string | null;
+      address: string | null;
+      bookingCount: number;
+      reviewCount: number;
+    }>>(sql);
+
+    companies = rawRows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      slug: r.slug,
+      businessType: r.businessType,
+      logoUrl: r.logoUrl,
+      address: r.address,
+      _count: {
+        bookings: Number(r.bookingCount || 0),
+        reviews: Number(r.reviewCount || 0),
+      },
+    }));
+  }
 
   const tipos = Object.entries(BUSINESS_LABELS);
 
@@ -52,8 +110,8 @@ export default async function EmpresasPage({
     <div className="min-h-screen bg-stone-50">
       <header className="bg-white border-b border-stone-200">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="font-semibold text-stone-900">
-            agendei<span className="text-amber-500">.</span>
+          <Link href="/">
+            <KreatorLogo size={28} textClassName="font-semibold text-stone-900 text-lg" />
           </Link>
           <Link href="/login" className="text-sm text-stone-600 hover:text-stone-900 transition-colors">
             Entrar

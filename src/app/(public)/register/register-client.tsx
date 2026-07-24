@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { setMarketingOptInAction } from "@/server/actions/profile";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import { KreatorIcon } from "@/components/ui/kreator-logo";
 
 const CalendarIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -126,12 +127,10 @@ export default function RegisterClient({
       </div>
 
       <div className="w-full max-w-xl relative z-10">
-        <Link href="/" className="flex items-center gap-2 group justify-center mb-10">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center shadow-lg shadow-violet-500/20 group-hover:shadow-violet-500/40 transition-shadow">
-            <CalendarIcon />
-          </div>
+        <Link href="/" className="flex items-center gap-2.5 group justify-center mb-10">
+          <KreatorIcon size={40} className="shadow-lg shadow-violet-500/20 group-hover:shadow-violet-500/40 transition-shadow" />
           <span className="text-2xl font-bold tracking-tight text-white">
-            agendei<span className="text-violet-500">.</span>
+            kreator<span className="text-violet-500">.</span>
           </span>
         </Link>
 

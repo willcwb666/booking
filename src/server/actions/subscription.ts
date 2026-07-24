@@ -58,6 +58,16 @@ export async function createPlanCheckoutAction(
     return { success: false, error: "Este plano ainda não está disponível para cobrança. Contate o suporte." };
   }
 
+  const company = await db.company.findUnique({
+    where: { id: companyId },
+    select: { stripeCustomerId: true, stripeSubscriptionId: true, subscriptionStatus: true },
+  });
+
+  // Se já possui assinatura ativa no Stripe, não cria nova assinatura no Checkout — envia para o Portal
+  if (company?.stripeSubscriptionId && (company.subscriptionStatus === "active" || company.subscriptionStatus === "trialing")) {
+    return createBillingPortalAction(companySlug);
+  }
+
   const customerId = await ensureStripeCustomer(companyId);
 
   const checkout = await stripe.checkout.sessions.create({

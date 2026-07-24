@@ -158,6 +158,25 @@ export async function updateAgendaAction(
   if (existing.status === "CANCELLED")
     return { success: false, errors: { _: ["Não é possível editar agenda cancelada"] } };
 
+  // Trava de Segurança: Não permite alterar a agenda se houver agendamentos em aberto
+  const openBookingsCount = await db.booking.count({
+    where: {
+      bookingConfig: { agendaId: id },
+      status: { in: ["CONFIRMED", "PENDING"] },
+    },
+  });
+
+  if (openBookingsCount > 0) {
+    return {
+      success: false,
+      errors: {
+        _: [
+          `Não é possível alterar esta agenda pois existem ${openBookingsCount} agendamento(s) em aberto. Finalize ou cancele os agendamentos antes de salvar as alterações.`,
+        ],
+      },
+    };
+  }
+
   const intent = formData.get("intent") as "draft" | "publish";
   const raw = parseFormData(formData);
   const parsed = agendaSchema.safeParse(raw);
@@ -254,6 +273,24 @@ export async function cancelAgendaAction(
     return { success: false, errors: { _: ["Agenda não encontrada"] } };
   if (existing.status === "CANCELLED")
     return { success: false, errors: { _: ["Agenda já está cancelada"] } };
+
+  const openBookingsCount = await db.booking.count({
+    where: {
+      bookingConfig: { agendaId: id },
+      status: { in: ["CONFIRMED", "PENDING"] },
+    },
+  });
+
+  if (openBookingsCount > 0) {
+    return {
+      success: false,
+      errors: {
+        _: [
+          `Não é possível cancelar esta agenda pois existem ${openBookingsCount} agendamento(s) em aberto. Finalize ou cancele os agendamentos antes de cancelar a agenda.`,
+        ],
+      },
+    };
+  }
 
   await db.agenda.update({
     where: { id },

@@ -1,3 +1,4 @@
+import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { getCompanyBySlugForUser } from "@/server/queries/companies";
@@ -12,23 +13,26 @@ export default async function DashboardPage({
 }) {
   const { companySlug } = await params;
   const session = await auth.api.getSession({ headers: await headers() });
-  const company = await getCompanyBySlugForUser(companySlug, session!.user.id);
+  if (!session) redirect("/login");
+
+  const company = await getCompanyBySlugForUser(companySlug, session.user.id);
+  if (!company) notFound();
 
   const [stats, reviewStats] = await Promise.all([
-    getBookingDashboardStats(company!.id),
-    getReviewStats(company!.id),
+    getBookingDashboardStats(company.id),
+    getReviewStats(company.id),
   ]);
 
   return (
     <DashboardClient
-      userName={session!.user.name}
+      userName={session.user.name}
       company={{
-        name: company!.name,
-        slug: company!.slug,
-        businessType: company!.businessType,
-        planTier: company!.plan.tier,
-        planDisplayName: company!.plan.displayName,
-        role: company!.members[0].role,
+        name: company.name,
+        slug: company.slug,
+        businessType: company.businessType,
+        planTier: company.plan.tier,
+        planDisplayName: company.plan.displayName,
+        role: company.members?.[0]?.role || "OWNER",
       }}
       stats={stats}
       reviewStats={reviewStats}

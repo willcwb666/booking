@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { createCompanyAction } from "@/server/actions/company";
 import { BUSINESS_TYPES, generateSlug } from "@/schemas/company.schema";
-import { MARKETS, getMarket, findMarketByTimezone } from "@/lib/markets";
+import { MARKETS, getMarket, findMarketByTimezone, detectUserMarket, formatPhoneNumber } from "@/lib/markets";
 import { LogoUpload } from "@/components/ui/logo-upload";
 
 type PlanFeature = {
@@ -43,14 +43,12 @@ export function OnboardingClient({ plans, userName, isAdditionalCompany, multiCo
   const [timezone, setTimezone] = useState("America/Sao_Paulo");
   const [phone, setPhone] = useState("");
 
-  // Detecta o mercado pelo fuso do navegador (ex.: America/Denver → EUA).
-  // Em useEffect para não divergir do HTML renderizado no servidor.
+  // Detecta automaticamente o país, idioma, fuso e DDI do navegador do usuário.
   useEffect(() => {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const detected = findMarketByTimezone(tz);
+    const { market: detected, timezoneId } = detectUserMarket();
     if (detected) {
       setCountry(detected.code);
-      setTimezone(tz);
+      setTimezone(timezoneId);
     }
   }, []);
 
@@ -309,20 +307,28 @@ export function OnboardingClient({ plans, userName, isAdditionalCompany, multiCo
               </div>
 
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Telefone / Celular</label>
                 <div className="flex">
-                  <span className="inline-flex items-center px-3 border border-r-0 border-gray-300 rounded-l-lg bg-gray-50 text-sm text-gray-600 select-none">
+                  <span className="inline-flex items-center px-3 border border-r-0 border-gray-300 rounded-l-lg bg-gray-50 text-sm font-bold text-gray-600 select-none">
                     {market.dialCode}
                   </span>
                   <input
                     id="phone"
                     type="tel"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => setPhone(formatPhoneNumber(e.target.value, country))}
                     placeholder={market.phonePlaceholder}
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-r-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
+                <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    defaultChecked
+                    className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <span className="text-xs font-medium text-gray-600">Este número tem WhatsApp</span>
+                </label>
               </div>
 
               <div>

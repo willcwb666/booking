@@ -10,10 +10,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Agendei — Agendamentos online para seu negócio",
+  title: "Kreator — Agendamentos online para seu negócio",
   description:
-    "Gerencie agendamentos, equipe e pagamentos em um só lugar. App mobile para seus clientes nunca perderem um compromisso.",
+    "Gerencie agendamentos, equipe e pagamentos em um só lugar. Plataforma completa para o seu negócio.",
 };
+
+import { ToastProvider } from "@/components/ui/toast-provider";
 
 export default async function RootLayout({
   children,
@@ -37,7 +39,9 @@ export default async function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col font-sans">
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getUserCompanies } from "@/server/queries/companies";
 import { getPlans } from "@/server/queries/plans";
-import { OnboardingClient } from "./onboarding-client";
+import { OnboardingWizardClient } from "./onboarding-wizard-client";
 
 export default async function OnboardingPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -42,7 +42,7 @@ export default async function OnboardingPage() {
   }));
 
   return (
-    <OnboardingClient
+    <OnboardingWizardClient
       plans={serializedPlans}
       userName={session.user.name}
       isAdditionalCompany={companies.length > 0}

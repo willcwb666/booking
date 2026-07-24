@@ -35,14 +35,13 @@ export default async function DashboardLayout({
     .map((m) => ({ name: m.company.name, slug: m.company.slug }));
 
   return (
-    <div className="flex h-screen bg-white text-[#425466] font-sans overflow-hidden selection:bg-[#635bff]/30 selection:text-[#0a2540]">
-
+    <div className="app-shell">
       {/* ── Sidebar ── */}
-      <aside className="relative z-20 w-[260px] flex flex-col bg-[#f6f9fc] border-r border-[#e3e8ee]">
+      <aside className="app-sidebar flex flex-col">
         <div className="h-16 flex items-center px-6">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="text-[17px] font-bold tracking-tight text-[#0a2540]">
-              agendei<span className="text-[#635bff]">.</span>
+            <span className="text-[17px] font-bold tracking-tight text-[var(--color-navy)]">
+              agendei<span className="text-[var(--color-primary)]">.</span>
             </span>
           </Link>
         </div>
@@ -51,23 +50,23 @@ export default async function DashboardLayout({
           <DashboardNav companies={companies} />
         </div>
 
-        <div className="p-4 bg-[#f6f9fc] border-t border-[#e3e8ee]">
+        <div className="p-4 border-t border-[var(--color-border)]">
           <div className="flex items-center gap-3 p-2">
             <img
               src={session?.user?.image || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(session?.user?.name ?? "U")}`}
               alt=""
-              className="w-8 h-8 rounded-full border border-[#e3e8ee]"
+              className="w-8 h-8 rounded-full border border-[var(--color-border)]"
             />
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-bold text-[#0a2540] truncate">{session?.user?.name || "Usuário"}</p>
-              <p className="text-[12px] font-medium text-[#697386] truncate">{session?.user?.email || ""}</p>
+              <p className="text-[13px] font-bold text-[var(--color-navy)] truncate">{session?.user?.name || "Usuário"}</p>
+              <p className="text-[12px] font-medium text-[var(--color-text-muted)] truncate">{session?.user?.email || ""}</p>
             </div>
             <form action={logoutAction}>
               <button
                 type="submit"
                 aria-label="Sair da conta"
                 title="Sair"
-                className="text-[#697386] hover:text-[#0a2540] transition-colors p-1"
+                className="text-[var(--color-text-muted)] hover:text-[var(--color-navy)] transition-colors p-1"
               >
                 <LogoutIcon />
               </button>
@@ -77,32 +76,32 @@ export default async function DashboardLayout({
       </aside>
 
       {/* ── Main Content ── */}
-      <main className="relative z-10 flex-1 flex flex-col h-screen overflow-hidden bg-white">
+      <main className="app-main">
 
         {/* Email Verification Banner */}
         {isEmailUnverified && (
-          <div className="w-full bg-[#fff4e5] border-b border-[#ffe8cc] px-8 py-2.5 flex items-center gap-2 text-[#b05d00] text-[13px] font-bold">
+          <div className="alert alert-warning w-full rounded-none border-x-0 border-t-0 px-8">
             <AlertCircleIcon />
             <span>Verifique seu e-mail para ativar todas as funcionalidades.</span>
           </div>
         )}
 
         {/* Topbar */}
-        <header className="h-16 flex items-center justify-between px-8 border-b border-[#e3e8ee] bg-white">
+        <header className="app-header">
           <div className="flex items-center gap-4">
-            <h1 className="text-[16px] font-bold text-[#0a2540]">Visão Geral</h1>
+            <h1 className="text-[16px] font-bold text-[var(--color-navy)]">Visão Geral</h1>
           </div>
           <div className="flex items-center gap-5">
             <Link
               href="/empresas"
-              className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-md bg-[#f6f9fc] text-[14px] font-semibold text-[#425466] hover:text-[#0a2540] transition-colors"
+              className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-md bg-[var(--color-bg-subtle)] text-[14px] font-semibold text-[var(--color-text)] hover:text-[var(--color-navy)] transition-colors"
             >
               <SearchIcon className="w-4 h-4" />
               Encontrar empresas
             </Link>
             <Link
               href="/orcamentos"
-              className="px-4 py-1.5 bg-[#0a2540] text-white rounded-full text-[14px] font-bold hover:bg-[#425466] transition-colors shadow-[0_2px_5px_rgba(0,0,0,0.1)]"
+              className="btn btn-navy btn-lg !rounded-full !text-[14px]"
             >
               Meus orçamentos
             </Link>
@@ -110,8 +109,8 @@ export default async function DashboardLayout({
         </header>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-8 scrollbar-hide">
-          <div className="w-[90%] mx-auto">
+        <div className="page-container scrollbar-hide">
+          <div className="page-content">
             {children}
           </div>
         </div>

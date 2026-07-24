@@ -163,29 +163,33 @@ export function AdminUsersClient({
   }
 
   return (
-    <div className="flex-1 flex flex-col">
-      <div className="px-8 py-5 border-b border-gray-200 bg-white">
-        <h1 className="text-xl font-bold text-gray-900">Usuários</h1>
-        <p className="text-sm text-gray-500 mt-0.5">{total} usuário{total !== 1 ? "s" : ""}</p>
+    <div className="w-full max-w-7xl px-6 sm:px-8 py-8 text-left space-y-6">
+      <div>
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Usuários Registrados</h1>
+        <p className="text-xs text-slate-500 mt-1">{total} usuário{total !== 1 ? "s" : ""} cadastrado(s) na plataforma</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-8">
-        <form onSubmit={handleSearch} className="flex gap-2 mb-5">
+      <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-2xs">
+        <form onSubmit={handleSearch} className="flex gap-2 max-w-md w-full">
           <input
             name="q"
             defaultValue={search}
-            placeholder="Buscar por nome ou e-mail…"
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-72"
+            placeholder="Buscar por nome ou e-mail..."
+            className="border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
           />
-          <button type="submit" className="px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors">
+          <button
+            type="submit"
+            className="px-5 py-2.5 bg-[#635bff] hover:bg-[#544dc9] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer shrink-0"
+          >
             Buscar
           </button>
           {search && (
-            <Link href={pathname} className="px-3 py-2 text-sm text-gray-400 hover:text-gray-600">
+            <Link href={pathname} className="px-3 py-2.5 text-xs text-slate-400 hover:text-slate-600 flex items-center">
               Limpar
             </Link>
           )}
         </form>
+      </div>
 
         {items.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
@@ -260,7 +264,6 @@ export function AdminUsersClient({
             )}
           </div>
         )}
-      </div>
     </div>
   );
 }

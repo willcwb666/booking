@@ -10,6 +10,7 @@ export type CompanyContext = {
   businessType: string;
   planTier: string;
   planDisplayName: string;
+  subscriptionInterval?: string | null;
   role: "OWNER" | "MANAGER" | "EMPLOYEE";
   currency: string; // ISO 4217 (BRL, USD…)
   locale: string;   // BCP 47 (pt-BR, en-US…)

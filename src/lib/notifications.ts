@@ -229,3 +229,51 @@ export async function notifyStatusChanged(bookingId: string, newStatus: string) 
     console.error("[notifications] notifyStatusChanged failed:", err);
   }
 }
+
+export async function notifyBookingCompletedWithInvoice(
+  bookingId: string,
+  basePrice: number,
+  additionalItems: Array<{ description: string; amount: number }>,
+  discountAmount: number,
+  finalTotal: number
+) {
+  try {
+    const { sendBookingCompletedInvoiceEmail } = await import("./email");
+    const booking = await db.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        company: { select: { name: true, phone: true, currency: true } },
+        bookingConfig: { select: { name: true } },
+        customerDetail: true,
+      },
+    });
+    if (!booking?.customerDetail) return;
+
+    const cd = booking.customerDetail;
+    const address = `${cd.address}${cd.aptNo ? `, ${cd.aptNo}` : ""}, ${cd.city}`;
+    const customerName = `${cd.firstName} ${cd.lastName}`;
+
+    await sendBookingCompletedInvoiceEmail({
+      to: cd.email,
+      customerName,
+      companyName: booking.company.name,
+      companyPhone: booking.company.phone,
+      serviceName: booking.bookingConfig.name,
+      bookingId: booking.id,
+      date: booking.scheduledDate,
+      startTime: booking.scheduledStartTime,
+      endTime: booking.scheduledEndTime,
+      address,
+      currency: booking.company.currency,
+      basePrice,
+      additionalItems,
+      discountAmount,
+      finalTotal,
+    });
+
+    const { awardLoyaltyPointsForBookingAction } = await import("@/server/actions/loyalty");
+    void awardLoyaltyPointsForBookingAction(bookingId, finalTotal);
+  } catch (err) {
+    console.error("[notifications] notifyBookingCompletedWithInvoice failed:", err);
+  }
+}

@@ -83,7 +83,7 @@ export function AgendasClient({ companySlug, agendas, professionals, role, activ
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10">
+    <div className="w-full max-w-7xl px-6 py-8 text-left">
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Agendas</h1>

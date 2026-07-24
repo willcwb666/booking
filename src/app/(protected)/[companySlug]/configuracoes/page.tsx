@@ -21,11 +21,48 @@ export default async function ConfiguracoesPage({
     select: { allowMultiCompany: true },
   });
 
-  const role = company.members[0].role;
-  const canEdit = role === "OWNER" || role === "MANAGER";
-  const isOwner = role === "OWNER";
+  const memberRole = company.members?.[0]?.role ?? (session?.user?.role === "admin" ? "OWNER" : "EMPLOYEE");
+  const canEdit = memberRole === "OWNER" || memberRole === "MANAGER" || session?.user?.role === "admin";
+  const isOwner = memberRole === "OWNER" || session?.user?.role === "admin";
 
-  const [paymentMethods, fullCompany, availablePlans] = await Promise.all([
+  // Garante a existência de cada coluna individualmente sem quebrar o PostgreSQL
+  const cols = [
+    `"minCancellationNoticeHours" INT DEFAULT 24`,
+    `"cancellationFee" DECIMAL(10, 2) DEFAULT 0`,
+    `"lateToleranceMinutes" INT DEFAULT 15`,
+    `"notifyEmailEnabled" BOOLEAN DEFAULT true`,
+    `"notifyTextEnabled" BOOLEAN DEFAULT true`,
+    `"notifySmsEnabled" BOOLEAN DEFAULT false`,
+    `"notifyWhatsappEnabled" BOOLEAN DEFAULT true`,
+    `"heroTitle" TEXT`,
+    `"heroSubtitle" TEXT`,
+    `"brandColor" TEXT DEFAULT '#0f172a'`,
+    `"coverImageUrl" TEXT`,
+    `"socialInstagram" TEXT`,
+    `"socialWhatsapp" TEXT`,
+    `"socialFacebook" TEXT`,
+  ];
+
+  for (const col of cols) {
+    try {
+      await db.$executeRawUnsafe(`ALTER TABLE "company" ADD COLUMN IF NOT EXISTS ${col};`);
+    } catch {
+      // ignora erro individual de DDL
+    }
+  }
+
+  // Busca dados adicionais da empresa com fallback seguro contra erros de banco
+  let extraData: any = null;
+  try {
+    const compExtra = await db.$queryRawUnsafe<Array<any>>(
+      `SELECT "minCancellationNoticeHours", "cancellationFee", "lateToleranceMinutes", "notifyEmailEnabled", "notifyTextEnabled", "notifySmsEnabled", "notifyWhatsappEnabled", "heroTitle", "heroSubtitle", "brandColor", "coverImageUrl", "socialInstagram", "socialWhatsapp", "socialFacebook" FROM "company" WHERE id = '${company.id}' LIMIT 1`
+    );
+    extraData = compExtra[0] || null;
+  } catch (err) {
+    console.error("[ConfiguracoesPage] Fallback para colunas extras:", err);
+  }
+
+  const [paymentMethods, fullCompany, availablePlans, availableServices] = await Promise.all([
     db.companyPaymentMethod.findMany({
       where: { companyId: company.id },
       orderBy: { displayOrder: "asc" },
@@ -57,20 +94,42 @@ export default async function ConfiguracoesPage({
         stripePriceMonthlyId: true, stripePriceYearlyId: true,
       },
     }),
+    db.bookingConfig.findMany({
+      where: { companyId: company.id, status: "PUBLISHED" },
+      select: { id: true, name: true },
+    }),
   ]);
 
   return (
     <SettingsClient
       companySlug={companySlug}
       canEdit={canEdit}
+      availableServices={availableServices}
       initial={{
         name: company.name,
         phone: company.phone ?? "",
         address: company.address ?? "",
+        country: (company as any).country || "BR",
         timezone: company.timezone,
         currency: company.currency,
         locale: company.locale,
         logoUrl: company.logoUrl,
+        minCancellationNoticeHours: Number(extraData?.minCancellationNoticeHours ?? 24),
+        cancellationFee: Number(extraData?.cancellationFee ?? 0),
+        lateToleranceMinutes: Number(extraData?.lateToleranceMinutes ?? 15),
+        notifyEmailEnabled: extraData?.notifyEmailEnabled ?? true,
+        notifyTextEnabled: extraData?.notifyTextEnabled ?? true,
+        notifySmsEnabled: extraData?.notifySmsEnabled ?? false,
+        notifyWhatsappEnabled: extraData?.notifyWhatsappEnabled ?? true,
+      }}
+      initialLanding={{
+        heroTitle: extraData?.heroTitle ?? "",
+        heroSubtitle: extraData?.heroSubtitle ?? "",
+        brandColor: extraData?.brandColor ?? "#0f172a",
+        coverImageUrl: extraData?.coverImageUrl ?? "",
+        socialInstagram: extraData?.socialInstagram ?? "",
+        socialWhatsapp: extraData?.socialWhatsapp ?? "",
+        socialFacebook: extraData?.socialFacebook ?? "",
       }}
       bookingBaseUrl={`/book/${companySlug}`}
       paymentMethods={paymentMethods}

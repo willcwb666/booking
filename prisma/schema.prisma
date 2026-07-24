@@ -18,6 +18,7 @@ enum BusinessType {
   BARBER
   HAIR_SALON
   PHOTOGRAPHER
+  MECHANIC
   OTHER
 }
 
@@ -257,7 +258,7 @@ model Company {
   id            String          @id @default(cuid())
   name          String
   slug          String          @unique
-  businessType  BusinessType
+  businessType  String
   planId        String
   plan          Plan            @relation(fields: [planId], references: [id])
   logoUrl       String?
@@ -273,7 +274,23 @@ model Company {
   stripeSubscriptionId  String?
   subscriptionStatus    String?   // active | trialing | past_due | canceled | …
   subscriptionInterval  String?   // month | year
-  subscriptionPeriodEnd DateTime?
+  // Política de cancelamento (configurável por empresa)
+  minCancellationNoticeHours Int     @default(24)
+  cancellationFee            Decimal @default(0) @db.Decimal(10, 2)
+  lateToleranceMinutes       Int     @default(15)
+  // Notificações e Canais
+  notifyEmailEnabled         Boolean @default(true)
+  notifyTextEnabled          Boolean @default(true)
+  notifySmsEnabled           Boolean @default(false)
+  notifyWhatsappEnabled      Boolean @default(true)
+  // Customização da Landing Page Pública
+  heroTitle                  String?
+  heroSubtitle               String?
+  brandColor                 String?   @default("#0f172a")
+  coverImageUrl              String?
+  socialInstagram            String?
+  socialWhatsapp             String?
+  socialFacebook             String?
   members         CompanyUser[]
   services        Service[]
   serviceTypes    ServiceType[]
@@ -290,6 +307,8 @@ model Company {
   waitlistEntries WaitlistEntry[]
   webhooks        CompanyWebhook[]
   promotions      Promotion[]
+  loyaltyProgram  LoyaltyProgram?
+  loyaltyAccounts LoyaltyAccount[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
@@ -871,4 +890,109 @@ model CalendarIntegration {
   @@unique([userId, provider])
   @@index([userId])
   @@map("calendar_integration")
+}
+
+// ─── Super Admin System Presets por Nicho ─────────────────────────────────────
+
+model SystemPreset {
+  id           String   @id @default(cuid())
+  businessType String
+  title        String
+  description  String?
+  defaultPrice Decimal      @db.Decimal(10, 2)
+  durationMin  Int          @default(30)
+  isExtra      Boolean      @default(false)
+  parentTitle  String?      // Título do serviço pai se for um serviço extra
+  displayOrder Int          @default(0)
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([businessType, isActive])
+  @@map("system_preset")
+}
+
+// ─── Super Admin Cadastro Dinâmico de Segmentos ───────────────────────────────
+
+model SystemSegment {
+  id           String   @id @default(cuid())
+  code         String   @unique // ex: "MECHANIC", "BARBER", "DENTIST"
+  label        String   // ex: "🛠️ Oficina Mecânica & Auto"
+  description  String?  // ex: "Para oficinas, autocenters e funilarias"
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("system_segment")
+}
+
+// ─── Programa de Fidelidade & Pontos (Loyalty Program) ─────────────────────────
+
+model LoyaltyProgram {
+  id                String   @id @default(cuid())
+  companyId         String   @unique
+  isEnabled         Boolean  @default(true)
+  pointsPerCurrency Decimal  @default(1.0) @db.Decimal(10, 2) // ex: 1 ponto por R$ 1,00
+  rewardThreshold   Int      @default(100)                    // ex: 100 pontos = 1 voucher
+  discountAmount    Decimal  @default(20.00) @db.Decimal(10, 2) // R$ 20,00 de desconto
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  company           Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("loyalty_program")
+}
+
+model LoyaltyAccount {
+  id            String   @id @default(cuid())
+  companyId     String
+  customerEmail String
+  points        Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, customerEmail])
+  @@index([companyId, customerEmail])
+  @@map("loyalty_account")
+}
+
+// ─── Logs de Auditoria do Sistema (Audit Log) ──────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  companyId String?
+  userId    String?
+  action    String   // ex: "COMPANY_UPDATE", "SERVICE_RESET", "PLAN_CHANGE"
+  entity    String   // ex: "Company", "Service", "Subscription"
+  details   String?  // JSON string contendo detalhes da alteração
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([companyId])
+  @@index([userId])
+  @@map("audit_log")
+}
+
+// ─── Notificações Internas do Sistema ─────────────────────────────────────────
+
+model SystemNotification {
+  id              String   @id @default(cuid())
+  companyId       String?
+  recipientUserId String?  // Null para broadcast de Super Admin global
+  title           String
+  message         String
+  type            String   @default("INFO") // PRESET_RESET_REQUEST | INFO | ALERT
+  payload         String?  // JSON string contendo companySlug, observation, etc.
+  isRead          Boolean  @default(false)
+  isResolved      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  @@index([companyId])
+  @@index([recipientUserId])
+  @@index([isRead])
+  @@map("system_notification")
 }

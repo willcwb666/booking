@@ -4,60 +4,6 @@ import React from "react";
 import Link from "next/link";
 import { formatMoney } from "@/lib/format";
 
-// ─── Configuração Dinâmica por Nicho ──────────────────────────────────────────
-const THEMES = {
-  HOME_CLEANING: {
-    bg: "bg-[#F0F7FA]",
-    textMain: "text-sky-950",
-    textSub: "text-sky-700",
-    buttonBg: "bg-sky-600 hover:bg-sky-700 shadow-sky-600/30",
-    buttonText: "text-white",
-    cardBg: "bg-white border-sky-100",
-    cardHover: "hover:border-sky-300 hover:shadow-sky-100",
-    icon: "✨",
-  },
-  BARBER: {
-    bg: "bg-[#0A0A0A]",
-    textMain: "text-white",
-    textSub: "text-zinc-400",
-    buttonBg: "bg-red-600 hover:bg-red-700 shadow-red-900/40",
-    buttonText: "text-white",
-    cardBg: "bg-zinc-900 border-zinc-800",
-    cardHover: "hover:border-red-900/50 hover:shadow-red-900/20",
-    icon: "💈",
-  },
-  LAWN_CARE: {
-    bg: "bg-[#F0FAF4]",
-    textMain: "text-emerald-950",
-    textSub: "text-emerald-700",
-    buttonBg: "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/30",
-    buttonText: "text-white",
-    cardBg: "bg-white border-emerald-100",
-    cardHover: "hover:border-emerald-300 hover:shadow-emerald-100",
-    icon: "🌱",
-  },
-  CAR_WASH: {
-    bg: "bg-blue-50",
-    textMain: "text-blue-950",
-    textSub: "text-blue-700",
-    buttonBg: "bg-blue-600 hover:bg-blue-700 shadow-blue-600/30",
-    buttonText: "text-white",
-    cardBg: "bg-white border-blue-100",
-    cardHover: "hover:border-blue-300 hover:shadow-blue-100",
-    icon: "🚗",
-  },
-  DEFAULT: {
-    bg: "bg-stone-50",
-    textMain: "text-stone-900",
-    textSub: "text-stone-500",
-    buttonBg: "bg-stone-900 hover:bg-stone-800 shadow-stone-900/20",
-    buttonText: "text-white",
-    cardBg: "bg-white border-stone-200",
-    cardHover: "hover:border-stone-400 hover:shadow-stone-200",
-    icon: "📌",
-  }
-};
-
 export default async function TenantLandingPage({
   params,
 }: {
@@ -65,7 +11,6 @@ export default async function TenantLandingPage({
 }) {
   const { companySlug: slug } = await params;
   
-  // 1. Busca a Empresa no banco pelo Slug
   const company = await db.company.findUnique({
     where: { slug, isActive: true },
     include: {
@@ -82,86 +27,150 @@ export default async function TenantLandingPage({
     }
   });
 
-  // Se o slug não existir, mostra a página 404
   if (!company) {
     notFound();
   }
 
-  // 2. Define as cores/tema com base no "businessType"
-  const theme = THEMES[company.businessType as keyof typeof THEMES] || THEMES.DEFAULT;
+  // Dados de customização com fallbacks elegantes
+  const rawExtra = await db.$queryRawUnsafe<Array<{
+    heroTitle: string | null;
+    heroSubtitle: string | null;
+    brandColor: string | null;
+    coverImageUrl: string | null;
+    socialInstagram: string | null;
+    socialWhatsapp: string | null;
+    socialFacebook: string | null;
+  }>>(`SELECT "heroTitle", "heroSubtitle", "brandColor", "coverImageUrl", "socialInstagram", "socialWhatsapp", "socialFacebook" FROM "company" WHERE id = '${company.id}' LIMIT 1`);
+
+  const landing = rawExtra[0] || {};
+  const brandColor = landing.brandColor || "#0f172a";
+  const heroTitle = landing.heroTitle || `Bem-vindo à ${company.name}`;
+  const heroSubtitle = landing.heroSubtitle || "Agende seus serviços online em 1 minuto com atendimento VIP 24/7";
+  const whatsappNum = landing.socialWhatsapp || company.phone || "";
 
   return (
-    <div className={`min-h-screen font-sans transition-colors duration-500 ${theme.bg} ${theme.textMain}`}>
+    <div className="min-h-screen bg-stone-50 text-stone-900 font-sans text-left transition-colors duration-500">
       
-      {/* ── Cabeçalho do Cliente ── */}
-      <header className="w-full pt-12 pb-6 px-6 md:px-0">
-        <div className="max-w-3xl mx-auto flex flex-col items-center text-center">
-          {company.logoUrl ? (
-            <img src={company.logoUrl} alt={company.name} className="w-24 h-24 rounded-full mb-6 border-4 border-white shadow-lg object-cover" />
-          ) : (
-            <div className={`w-24 h-24 rounded-full mb-6 flex items-center justify-center text-4xl shadow-lg border-4 ${theme.cardBg}`}>
-              {theme.icon}
-            </div>
-          )}
-          
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
-            {company.name}
+      {/* ── Top Navbar Pública ── */}
+      <nav className="w-full bg-white/90 backdrop-blur-md border-b border-stone-200 sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {company.logoUrl ? (
+              <img src={company.logoUrl} alt={company.name} className="w-10 h-10 rounded-full object-cover border border-stone-200" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-stone-900 text-white flex items-center justify-center font-black text-sm">
+                {company.name.substring(0, 2).toUpperCase()}
+              </div>
+            )}
+            <span className="font-extrabold text-stone-900 text-lg tracking-tight">{company.name}</span>
+          </div>
+
+          <div className="flex items-center gap-3 sm:gap-4">
+            {whatsappNum && (
+              <a
+                href={`https://wa.me/${whatsappNum.replace(/\D/g, '')}`}
+                target="_blank"
+                rel="noreferrer"
+                className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-bold transition-all"
+              >
+                📱 WhatsApp
+              </a>
+            )}
+            <Link
+              href={`/book/${company.slug}`}
+              className="px-5 py-2.5 text-white font-bold rounded-xl text-xs shadow-md transition-all hover:opacity-90"
+              style={{ backgroundColor: brandColor }}
+            >
+              Agendar Horário
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* ── Hero Banner ── */}
+      <section className="relative w-full py-16 sm:py-24 px-6 border-b border-stone-200 overflow-hidden bg-white">
+        {landing.coverImageUrl && (
+          <div
+            className="absolute inset-0 opacity-15 bg-cover bg-center"
+            style={{ backgroundImage: `url(${landing.coverImageUrl})` }}
+          />
+        )}
+
+        <div className="max-w-4xl mx-auto text-left relative z-10 space-y-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-stone-100 rounded-full text-[11px] font-bold text-stone-700 uppercase tracking-wider">
+            ✨ Agendamento Online Garantido
+          </div>
+
+          <h1 className="text-3xl sm:text-5xl font-black text-stone-900 tracking-tight leading-tight">
+            {heroTitle}
           </h1>
-          
+
+          <p className="text-base sm:text-lg text-stone-600 max-w-2xl leading-relaxed">
+            {heroSubtitle}
+          </p>
+
           {company.address && (
-            <p className={`text-lg font-medium max-w-lg mb-8 ${theme.textSub}`}>
+            <p className="text-xs sm:text-sm font-semibold text-stone-500 flex items-center gap-1.5">
               📍 {company.address}
             </p>
           )}
 
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link href={`/book/${company.slug}`} className={`px-8 py-4 rounded-full text-lg font-bold transition-all hover:scale-105 shadow-xl ${theme.buttonBg} ${theme.buttonText}`}>
-              Agendar Horário
+          <div className="pt-2 flex flex-wrap gap-3">
+            <Link
+              href={`/book/${company.slug}`}
+              className="px-8 py-4 text-white font-black text-sm rounded-2xl shadow-xl transition-all hover:scale-105"
+              style={{ backgroundColor: brandColor }}
+            >
+              Ver Horários e Agendar ➔
             </Link>
-            {company.phone && (
-              <a href={`https://wa.me/${company.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className={`px-8 py-4 rounded-full text-lg font-bold border transition-all hover:scale-105 ${theme.cardBg} ${theme.textMain}`}>
-                WhatsApp
-              </a>
-            )}
           </div>
         </div>
-      </header>
+      </section>
 
-      {/* ── Lista de Serviços Dinâmica ── */}
-      <main className="max-w-3xl mx-auto px-6 md:px-0 py-12">
-        <h2 className="text-2xl font-bold mb-8 text-center uppercase tracking-widest text-sm opacity-80">Nossos Serviços</h2>
+      {/* ── Catálogo de Serviços ── */}
+      <main className="max-w-4xl mx-auto px-6 py-12 space-y-10">
+        <div>
+          <h2 className="text-xs font-black uppercase tracking-widest text-stone-400">Catálogo de Atendimentos</h2>
+          <h3 className="text-xl sm:text-2xl font-bold text-stone-900 mt-1">Serviços Disponíveis</h3>
+        </div>
 
         {company.services.length === 0 ? (
-          <div className={`p-8 rounded-3xl text-center border ${theme.cardBg} ${theme.textSub}`}>
+          <div className="p-8 rounded-3xl text-center bg-white border border-stone-200 text-stone-500 text-xs">
             Nenhum serviço cadastrado no momento.
           </div>
         ) : (
           <div className="space-y-8">
             {company.services.map((service) => (
               <div key={service.id} className="space-y-4">
-                <h3 className="text-xl font-bold border-b pb-2 opacity-90">{service.name}</h3>
+                <h4 className="text-lg font-bold text-stone-900 border-b border-stone-200 pb-2">{service.name}</h4>
                 {service.description && (
-                  <p className={`text-sm mb-4 ${theme.textSub}`}>{service.description}</p>
+                  <p className="text-xs text-stone-500 mb-4">{service.description}</p>
                 )}
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {service.serviceTypes.map((type) => (
                     <div 
                       key={type.id} 
-                      className={`p-5 rounded-2xl border cursor-pointer transition-all duration-300 ${theme.cardBg} ${theme.cardHover}`}
+                      className="p-5 rounded-2xl border border-stone-200 bg-white hover:border-stone-400 hover:shadow-md transition-all duration-300 space-y-3"
                     >
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-bold text-lg">{type.name}</h4>
-                        <span className="font-extrabold">{formatMoney(Number(type.price), company.currency, company.locale)}</span>
+                      <div className="flex justify-between items-start">
+                        <h5 className="font-bold text-stone-900 text-base">{type.name}</h5>
+                        <span className="font-black text-stone-900">
+                          {formatMoney(Number(type.price), company.currency, company.locale)}
+                        </span>
                       </div>
                       {type.description && (
-                        <p className={`text-sm mb-4 ${theme.textSub}`}>{type.description}</p>
+                        <p className="text-xs text-stone-500">{type.description}</p>
                       )}
-                      <div className="flex justify-between items-center mt-4">
-                        <span className={`text-xs font-semibold px-3 py-1 rounded-full bg-black/5 dark:bg-white/10`}>
+                      <div className="flex justify-between items-center pt-2">
+                        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-stone-100 text-stone-600">
                           ⏱ {type.estimatedMinutes} min
                         </span>
-                        <Link href={`/book/${company.slug}`} className={`text-sm font-bold px-4 py-2 rounded-lg transition-all ${theme.buttonBg} ${theme.buttonText}`}>
+                        <Link
+                          href={`/book/${company.slug}`}
+                          className="text-xs font-bold px-4 py-2 rounded-xl text-white transition-all hover:opacity-90"
+                          style={{ backgroundColor: brandColor }}
+                        >
                           Selecionar
                         </Link>
                       </div>
@@ -174,10 +183,15 @@ export default async function TenantLandingPage({
         )}
       </main>
       
-      {/* ── Footer Branding ── */}
-      <footer className="w-full py-10 mt-12 text-center opacity-50">
-        <p className={`text-sm font-medium ${theme.textSub}`}>
-          Agendamento inteligente powered by <span className="font-bold">agendei.</span>
+      {/* ── Footer ── */}
+      <footer className="w-full py-12 border-t border-stone-200 bg-white text-center text-xs text-stone-500 space-y-3">
+        <p>
+          © {new Date().getFullYear()} {company.name} · Sistema de Agendamento Inteligente
+        </p>
+        <p>
+          <Link href="/login" className="text-stone-400 hover:text-stone-700 underline font-medium">
+            Área da Equipe / Entrar no Sistema
+          </Link>
         </p>
       </footer>
 

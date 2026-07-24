@@ -20,13 +20,15 @@ export async function toggleCompanyActiveAction(
   const check = await requireAdmin();
   if ("error" in check) return { success: false, error: check.error };
 
-  const company = await db.company.findUnique({ where: { id: companyId } });
-  if (!company) return { success: false, error: "Empresa não encontrada" };
+  const rows = await db.$queryRawUnsafe<Array<{ id: string; isActive: boolean }>>(
+    `SELECT id, "isActive" FROM "company" WHERE id = '${companyId.replace(/'/g, "''")}' LIMIT 1`
+  );
+  if (rows.length === 0) return { success: false, error: "Empresa não encontrada" };
 
-  await db.company.update({
-    where: { id: companyId },
-    data: { isActive: !company.isActive },
-  });
+  const currentIsActive = rows[0].isActive;
+  await db.$executeRawUnsafe(
+    `UPDATE "company" SET "isActive" = ${!currentIsActive}, "updatedAt" = NOW() WHERE id = '${companyId.replace(/'/g, "''")}'`
+  );
 
   revalidatePath("/admin/companies");
   return { success: true };

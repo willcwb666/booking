@@ -8,13 +8,15 @@ type Props = {
   initialUrl?: string | null;
   label?: string;
   disabled?: boolean;
+  /** Callback opcional com a URL pública após upload bem-sucedido */
+  onUploadComplete?: (url: string) => void;
 };
 
 /**
  * Upload de logo via presigned URL (R2). Faz o upload no ato da seleção e
  * expõe a URL pública num input hidden para o form pai submeter.
  */
-export function LogoUpload({ name = "logoUrl", initialUrl = null, label = "Logo", disabled = false }: Props) {
+export function LogoUpload({ name = "logoUrl", initialUrl = null, label = "Logo", disabled = false, onUploadComplete }: Props) {
   const [url, setUrl] = useState<string | null>(initialUrl);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +54,7 @@ export function LogoUpload({ name = "logoUrl", initialUrl = null, label = "Logo"
       if (!put.ok) throw new Error("Erro ao enviar a imagem");
 
       setUrl(publicUrl);
+      onUploadComplete?.(publicUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao enviar a imagem");
     } finally {

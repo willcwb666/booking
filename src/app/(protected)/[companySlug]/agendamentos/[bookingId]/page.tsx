@@ -88,6 +88,8 @@ export default async function BookingDetailPage({
               bookingId={bookingId}
               companySlug={companySlug}
               currentStatus={booking.status}
+              originalTotal={Number(booking.estimate?.total ?? 0)}
+              currency={company.currency}
             />
             {canReschedule && (
               <RescheduleDialog
@@ -107,6 +109,17 @@ export default async function BookingDetailPage({
             )}
             {canMarkPaid && (
               <MarkPaidButton bookingId={bookingId} companySlug={companySlug} />
+            )}
+            {booking.status === "COMPLETED" && (
+              <a
+                href={`/receipt/${bookingId}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-lg bg-stone-900 text-white hover:bg-stone-800 transition-colors shadow-sm"
+              >
+                <span>📄</span>
+                <span>Ver / Imprimir Comprovante PDF</span>
+              </a>
             )}
           </div>
         </div>

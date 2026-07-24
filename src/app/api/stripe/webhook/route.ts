@@ -70,6 +70,18 @@ export async function POST(req: NextRequest) {
     await applySubscription(event.data.object as Stripe.Subscription);
   }
 
+  if (event.type === "invoice.payment_failed") {
+    // O campo `subscription` saiu dos tipos na API dahlia, mas segue no payload
+    const invoice = event.data.object as Stripe.Invoice & {
+      subscription?: string | { id: string } | null;
+    };
+    if (invoice.subscription) {
+      const subscriptionId = typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription.id;
+      const sub = await stripe.subscriptions.retrieve(subscriptionId);
+      await applySubscription(sub);
+    }
+  }
+
   return new Response("ok", { status: 200 });
 }
 
@@ -80,7 +92,7 @@ export async function POST(req: NextRequest) {
  */
 async function applySubscription(sub: Stripe.Subscription): Promise<void> {
   const companyId = sub.metadata?.companyId;
-  const planId = sub.metadata?.planId;
+  let planId = sub.metadata?.planId;
   const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
 
   const company = companyId
@@ -89,9 +101,26 @@ async function applySubscription(sub: Stripe.Subscription): Promise<void> {
   if (!company) return;
 
   const item = sub.items.data[0];
-  const interval = item?.price.recurring?.interval ?? null;
+  const priceId = item?.price?.id;
+  const interval = item?.price?.recurring?.interval ?? null;
   const periodEnd = item?.current_period_end ?? null;
   const canceled = sub.status === "canceled";
+
+  // Sincroniza o plano real com base no Price ID do Stripe ativo
+  if (priceId) {
+    const matchedPlan = await db.plan.findFirst({
+      where: {
+        OR: [
+          { stripePriceMonthlyId: priceId },
+          { stripePriceYearlyId: priceId },
+        ],
+      },
+      select: { id: true },
+    });
+    if (matchedPlan) {
+      planId = matchedPlan.id;
+    }
+  }
 
   await db.company.update({
     where: { id: company.id },
@@ -101,7 +130,6 @@ async function applySubscription(sub: Stripe.Subscription): Promise<void> {
       subscriptionStatus: sub.status,
       subscriptionInterval: interval,
       subscriptionPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
-      // Só troca o plano da empresa quando a assinatura está vigente
       ...(planId && !canceled ? { planId } : {}),
     },
   });

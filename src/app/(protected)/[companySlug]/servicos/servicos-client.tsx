@@ -105,6 +105,7 @@ export function ServicosClient({
   const router = useRouter();
   const company = useCompany();
   const [activeTab, setActiveTab] = useState<"services" | "extras">("services");
+  const [searchTerm, setSearchTerm] = useState("");
   const [expandedService, setExpandedService] = useState<string | null>(null);
   const [dialog, setDialog] = useState<DialogState>({ type: "none" });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]> | null>(null);
@@ -178,7 +179,7 @@ export function ServicosClient({
   }[dialog.type];
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10">
+    <div className="w-full max-w-7xl px-6 py-8 text-left">
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
@@ -217,22 +218,37 @@ export function ServicosClient({
         aria-labelledby="tab-services"
         hidden={activeTab !== "services"}
       >
-        <div className="flex justify-end mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="relative max-w-xs w-full">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar serviço por nome..."
+              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs font-medium"
+            />
+            <svg className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+
           <button
             onClick={() => openDialog({ type: "create-service" })}
-            className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2.5 text-xs font-semibold bg-[#635bff] hover:bg-[#544dc9] text-white rounded-xl shadow-xs transition-all cursor-pointer"
           >
             + Novo Serviço
           </button>
         </div>
 
-        {services.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-12 bg-white rounded-xl border border-gray-200">
-            Nenhum serviço cadastrado ainda.
+        {services.filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
+          <p className="text-xs text-slate-400 text-center py-12 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+            Nenhum serviço encontrado para essa busca.
           </p>
         ) : (
           <div className="space-y-3">
-            {services.map((service, sIdx) => (
+            {services
+              .filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
+              .map((service, sIdx) => (
               <div key={service.id} className="bg-white rounded-xl border border-gray-200">
                 {/* Service row */}
                 <div className="flex items-center gap-3 px-4 py-3">

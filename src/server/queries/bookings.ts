@@ -12,6 +12,7 @@ export type BookingListItem = {
   paymentStatus: PaymentStatus;
   customerName: string | null;
   customerEmail: string | null;
+  customerPhone: string | null;
   professionalName: string | null;
   estimateTotal: string;
   serviceLabels: string[];
@@ -61,7 +62,7 @@ export async function getBookings(filters: GetBookingsFilters) {
       skip: (page - 1) * pageSize,
       take: pageSize,
       include: {
-        customerDetail: { select: { firstName: true, lastName: true, email: true } },
+        customerDetail: { select: { firstName: true, lastName: true, email: true, phone: true } },
         professional: { select: { name: true } },
         estimate: {
           select: {
@@ -89,6 +90,7 @@ export async function getBookings(filters: GetBookingsFilters) {
       ? `${b.customerDetail.firstName} ${b.customerDetail.lastName}`
       : null,
     customerEmail: b.customerDetail?.email ?? null,
+    customerPhone: b.customerDetail?.phone ?? null,
     professionalName: b.professional?.name ?? null,
     estimateTotal: b.estimate?.total.toString() ?? "0",
     serviceLabels: (b.estimate?.serviceTypes ?? []).map(

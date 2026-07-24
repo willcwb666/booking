@@ -280,3 +280,115 @@ export async function sendBookingCancelledEmail({
     console.error("[email] cancellation failed:", err);
   }
 }
+
+export type CompletedInvoiceEmailData = {
+  to: string;
+  customerName: string;
+  companyName: string;
+  companyPhone?: string | null;
+  serviceName: string;
+  bookingId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  address: string;
+  currency: string;
+  basePrice: number;
+  additionalItems: Array<{ description: string; amount: number }>;
+  discountAmount: number;
+  finalTotal: number;
+};
+
+export async function sendBookingCompletedInvoiceEmail(data: CompletedInvoiceEmailData) {
+  const appUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+  const receiptUrl = `${appUrl}/receipt/${data.bookingId}`;
+
+  const additionalsHtml = data.additionalItems.length > 0
+    ? data.additionalItems.map(
+        (item) => `
+          <tr>
+            <td style="padding:8px 0;color:#374151;font-size:14px">+ ${escapeHtml(item.description)}</td>
+            <td style="padding:8px 0;text-align:right;color:#059669;font-weight:bold;font-size:14px">+ ${data.currency} ${item.amount.toFixed(2)}</td>
+          </tr>`
+      ).join("")
+    : "";
+
+  const discountHtml = data.discountAmount > 0
+    ? `
+      <tr>
+        <td style="padding:8px 0;color:#dc2626;font-size:14px">- Desconto Aplicado</td>
+        <td style="padding:8px 0;text-align:right;color:#dc2626;font-weight:bold;font-size:14px">- ${data.currency} ${data.discountAmount.toFixed(2)}</td>
+      </tr>`
+    : "";
+
+  try {
+    await resend.emails.send({
+      from: FROM,
+      to: data.to,
+      subject: `🧾 Comprovante de Atendimento Concluído — ${data.companyName}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:580px;margin:0 auto;padding:24px;background:#ffffff;border:1px solid #e5e7eb;border-radius:16px">
+          <!-- Logo & Header -->
+          <div style="border-bottom:2px solid #f3f4f6;padding-bottom:16px;margin-bottom:20px flex items-center justify-between">
+            <h2 style="color:#111827;margin:0;font-size:20px font-weight:bold">COMPROVANTE DE SERVIÇO</h2>
+            <p style="color:#6b7280;font-size:13px;margin:4px 0 0 0">${escapeHtml(data.companyName)} · Agendamento #${escapeHtml(data.bookingId.slice(-8))}</p>
+          </div>
+
+          <p style="color:#374151;font-size:15px">Olá, <strong>${escapeHtml(data.customerName)}</strong>!</p>
+          <p style="color:#4b5563;font-size:14px;line-height:1.5;margin-top:0">
+            Seu atendimento foi concluído com sucesso. Abaixo está o discriminativo detalhado dos serviços prestados e do acerto final:
+          </p>
+
+          <!-- Tabela do Recibo -->
+          <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:20px 0">
+            <table role="presentation" width="100%" style="border-collapse:collapse">
+              <thead>
+                <tr style="border-bottom:1px solid #e5e7eb text-align:left">
+                  <th style="padding-bottom:8px;color:#6b7280;font-size:12px;text-transform:uppercase">Descrição do Serviço</th>
+                  <th style="padding-bottom:8px;text-align:right;color:#6b7280;font-size:12px;text-transform:uppercase">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="padding:10px 0;color:#111827;font-weight:bold;font-size:14px">${escapeHtml(data.serviceName)} (Base)</td>
+                  <td style="padding:10px 0;text-align:right;color:#111827;font-weight:bold;font-size:14px">${data.currency} ${data.basePrice.toFixed(2)}</td>
+                </tr>
+                ${additionalsHtml}
+                ${discountHtml}
+              </tbody>
+            </table>
+
+            <div style="border-top:2px dashed #d1d5db;margin-top:16px;padding-top:16px;display:flex;justify-content:space-between">
+              <table role="presentation" width="100%">
+                <tr>
+                  <td style="font-size:16px;font-weight:bold;color:#111827">TOTAL FINAL PAGO:</td>
+                  <td style="text-align:right;font-size:18px;font-weight:extrabold;color:#059669">${data.currency} ${data.finalTotal.toFixed(2)}</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- Informações de Data e Local -->
+          <div style="color:#6b7280;font-size:13px;line-height:1.6;margin-bottom:24px">
+            <p style="margin:2px 0">📅 <strong>Data:</strong> ${formatDate(data.date)} (${data.startTime} às ${data.endTime})</p>
+            <p style="margin:2px 0">📍 <strong>Endereço:</strong> ${escapeHtml(data.address)}</p>
+            ${data.companyPhone ? `<p style="margin:2px 0">📞 <strong>Contato da Empresa:</strong> ${escapeHtml(data.companyPhone)}</p>` : ""}
+          </div>
+
+          <!-- Botão de Download PDF / Visualização Digital -->
+          <div style="text-align:center;margin:28px 0">
+            <a href="${receiptUrl}" target="_blank" style="display:inline-block;background:#111827;color:#ffffff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:14px">
+              📄 Baixar Comprovante em PDF / Imprimir
+            </a>
+          </div>
+
+          <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:32px">
+            Kreator · Plataforma Completa de Agendamentos e Serviços
+          </p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("[email] invoice email failed:", err);
+  }
+}

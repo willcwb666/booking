@@ -6,7 +6,7 @@ import { encrypt } from "@/lib/encrypt";
 import { decrypt } from "@/lib/encrypt";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { notifyBookingConfirmed, notifyBookingCancelled, notifyStatusChanged, notifyCompanyNewBooking } from "@/lib/notifications";
+import { notifyBookingConfirmed, notifyBookingCancelled, notifyStatusChanged, notifyCompanyNewBooking, notifyBookingCompletedWithInvoice } from "@/lib/notifications";
 import { rateLimit } from "@/lib/rate-limit";
 import { createPixPayment } from "@/lib/mercadopago";
 import { triggerWebhooks } from "@/lib/webhooks";
@@ -449,12 +449,25 @@ export async function cancelBookingAction(formData: FormData): Promise<CancelRes
 
   const booking = await db.booking.findFirst({
     where: { id: bookingId, company: { slug: companySlug } },
+    include: { company: true, estimate: true },
   });
   if (!booking) return { success: false, errors: { _: ["Agendamento não encontrado"] } };
 
   if (booking.status !== "PENDING" && booking.status !== "CONFIRMED") {
     return { success: false, errors: { _: ["Este agendamento não pode ser cancelado"] } };
   }
+
+  // Calcular antecedência do cancelamento vs política da empresa
+  const comp = booking.company;
+  const minNoticeHours = (comp as any).minCancellationNoticeHours ?? 24;
+  const cancelFeeAmount = Number((comp as any).cancellationFee ?? 0);
+
+  const [sYear, sMonth, sDay] = booking.scheduledDate.split("-").map(Number);
+  const [sHour, sMin] = booking.scheduledStartTime.split(":").map(Number);
+  const appointmentTime = new Date(sYear, sMonth - 1, sDay, sHour, sMin);
+  const diffHours = (appointmentTime.getTime() - Date.now()) / (1000 * 60 * 60);
+
+  const isLateCancellation = diffHours < minNoticeHours;
 
   await db.$transaction(async (tx) => {
     await tx.booking.update({
@@ -471,7 +484,19 @@ export async function cancelBookingAction(formData: FormData): Promise<CancelRes
 
   // Issue refund if paid by card
   if (booking.stripePaymentIntentId && booking.paymentStatus === "PAID") {
-    await stripe.refunds.create({ payment_intent: booking.stripePaymentIntentId });
+    if (isLateCancellation && cancelFeeAmount > 0) {
+      const originalTotal = Number(booking.estimate?.total ?? 0);
+      const refundAmount = Math.max(0, originalTotal - cancelFeeAmount);
+      if (refundAmount > 0) {
+        await stripe.refunds.create({
+          payment_intent: booking.stripePaymentIntentId,
+          amount: Math.round(refundAmount * 100),
+        });
+      }
+    } else {
+      await stripe.refunds.create({ payment_intent: booking.stripePaymentIntentId });
+    }
+
     await db.booking.update({
       where: { id: bookingId },
       data: { paymentStatus: "REFUNDED" },
@@ -689,5 +714,102 @@ export async function updateBookingStatusAction(
   } else if (newStatus === "CONFIRMED") {
     void triggerWebhooks(booking.companyId, "BOOKING_CONFIRMED", { bookingId });
   }
+  return { success: true };
+}
+
+export type ExtraItemInput = {
+  description: string;
+  amount: number;
+};
+
+export type CompleteBookingAdjustmentsPayload = {
+  bookingId: string;
+  companySlug: string;
+  additionalItems: ExtraItemInput[];
+  discountType: "FIXED" | "PERCENTAGE";
+  discountValue: number;
+  discountReason?: string;
+};
+
+export async function completeBookingWithAdjustmentsAction(
+  payload: CompleteBookingAdjustmentsPayload
+): Promise<StatusResult> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { success: false, error: "Não autenticado" };
+
+  const member = await db.companyUser.findFirst({
+    where: {
+      userId: session.user.id,
+      company: { slug: payload.companySlug },
+      isActive: true,
+    },
+  });
+  if (!member) return { success: false, error: "Acesso negado" };
+
+  const booking = await db.booking.findFirst({
+    where: { id: payload.bookingId, company: { slug: payload.companySlug } },
+    include: { estimate: true },
+  });
+  if (!booking) return { success: false, error: "Agendamento não encontrado" };
+
+  // Cálculo financeiro do fechamento
+  const originalTotal = Number(booking.estimate?.total ?? 0);
+  const additionalsTotal = payload.additionalItems.reduce((acc, item) => acc + (Number(item.amount) || 0), 0);
+  const subtotal = originalTotal + additionalsTotal;
+
+  let discountAmount = 0;
+  if (payload.discountType === "PERCENTAGE") {
+    discountAmount = (subtotal * (Number(payload.discountValue) || 0)) / 100;
+  } else {
+    discountAmount = Number(payload.discountValue) || 0;
+  }
+
+  const finalTotal = Math.max(0, subtotal - discountAmount);
+  const diffAmount = finalTotal - originalTotal;
+
+  // Se houver desconto que diminuiu o valor total pago antecipado pelo cliente por cartão no Stripe
+  if (diffAmount < 0 && booking.stripePaymentIntentId && booking.paymentStatus === "PAID") {
+    try {
+      const refundCents = Math.round(Math.abs(diffAmount) * 100);
+      if (refundCents > 0) {
+        await stripe.refunds.create({
+          payment_intent: booking.stripePaymentIntentId,
+          amount: refundCents,
+        });
+      }
+    } catch (e) {
+      console.error("[Stripe Refund Error on Completion]:", e);
+    }
+  }
+
+  // Atualizar estimativa e booking para COMPLETED
+  await db.$transaction(async (tx) => {
+    if (booking.estimateId) {
+      await tx.estimate.update({
+        where: { id: booking.estimateId },
+        data: {
+          total: finalTotal,
+        },
+      });
+    }
+
+    await tx.booking.update({
+      where: { id: payload.bookingId },
+      data: {
+        status: "COMPLETED",
+      },
+    });
+  });
+
+  void notifyStatusChanged(payload.bookingId, "COMPLETED");
+  void notifyBookingCompletedWithInvoice(
+    payload.bookingId,
+    originalTotal,
+    payload.additionalItems,
+    discountAmount,
+    finalTotal
+  );
+  void triggerWebhooks(booking.companyId, "BOOKING_COMPLETED", { bookingId: payload.bookingId });
+
   return { success: true };
 }

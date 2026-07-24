@@ -4,9 +4,12 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { revalidatePath } from "next/cache";
 import { createCompanySchema, generateSlug, isReservedSlug } from "@/schemas/company.schema";
 import { ensureUniqueSlug } from "@/server/queries/companies";
 import { getMarket, isValidTimezoneForMarket } from "@/lib/markets";
+import { stripeEnabled } from "@/lib/stripe";
+import { createPlanCheckoutAction } from "@/server/actions/subscription";
 import type { ActionResult } from "@/types";
 
 // Só aceita URLs válidas de upload próprio (R2 ou upload local) — impede gravar URL arbitrária
@@ -67,6 +70,9 @@ export async function createCompanyAction(
     return { success: false, errors: { name: ["Esse nome não pode ser usado como endereço"] } };
   }
 
+  // Garante slug único (o refactor de multiempresas precisava disto)
+  const slug = await ensureUniqueSlug(base);
+
   // Mercado da empresa: país define moeda/idioma; fuso precisa pertencer ao país
   const market = getMarket((formData.get("country") as string) ?? "");
   if (!market) {
@@ -79,32 +85,53 @@ export async function createCompanyAction(
 
   const logoUrl = sanitizeLogoUrl(formData.get("logoUrl") as string | null);
 
-  const slug = await ensureUniqueSlug(base);
+  try {
+    await db.$executeRawUnsafe(`ALTER TABLE "company" ALTER COLUMN "businessType" TYPE text USING "businessType"::text;`);
+  } catch {
+    // ignora se já for tipo text
+  }
 
-  const company = await db.company.create({
+  const companyId = `cm_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
+  await db.$executeRawUnsafe(
+    `
+    INSERT INTO "company" (
+      id, name, slug, "businessType", "planId", phone, address, "logoUrl",
+      currency, locale, timezone, "isActive", "createdAt", "updatedAt"
+    ) VALUES (
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, true, NOW(), NOW()
+    )
+  `,
+    companyId,
+    parsed.data.name,
+    slug,
+    parsed.data.businessType,
+    parsed.data.planId,
+    parsed.data.phone || null,
+    parsed.data.address || null,
+    logoUrl || null,
+    market.currency,
+    market.locale,
+    timezone
+  );
+
+  await db.companyUser.create({
     data: {
-      name: parsed.data.name,
-      slug,
-      businessType: parsed.data.businessType as never,
-      planId: parsed.data.planId,
-      phone: parsed.data.phone ?? null,
-      address: parsed.data.address ?? null,
-      logoUrl,
-      currency: market.currency,
-      locale: market.locale,
-      timezone,
-      members: {
-        create: { userId: session.user.id, role: "OWNER", isActive: true },
-      },
-      // Formas de pagamento padrão — o dono ajusta em Configurações
-      paymentMethods: {
-        create: [
-          { kind: "STRIPE_CARD", label: "Cartão de crédito/débito", displayOrder: 0 },
-          { kind: "MANUAL", label: "Dinheiro/Cheque", displayOrder: 10 },
-        ],
-      },
+      companyId,
+      userId: session.user.id,
+      role: "OWNER",
+      isActive: true,
     },
   });
+
+  await db.companyPaymentMethod.createMany({
+    data: [
+      { companyId, kind: "STRIPE_CARD", label: "Cartão de crédito/débito", displayOrder: 0 },
+      { companyId, kind: "MANUAL", label: "Dinheiro/Cheque", displayOrder: 10 },
+    ],
+  });
+
+  const company = { slug };
 
   redirect(`/${company.slug}/dashboard`);
 }
@@ -166,10 +193,44 @@ export async function updateCompanyAction(
     logoData = { logoUrl: sanitizeLogoUrl(formData.get("logoUrl") as string) };
   }
 
-  await db.company.update({
-    where: { id: member.company.id },
-    data: { name, phone, address, ...marketData, ...logoData },
-  });
+  try {
+    await db.$executeRawUnsafe(`
+      ALTER TABLE "company" 
+      ADD COLUMN IF NOT EXISTS "minCancellationNoticeHours" INT DEFAULT 24,
+      ADD COLUMN IF NOT EXISTS "cancellationFee" DECIMAL(10, 2) DEFAULT 0;
+    `);
+  } catch {
+    // ignora
+  }
+
+  const minNoticeHours = parseInt((formData.get("minCancellationNoticeHours") as string) || "24", 10);
+  const cancelFeeVal = parseFloat((formData.get("cancellationFee") as string) || "0") || 0;
+
+  const idVal = member.company.id.replace(/'/g, "''");
+  const nameVal = name.replace(/'/g, "''");
+  const phoneVal = phone ? `'${phone.replace(/'/g, "''")}'` : "NULL";
+  const addressVal = address ? `'${address.replace(/'/g, "''")}'` : "NULL";
+
+  let extraSql = "";
+  if (countryCode && "currency" in marketData) {
+    extraSql += `, currency = '${marketData.currency}', locale = '${marketData.locale}', timezone = '${marketData.timezone}'`;
+  }
+  if (formData.has("logoUrl")) {
+    const lUrl = sanitizeLogoUrl(formData.get("logoUrl") as string);
+    const logoVal = lUrl ? `'${lUrl.replace(/'/g, "''")}'` : "NULL";
+    extraSql += `, "logoUrl" = ${logoVal}`;
+  }
+
+  await db.$executeRawUnsafe(`
+    UPDATE "company"
+    SET name = '${nameVal}', phone = ${phoneVal}, address = ${addressVal},
+        "minCancellationNoticeHours" = ${minNoticeHours}, "cancellationFee" = ${cancelFeeVal},
+        "updatedAt" = NOW() ${extraSql}
+    WHERE id = '${idVal}'
+  `);
+
+  revalidatePath(`/${companySlug}/configuracoes`);
+  revalidatePath(`/${companySlug}/dashboard`);
 
   return { success: true };
 }
@@ -200,4 +261,244 @@ export async function setMultiCompanyAction(enable: boolean): Promise<ActionResu
   });
 
   return { success: true };
+}
+
+export type WizardPayload = {
+  name: string;
+  businessType: string;
+  planId: string;
+  phone?: string;
+  address?: string;
+  logoUrl?: string;
+  country: string;
+  timezone: string;
+  enableMultiCompany?: boolean;
+  workingDays: number[];
+  startTime: string;
+  endTime: string;
+  intervalMinutes: number;
+  selectedServices: Array<{
+    title: string;
+    description?: string;
+    price: number;
+    durationMin: number;
+    isExtra: boolean;
+    extras?: Array<{
+      title: string;
+      description?: string;
+      price: number;
+      durationMin: number;
+    }>;
+  }>;
+};
+
+export async function createCompanyWizardAction(payload: WizardPayload): Promise<{ success: boolean; companySlug?: string; error?: string; checkoutUrl?: string }> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { success: false, error: "Não autenticado" };
+
+  if (payload.enableMultiCompany) {
+    await db.user.update({
+      where: { id: session.user.id },
+      data: { allowMultiCompany: true },
+    });
+  }
+
+  const base = generateSlug(payload.name);
+  if (isReservedSlug(base)) {
+    return { success: false, error: "Esse nome de empresa não pode ser utilizado" };
+  }
+
+  const market = getMarket(payload.country || "BR");
+  if (!market) {
+    return { success: false, error: "País selecionado inválido" };
+  }
+
+  const timezone = isValidTimezoneForMarket(market.code, payload.timezone)
+    ? payload.timezone
+    : market.timezones[0].id;
+
+  const logoUrl = sanitizeLogoUrl(payload.logoUrl || null);
+  const slug = await ensureUniqueSlug(base);
+
+  try {
+    await db.$executeRawUnsafe(`ALTER TABLE "company" ALTER COLUMN "businessType" TYPE text USING "businessType"::text;`);
+  } catch {
+    // ignora se já for do tipo text
+  }
+
+  try {
+    const result = await db.$transaction(async (tx) => {
+      // 1. Criar a Empresa via SQL direto (bypassa validação de enum em memória do Prisma)
+      const companyId = `cm_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      const phoneVal = payload.phone ? `'${payload.phone.replace(/'/g, "''")}'` : "NULL";
+      const addressVal = payload.address ? `'${payload.address.replace(/'/g, "''")}'` : "NULL";
+      const logoVal = logoUrl ? `'${logoUrl.replace(/'/g, "''")}'` : "NULL";
+      const nameVal = payload.name.replace(/'/g, "''");
+
+      await tx.$executeRawUnsafe(`
+        INSERT INTO "company" (
+          id, name, slug, "businessType", "planId", phone, address, "logoUrl",
+          currency, locale, timezone, "isActive", "createdAt", "updatedAt"
+        ) VALUES (
+          '${companyId}', '${nameVal}', '${slug}', '${payload.businessType}', '${payload.planId}',
+          ${phoneVal}, ${addressVal}, ${logoVal}, '${market.currency}', '${market.locale}',
+          '${timezone}', true, NOW(), NOW()
+        )
+      `);
+
+      // Criar vínculo do proprietário
+      await tx.companyUser.create({
+        data: {
+          companyId,
+          userId: session.user.id,
+          role: "OWNER",
+          isActive: true,
+        },
+      });
+
+      // Criar formas de pagamento padrão
+      await tx.companyPaymentMethod.createMany({
+        data: [
+          { companyId, kind: "STRIPE_CARD", label: "Cartão de crédito/débito", displayOrder: 0 },
+          { companyId, kind: "MANUAL", label: "Dinheiro/Cheque/PIX no local", displayOrder: 10 },
+        ],
+      });
+
+      const company = { id: companyId, slug };
+
+      // 2. Criar Profissional Padrão (O próprio dono)
+      const professional = await tx.professional.create({
+        data: {
+          companyId: company.id,
+          name: session.user.name,
+          email: session.user.email,
+          phone: payload.phone || null,
+          bio: "Responsável Técnico",
+          userId: session.user.id,
+          isActive: true,
+        },
+      });
+
+      // 3. Criar Agenda Ativa
+      const todayStr = new Date().toISOString().split("T")[0];
+      const agenda = await tx.agenda.create({
+        data: {
+          companyId: company.id,
+          name: "Agenda Principal de Atendimento",
+          status: "ACTIVE",
+          startDate: todayStr,
+          workingDays: payload.workingDays && payload.workingDays.length > 0 ? payload.workingDays : [1, 2, 3, 4, 5],
+          startTime: payload.startTime || "08:00",
+          endTime: payload.endTime || "18:00",
+          intervalMinutes: payload.intervalMinutes || 30,
+          createdById: session.user.id,
+          professionals: {
+            create: { professionalId: professional.id },
+          },
+        },
+      });
+
+      // 4. Criar Categoria Principal de Serviços
+      const serviceCategory = await tx.service.create({
+        data: {
+          companyId: company.id,
+          name: "Serviços Principais",
+          description: "Catálogo de serviços cadastrados no onboarding",
+          order: 0,
+        },
+      });
+
+      // 5. Criar Serviços e Extras
+      const createdServiceTypeIds: string[] = [];
+      const createdExtraServiceIds: string[] = [];
+
+      for (const item of payload.selectedServices) {
+        if (!item.isExtra) {
+          // Serviço Principal
+          const st = await tx.serviceType.create({
+            data: {
+              companyId: company.id,
+              serviceId: serviceCategory.id,
+              name: item.title,
+              description: item.description || null,
+              price: item.price,
+              estimatedMinutes: item.durationMin,
+              order: 0,
+              isActive: true,
+            },
+          });
+          createdServiceTypeIds.push(st.id);
+
+          // Extras vinculados a este serviço principal
+          if (item.extras && item.extras.length > 0) {
+            for (const extra of item.extras) {
+              const ex = await tx.extraService.create({
+                data: {
+                  companyId: company.id,
+                  name: extra.title,
+                  description: extra.description || null,
+                  price: extra.price,
+                  estimatedMinutes: extra.durationMin || 15,
+                  order: 0,
+                  isActive: true,
+                },
+              });
+              createdExtraServiceIds.push(ex.id);
+            }
+          }
+        } else {
+          // Extra avulso
+          const ex = await tx.extraService.create({
+            data: {
+              companyId: company.id,
+              name: item.title,
+              description: item.description || null,
+              price: item.price,
+              estimatedMinutes: item.durationMin || 15,
+              order: 0,
+              isActive: true,
+            },
+          });
+          createdExtraServiceIds.push(ex.id);
+        }
+      }
+
+      // 6. Criar e PUBLICAR a BookingConfig
+      const bookingConfig = await tx.bookingConfig.create({
+        data: {
+          companyId: company.id,
+          agendaId: agenda.id,
+          name: "Agendamento Online 24/7",
+          status: "PUBLISHED",
+          allowPartialService: true,
+          createdById: session.user.id,
+          serviceTypes: {
+            create: createdServiceTypeIds.map((id) => ({ serviceTypeId: id })),
+          },
+          extraServices: {
+            create: createdExtraServiceIds.map((id) => ({ extraServiceId: id })),
+          },
+        },
+      });
+
+      return { companySlug: company.slug, bookingConfigId: bookingConfig.id };
+    });
+
+    let checkoutUrl: string | undefined = undefined;
+    if (stripeEnabled) {
+      try {
+        const checkoutRes = await createPlanCheckoutAction(result.companySlug, payload.planId, "month");
+        if (checkoutRes.success) {
+          checkoutUrl = checkoutRes.url;
+        }
+      } catch {
+        // ignora se o plano for gratuito ou não billable
+      }
+    }
+
+    return { success: true, companySlug: result.companySlug, checkoutUrl };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Erro ao criar empresa no onboarding";
+    return { success: false, error: msg };
+  }
 }

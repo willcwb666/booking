@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import React, { useState, useEffect, useRef } from "react";
+import { KreatorLogo } from "@/components/ui/kreator-logo";
 
 // ─── Minimalist Modern Icons ────────────────────────────────────────────────
 const ArrowRight = () => (
@@ -547,13 +548,8 @@ export default function LandingClient({
         <div className="max-w-[1760px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 h-20 flex items-center justify-between">
           
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-stone-900 text-white font-black text-sm flex items-center justify-center tracking-tighter shadow-sm">
-              a.
-            </div>
-            <span className="font-bold tracking-tight text-stone-900 text-lg">
-              agendei<span className="text-stone-400">.</span>
-            </span>
+          <Link href="/">
+            <KreatorLogo size={32} textClassName="font-bold tracking-tight text-stone-900 text-lg" />
           </Link>
 
           {/* Nav Links */}
@@ -1143,10 +1139,9 @@ export default function LandingClient({
       {/* ── 10. Footer Minimalista Ultrawide ── */}
       <footer className="border-t border-stone-200/80 py-12 bg-white text-xs sm:text-sm font-medium text-stone-500">
         <div className="max-w-[1760px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded bg-stone-900 text-white font-bold flex items-center justify-center text-xs">a.</div>
-            <span className="font-bold text-stone-900 text-base">agendei<span className="text-stone-400">.</span></span>
-          </div>
+          <Link href="/">
+            <KreatorLogo size={28} textClassName="font-bold text-stone-900 text-base" />
+          </Link>
 
           <div className="flex flex-wrap items-center justify-center gap-8 text-sm font-semibold text-stone-600">
             <a href="#como-funciona" className="hover:text-stone-900 transition-colors">{t.nav.howItWorks}</a>
