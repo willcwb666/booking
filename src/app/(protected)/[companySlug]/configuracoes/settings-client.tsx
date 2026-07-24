@@ -159,7 +159,8 @@ export function SettingsClient({
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 sm:p-8 w-full max-w-7xl text-left pb-28">
+    <div className="page-container pb-28">
+     <div className="page-content">
       <PresetResetRequestModal
         companySlug={companySlug}
         isOpen={showResetModal}
@@ -169,22 +170,22 @@ export function SettingsClient({
       {/* Header com Título e Indicador de Mudanças */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">Configurações Gerais</h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <h1 className="page-title">Configurações Gerais</h1>
+          <p className="page-description">
             Gerencie dados operacionais, comunicação, aparência e assinatura da sua empresa.
           </p>
         </div>
 
         {isDirty && (
-          <span className="text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200/80 px-3.5 py-1.5 rounded-full inline-flex items-center gap-1.5 animate-pulse">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+          <span className="badge badge-warning gap-1.5 !px-3.5 !py-1.5 animate-pulse">
+            <AlertTriangle className="w-3.5 h-3.5" />
             <span>Você tem alterações não salvas</span>
           </span>
         )}
       </div>
 
       {/* Navegação por Abas Organizadas (Estilo Stripe Tab Bar) */}
-      <div className="bg-slate-100/80 p-1.5 rounded-xl border border-slate-200/60 inline-flex flex-wrap gap-1 mb-8">
+      <div className="bg-[var(--color-bg-muted)] p-1.5 rounded-xl border border-[var(--color-border)] inline-flex flex-wrap gap-1 mb-8">
         {tabs.map((t) => {
           const isActive = tab === t.id;
           return (
@@ -194,11 +195,11 @@ export function SettingsClient({
               onClick={() => setTab(t.id)}
               className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer inline-flex items-center gap-2 ${
                 isActive
-                  ? "bg-white text-indigo-600 shadow-2xs border border-slate-200/80 font-bold"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+                  ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-[var(--shadow-xs)] border border-[var(--color-border)] font-bold"
+                  : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] hover:bg-[var(--color-bg-hover)]"
               }`}
             >
-              <span className={isActive ? "text-indigo-600" : "text-slate-400"}>{t.icon}</span>
+              <span className={isActive ? "text-[var(--color-primary)]" : "text-[var(--color-text-subtle)]"}>{t.icon}</span>
               <span>{t.label}</span>
             </button>
           );
@@ -260,12 +261,12 @@ export function SettingsClient({
 
       {/* Barra Global de Ação Fixa de Salvar Alterações */}
       {tab !== "plano" && tab !== "reset" && canEdit && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white px-6 py-3.5 rounded-2xl shadow-2xl border border-slate-800 flex items-center justify-between gap-6 max-w-xl w-full">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[var(--color-navy)] text-white px-6 py-3.5 rounded-2xl shadow-[var(--shadow-lg)] flex items-center justify-between gap-6 max-w-xl w-full">
           <div className="text-xs">
             <span className="font-bold block text-white">
               {isDirty ? "Campos alterados!" : "Nenhuma alteração pendente"}
             </span>
-            <span className="text-slate-400 text-[11px]">
+            <span className="text-white/60 text-[11px]">
               {isDirty ? "Clique para salvar todas as mudanças efetuadas." : "Altere qualquer campo para habilitar o salvamento."}
             </span>
           </div>
@@ -274,12 +275,13 @@ export function SettingsClient({
             type="button"
             onClick={handleGlobalSave}
             disabled={!isDirty || isPending}
-            className="px-6 py-2.5 bg-[#635bff] hover:bg-[#544dc9] disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer whitespace-nowrap"
+            className="btn btn-primary whitespace-nowrap"
           >
             {isPending ? "Salvando..." : "Salvar Alterações"}
           </button>
         </div>
       )}
+     </div>
     </div>
   );
 }

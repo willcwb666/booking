@@ -179,19 +179,18 @@ export function ServicosClient({
   }[dialog.type];
 
   return (
-    <div className="w-full max-w-7xl px-6 py-8 text-left">
+    <div className="page-container">
+     <div className="page-content">
       {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Serviços</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Gerencie os serviços, tipos e extras da sua empresa.
-          </p>
-        </div>
+      <div className="page-header !mb-6">
+        <h1 className="page-title">Serviços</h1>
+        <p className="page-description">
+          Gerencie os serviços, tipos e extras da sua empresa.
+        </p>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6" role="tablist" aria-label="Seções de serviços">
+      <div className="border-b border-[var(--color-border)] mb-6" role="tablist" aria-label="Seções de serviços">
         {(["services", "extras"] as const).map((tab) => (
           <button
             key={tab}
@@ -202,8 +201,8 @@ export function ServicosClient({
             onClick={() => setActiveTab(tab)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
               activeTab === tab
-                ? "border-blue-600 text-blue-700"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-[var(--color-primary)] text-[var(--color-primary)]"
+                : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
             }`}
           >
             {tab === "services" ? "Serviços e Tipos" : "Extras"}
@@ -225,23 +224,23 @@ export function ServicosClient({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar serviço por nome..."
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs font-medium"
+              className="input !w-full !pl-9"
             />
-            <svg className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-[var(--color-text-subtle)] absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
 
           <button
             onClick={() => openDialog({ type: "create-service" })}
-            className="px-4 py-2.5 text-xs font-semibold bg-[#635bff] hover:bg-[#544dc9] text-white rounded-xl shadow-xs transition-all cursor-pointer"
+            className="btn btn-primary"
           >
             + Novo Serviço
           </button>
         </div>
 
         {services.filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
-          <p className="text-xs text-slate-400 text-center py-12 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+          <p className="card text-xs text-[var(--color-text-subtle)] text-center py-12">
             Nenhum serviço encontrado para essa busca.
           </p>
         ) : (
@@ -249,7 +248,7 @@ export function ServicosClient({
             {services
               .filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
               .map((service, sIdx) => (
-              <div key={service.id} className="bg-white rounded-xl border border-gray-200">
+              <div key={service.id} className="card">
                 {/* Service row */}
                 <div className="flex items-center gap-3 px-4 py-3">
                   <button
@@ -338,7 +337,7 @@ export function ServicosClient({
                             serviceId: service.id,
                           })
                         }
-                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                        className="text-xs text-[var(--color-primary)] hover:opacity-80 font-medium"
                       >
                         + Adicionar tipo
                       </button>
@@ -421,11 +420,11 @@ export function ServicosClient({
         hidden={activeTab !== "extras"}
       >
         {!extrasEnabled ? (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
-            <p className="text-sm font-medium text-amber-900 mb-1">
+          <div className="bg-[var(--color-warning-light)] border border-[var(--color-warning-border)] rounded-xl p-6 text-center">
+            <p className="text-sm font-medium text-[var(--color-warning)] mb-1">
               Recurso não disponível no plano atual
             </p>
-            <p className="text-sm text-amber-700">
+            <p className="text-sm text-[var(--color-text-muted)]">
               Serviços extras estão disponíveis nos planos Normal e Advanced.
             </p>
           </div>
@@ -434,44 +433,44 @@ export function ServicosClient({
             <div className="flex justify-end mb-4">
               <button
                 onClick={() => openDialog({ type: "create-extra" })}
-                className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="btn btn-primary"
               >
                 + Novo Extra
               </button>
             </div>
 
             {extraServices.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-12 bg-white rounded-xl border border-gray-200">
+              <p className="card text-sm text-[var(--color-text-subtle)] text-center py-12">
                 Nenhum extra cadastrado ainda.
               </p>
             ) : (
-              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <table className="w-full text-sm">
+              <div className="table-container">
+                <table className="table">
                   <caption className="sr-only">Lista de serviços extras</caption>
-                  <thead className="border-b border-gray-100">
-                    <tr className="text-xs text-gray-400 uppercase">
-                      <th scope="col" className="text-left px-4 py-3 font-medium">Nome</th>
-                      <th scope="col" className="text-right px-4 py-3 font-medium">Preço</th>
-                      <th scope="col" className="text-right px-4 py-3 font-medium">Duração</th>
-                      <th scope="col" className="text-right px-4 py-3 font-medium sr-only">Ações</th>
+                  <thead>
+                    <tr>
+                      <th scope="col">Nome</th>
+                      <th scope="col" className="!text-right">Preço</th>
+                      <th scope="col" className="!text-right">Duração</th>
+                      <th scope="col" className="!text-right sr-only">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
                     {extraServices.map((extra, idx) => (
-                      <tr key={extra.id} className="border-t border-gray-50">
-                        <td className="px-4 py-3">
-                          <p className="font-medium text-gray-800">{extra.name}</p>
+                      <tr key={extra.id}>
+                        <td>
+                          <p className="font-medium text-[var(--color-text-heading)]">{extra.name}</p>
                           {extra.description && (
-                            <p className="text-xs text-gray-400">{extra.description}</p>
+                            <p className="text-xs text-[var(--color-text-subtle)]">{extra.description}</p>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-right font-medium text-gray-800">
+                        <td className="!text-right font-medium text-[var(--color-text-heading)]">
                           {formatCurrency(extra.price, company.currency, company.locale)}
                         </td>
-                        <td className="px-4 py-3 text-right text-gray-500">
+                        <td className="!text-right text-[var(--color-text-muted)]">
                           {formatDuration(extra.estimatedMinutes)}
                         </td>
-                        <td className="px-4 py-3 text-right">
+                        <td className="!text-right">
                           <div className="flex items-center justify-end gap-1" role="group" aria-label={`Ações para extra ${extra.name}`}>
                             <button
                               onClick={() => handleReorder(reorderExtraServiceAction, extra.id, "up")}
@@ -539,14 +538,14 @@ export function ServicosClient({
               }
             }}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <h2 id="dialog-title" className="text-base font-semibold text-gray-900">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">
+              <h2 id="dialog-title" className="text-base font-semibold text-[var(--color-text-heading)]">
                 {dialogTitle}
               </h2>
               <button
                 type="button"
                 onClick={closeDialog}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-[var(--color-text-subtle)] hover:text-[var(--color-text)] transition-colors"
                 aria-label="Fechar"
               >
                 ✕
@@ -560,7 +559,7 @@ export function ServicosClient({
               {(dialog.type === "create-service" || dialog.type === "edit-service") && (
                 <>
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="name" className="input-label">
                       Nome <span aria-hidden="true">*</span>
                     </label>
                     <input
@@ -570,13 +569,13 @@ export function ServicosClient({
                       required
                       autoFocus
                       defaultValue={dialog.type === "edit-service" ? dialog.item.name : ""}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="input"
                       aria-describedby={fieldErrors?.name ? "name-error" : undefined}
                     />
                     <FieldError errors={fieldErrors} field="name" />
                   </div>
                   <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="description" className="input-label">
                       Descrição
                     </label>
                     <textarea
@@ -584,7 +583,7 @@ export function ServicosClient({
                       name="description"
                       rows={2}
                       defaultValue={dialog.type === "edit-service" ? (dialog.item.description ?? "") : ""}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      className="textarea resize-none"
                     />
                     <FieldError errors={fieldErrors} field="description" />
                   </div>
@@ -595,7 +594,7 @@ export function ServicosClient({
               {(dialog.type === "create-service-type" || dialog.type === "edit-service-type") && (
                 <>
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="name" className="input-label">
                       Nome <span aria-hidden="true">*</span>
                     </label>
                     <input
@@ -605,12 +604,12 @@ export function ServicosClient({
                       required
                       autoFocus
                       defaultValue={dialog.type === "edit-service-type" ? dialog.item.name : ""}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="input"
                     />
                     <FieldError errors={fieldErrors} field="name" />
                   </div>
                   <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="description" className="input-label">
                       Descrição
                     </label>
                     <textarea
@@ -618,12 +617,12 @@ export function ServicosClient({
                       name="description"
                       rows={2}
                       defaultValue={dialog.type === "edit-service-type" ? (dialog.item.description ?? "") : ""}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      className="textarea resize-none"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="price" className="input-label">
                         Preço ({company.currency}) <span aria-hidden="true">*</span>
                       </label>
                       <input
@@ -634,13 +633,13 @@ export function ServicosClient({
                         step="0.01"
                         required
                         defaultValue={dialog.type === "edit-service-type" ? dialog.item.price : ""}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="input"
                         aria-describedby={fieldErrors?.price ? "price-error" : undefined}
                       />
                       <FieldError errors={fieldErrors} field="price" />
                     </div>
                     <div>
-                      <label htmlFor="estimatedMinutes" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="estimatedMinutes" className="input-label">
                         Duração (min) <span aria-hidden="true">*</span>
                       </label>
                       <input
@@ -651,7 +650,7 @@ export function ServicosClient({
                         step="1"
                         required
                         defaultValue={dialog.type === "edit-service-type" ? dialog.item.estimatedMinutes : ""}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="input"
                         aria-describedby={fieldErrors?.estimatedMinutes ? "estimatedMinutes-error" : undefined}
                       />
                       <FieldError errors={fieldErrors} field="estimatedMinutes" />
@@ -678,7 +677,7 @@ export function ServicosClient({
               {(dialog.type === "create-extra" || dialog.type === "edit-extra") && (
                 <>
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="name" className="input-label">
                       Nome <span aria-hidden="true">*</span>
                     </label>
                     <input
@@ -688,12 +687,12 @@ export function ServicosClient({
                       required
                       autoFocus
                       defaultValue={dialog.type === "edit-extra" ? dialog.item.name : ""}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="input"
                     />
                     <FieldError errors={fieldErrors} field="name" />
                   </div>
                   <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="description" className="input-label">
                       Descrição
                     </label>
                     <textarea
@@ -701,12 +700,12 @@ export function ServicosClient({
                       name="description"
                       rows={2}
                       defaultValue={dialog.type === "edit-extra" ? (dialog.item.description ?? "") : ""}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      className="textarea resize-none"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="price" className="input-label">
                         Preço ({company.currency}) <span aria-hidden="true">*</span>
                       </label>
                       <input
@@ -717,12 +716,12 @@ export function ServicosClient({
                         step="0.01"
                         required
                         defaultValue={dialog.type === "edit-extra" ? dialog.item.price : ""}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="input"
                       />
                       <FieldError errors={fieldErrors} field="price" />
                     </div>
                     <div>
-                      <label htmlFor="estimatedMinutes" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="estimatedMinutes" className="input-label">
                         Duração (min) <span aria-hidden="true">*</span>
                       </label>
                       <input
@@ -733,7 +732,7 @@ export function ServicosClient({
                         step="1"
                         required
                         defaultValue={dialog.type === "edit-extra" ? dialog.item.estimatedMinutes : ""}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="input"
                       />
                       <FieldError errors={fieldErrors} field="estimatedMinutes" />
                     </div>
@@ -756,18 +755,18 @@ export function ServicosClient({
               )}
             </div>
 
-            <div className="px-5 py-4 border-t border-gray-100 flex justify-end gap-2">
+            <div className="px-5 py-4 border-t border-[var(--color-border)] flex justify-end gap-2">
               <button
                 type="button"
                 onClick={closeDialog}
-                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                className="btn btn-ghost"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={isPending}
-                className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors"
+                className="btn btn-primary"
               >
                 {isPending ? "Salvando..." : "Salvar"}
               </button>
@@ -775,6 +774,7 @@ export function ServicosClient({
           </form>
         )}
       </dialog>
+     </div>
     </div>
   );
 }

@@ -37,19 +37,19 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: "bg-yellow-100 text-yellow-800",
-  CONFIRMED: "bg-blue-100 text-blue-800",
-  IN_PROGRESS: "bg-purple-100 text-purple-800",
-  COMPLETED: "bg-green-100 text-green-800",
-  CANCELLED: "bg-red-100 text-red-800",
-  RESCHEDULED: "bg-orange-100 text-orange-800",
+  PENDING: "badge badge-warning",
+  CONFIRMED: "badge badge-primary",
+  IN_PROGRESS: "badge badge-primary",
+  COMPLETED: "badge badge-success",
+  CANCELLED: "badge badge-danger",
+  RESCHEDULED: "badge badge-warning",
 };
 
 const PAYMENT_STATUS_COLORS: Record<string, string> = {
-  PENDING: "text-yellow-700",
-  PAID: "text-green-700",
-  FAILED: "text-red-700",
-  REFUNDED: "text-gray-500",
+  PENDING: "text-[var(--color-warning)]",
+  PAID: "text-[var(--color-success)]",
+  FAILED: "text-[var(--color-danger)]",
+  REFUNDED: "text-[var(--color-text-subtle)]",
 };
 
 const PAYMENT_STATUS_LABELS: Record<string, string> = {
@@ -113,14 +113,14 @@ export function AgendamentosClient({
   return (
     <div className="flex-1 min-h-0 flex flex-col">
       {/* Page header */}
-      <div className="px-6 py-5 border-b border-gray-200 bg-white flex items-center justify-between gap-4">
+      <div className="px-6 py-5 border-b border-[var(--color-border)] bg-[var(--color-bg)] flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Agendamentos</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{total} agendamento{total !== 1 ? "s" : ""} no total</p>
+          <h1 className="text-xl font-bold text-[var(--color-text-heading)]">Agendamentos</h1>
+          <p className="text-sm text-[var(--color-text-muted)] mt-0.5">{total} agendamento{total !== 1 ? "s" : ""} no total</p>
         </div>
         <a
           href={`/api/export/bookings?slug=${companySlug}${filters.status && filters.status !== "ALL" ? `&status=${filters.status}` : ""}${filters.from ? `&from=${filters.from}` : ""}${filters.to ? `&to=${filters.to}` : ""}`}
-          className="shrink-0 px-4 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+          className="btn btn-secondary shrink-0"
           download
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -132,7 +132,7 @@ export function AgendamentosClient({
 
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {/* Filters */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+        <div className="card card-body space-y-3">
           {/* Status tabs */}
           <div className="flex flex-wrap gap-1" role="tablist" aria-label="Filtrar por status">
             {STATUS_TABS.map((s) => (
@@ -141,12 +141,7 @@ export function AgendamentosClient({
                 href={buildUrl({ status: s, page: 1 })}
                 role="tab"
                 aria-selected={filters.status === s}
-                className={[
-                  "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                  filters.status === s
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200",
-                ].join(" ")}
+                className={filters.status === s ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm"}
               >
                 {STATUS_LABELS[s]}
               </Link>
@@ -160,12 +155,9 @@ export function AgendamentosClient({
                 name="q"
                 defaultValue={filters.q}
                 placeholder="Buscar por cliente…"
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-52"
+                className="input !w-52"
               />
-              <button
-                type="submit"
-                className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 transition-colors"
-              >
+              <button type="submit" className="btn btn-secondary btn-sm">
                 Buscar
               </button>
             </form>
@@ -176,27 +168,24 @@ export function AgendamentosClient({
                 name="from"
                 type="date"
                 defaultValue={filters.from}
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input !w-auto"
                 aria-label="Data inicial"
               />
-              <span className="text-gray-400 text-sm">–</span>
+              <span className="text-[var(--color-text-subtle)] text-sm">–</span>
               <input
                 name="to"
                 type="date"
                 defaultValue={filters.to}
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input !w-auto"
                 aria-label="Data final"
               />
-              <button
-                type="submit"
-                className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 transition-colors"
-              >
+              <button type="submit" className="btn btn-secondary btn-sm">
                 Filtrar
               </button>
               {(filters.from || filters.to) && (
                 <Link
                   href={buildUrl({ from: "", to: "", page: 1 })}
-                  className="text-xs text-gray-400 hover:text-gray-600"
+                  className="text-xs text-[var(--color-text-subtle)] hover:text-[var(--color-text)]"
                 >
                   Limpar
                 </Link>
@@ -207,93 +196,72 @@ export function AgendamentosClient({
 
         {/* Table */}
         {items.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-            <p className="text-gray-500 text-sm">Nenhum agendamento encontrado.</p>
+          <div className="card p-12 text-center">
+            <p className="text-[var(--color-text-muted)] text-sm">Nenhum agendamento encontrado.</p>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="table-container">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="table">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <th scope="col" className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Cliente
-                    </th>
-                    <th scope="col" className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Serviço
-                    </th>
-                    <th scope="col" className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Data / Hora
-                    </th>
-                    <th scope="col" className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Status
-                    </th>
-                    <th scope="col" className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Pagamento
-                    </th>
-                    <th scope="col" className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Total
-                    </th>
-                    <th scope="col" className="px-4 py-3">
-                      <span className="sr-only">Ações</span>
-                    </th>
+                  <tr>
+                    <th scope="col">Cliente</th>
+                    <th scope="col">Serviço</th>
+                    <th scope="col">Data / Hora</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Pagamento</th>
+                    <th scope="col" className="!text-right">Total</th>
+                    <th scope="col"><span className="sr-only">Ações</span></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody>
                   {items.map((item) => (
-                    <tr
-                      key={item.id}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-gray-900">
+                    <tr key={item.id}>
+                      <td>
+                        <p className="font-medium text-[var(--color-text-heading)]">
                           {item.customerName ?? "—"}
                         </p>
                         {item.customerEmail && (
-                          <p className="text-xs text-gray-400">{item.customerEmail}</p>
+                          <p className="text-xs text-[var(--color-text-subtle)]">{item.customerEmail}</p>
                         )}
                       </td>
-                      <td className="px-4 py-3">
-                        <p className="text-gray-700 line-clamp-1">
+                      <td>
+                        <p className="text-[var(--color-text)] line-clamp-1">
                           {item.serviceLabels[0] ?? "—"}
                         </p>
                         {item.serviceLabels.length > 1 && (
-                          <p className="text-xs text-gray-400">
+                          <p className="text-xs text-[var(--color-text-subtle)]">
                             +{item.serviceLabels.length - 1} mais
                           </p>
                         )}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <p className="text-gray-900">
+                      <td className="whitespace-nowrap">
+                        <p className="text-[var(--color-text-heading)]">
                           {item.scheduledDate.split("-").reverse().join("/")}
                         </p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-[var(--color-text-subtle)]">
                           {item.scheduledStartTime} – {item.scheduledEndTime}
                         </p>
                       </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[item.status] ?? "bg-gray-100 text-gray-600"}`}
-                        >
+                      <td>
+                        <span className={STATUS_COLORS[item.status] ?? "badge"}>
                           {STATUS_LABELS[item.status] ?? item.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <p className="text-xs text-gray-500">
+                      <td>
+                        <p className="text-xs text-[var(--color-text-muted)]">
                           {item.paymentMethod === "CARD" ? "Cartão" : "Dinheiro/Cheque"}
                         </p>
-                        <p
-                          className={`text-xs font-medium ${PAYMENT_STATUS_COLORS[item.paymentStatus] ?? "text-gray-500"}`}
-                        >
+                        <p className={`text-xs font-medium ${PAYMENT_STATUS_COLORS[item.paymentStatus] ?? "text-[var(--color-text-muted)]"}`}>
                           {PAYMENT_STATUS_LABELS[item.paymentStatus] ?? item.paymentStatus}
                         </p>
                       </td>
-                      <td className="px-4 py-3 text-right whitespace-nowrap">
-                        <span className="font-semibold text-gray-900">
+                      <td className="!text-right whitespace-nowrap">
+                        <span className="font-semibold text-[var(--color-text-heading)]">
                           {formatMoney(Number(item.estimateTotal), company.currency, company.locale)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <td className="!text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-2">
                           {item.customerPhone && (
                             <a
@@ -302,16 +270,16 @@ export function AgendamentosClient({
                               )}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 px-2.5 py-1 rounded-lg transition-all"
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-[var(--color-success)] hover:opacity-80 bg-[var(--color-success-light)] border border-[var(--color-success-border)] px-2.5 py-1 rounded-lg transition-all"
                               title="Enviar mensagem via WhatsApp"
                             >
-                              <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                              <Phone className="w-3.5 h-3.5" />
                               <span>WhatsApp</span>
                             </a>
                           )}
                           <Link
                             href={`/${company.slug}/agendamentos/${item.id}`}
-                            className="text-xs font-semibold text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-slate-200/80 border border-slate-200/80 px-2.5 py-1 rounded-lg transition-colors"
+                            className="btn btn-outline btn-sm"
                           >
                             Detalhes
                           </Link>
@@ -325,24 +293,18 @@ export function AgendamentosClient({
 
             {/* Pagination */}
             {pageCount > 1 && (
-              <div className="border-t border-gray-100 px-4 py-3 flex items-center justify-between">
-                <p className="text-xs text-gray-500">
+              <div className="border-t border-[var(--color-border)] px-4 py-3 flex items-center justify-between">
+                <p className="text-xs text-[var(--color-text-muted)]">
                   Página {page} de {pageCount}
                 </p>
                 <div className="flex gap-2">
                   {page > 1 && (
-                    <Link
-                      href={buildUrl({ page: page - 1 })}
-                      className="px-3 py-1 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
+                    <Link href={buildUrl({ page: page - 1 })} className="btn btn-outline btn-sm">
                       Anterior
                     </Link>
                   )}
                   {page < pageCount && (
-                    <Link
-                      href={buildUrl({ page: page + 1 })}
-                      className="px-3 py-1 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
+                    <Link href={buildUrl({ page: page + 1 })} className="btn btn-outline btn-sm">
                       Próxima
                     </Link>
                   )}
