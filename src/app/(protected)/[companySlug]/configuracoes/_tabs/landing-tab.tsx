@@ -20,7 +20,7 @@ export function LandingTab({ companySlug, canEdit, availableServices }: Props) {
     heroTitle: "Bem-vindo!",
     heroSubtitle: "Agende seus serviços com facilidade e praticidade.",
     bannerUrl: "",
-    accentColor: "#635bff",
+    accentColor: "var(--color-primary)",
     featuredServiceIds: [],
     showTestimonials: true,
     customWelcomeMessage: "",
@@ -69,15 +69,15 @@ export function LandingTab({ companySlug, canEdit, availableServices }: Props) {
 
   return (
     <div className="space-y-6 text-left">
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-6 shadow-xs">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+      <div className="bg-white rounded-3xl border border-[var(--color-border)] p-6 sm:p-8 space-y-6 shadow-xs">
+        <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
+            <div className="w-10 h-10 rounded-2xl bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-[var(--color-border)]">
               <Globe className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-slate-900">Customização da Landing Page Pública</h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <h2 className="text-base font-extrabold text-[var(--color-text-heading)]">Customização da Landing Page Pública</h2>
+              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                 Personalize o visual e os serviços em destaque que os clientes verão no seu link de agendamento.
               </p>
             </div>
@@ -87,9 +87,9 @@ export function LandingTab({ companySlug, canEdit, availableServices }: Props) {
             href={`/booking/${companySlug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all inline-flex items-center gap-1.5"
+            className="px-4 py-2 bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text-heading)] font-bold text-xs rounded-xl transition-all inline-flex items-center gap-1.5"
           >
-            <Globe className="w-3.5 h-3.5 text-indigo-600" />
+            <Globe className="w-3.5 h-3.5 text-[var(--color-primary)]" />
             <span>Ver Sua Landing Page ↗</span>
           </a>
         </div>
@@ -97,64 +97,64 @@ export function LandingTab({ companySlug, canEdit, availableServices }: Props) {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Título de Cabeçalho (Hero Title)</label>
+              <label className="block text-xs font-bold text-[var(--color-text-heading)] mb-1">Título de Cabeçalho (Hero Title)</label>
               <input
                 type="text"
                 value={config.heroTitle}
                 onChange={(e) => setConfig({ ...config, heroTitle: e.target.value })}
-                className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 placeholder="Ex: Seja bem-vindo à nossa barbearia"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Cor Principal de Destaque</label>
+              <label className="block text-xs font-bold text-[var(--color-text-heading)] mb-1">Cor Principal de Destaque</label>
               <div className="flex gap-2 items-center">
                 <input
                   type="color"
                   value={config.accentColor}
                   onChange={(e) => setConfig({ ...config, accentColor: e.target.value })}
-                  className="w-10 h-10 rounded-xl border border-slate-200 cursor-pointer p-0.5"
+                  className="w-10 h-10 rounded-xl border border-[var(--color-border)] cursor-pointer p-0.5"
                 />
                 <input
                   type="text"
                   value={config.accentColor}
                   onChange={(e) => setConfig({ ...config, accentColor: e.target.value })}
-                  className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-mono text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Subtítulo / Mensagem de Apresentação</label>
+            <label className="block text-xs font-bold text-[var(--color-text-heading)] mb-1">Subtítulo / Mensagem de Apresentação</label>
             <textarea
               rows={2}
               value={config.heroSubtitle}
               onChange={(e) => setConfig({ ...config, heroSubtitle: e.target.value })}
-              className="w-full border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-900 focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-[var(--color-border)] rounded-xl p-3 text-xs font-medium text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
               placeholder="Ex: Reserve os melhores horários com nossos profissionais qualificados."
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">URL da Imagem de Banner da Capa (Opcional)</label>
+            <label className="block text-xs font-bold text-[var(--color-text-heading)] mb-1">URL da Imagem de Banner da Capa (Opcional)</label>
             <input
               type="text"
               value={config.bannerUrl}
               onChange={(e) => setConfig({ ...config, bannerUrl: e.target.value })}
-              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
               placeholder="https://exemplo.com/imagem-estabelecimento.jpg"
             />
           </div>
 
           {/* Seleção de Serviços em Destaque (Máximo 6) */}
-          <div className="pt-2 border-t border-slate-100 space-y-3">
+          <div className="pt-2 border-t border-[var(--color-border)] space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-extrabold text-slate-800">
+              <span className="text-xs font-extrabold text-[var(--color-text-heading)]">
                 Selecione os Serviços em Destaque na Capa (Até 6):
               </span>
-              <span className="text-[11px] font-bold text-indigo-600">
+              <span className="text-[11px] font-bold text-[var(--color-primary)]">
                 {config.featuredServiceIds.length} de 6 Selecionados
               </span>
             </div>
@@ -169,12 +169,12 @@ export function LandingTab({ companySlug, canEdit, availableServices }: Props) {
                     onClick={() => handleToggleService(s.id)}
                     className={`p-3 rounded-2xl border text-xs font-bold transition-all text-left flex items-center justify-between cursor-pointer ${
                       isSelected
-                        ? "bg-indigo-50 border-indigo-300 text-indigo-900 shadow-2xs"
-                        : "bg-slate-50 border-slate-200/80 text-slate-700 hover:bg-slate-100"
+                        ? "bg-[var(--color-primary-light)] border-[var(--color-primary)] text-[var(--color-primary)] shadow-2xs"
+                        : "bg-[var(--color-bg-subtle)] border-[var(--color-border)] text-[var(--color-text-heading)] hover:bg-[var(--color-bg-muted)]"
                     }`}
                   >
                     <span>{s.name}</span>
-                    {isSelected && <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0" />}
+                    {isSelected && <CheckCircle2 className="w-4 h-4 text-[var(--color-primary)] shrink-0" />}
                   </button>
                 );
               })}
@@ -183,12 +183,12 @@ export function LandingTab({ companySlug, canEdit, availableServices }: Props) {
         </div>
 
         {canEdit && (
-          <div className="pt-4 flex justify-end border-t border-slate-100">
+          <div className="pt-4 flex justify-end border-t border-[var(--color-border)]">
             <button
               type="button"
               onClick={handleSave}
               disabled={isPending}
-              className="px-6 py-2.5 bg-[#635bff] hover:bg-[#544dc9] text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
+              className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>{isPending ? "Salvando..." : "Salvar Landing Page Customizada"}</span>
