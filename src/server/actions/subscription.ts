@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { stripe } from "@/lib/stripe";
+import { stripe, stripeEnabled } from "@/lib/stripe";
 import { ensureStripeCustomer } from "@/lib/stripe-billing";
 
 type CheckoutResult =
@@ -42,6 +42,8 @@ export async function createPlanCheckoutAction(
   planId: string,
   interval: "month" | "year"
 ): Promise<CheckoutResult> {
+  if (!stripeEnabled) return { success: false, error: "Cobrança não configurada nesta instância" };
+
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return { success: false, error: "Não autenticado" };
 
@@ -78,6 +80,8 @@ export async function createPlanCheckoutAction(
  * Abre o Billing Portal do Stripe (trocar cartão, cancelar, ver faturas).
  */
 export async function createBillingPortalAction(companySlug: string): Promise<CheckoutResult> {
+  if (!stripeEnabled) return { success: false, error: "Cobrança não configurada nesta instância" };
+
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return { success: false, error: "Não autenticado" };
 
