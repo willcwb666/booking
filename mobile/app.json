@@ -32,7 +32,8 @@
           "icon": "./assets/icon.png",
           "color": "#2563eb"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "scheme": "agendei",
     "extra": {
