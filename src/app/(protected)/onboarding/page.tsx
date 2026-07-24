@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { getUserCompanies } from "@/server/queries/companies";
 import { getPlans } from "@/server/queries/plans";
 import { OnboardingClient } from "./onboarding-client";
@@ -9,8 +10,17 @@ export default async function OnboardingPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/login");
 
-  const companies = await getUserCompanies(session.user.id);
-  if (companies.length > 0) {
+  const [companies, dbUser] = await Promise.all([
+    getUserCompanies(session.user.id),
+    db.user.findUnique({
+      where: { id: session.user.id },
+      select: { allowMultiCompany: true },
+    }),
+  ]);
+
+  // Com multiempresas ativo, o onboarding também serve para criar empresas
+  // adicionais; sem o modo, quem já tem empresa vai direto para o painel
+  if (companies.length > 0 && !dbUser?.allowMultiCompany) {
     redirect(`/${companies[0].company.slug}/dashboard`);
   }
 
@@ -31,5 +41,12 @@ export default async function OnboardingPage() {
     })),
   }));
 
-  return <OnboardingClient plans={serializedPlans} userName={session.user.name} />;
+  return (
+    <OnboardingClient
+      plans={serializedPlans}
+      userName={session.user.name}
+      isAdditionalCompany={companies.length > 0}
+      multiCompanyEnabled={dbUser?.allowMultiCompany ?? false}
+    />
+  );
 }

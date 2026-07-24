@@ -18,6 +18,7 @@ const RESERVED_SEGMENTS = new Set([
   "empresas",
   "book",
   "orcamentos",
+  "selecionar-empresa",
 ]);
 
 // `/{slug}` (um único segmento, não reservado) é a página pública da empresa

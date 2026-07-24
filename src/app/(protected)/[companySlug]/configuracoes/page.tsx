@@ -15,6 +15,11 @@ export default async function ConfiguracoesPage({
   const company = await getCompanyBySlugForUser(companySlug, session!.user.id);
   if (!company) notFound();
 
+  const dbUser = await db.user.findUnique({
+    where: { id: session!.user.id },
+    select: { allowMultiCompany: true },
+  });
+
   const role = company.members[0].role;
   const canEdit = role === "OWNER" || role === "MANAGER";
 
@@ -46,6 +51,7 @@ export default async function ConfiguracoesPage({
       }}
       bookingBaseUrl={`/book/${companySlug}`}
       paymentMethods={paymentMethods}
+      multiCompany={dbUser?.allowMultiCompany ?? false}
     />
   );
 }

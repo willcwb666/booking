@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
-import { updateCompanyAction } from "@/server/actions/company";
+import { updateCompanyAction, setMultiCompanyAction } from "@/server/actions/company";
 import {
   addPaymentMethodAction,
   togglePaymentMethodAction,
@@ -35,6 +35,7 @@ type Props = {
   };
   bookingBaseUrl: string;
   paymentMethods: PaymentMethodItem[];
+  multiCompany: boolean;
 };
 
 type Tab = "empresa" | "pagamentos";
@@ -46,7 +47,7 @@ function EmpresaTab({
   canEdit,
   initial,
   bookingBaseUrl,
-}: Omit<Props, "paymentMethods">) {
+}: Omit<Props, "paymentMethods" | "multiCompany">) {
   const company = useCompany();
   const [result, action, pending] = useActionState<ActionResult | null, FormData>(
     updateCompanyAction,
@@ -222,6 +223,68 @@ function EmpresaTab({
           )}
         </form>
       </div>
+    </div>
+  );
+}
+
+// ─── Multiempresas ────────────────────────────────────────────────────────────
+
+function MultiEmpresaSection({ initialEnabled }: { initialEnabled: boolean }) {
+  const [enabled, setEnabled] = useState(initialEnabled);
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  function handleToggle(next: boolean) {
+    setError(null);
+    setSaved(false);
+    startTransition(async () => {
+      const result = await setMultiCompanyAction(next);
+      if (result.success) {
+        setEnabled(next);
+        setSaved(true);
+      } else {
+        setError(result.errors._?.[0] ?? "Erro ao salvar");
+      }
+    });
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5 mt-5">
+      <h2 className="text-sm font-semibold text-gray-900 mb-1">Multiempresas</h2>
+      <p className="text-xs text-gray-500 mb-4">
+        Cadastre mais de uma empresa na mesma conta (ex.: barbearia e mecânica),
+        cada uma com seu próprio ambiente, agenda e equipe.
+      </p>
+
+      <label className="flex items-start gap-2.5 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={enabled}
+          disabled={pending}
+          onChange={(e) => handleToggle(e.target.checked)}
+          className="w-4 h-4 mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        />
+        <span className="text-sm text-gray-700">
+          Habilitar multiempresas
+          {enabled && (
+            <span className="block text-xs text-gray-500 mt-0.5">
+              A opção &quot;Criar empresa&quot; aparece no menu lateral.
+            </span>
+          )}
+        </span>
+      </label>
+
+      {enabled && (
+        <p className="mt-3 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-300 rounded-lg px-3 py-2" role="alert">
+          ⚠ Atenção: a assinatura do plano é cobrada individualmente por empresa.
+          Se um plano custa R$ 10/mês e você tiver 3 empresas, a cobrança total
+          será R$ 30/mês.
+        </p>
+      )}
+
+      {error && <p role="alert" className="mt-2 text-sm text-red-600">{error}</p>}
+      {saved && <p role="status" className="mt-2 text-sm text-green-700">Preferência salva!</p>}
     </div>
   );
 }
@@ -452,6 +515,7 @@ export function SettingsClient({
   initial,
   bookingBaseUrl,
   paymentMethods,
+  multiCompany,
 }: Props) {
   const [tab, setTab] = useState<Tab>("empresa");
 
@@ -485,12 +549,15 @@ export function SettingsClient({
       </div>
 
       {tab === "empresa" && (
-        <EmpresaTab
-          companySlug={companySlug}
-          canEdit={canEdit}
-          initial={initial}
-          bookingBaseUrl={bookingBaseUrl}
-        />
+        <>
+          <EmpresaTab
+            companySlug={companySlug}
+            canEdit={canEdit}
+            initial={initial}
+            bookingBaseUrl={bookingBaseUrl}
+          />
+          <MultiEmpresaSection initialEnabled={multiCompany} />
+        </>
       )}
 
       {tab === "pagamentos" && (

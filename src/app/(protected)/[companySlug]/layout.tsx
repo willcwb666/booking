@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { getCompanyBySlugForUser } from "@/server/queries/companies";
 import { CompanyProvider } from "@/lib/company-context";
 import { AppSidebar } from "@/components/ui/app-sidebar";
@@ -22,6 +23,11 @@ export default async function CompanyLayout({
 
   const member = company.members[0];
 
+  const dbUser = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { allowMultiCompany: true },
+  });
+
   return (
     <CompanyProvider
       company={{
@@ -37,7 +43,10 @@ export default async function CompanyLayout({
       }}
     >
       <div className="flex min-h-screen bg-gray-50">
-        <AppSidebar userName={session.user.name} />
+        <AppSidebar
+          userName={session.user.name}
+          multiCompany={dbUser?.allowMultiCompany ?? false}
+        />
         <main className="flex-1 overflow-auto">
           {children}
         </main>

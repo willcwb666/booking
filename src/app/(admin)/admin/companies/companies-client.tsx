@@ -166,7 +166,17 @@ export function AdminCompaniesClient({
                         </span>
                       </td>
                       <td className="px-5 py-3">
-                        <ToggleActiveButton companyId={item.id} isActive={item.isActive} />
+                        <div className="flex items-center justify-end gap-2">
+                          {item.isActive && (
+                            <Link
+                              href={`/${item.slug}/dashboard`}
+                              className="px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 whitespace-nowrap"
+                            >
+                              Acessar painel
+                            </Link>
+                          )}
+                          <ToggleActiveButton companyId={item.id} isActive={item.isActive} />
+                        </div>
                       </td>
                     </tr>
                   ))}

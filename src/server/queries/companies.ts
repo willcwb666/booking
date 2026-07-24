@@ -14,11 +14,18 @@ export async function getUserCompanies(userId: string) {
 }
 
 export async function getCompanyBySlugForUser(slug: string, userId: string) {
-  return db.company.findFirst({
+  // Admin da plataforma tem acesso a qualquer empresa (como OWNER)
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+  const isPlatformAdmin = user?.role === "admin";
+
+  const company = await db.company.findFirst({
     where: {
       slug,
       isActive: true,
-      members: { some: { userId, isActive: true } },
+      ...(isPlatformAdmin ? {} : { members: { some: { userId, isActive: true } } }),
     },
     include: {
       plan: {
@@ -34,6 +41,12 @@ export async function getCompanyBySlugForUser(slug: string, userId: string) {
       },
     },
   });
+
+  if (company && isPlatformAdmin && company.members.length === 0) {
+    company.members = [{ role: "OWNER" }];
+  }
+
+  return company;
 }
 
 export async function isSlugAvailable(slug: string): Promise<boolean> {

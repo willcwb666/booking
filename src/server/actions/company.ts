@@ -25,10 +25,24 @@ export async function createCompanyAction(
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return { success: false, errors: { _: ["Não autenticado"] } };
 
+  // Checkbox multiempresas no onboarding habilita cadastrar mais empresas
+  // (só liga — desligar é feito nas configurações)
+  if (formData.get("enableMultiCompany") === "on") {
+    await db.user.update({
+      where: { id: session.user.id },
+      data: { allowMultiCompany: true },
+    });
+  }
+
+  const dbUser = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { allowMultiCompany: true },
+  });
+
   const alreadyHas = await db.companyUser.findFirst({
     where: { userId: session.user.id, isActive: true },
   });
-  if (alreadyHas) redirect(`/onboarding`);
+  if (alreadyHas && !dbUser?.allowMultiCompany) redirect(`/onboarding`);
 
   const raw = {
     name: formData.get("name"),
@@ -100,7 +114,7 @@ export async function updateCompanyAction(
 
   const companySlug = formData.get("companySlug") as string;
 
-  const member = await db.companyUser.findFirst({
+  let member = await db.companyUser.findFirst({
     where: {
       userId: session.user.id,
       company: { slug: companySlug },
@@ -109,6 +123,15 @@ export async function updateCompanyAction(
     },
     include: { company: { select: { id: true } } },
   });
+
+  // Admin da plataforma pode editar qualquer empresa
+  if (!member && session.user.role === "admin") {
+    const company = await db.company.findUnique({
+      where: { slug: companySlug },
+      select: { id: true },
+    });
+    if (company) member = { company } as NonNullable<typeof member>;
+  }
   if (!member) return { success: false, errors: { _: ["Acesso negado"] } };
 
   const name = (formData.get("name") as string)?.trim();
@@ -142,6 +165,34 @@ export async function updateCompanyAction(
   await db.company.update({
     where: { id: member.company.id },
     data: { name, phone, address, ...marketData, ...logoData },
+  });
+
+  return { success: true };
+}
+
+/**
+ * Liga/desliga o modo multiempresas da conta. Cada empresa tem plano e
+ * assinatura próprios — a cobrança é individual por empresa.
+ */
+export async function setMultiCompanyAction(enable: boolean): Promise<ActionResult> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { success: false, errors: { _: ["Não autenticado"] } };
+
+  if (!enable) {
+    const count = await db.companyUser.count({
+      where: { userId: session.user.id, isActive: true },
+    });
+    if (count > 1) {
+      return {
+        success: false,
+        errors: { _: ["Você tem mais de uma empresa ativa — desative as extras antes de desligar o modo multiempresas"] },
+      };
+    }
+  }
+
+  await db.user.update({
+    where: { id: session.user.id },
+    data: { allowMultiCompany: enable },
   });
 
   return { success: true };

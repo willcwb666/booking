@@ -142,6 +142,10 @@ model User {
   bio           String?
   location      String?
 
+  // Multiempresas: permite cadastrar mais de uma empresa (cada uma com
+  // assinatura de plano cobrada individualmente)
+  allowMultiCompany Boolean @default(false)
+
   sessions              Session[]
   accounts              Account[]
   companyUsers          CompanyUser[]

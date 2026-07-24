@@ -23,12 +23,18 @@ type Plan = {
   features: PlanFeature[];
 };
 
-type Props = { plans: Plan[]; userName: string };
+type Props = {
+  plans: Plan[];
+  userName: string;
+  isAdditionalCompany: boolean;
+  multiCompanyEnabled: boolean;
+};
 
 const STEPS = ["Tipo de Negócio", "Plano", "Detalhes"] as const;
 
-export function OnboardingClient({ plans, userName }: Props) {
+export function OnboardingClient({ plans, userName, isAdditionalCompany, multiCompanyEnabled }: Props) {
   const [step, setStep] = useState(0);
+  const [multiCompany, setMultiCompany] = useState(false);
   const [businessType, setBusinessType] = useState("");
   const [planId, setPlanId] = useState("");
   const [name, setName] = useState("");
@@ -73,7 +79,15 @@ export function OnboardingClient({ plans, userName }: Props) {
       {/* Header */}
       <div className="mb-8 text-center">
         <p className="text-sm text-gray-500 mb-1">Bem-vindo, {userName}</p>
-        <h1 className="text-2xl font-bold text-gray-900">Configure sua empresa</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {isAdditionalCompany ? "Cadastre uma nova empresa" : "Configure sua empresa"}
+        </h1>
+        {isAdditionalCompany && (
+          <p className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 inline-block">
+            A assinatura do plano desta empresa será cobrada individualmente,
+            além das assinaturas das suas outras empresas.
+          </p>
+        )}
       </div>
 
       {/* Step indicator */}
@@ -319,6 +333,33 @@ export function OnboardingClient({ plans, userName }: Props) {
                   className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+
+              {!multiCompanyEnabled && !isAdditionalCompany && (
+                <div className="rounded-xl border border-gray-200 p-4">
+                  <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      name="enableMultiCompany"
+                      checked={multiCompany}
+                      onChange={(e) => setMultiCompany(e.target.checked)}
+                      className="w-4 h-4 mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">
+                      Habilitar multiempresas
+                      <span className="block text-xs text-gray-500">
+                        Permite cadastrar mais de uma empresa na mesma conta (ex.: barbearia e mecânica).
+                      </span>
+                    </span>
+                  </label>
+                  {multiCompany && (
+                    <p className="mt-3 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-300 rounded-lg px-3 py-2" role="alert">
+                      ⚠ Atenção: a assinatura do plano é cobrada individualmente por
+                      empresa. Se um plano custa R$ 10/mês e você tiver 3 empresas,
+                      a cobrança total será R$ 30/mês.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             {state?.success === false && "_" in (state.errors as object) && (
