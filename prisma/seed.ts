@@ -1,13 +1,13 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient, PlanTier } from "../src/generated/prisma/client";
+import { PrismaClient } from "../src/generated/prisma/client";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
 const PLANS = [
   {
-    tier: PlanTier.STARTER,
+    tier: "STARTER",
     displayName: "Starter",
     description: "Para quem está começando",
     priceMonthly: 29.9,
@@ -26,7 +26,7 @@ const PLANS = [
     ],
   },
   {
-    tier: PlanTier.NORMAL,
+    tier: "NORMAL",
     displayName: "Normal",
     description: "Para negócios em crescimento",
     priceMonthly: 79.9,
@@ -45,7 +45,7 @@ const PLANS = [
     ],
   },
   {
-    tier: PlanTier.ADVANCED,
+    tier: "ADVANCED",
     displayName: "Advanced",
     description: "Para empresas consolidadas",
     priceMonthly: 149.9,

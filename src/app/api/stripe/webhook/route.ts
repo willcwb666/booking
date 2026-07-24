@@ -71,12 +71,15 @@ export async function POST(req: NextRequest) {
   }
 
   if (event.type === "invoice.payment_failed") {
-    // O campo `subscription` saiu dos tipos na API dahlia, mas segue no payload
+    // API dahlia removeu `invoice.subscription`; a assinatura agora vem em
+    // `invoice.parent.subscription_details.subscription`. Tenta ambos (compat).
     const invoice = event.data.object as Stripe.Invoice & {
       subscription?: string | { id: string } | null;
+      parent?: { subscription_details?: { subscription?: string | { id: string } | null } | null } | null;
     };
-    if (invoice.subscription) {
-      const subscriptionId = typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription.id;
+    const subRef = invoice.subscription ?? invoice.parent?.subscription_details?.subscription ?? null;
+    if (subRef) {
+      const subscriptionId = typeof subRef === "string" ? subRef : subRef.id;
       const sub = await stripe.subscriptions.retrieve(subscriptionId);
       await applySubscription(sub);
     }

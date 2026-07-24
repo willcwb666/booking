@@ -5,8 +5,7 @@ import React from "react";
 type Props = {
   companySlug: string;
   canEdit: boolean;
-  availableServices?: Array<{ id: string; name: string }>;
-  initial?: {
+  initial: {
     heroTitle: string;
     heroSubtitle: string;
     brandColor: string;

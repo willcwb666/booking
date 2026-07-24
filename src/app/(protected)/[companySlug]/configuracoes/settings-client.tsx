@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition } from "react";
 import { CompanySettingsTab } from "./_tabs/company-settings-tab";
-import { LandingTab } from "./landing-tab";
+import { LandingTab } from "./_tabs/landing-tab";
 import { NotificationsTab } from "./_tabs/notifications-tab";
 import { CancellationTab } from "./_tabs/cancellation-tab";
 import { ResetTab } from "./_tabs/reset-tab";

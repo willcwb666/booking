@@ -22,11 +22,6 @@ enum BusinessType {
   OTHER
 }
 
-enum PlanTier {
-  STARTER
-  NORMAL
-  ADVANCED
-}
 
 enum CompanyUserRole {
   OWNER
@@ -219,7 +214,9 @@ model Verification {
 
 model Plan {
   id           String        @id @default(cuid())
-  tier         PlanTier      @unique
+  // Código único do plano (livre); antes era enum PlanTier, agora String para
+  // permitir o cadastro de planos arbitrários pelo super admin
+  tier         String        @unique
   displayName  String
   description  String?
   priceMonthly Decimal       @db.Decimal(10, 2)
@@ -274,6 +271,7 @@ model Company {
   stripeSubscriptionId  String?
   subscriptionStatus    String?   // active | trialing | past_due | canceled | …
   subscriptionInterval  String?   // month | year
+  subscriptionPeriodEnd DateTime? // fim do período pago atual (base do dunning)
   // Política de cancelamento (configurável por empresa)
   minCancellationNoticeHours Int     @default(24)
   cancellationFee            Decimal @default(0) @db.Decimal(10, 2)

@@ -95,7 +95,8 @@ export async function getCompanyStripeSubscriptionsAction(companySlug: string): 
         currency: (price?.currency ?? "BRL").toUpperCase(),
         interval: price?.recurring?.interval ?? "month",
         created: s.created,
-        currentPeriodEnd: (s as any).current_period_end,
+        // API dahlia: current_period_end vive no item da assinatura, não no topo
+        currentPeriodEnd: lineItem?.current_period_end ?? null,
         latestPaymentIntentId: piId,
       };
     });

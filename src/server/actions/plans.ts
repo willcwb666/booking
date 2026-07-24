@@ -6,7 +6,6 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { syncPlanWithStripe } from "@/lib/stripe-billing";
-import type { PlanTier } from "@/generated/prisma/client";
 import type { ActionResult } from "@/types";
 
 async function requireAdmin(): Promise<boolean> {
@@ -35,14 +34,14 @@ export async function createPlanAction(formData: FormData): Promise<{ success: b
   if (!displayName) return { success: false, error: "Preencha o nome do plano." };
 
   try {
-    const existing = await db.plan.findUnique({ where: { tier: tier as PlanTier } });
+    const existing = await db.plan.findUnique({ where: { tier } });
     if (existing) {
       return { success: false, error: `Já existe um plano cadastrado com o código '${tier}'.` };
     }
 
     const created = await db.plan.create({
       data: {
-        tier: tier as PlanTier,
+        tier,
         displayName,
         description,
         priceMonthly: priceMonthly.toFixed(2),
