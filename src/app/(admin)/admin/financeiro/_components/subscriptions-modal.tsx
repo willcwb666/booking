@@ -83,17 +83,17 @@ export function SubscriptionsModal({ companySlug, companyName, onClose }: Props)
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-stone-200">
+      <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-[var(--color-border)]">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-stone-100 pb-4">
+        <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
           <div>
-            <h2 className="text-xl font-bold text-stone-900">Gerenciar Assinaturas no Stripe</h2>
-            <p className="text-xs text-stone-500 mt-0.5">Empresa: {companyName}</p>
+            <h2 className="text-xl font-bold text-[var(--color-text-heading)]">Gerenciar Assinaturas no Stripe</h2>
+            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Empresa: {companyName}</p>
           </div>
           <button
             onClick={onClose}
-            className="text-stone-400 hover:text-stone-600 p-1 text-lg font-bold"
+            className="text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)] p-1 text-lg font-bold"
           >
             ✕
           </button>
@@ -101,7 +101,7 @@ export function SubscriptionsModal({ companySlug, companyName, onClose }: Props)
 
         {/* Loading state */}
         {loading && (
-          <div className="py-12 text-center text-xs text-stone-400 font-semibold animate-pulse">
+          <div className="py-12 text-center text-xs text-[var(--color-text-subtle)] font-semibold animate-pulse">
             Consultando assinaturas ativas e histórico no Stripe...
           </div>
         )}
@@ -117,7 +117,7 @@ export function SubscriptionsModal({ companySlug, companyName, onClose }: Props)
         {!loading && !error && (
           <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
             {subscriptions.length === 0 ? (
-              <p className="text-center py-8 text-xs text-stone-400">
+              <p className="text-center py-8 text-xs text-[var(--color-text-subtle)]">
                 Nenhuma assinatura encontrada no Stripe para esta empresa.
               </p>
             ) : (
@@ -131,36 +131,36 @@ export function SubscriptionsModal({ companySlug, companyName, onClose }: Props)
                     className={`p-5 rounded-2xl border transition-all ${
                       isActive
                         ? "border-emerald-200 bg-emerald-50/40"
-                        : "border-stone-200 bg-stone-50/50 opacity-80"
+                        : "border-[var(--color-border)] bg-[var(--color-bg-subtle)]/50 opacity-80"
                     }`}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-stone-900 text-sm">
+                          <span className="font-bold text-[var(--color-text-heading)] text-sm">
                             {sub.planName}
                           </span>
                           <span
                             className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
                               isActive
                                 ? "bg-emerald-100 text-emerald-800"
-                                : "bg-stone-200 text-stone-600"
+                                : "bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]"
                             }`}
                           >
                             {sub.status}
                           </span>
                         </div>
-                        <p className="text-xs font-mono text-stone-400 mt-1">ID: {sub.id}</p>
+                        <p className="text-xs font-mono text-[var(--color-text-subtle)] mt-1">ID: {sub.id}</p>
                       </div>
 
                       <div className="text-right">
-                        <p className="text-base font-black text-stone-900">
+                        <p className="text-base font-black text-[var(--color-text-heading)]">
                           {sub.currency} {sub.amount.toFixed(2)}{" "}
-                          <span className="text-xs font-normal text-stone-500">
+                          <span className="text-xs font-normal text-[var(--color-text-muted)]">
                             /{sub.interval === "year" ? "ano" : "mês"}
                           </span>
                         </p>
-                        <p className="text-[11px] text-stone-400">
+                        <p className="text-[11px] text-[var(--color-text-subtle)]">
                           Criada em: {formatDate(sub.created)}
                         </p>
                       </div>
@@ -168,8 +168,8 @@ export function SubscriptionsModal({ companySlug, companyName, onClose }: Props)
 
                     {/* Ações por assinatura */}
                     {isActive && (
-                      <div className="pt-3 border-t border-stone-200/60 flex flex-col sm:flex-row items-center justify-between gap-3">
-                        <label className="flex items-center gap-2 text-xs text-stone-700 cursor-pointer">
+                      <div className="pt-3 border-t border-[var(--color-border)]/60 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <label className="flex items-center gap-2 text-xs text-[var(--color-text)] cursor-pointer">
                           <input
                             type="checkbox"
                             checked={issueRefundMap[sub.id] ?? true}
@@ -179,7 +179,7 @@ export function SubscriptionsModal({ companySlug, companyName, onClose }: Props)
                                 [sub.id]: e.target.checked,
                               }))
                             }
-                            className="rounded border-stone-300 text-red-600 focus:ring-red-500"
+                            className="rounded border-[var(--color-border-strong)] text-red-600 focus:ring-red-500"
                           />
                           <span>Efetuar reembolso automático no cartão ao cancelar</span>
                         </label>
@@ -198,7 +198,7 @@ export function SubscriptionsModal({ companySlug, companyName, onClose }: Props)
                     )}
 
                     {isCanceled && (
-                      <p className="text-xs text-stone-400 italic pt-2 border-t border-stone-200/60">
+                      <p className="text-xs text-[var(--color-text-subtle)] italic pt-2 border-t border-[var(--color-border)]/60">
                         Assinatura cancelada no Stripe.
                       </p>
                     )}
@@ -210,11 +210,11 @@ export function SubscriptionsModal({ companySlug, companyName, onClose }: Props)
         )}
 
         {/* Footer */}
-        <div className="flex justify-end pt-2 border-t border-stone-100">
+        <div className="flex justify-end pt-2 border-t border-[var(--color-border)]">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 bg-stone-900 text-white rounded-xl text-xs font-bold hover:bg-stone-800 transition-colors"
+            className="px-5 py-2.5 bg-[var(--color-navy)] text-white rounded-xl text-xs font-bold hover:bg-[var(--color-navy-hover)] transition-colors"
           >
             Fechar
           </button>

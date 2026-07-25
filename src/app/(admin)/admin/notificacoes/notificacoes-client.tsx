@@ -76,14 +76,14 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs">
+          <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs">
             <Bell className="w-4 h-4" />
             <span>Notificações & Central de Pedidos</span>
           </div>
-          <h1 className="text-xl font-extrabold text-slate-900 tracking-tight mt-1">
+          <h1 className="text-xl font-extrabold text-[var(--color-text-heading)] tracking-tight mt-1">
             Solicitações do Sistema e Alertas
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
             Gerencie os pedidos enviados pelas empresas da plataforma e veja as notificações disparadas.
           </p>
         </div>
@@ -96,15 +96,15 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
       </div>
 
       {/* Abas Superiores: Recebidas vs Enviadas */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
-        <div className="bg-slate-100/80 p-1.5 rounded-xl border border-slate-200/60 inline-flex gap-1">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-border)]/80 pb-4">
+        <div className="bg-[var(--color-bg-muted)]/80 p-1.5 rounded-xl border border-[var(--color-border)]/60 inline-flex gap-1">
           <button
             type="button"
             onClick={() => setActiveTab("received")}
             className={`px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === "received"
-                ? "bg-white text-indigo-600 shadow-2xs border border-slate-200/80"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-white text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80"
+                : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
             }`}
           >
             <span>📬 Notificações Recebidas</span>
@@ -119,12 +119,12 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
             onClick={() => setActiveTab("sent")}
             className={`px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === "sent"
-                ? "bg-white text-indigo-600 shadow-2xs border border-slate-200/80"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-white text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80"
+                : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
             }`}
           >
             <span>📤 Notificações Enviadas</span>
-            <span className="text-[10px] text-slate-400 font-semibold">({sentList.length})</span>
+            <span className="text-[10px] text-[var(--color-text-subtle)] font-semibold">({sentList.length})</span>
           </button>
         </div>
 
@@ -134,7 +134,7 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
             type="button"
             onClick={() => setFilter("all")}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${
-              filter === "all" ? "bg-slate-200 text-slate-900 font-bold" : "text-slate-500 hover:text-slate-800"
+              filter === "all" ? "bg-[var(--color-bg-muted)] text-[var(--color-text-heading)] font-bold" : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
             }`}
           >
             Todas ({targetList.length})
@@ -143,7 +143,7 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
             type="button"
             onClick={() => setFilter("pending")}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${
-              filter === "pending" ? "bg-slate-200 text-slate-900 font-bold" : "text-slate-500 hover:text-slate-800"
+              filter === "pending" ? "bg-[var(--color-bg-muted)] text-[var(--color-text-heading)] font-bold" : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
             }`}
           >
             Não Lidas ({targetList.filter((n) => !n.isRead).length})
@@ -152,7 +152,7 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
             type="button"
             onClick={() => setFilter("resolved")}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${
-              filter === "resolved" ? "bg-slate-200 text-slate-900 font-bold" : "text-slate-500 hover:text-slate-800"
+              filter === "resolved" ? "bg-[var(--color-bg-muted)] text-[var(--color-text-heading)] font-bold" : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
             }`}
           >
             Lidas / Concluídas ({targetList.filter((n) => n.isRead || n.isResolved).length})
@@ -163,7 +163,7 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
       {/* Lista de Notificações */}
       <div className="space-y-3">
         {filteredNotifications.length === 0 ? (
-          <div className="p-12 text-center bg-white rounded-3xl border border-slate-200/80 shadow-2xs text-xs text-slate-400">
+          <div className="p-12 text-center bg-white rounded-3xl border border-[var(--color-border)]/80 shadow-2xs text-xs text-[var(--color-text-subtle)]">
             Nenhuma notificação {activeTab === "received" ? "recebida" : "enviada"} encontrada neste filtro.
           </div>
         ) : (
@@ -172,26 +172,26 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
               key={notif.id}
               className={`p-6 rounded-3xl border transition-all space-y-4 shadow-2xs ${
                 !notif.isRead && activeTab === "received"
-                  ? "bg-indigo-50/40 border-indigo-200 shadow-xs"
-                  : "bg-white border-slate-200/80"
+                  ? "bg-[var(--color-primary-light)]/40 border-[var(--color-primary)]/30 shadow-xs"
+                  : "bg-white border-[var(--color-border)]/80"
               }`}
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0 border border-indigo-200/60 font-bold">
-                    <Bell className="w-5 h-5 text-indigo-600" />
+                  <div className="w-10 h-10 rounded-2xl bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-[var(--color-primary)]/30/60 font-bold">
+                    <Bell className="w-5 h-5 text-[var(--color-primary)]" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-extrabold text-slate-900">{notif.title}</h3>
-                    <div className="flex items-center gap-3 text-xs text-slate-500 mt-0.5">
+                    <h3 className="text-sm font-extrabold text-[var(--color-text-heading)]">{notif.title}</h3>
+                    <div className="flex items-center gap-3 text-xs text-[var(--color-text-muted)] mt-0.5">
                       {notif.payload?.companyName && (
-                        <span className="flex items-center gap-1 font-semibold text-slate-700">
-                          <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="flex items-center gap-1 font-semibold text-[var(--color-text)]">
+                          <Building2 className="w-3.5 h-3.5 text-[var(--color-text-subtle)]" />
                           {notif.payload.companyName}
                         </span>
                       )}
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-slate-400" />
+                        <Clock className="w-3.5 h-3.5 text-[var(--color-text-subtle)]" />
                         {notif.createdAt}
                       </span>
                     </div>
@@ -200,32 +200,32 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
 
                 <div className="flex items-center gap-2">
                   {notif.isRead ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-slate-400" />
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--color-text-muted)] bg-[var(--color-bg-muted)] px-3 py-1 rounded-full border border-[var(--color-border)]">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-text-subtle)]" />
                       Lida
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--color-primary)] bg-[var(--color-primary-light)] px-3 py-1 rounded-full border border-[var(--color-primary)]/30">
                       ● Não lida
                     </span>
                   )}
                 </div>
               </div>
 
-              <p className="text-xs text-slate-600 leading-relaxed pl-13">{notif.message}</p>
+              <p className="text-xs text-[var(--color-text-muted)] leading-relaxed pl-13">{notif.message}</p>
 
               {notif.payload?.observation && (
-                <div className="ml-13 p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs text-slate-700 font-mono flex items-start gap-2.5">
-                  <MessageSquare className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                <div className="ml-13 p-3.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)]/80 rounded-2xl text-xs text-[var(--color-text)] font-mono flex items-start gap-2.5">
+                  <MessageSquare className="w-4 h-4 text-[var(--color-primary)] shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-slate-900 font-sans block mb-0.5">Observação do Cliente:</strong>
+                    <strong className="text-[var(--color-text-heading)] font-sans block mb-0.5">Observação do Cliente:</strong>
                     <span>{notif.payload.observation}</span>
                   </div>
                 </div>
               )}
 
               {/* Botões de Ação */}
-              <div className="ml-13 pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100">
+              <div className="ml-13 pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-border)]">
                 {notif.type === "PRESET_RESET_REQUEST" && !notif.isResolved && (
                   <button
                     type="button"
@@ -245,11 +245,11 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
                     disabled={isPending}
                     className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs ${
                       notif.isRead
-                        ? "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                        ? "bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)]"
                         : "bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white"
                     }`}
                   >
-                    <CheckCircle2 className={`w-4 h-4 ${notif.isRead ? "text-slate-500" : "text-white"}`} />
+                    <CheckCircle2 className={`w-4 h-4 ${notif.isRead ? "text-[var(--color-text-muted)]" : "text-white"}`} />
                     <span>{notif.isRead ? "Marcar como não lida" : "Marcar como Lida"}</span>
                   </button>
                 )}

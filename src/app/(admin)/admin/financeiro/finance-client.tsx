@@ -153,8 +153,8 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Gestão Financeira & Assinaturas SaaS</h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <h1 className="text-2xl font-extrabold text-[var(--color-text-heading)] tracking-tight">Gestão Financeira & Assinaturas SaaS</h1>
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">
             Acompanhe o faturamento mensal recorrente (MRR), inadimplência e gerencie os planos de cada empresa.
           </p>
         </div>
@@ -170,41 +170,41 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
 
       {/* Cards Financeiros Recalculados Dinamicamente */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white rounded-2xl border border-stone-200 p-5 shadow-sm">
-          <span className="text-xs font-bold text-stone-400 uppercase tracking-wider block mb-1">MRR Total</span>
+        <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5 shadow-sm">
+          <span className="text-xs font-bold text-[var(--color-text-subtle)] uppercase tracking-wider block mb-1">MRR Total</span>
           <p className="text-2xl font-black text-emerald-600">{fmtCurrency(liveStats.mrr)}</p>
-          <p className="text-xs text-stone-500 mt-1">Faturamento mensal recorrente</p>
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">Faturamento mensal recorrente</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-stone-200 p-5 shadow-sm">
-          <span className="text-xs font-bold text-stone-400 uppercase tracking-wider block mb-1">ARR Projetado</span>
+        <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5 shadow-sm">
+          <span className="text-xs font-bold text-[var(--color-text-subtle)] uppercase tracking-wider block mb-1">ARR Projetado</span>
           <p className="text-2xl font-black text-blue-600">{fmtCurrency(liveStats.arr)}</p>
-          <p className="text-xs text-stone-500 mt-1">Projeção de faturamento anual</p>
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">Projeção de faturamento anual</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-stone-200 p-5 shadow-sm">
-          <span className="text-xs font-bold text-stone-400 uppercase tracking-wider block mb-1">Assinaturas Ativas</span>
-          <p className="text-2xl font-black text-stone-900">{liveStats.activeSubscriptionsCount}</p>
-          <p className="text-xs text-stone-500 mt-1">Empresas adimplentes</p>
+        <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5 shadow-sm">
+          <span className="text-xs font-bold text-[var(--color-text-subtle)] uppercase tracking-wider block mb-1">Assinaturas Ativas</span>
+          <p className="text-2xl font-black text-[var(--color-text-heading)]">{liveStats.activeSubscriptionsCount}</p>
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">Empresas adimplentes</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-stone-200 p-5 shadow-sm">
-          <span className="text-xs font-bold text-stone-400 uppercase tracking-wider block mb-1">Inadimplência</span>
+        <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5 shadow-sm">
+          <span className="text-xs font-bold text-[var(--color-text-subtle)] uppercase tracking-wider block mb-1">Inadimplência</span>
           <p className={`text-2xl font-black ${liveStats.overdueSubscriptionsCount > 0 ? "text-red-600" : "text-emerald-600"}`}>
             {liveStats.overdueSubscriptionsCount}
           </p>
-          <p className="text-xs text-stone-500 mt-1">Pagamentos pendentes/vencidos</p>
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">Pagamentos pendentes/vencidos</p>
         </div>
       </div>
 
       {/* Controles de Busca e Filtro */}
-      <div className="bg-white rounded-2xl border border-stone-200 p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="w-full sm:w-96">
           <input
             placeholder="Buscar por empresa ou e-mail do dono..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-stone-900"
+            className="w-full border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
           />
         </div>
 
@@ -220,8 +220,8 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
               onClick={() => setStatusFilter(f.id)}
               className={`px-3 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                 statusFilter === f.id
-                  ? "bg-stone-900 text-white shadow-md"
-                  : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                  ? "bg-[var(--color-navy)] text-white shadow-md"
+                  : "bg-[var(--color-bg-muted)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-muted)]"
               }`}
             >
               {f.label}
@@ -231,10 +231,10 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
       </div>
 
       {/* Tabela de Assinaturas */}
-      <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm">
+      <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden shadow-sm">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="bg-stone-50 border-b border-stone-200 text-stone-400 font-bold uppercase tracking-wider">
+            <tr className="bg-[var(--color-bg-subtle)] border-b border-[var(--color-border)] text-[var(--color-text-subtle)] font-bold uppercase tracking-wider">
               <th className="py-3.5 px-5">Empresa & Dono</th>
               <th className="py-3.5 px-5">Plano Contratado</th>
               <th className="py-3.5 px-5">Valor Mensal</th>
@@ -242,16 +242,16 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
               <th className="py-3.5 px-5 text-right">Ação</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-stone-100">
+          <tbody className="divide-y divide-[var(--color-border)]">
             {filteredCompanies.map((c) => {
               const isOverdue = c.subscriptionStatus === "past_due" || c.subscriptionStatus === "unpaid";
               const isCanceled = c.subscriptionStatus === "canceled";
 
               return (
-                <tr key={c.id} className="hover:bg-stone-50/50 transition-colors">
+                <tr key={c.id} className="hover:bg-[var(--color-bg-subtle)]/50 transition-colors">
                   <td className="py-4 px-5">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-stone-100 border border-stone-200 flex items-center justify-center font-bold text-stone-700">
+                      <div className="w-9 h-9 rounded-xl bg-[var(--color-bg-muted)] border border-[var(--color-border)] flex items-center justify-center font-bold text-[var(--color-text)]">
                         {c.logoUrl ? (
                           <img src={c.logoUrl} alt="" className="w-full h-full object-cover rounded-xl" />
                         ) : (
@@ -259,21 +259,21 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
                         )}
                       </div>
                       <div>
-                        <p className="font-bold text-stone-900 text-sm">{c.name}</p>
-                        <p className="text-stone-500 text-[11px]">{c.ownerName} ({c.ownerEmail})</p>
+                        <p className="font-bold text-[var(--color-text-heading)] text-sm">{c.name}</p>
+                        <p className="text-[var(--color-text-muted)] text-[11px]">{c.ownerName} ({c.ownerEmail})</p>
                       </div>
                     </div>
                   </td>
 
                   <td className="py-4 px-5">
-                    <span className="font-semibold text-stone-800">{c.planName}</span>
-                    <span className="block text-[11px] text-stone-400">
+                    <span className="font-semibold text-[var(--color-text-heading)]">{c.planName}</span>
+                    <span className="block text-[11px] text-[var(--color-text-subtle)]">
                       Ciclo: {c.subscriptionInterval === "year" ? "Anual" : "Mensal"}
                     </span>
                   </td>
 
-                  <td className="py-4 px-5 font-bold text-stone-900">
-                    {fmtCurrency(c.planMonthlyPrice)} <span className="text-[10px] text-stone-400 font-normal">/mês</span>
+                  <td className="py-4 px-5 font-bold text-[var(--color-text-heading)]">
+                    {fmtCurrency(c.planMonthlyPrice)} <span className="text-[10px] text-[var(--color-text-subtle)] font-normal">/mês</span>
                   </td>
 
                   <td className="py-4 px-5">
@@ -282,7 +282,7 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
                         <span>🚫</span> Inadimplente
                       </span>
                     ) : isCanceled ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-stone-100 text-stone-600">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]">
                         <span>⚪</span> Cancelada
                       </span>
                     ) : (
@@ -302,7 +302,7 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
                     </button>
                     <button
                       onClick={() => handleOpenEdit(c)}
-                      className="px-3 py-1.5 bg-stone-900 hover:bg-stone-800 text-white rounded-lg font-bold text-xs transition-colors"
+                      className="px-3 py-1.5 bg-[var(--color-navy)] hover:bg-[var(--color-navy-hover)] text-white rounded-lg font-bold text-xs transition-colors"
                     >
                       Gerenciar
                     </button>
@@ -313,7 +313,7 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
 
             {filteredCompanies.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-stone-400 text-xs">
+                <td colSpan={5} className="py-8 text-center text-[var(--color-text-subtle)] text-xs">
                   Nenhuma empresa encontrada com os filtros selecionados.
                 </td>
               </tr>
@@ -325,24 +325,24 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
       {/* Modal de Alteração de Assinatura */}
       {editingCompany && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-6 shadow-2xl border border-stone-200">
-            <div className="flex justify-between items-center border-b border-stone-100 pb-3">
-              <h3 className="font-bold text-stone-900 text-base">Gerenciar Assinatura SaaS</h3>
-              <button onClick={() => setEditingCompany(null)} className="text-stone-400 font-bold">✕</button>
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-6 shadow-2xl border border-[var(--color-border)]">
+            <div className="flex justify-between items-center border-b border-[var(--color-border)] pb-3">
+              <h3 className="font-bold text-[var(--color-text-heading)] text-base">Gerenciar Assinatura SaaS</h3>
+              <button onClick={() => setEditingCompany(null)} className="text-[var(--color-text-subtle)] font-bold">✕</button>
             </div>
 
             <div>
-              <p className="text-xs text-stone-500">Empresa:</p>
-              <p className="font-bold text-stone-900 text-sm">{editingCompany.name}</p>
+              <p className="text-xs text-[var(--color-text-muted)]">Empresa:</p>
+              <p className="font-bold text-[var(--color-text-heading)] text-sm">{editingCompany.name}</p>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-stone-700 mb-1">Status da Assinatura</label>
+                <label className="block text-xs font-bold text-[var(--color-text)] mb-1">Status da Assinatura</label>
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="w-full border border-stone-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-stone-900"
+                  className="w-full border border-[var(--color-border)] rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 >
                   <option value="active">Active (Em Dia / Ativa)</option>
                   <option value="past_due">Past Due (Inadimplente / Pagamento Pendente)</option>
@@ -352,11 +352,11 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-stone-700 mb-1">Plano da Empresa</label>
+                <label className="block text-xs font-bold text-[var(--color-text)] mb-1">Plano da Empresa</label>
                 <select
                   value={selectedPlanId}
                   onChange={(e) => setSelectedPlanId(e.target.value)}
-                  className="w-full border border-stone-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-stone-900"
+                  className="w-full border border-[var(--color-border)] rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 >
                   {availablePlans.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -370,14 +370,14 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setEditingCompany(null)}
-                className="px-4 py-2 text-xs font-semibold text-stone-600 hover:text-stone-800"
+                className="px-4 py-2 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSaveSubscription}
                 disabled={isPending}
-                className="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold shadow-md transition-colors"
+                className="px-4 py-2 bg-[var(--color-navy)] hover:bg-[var(--color-navy-hover)] text-white rounded-xl text-xs font-bold shadow-md transition-colors"
               >
                 {isPending ? "Salvando..." : "Salvar Alterações"}
               </button>

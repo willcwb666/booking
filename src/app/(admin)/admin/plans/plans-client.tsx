@@ -184,10 +184,10 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
           <CreditCard className="w-4 h-4" />
           <span>Gestão de Assinaturas</span>
         </div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">
+        <h1 className="text-2xl font-extrabold text-[var(--color-text-heading)] tracking-tight mt-1">
           Planos do SaaS
         </h1>
-        <p className="text-xs text-slate-500 mt-1">
+        <p className="text-xs text-[var(--color-text-muted)] mt-1">
           Arraste as abas para reordenar a sequência de exibição na Landing Page. Defina o plano <strong>Mais Popular (Destaque)</strong> com 1 clique.
         </p>
       </div>
@@ -199,7 +199,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
       )}
 
       {/* Tab Bar por Plano com Drag-and-Drop + Botão [+] Criar Novo Plano */}
-      <div className="bg-slate-100/80 p-2 rounded-2xl border border-slate-200/60 inline-flex flex-wrap items-center gap-2">
+      <div className="bg-[var(--color-bg-muted)]/80 p-2 rounded-2xl border border-[var(--color-border)]/60 inline-flex flex-wrap items-center gap-2">
         {plansList.map((p, idx) => {
           const isActive = activeTab === p.id;
           return (
@@ -211,11 +211,11 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
               onDragEnd={handleDragEnd}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-grab active:cursor-grabbing border ${
                 isActive
-                  ? "bg-white text-[var(--color-primary)] shadow-2xs border-slate-200 font-black"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 border-transparent"
+                  ? "bg-white text-[var(--color-primary)] shadow-2xs border-[var(--color-border)] font-black"
+                  : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] hover:bg-[var(--color-bg-muted)]/60 border-transparent"
               }`}
             >
-              <span className="text-slate-300 hover:text-slate-600">
+              <span className="text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)]">
                 <IconGripVertical />
               </span>
 
@@ -226,7 +226,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
               >
                 <span>{p.displayName}</span>
                 {p.isPopular && (
-                  <span className="bg-amber-400 text-slate-950 text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full shadow-2xs">
+                  <span className="bg-amber-400 text-[var(--color-text-heading)] text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full shadow-2xs">
                     ★ Destaque
                   </span>
                 )}
@@ -237,7 +237,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
                 type="button"
                 onClick={() => handleDeletePlan(p.id)}
                 title="Excluir Plano"
-                className="p-1 text-slate-300 hover:text-red-600 transition-colors ml-1"
+                className="p-1 text-[var(--color-text-subtle)] hover:text-red-600 transition-colors ml-1"
               >
                 <IconTrash />
               </button>
@@ -251,7 +251,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
           className={`px-4 py-2 text-xs font-extrabold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
             activeTab === "new"
               ? "bg-[var(--color-primary)] text-white shadow-2xs font-black"
-              : "text-[var(--color-primary)] hover:bg-indigo-50 bg-indigo-50/50 border border-indigo-100"
+              : "text-[var(--color-primary)] hover:bg-[var(--color-primary-light)] bg-[var(--color-primary-light)]/50 border border-[var(--color-primary)]/20"
           }`}
         >
           <Plus className="w-4 h-4" />
@@ -261,7 +261,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
 
       {/* Conteúdo da Aba do Plano Ativo */}
       {currentPlan && (
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-6 shadow-xs animate-fadeIn">
+        <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-6 shadow-xs animate-fadeIn">
           <PlanCard
             plan={currentPlan}
             onSaved={() => router.refresh()}
@@ -272,10 +272,10 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
 
       {/* Conteúdo da Aba de Criação de Novo Plano */}
       {activeTab === "new" && (
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-6 shadow-xs animate-fadeIn">
-          <div className="border-b border-slate-100 pb-4">
-            <h2 className="text-base font-extrabold text-slate-900">Cadastrar Novo Plano no SaaS</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+        <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-6 shadow-xs animate-fadeIn">
+          <div className="border-b border-[var(--color-border)] pb-4">
+            <h2 className="text-base font-extrabold text-[var(--color-text-heading)]">Cadastrar Novo Plano no SaaS</h2>
+            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
               Crie uma nova opção de assinatura com precificação personalizada.
             </p>
           </div>
@@ -283,63 +283,63 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
           <form onSubmit={handleCreateNewPlan} className="space-y-4 max-w-2xl">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Nome de Exibição</label>
+                <label className="block text-xs font-bold text-[var(--color-text)] mb-1">Nome de Exibição</label>
                 <input
                   type="text"
                   required
                   placeholder="Ex: Plano Enterprise"
                   value={newPlanName}
                   onChange={(e) => setNewPlanName(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Código Identificador (Tier)</label>
+                <label className="block text-xs font-bold text-[var(--color-text)] mb-1">Código Identificador (Tier)</label>
                 <input
                   type="text"
                   required
                   placeholder="Ex: enterprise"
                   value={newPlanTier}
                   onChange={(e) => setNewPlanTier(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-mono text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Descrição Comercial</label>
+              <label className="block text-xs font-bold text-[var(--color-text)] mb-1">Descrição Comercial</label>
               <input
                 type="text"
                 placeholder="Ex: Ideal para grandes redes e franqueadas"
                 value={newPlanDesc}
                 onChange={(e) => setNewPlanDesc(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Preço Mensal (R$)</label>
+                <label className="block text-xs font-bold text-[var(--color-text)] mb-1">Preço Mensal (R$)</label>
                 <input
                   type="number"
                   step="0.01"
                   min="0"
                   value={newPlanPriceMonthly}
                   onChange={(e) => setNewPlanPriceMonthly(parseFloat(e.target.value) || 0)}
-                  className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Preço Anual (R$ Total)</label>
+                <label className="block text-xs font-bold text-[var(--color-text)] mb-1">Preço Anual (R$ Total)</label>
                 <input
                   type="number"
                   step="0.01"
                   min="0"
                   value={newPlanPriceYearly}
                   onChange={(e) => setNewPlanPriceYearly(parseFloat(e.target.value) || 0)}
-                  className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
             </div>
@@ -359,9 +359,9 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
 
       {/* RODAPÉ FIXO DE SALVAR E SINCRONIZAR */}
       {currentPlan && (
-        <div className="fixed bottom-6 right-8 z-40 bg-slate-900/90 backdrop-blur-md text-white px-6 py-3.5 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-4">
+        <div className="fixed bottom-6 right-8 z-40 bg-[var(--color-navy)]/90 backdrop-blur-md text-white px-6 py-3.5 rounded-2xl shadow-2xl border border-[var(--color-navy-hover)] flex items-center gap-4">
           <div>
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+            <span className="text-[10px] text-[var(--color-text-subtle)] font-bold uppercase tracking-wider block">
               Plano Selecionado: {currentPlan.displayName}
             </span>
             <span className="text-xs font-extrabold text-white">Pronto para salvar no Stripe</span>
@@ -412,9 +412,9 @@ function PlanCard({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-border)] pb-4">
         <div className="flex items-center gap-3">
-          <span className="text-xs font-mono font-bold bg-slate-100 text-slate-700 px-3 py-1 rounded-lg">
+          <span className="text-xs font-mono font-bold bg-[var(--color-bg-muted)] text-[var(--color-text)] px-3 py-1 rounded-lg">
             {plan.tier}
           </span>
           {plan.syncedWithStripe ? (
@@ -450,55 +450,55 @@ function PlanCard({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Nome do Plano</label>
+            <label className="block text-xs font-bold text-[var(--color-text)] mb-1">Nome do Plano</label>
             <input
               name="displayName"
               defaultValue={plan.displayName}
               required
-              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
             />
             {errors?.displayName && <p className="text-xs text-red-600 mt-1">{errors.displayName[0]}</p>}
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Descrição Comercial</label>
+            <label className="block text-xs font-bold text-[var(--color-text)] mb-1">Descrição Comercial</label>
             <input
               name="description"
               defaultValue={plan.description}
-              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Preço Mensal (R$)</label>
+            <label className="block text-xs font-bold text-[var(--color-text)] mb-1">Preço Mensal (R$)</label>
             <input
               name="priceMonthly"
               type="number"
               min="0"
               step="0.01"
               defaultValue={plan.priceMonthly}
-              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
             />
             {errors?.priceMonthly && <p className="text-xs text-red-600 mt-1">{errors.priceMonthly[0]}</p>}
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Preço Anual (R$ Total/Ano)</label>
+            <label className="block text-xs font-bold text-[var(--color-text)] mb-1">Preço Anual (R$ Total/Ano)</label>
             <input
               name="priceYearly"
               type="number"
               min="0"
               step="0.01"
               defaultValue={plan.priceYearly}
-              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
             />
             {errors?.priceYearly && <p className="text-xs text-red-600 mt-1">{errors.priceYearly[0]}</p>}
           </div>
         </div>
 
-        <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer pt-2">
+        <label className="flex items-center gap-2 text-xs font-bold text-[var(--color-text)] cursor-pointer pt-2">
           <input type="checkbox" name="isActive" defaultChecked={plan.isActive} className="w-4 h-4 text-[var(--color-primary)] rounded" />
           <span>Plano Ativo (Exibido nas tabelas de preços e landing page)</span>
         </label>
@@ -558,14 +558,14 @@ function FeaturesEditor({ planId, features, onSaved }: { planId: string; feature
   }
 
   return (
-    <div className="pt-4 border-t border-slate-100 space-y-3">
-      <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider block">
+    <div className="pt-4 border-t border-[var(--color-border)] space-y-3">
+      <span className="text-xs font-extrabold text-[var(--color-text-subtle)] uppercase tracking-wider block">
         Recursos Incluídos neste Plano
       </span>
 
       <ul className="space-y-2">
         {features.map((f) => (
-          <li key={f.id} className="flex items-center justify-between gap-3 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
+          <li key={f.id} className="flex items-center justify-between gap-3 text-xs bg-[var(--color-bg-subtle)] p-2.5 rounded-xl border border-[var(--color-border)]/60">
             {editingId === f.id ? (
               <div className="flex items-center gap-2 w-full">
                 <input
@@ -576,7 +576,7 @@ function FeaturesEditor({ planId, features, onSaved }: { planId: string; feature
                     if (e.key === "Enter") { e.preventDefault(); saveEdit(f); }
                     if (e.key === "Escape") setEditingId(null);
                   }}
-                  className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-1 text-xs focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="flex-1 bg-white border border-[var(--color-border)] rounded-lg px-3 py-1 text-xs focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
                 <button
                   type="button"
@@ -589,7 +589,7 @@ function FeaturesEditor({ planId, features, onSaved }: { planId: string; feature
               </div>
             ) : (
               <>
-                <span className={`font-semibold ${f.enabled ? "text-slate-800" : "text-slate-400 line-through"}`}>
+                <span className={`font-semibold ${f.enabled ? "text-[var(--color-text-heading)]" : "text-[var(--color-text-subtle)] line-through"}`}>
                   {f.enabled ? "✓" : "✗"} {f.featureLabel}
                 </span>
 
@@ -599,7 +599,7 @@ function FeaturesEditor({ planId, features, onSaved }: { planId: string; feature
                     type="button"
                     onClick={() => startEdit(f)}
                     title="Editar Recurso"
-                    className="p-1 text-slate-400 hover:text-[var(--color-primary)] transition-colors"
+                    className="p-1 text-[var(--color-text-subtle)] hover:text-[var(--color-primary)] transition-colors"
                   >
                     <IconPencil />
                   </button>
@@ -607,7 +607,7 @@ function FeaturesEditor({ planId, features, onSaved }: { planId: string; feature
                     type="button"
                     onClick={() => removeFeature(f.id)}
                     title="Excluir Recurso"
-                    className="p-1 text-slate-400 hover:text-red-600 transition-colors"
+                    className="p-1 text-[var(--color-text-subtle)] hover:text-red-600 transition-colors"
                   >
                     <IconTrash />
                   </button>
@@ -623,12 +623,12 @@ function FeaturesEditor({ planId, features, onSaved }: { planId: string; feature
           name="featureLabel"
           placeholder="Ex: Suporte prioritário 24/7"
           required
-          className="flex-1 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
+          className="flex-1 border border-[var(--color-border)] rounded-xl px-3.5 py-2 text-xs font-medium text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
         />
         <button
           type="submit"
           disabled={pending}
-          className="px-4 py-2 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors shrink-0"
+          className="px-4 py-2 text-xs font-bold bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)] rounded-xl transition-colors shrink-0"
         >
           + Adicionar Recurso
         </button>

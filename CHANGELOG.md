@@ -4,7 +4,14 @@ Todas as alterações notáveis, novas funcionalidades, melhorias de UX/UI e cor
 
 ---
 
-## 🟢 [v2.14.0] - 2026-07-24 (Release Atual)
+## 🟢 [v2.14.1] - 2026-07-24 (Release Atual)
+### 🎨 Padronização de Neutros Secundários no Painel Admin
+
+- **Escala de cinzas unificada nos tokens do design system**: as 11 telas administrativas + os modais (`reset-preset`, `subscriptions`) usavam cinzas Tailwind crus de famílias misturadas (`slate-*`, `gray-*`, `stone-*`) para texto, bordas e fundos. Agora todos consomem os tokens neutros: textos → `var(--color-text-heading/text/muted/subtle)`, bordas → `var(--color-border)` / `var(--color-border-strong)`, fundos → `var(--color-bg-subtle/muted)`, botões escuros → `var(--color-navy)` / `var(--color-navy-hover)`. Acentos suaves da marca (`indigo-50/100/200`) foram mapeados para `var(--color-primary-light)` e `var(--color-primary)/20-40`, e os hex fixos do gráfico SVG (grade e linha) também passaram a usar as variáveis. Cores semânticas de status (verde/vermelho/âmbar/azul/violeta) foram preservadas propositalmente.
+
+---
+
+## 🟢 [v2.14.0] - 2026-07-24
 ### 🎨 Padronização do Design System (Stripe) — Agenda e Painel Admin
 
 - **Componentes da Agenda migrados para variáveis CSS**: `mini-calendar`, `time-grid`, `month-view`, `create-event-dialog` e `event-detail-dialog` deixaram de usar cores Tailwind cruas (`blue-600`, `gray-*`) e passaram a consumir os tokens do design system (`var(--color-primary)`, `var(--color-border)`, `var(--color-text-heading/muted/subtle)`, `var(--color-bg-subtle/muted)`). Os diálogos agora usam as classes utilitárias `.input`, `.select`, `.textarea`, `.btn-primary`, `.btn-ghost` e `.btn-destructive`. As cores semânticas da legenda de eventos (azul/violeta/laranja) foram mantidas propositalmente.

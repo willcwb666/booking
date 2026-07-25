@@ -191,14 +191,14 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
       {/* Header com Botão + Liberar Módulo(s) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs">
+          <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs">
             <Tag className="w-4 h-4" />
             <span>Super Admin Marketplace</span>
           </div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">
+          <h1 className="text-2xl font-extrabold text-[var(--color-text-heading)] tracking-tight mt-1">
             Gestão de Módulos Extras & Licenciamento
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">
             Gerencie módulos ativos por empresa e libere novos acessos individuais ou em lote por segmento.
           </p>
         </div>
@@ -217,10 +217,10 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
       </div>
 
       {/* TABELA DE MÓDULOS ATIVOS POR EMPRESA (Com Botões Renovação e Revogação) */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-4 shadow-xs">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <h2 className="text-base font-extrabold text-slate-900">Módulos Ativos por Empresa</h2>
-          <span className="text-xs text-slate-500 font-medium">
+      <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-4 shadow-xs">
+        <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
+          <h2 className="text-base font-extrabold text-[var(--color-text-heading)]">Módulos Ativos por Empresa</h2>
+          <span className="text-xs text-[var(--color-text-muted)] font-medium">
             Total de {licensesList.length} licença(s) concedida(s)
           </span>
         </div>
@@ -228,7 +228,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
             <thead>
-              <tr className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200/80">
+              <tr className="bg-[var(--color-bg-subtle)] text-[var(--color-text-muted)] font-bold border-b border-[var(--color-border)]/80">
                 <th className="px-4 py-3">Empresa</th>
                 <th className="px-4 py-3">Módulo Liberado</th>
                 <th className="px-4 py-3 text-center">Status</th>
@@ -237,18 +237,18 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                 <th className="px-4 py-3 text-right">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-medium">
+            <tbody className="divide-y divide-[var(--color-border)] font-medium">
               {licensesList.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-slate-400">
+                  <td colSpan={6} className="text-center py-8 text-[var(--color-text-subtle)]">
                     Nenhum módulo ativo no momento. Clique no botão acima para liberar módulos!
                   </td>
                 </tr>
               ) : (
                 licensesList.map((lic) => (
-                  <tr key={lic.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="px-4 py-3 font-bold text-slate-900">{lic.companyName}</td>
-                    <td className="px-4 py-3 font-semibold text-indigo-600">{lic.moduleName}</td>
+                  <tr key={lic.id} className="hover:bg-[var(--color-bg-subtle)]/60 transition-colors">
+                    <td className="px-4 py-3 font-bold text-[var(--color-text-heading)]">{lic.companyName}</td>
+                    <td className="px-4 py-3 font-semibold text-[var(--color-primary)]">{lic.moduleName}</td>
                     <td className="px-4 py-3 text-center">
                       {lic.status === "TRIAL" ? (
                         <span className="bg-amber-100 text-amber-900 text-[10px] font-black uppercase px-2.5 py-1 rounded-full">
@@ -260,17 +260,17 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-center text-slate-600 font-mono">
+                    <td className="px-4 py-3 text-center text-[var(--color-text-muted)] font-mono">
                       {lic.expiresAt || "Vínculo Vitalício"}
                     </td>
-                    <td className="px-4 py-3 text-center text-slate-500">{lic.grantedAt}</td>
+                    <td className="px-4 py-3 text-center text-[var(--color-text-muted)]">{lic.grantedAt}</td>
                     <td className="px-4 py-3 text-right space-x-2">
                       {lic.status === "TRIAL" && (
                         <button
                           type="button"
                           onClick={() => handleRenew(lic.companyId, lic.moduleCode)}
                           disabled={isPending}
-                          className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] rounded-lg transition-colors"
+                          className="px-3 py-1.5 bg-[var(--color-primary-light)] hover:bg-[var(--color-primary-light)] text-[var(--color-primary)] font-bold text-[11px] rounded-lg transition-colors"
                         >
                           Renovar (+30d)
                         </button>
@@ -294,15 +294,15 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
 
       {/* MODAL MULTI-PASSO DE LIBERAÇÃO DE MÓDULOS */}
       {isWizardOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-3xl w-full p-6 sm:p-8 space-y-6 animate-fadeIn">
+        <div className="fixed inset-0 z-50 bg-[var(--color-navy)]/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-[var(--color-border)] shadow-2xl max-w-3xl w-full p-6 sm:p-8 space-y-6 animate-fadeIn">
             {/* Header Wizard */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
               <div>
-                <span className="text-[10px] font-extrabold text-indigo-600 uppercase tracking-wider block">
+                <span className="text-[10px] font-extrabold text-[var(--color-primary)] uppercase tracking-wider block">
                   Passo {wizardStep} de 3
                 </span>
-                <h2 className="text-lg font-extrabold text-slate-900">
+                <h2 className="text-lg font-extrabold text-[var(--color-text-heading)]">
                   {wizardStep === 1
                     ? "Passo 1: Seleção de Alvo (Individual ou por Segmento)"
                     : wizardStep === 2
@@ -313,7 +313,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
               <button
                 type="button"
                 onClick={() => setIsWizardOpen(false)}
-                className="text-slate-400 hover:text-slate-600 font-bold text-sm"
+                className="text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)] font-bold text-sm"
               >
                 ✕
               </button>
@@ -323,12 +323,12 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
             {wizardStep === 1 && (
               <div className="space-y-5">
                 {/* Selector de Tipo */}
-                <div className="flex gap-4 p-1.5 bg-slate-100 rounded-2xl border border-slate-200">
+                <div className="flex gap-4 p-1.5 bg-[var(--color-bg-muted)] rounded-2xl border border-[var(--color-border)]">
                   <button
                     type="button"
                     onClick={() => setGrantType("INDIVIDUAL")}
                     className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${
-                      grantType === "INDIVIDUAL" ? "bg-white text-indigo-600 shadow-2xs font-extrabold" : "text-slate-600"
+                      grantType === "INDIVIDUAL" ? "bg-white text-[var(--color-primary)] shadow-2xs font-extrabold" : "text-[var(--color-text-muted)]"
                     }`}
                   >
                     Empresas Individuais
@@ -337,7 +337,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                     type="button"
                     onClick={() => setGrantType("GROUP")}
                     className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${
-                      grantType === "GROUP" ? "bg-white text-indigo-600 shadow-2xs font-extrabold" : "text-slate-600"
+                      grantType === "GROUP" ? "bg-white text-[var(--color-primary)] shadow-2xs font-extrabold" : "text-[var(--color-text-muted)]"
                     }`}
                   >
                     Em Grupo (Por Segmento)
@@ -347,24 +347,24 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                 {grantType === "INDIVIDUAL" ? (
                   <div className="space-y-3">
                     <div className="relative">
-                      <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                      <Search className="w-4 h-4 text-[var(--color-text-subtle)] absolute left-3.5 top-3" />
                       <input
                         type="text"
                         placeholder="Digite o nome ou pedaço do nome da empresa para buscar..."
                         value={companySearch}
                         onChange={(e) => setCompanySearch(e.target.value)}
-                        className="w-full border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs font-medium focus:ring-2 focus:ring-indigo-500"
+                        className="w-full border border-[var(--color-border)] rounded-xl pl-10 pr-4 py-2.5 text-xs font-medium focus:ring-2 focus:ring-[var(--color-primary)]"
                       />
                     </div>
 
-                    <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-2xl p-2 space-y-1 divide-y divide-slate-100">
+                    <div className="max-h-60 overflow-y-auto border border-[var(--color-border)] rounded-2xl p-2 space-y-1 divide-y divide-[var(--color-border)]">
                       {filteredCompanies.map((c) => {
                         const isChecked = selectedCompanyIds.includes(c.id);
                         return (
                           <label
                             key={c.id}
                             className={`flex items-center justify-between p-2.5 rounded-xl text-xs font-bold cursor-pointer transition-colors ${
-                              isChecked ? "bg-indigo-50 text-indigo-900" : "hover:bg-slate-50 text-slate-700"
+                              isChecked ? "bg-[var(--color-primary-light)] text-[var(--color-primary)]" : "hover:bg-[var(--color-bg-subtle)] text-[var(--color-text)]"
                             }`}
                           >
                             <div className="flex items-center gap-2">
@@ -372,12 +372,12 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                                 type="checkbox"
                                 checked={isChecked}
                                 onChange={() => toggleCompanySelect(c.id)}
-                                className="w-4 h-4 text-indigo-600 rounded"
+                                className="w-4 h-4 text-[var(--color-primary)] rounded"
                               />
                               <span>{c.name}</span>
-                              <span className="text-[10px] font-mono text-slate-400">({c.slug})</span>
+                              <span className="text-[10px] font-mono text-[var(--color-text-subtle)]">({c.slug})</span>
                             </div>
-                            <span className="text-[10px] font-bold uppercase bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                            <span className="text-[10px] font-bold uppercase bg-[var(--color-bg-muted)] text-[var(--color-text-muted)] px-2 py-0.5 rounded">
                               {c.businessType}
                             </span>
                           </label>
@@ -385,13 +385,13 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                       })}
                     </div>
 
-                    <p className="text-[11px] text-slate-500 font-bold">
+                    <p className="text-[11px] text-[var(--color-text-muted)] font-bold">
                       {selectedCompanyIds.length} empresa(s) selecionada(s)
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <span className="text-xs font-bold text-slate-700 block">
+                    <span className="text-xs font-bold text-[var(--color-text)] block">
                       Selecione 1 ou mais Segmentos de Mercado:
                     </span>
                     <div className="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto">
@@ -404,12 +404,12 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                             onClick={() => toggleSegmentSelect(seg.code)}
                             className={`p-3 rounded-2xl border text-xs font-bold text-left flex items-center justify-between cursor-pointer transition-all ${
                               isChecked
-                                ? "bg-indigo-50 border-indigo-300 text-indigo-900 shadow-2xs"
-                                : "bg-slate-50 border-slate-200/80 text-slate-700 hover:bg-slate-100"
+                                ? "bg-[var(--color-primary-light)] border-[var(--color-primary)]/40 text-[var(--color-primary)] shadow-2xs"
+                                : "bg-[var(--color-bg-subtle)] border-[var(--color-border)]/80 text-[var(--color-text)] hover:bg-[var(--color-bg-muted)]"
                             }`}
                           >
                             <span>{seg.label}</span>
-                            {isChecked && <CheckCircle2 className="w-4 h-4 text-indigo-600" />}
+                            {isChecked && <CheckCircle2 className="w-4 h-4 text-[var(--color-primary)]" />}
                           </button>
                         );
                       })}
@@ -422,7 +422,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
             {/* PASSO 2: SELEÇÃO DE MÓDULOS & DEGUSTAÇÃO */}
             {wizardStep === 2 && (
               <div className="space-y-4 max-h-96 overflow-y-auto pr-1">
-                <span className="text-xs font-bold text-slate-700 block mb-2">
+                <span className="text-xs font-bold text-[var(--color-text)] block mb-2">
                   Selecione os módulos a serem liberados e configure a modalidade:
                 </span>
 
@@ -434,43 +434,43 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                         key={m.id}
                         className={`p-4 rounded-2xl border transition-all text-xs space-y-3 ${
                           cfg.enabled
-                            ? "bg-indigo-50/40 border-indigo-300 shadow-2xs"
-                            : "bg-slate-50/60 border-slate-200/80 opacity-70"
+                            ? "bg-[var(--color-primary-light)]/40 border-[var(--color-primary)]/40 shadow-2xs"
+                            : "bg-[var(--color-bg-subtle)]/60 border-[var(--color-border)]/80 opacity-70"
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <label className="flex items-center gap-2 cursor-pointer font-extrabold text-slate-900">
+                          <label className="flex items-center gap-2 cursor-pointer font-extrabold text-[var(--color-text-heading)]">
                             <input
                               type="checkbox"
                               checked={cfg.enabled}
                               onChange={() => toggleModuleSelect(m.code)}
-                              className="w-4 h-4 text-indigo-600 rounded"
+                              className="w-4 h-4 text-[var(--color-primary)] rounded"
                             />
                             <span>{m.name}</span>
                           </label>
                         </div>
 
                         {cfg.enabled && (
-                          <div className="pt-2 border-t border-indigo-100 space-y-2 animate-fadeIn">
+                          <div className="pt-2 border-t border-[var(--color-primary)]/20 space-y-2 animate-fadeIn">
                             <div className="flex items-center gap-3">
-                              <label className="flex items-center gap-1 cursor-pointer font-bold text-slate-700 text-[11px]">
+                              <label className="flex items-center gap-1 cursor-pointer font-bold text-[var(--color-text)] text-[11px]">
                                 <input
                                   type="radio"
                                   name={`type_${m.code}`}
                                   checked={!cfg.isTrial}
                                   onChange={() => updateModuleTrial(m.code, false)}
-                                  className="text-indigo-600"
+                                  className="text-[var(--color-primary)]"
                                 />
                                 <span>Definitivo</span>
                               </label>
 
-                              <label className="flex items-center gap-1 cursor-pointer font-bold text-slate-700 text-[11px]">
+                              <label className="flex items-center gap-1 cursor-pointer font-bold text-[var(--color-text)] text-[11px]">
                                 <input
                                   type="radio"
                                   name={`type_${m.code}`}
                                   checked={cfg.isTrial}
                                   onChange={() => updateModuleTrial(m.code, true)}
-                                  className="text-indigo-600"
+                                  className="text-[var(--color-primary)]"
                                 />
                                 <span>Degustação (Trial)</span>
                               </label>
@@ -478,7 +478,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
 
                             {cfg.isTrial && (
                               <div className="flex items-center gap-2 pt-1">
-                                <span className="text-[11px] font-bold text-slate-600">Dias de teste:</span>
+                                <span className="text-[11px] font-bold text-[var(--color-text-muted)]">Dias de teste:</span>
                                 <input
                                   type="number"
                                   min="1"
@@ -486,7 +486,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                                   onChange={(e) =>
                                     updateModuleTrial(m.code, true, parseInt(e.target.value) || 30)
                                   }
-                                  className="w-20 border border-slate-200 bg-white rounded-lg px-2 py-1 text-xs font-bold text-slate-900"
+                                  className="w-20 border border-[var(--color-border)] bg-white rounded-lg px-2 py-1 text-xs font-bold text-[var(--color-text-heading)]"
                                 />
                               </div>
                             )}
@@ -502,10 +502,10 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
             {/* PASSO 3: RESUMO & CONFIRMAÇÃO FINAL */}
             {wizardStep === 3 && (
               <div className="space-y-4 text-xs">
-                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
+                <div className="bg-[var(--color-bg-subtle)] p-5 rounded-2xl border border-[var(--color-border)] space-y-3">
                   <div>
-                    <span className="text-slate-400 font-bold uppercase text-[10px] block">Alvo Selecionado</span>
-                    <p className="font-extrabold text-slate-900">
+                    <span className="text-[var(--color-text-subtle)] font-bold uppercase text-[10px] block">Alvo Selecionado</span>
+                    <p className="font-extrabold text-[var(--color-text-heading)]">
                       {grantType === "INDIVIDUAL"
                         ? `${selectedCompanyIds.length} empresa(s) individual(is)`
                         : `${selectedSegmentCodes.length} segmento(s) de mercado`}
@@ -513,8 +513,8 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                   </div>
 
                   <div>
-                    <span className="text-slate-400 font-bold uppercase text-[10px] block">Módulos a Liberar</span>
-                    <ul className="list-disc pl-4 space-y-1 font-semibold text-indigo-700 mt-1">
+                    <span className="text-[var(--color-text-subtle)] font-bold uppercase text-[10px] block">Módulos a Liberar</span>
+                    <ul className="list-disc pl-4 space-y-1 font-semibold text-[var(--color-primary)] mt-1">
                       {getSelectedModulesArray().map((m) => (
                         <li key={m.moduleCode}>
                           {m.moduleCode.replace(/_/g, " ").toUpperCase()} —{" "}
@@ -532,12 +532,12 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
             )}
 
             {/* Navegação entre Passos */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+            <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
               {wizardStep > 1 ? (
                 <button
                   type="button"
                   onClick={() => setWizardStep((wizardStep - 1) as any)}
-                  className="px-4 py-2 bg-slate-100 text-slate-700 font-bold text-xs rounded-xl"
+                  className="px-4 py-2 bg-[var(--color-bg-muted)] text-[var(--color-text)] font-bold text-xs rounded-xl"
                 >
                   ← Voltar
                 </button>

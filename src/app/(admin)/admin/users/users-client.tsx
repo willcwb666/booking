@@ -48,26 +48,26 @@ function BanDialog({ userId, onDone }: { userId: string; onDone: () => void }) {
       <dialog
         ref={dialogRef}
         onClick={(e) => { if (e.target === dialogRef.current) close(); }}
-        className="rounded-xl border border-gray-200 shadow-xl p-0 backdrop:bg-black/40 max-w-sm w-full"
+        className="rounded-xl border border-[var(--color-border)] shadow-xl p-0 backdrop:bg-black/40 max-w-sm w-full"
       >
         <form onSubmit={handleSubmit}>
-          <div className="px-5 py-4 border-b border-gray-100">
-            <h2 className="text-sm font-semibold text-gray-900">Banir usuário</h2>
+          <div className="px-5 py-4 border-b border-[var(--color-border)]">
+            <h2 className="text-sm font-semibold text-[var(--color-text-heading)]">Banir usuário</h2>
           </div>
           <div className="px-5 py-4">
-            <label className="block text-xs text-gray-600 mb-1.5" htmlFor="ban-reason">
+            <label className="block text-xs text-[var(--color-text-muted)] mb-1.5" htmlFor="ban-reason">
               Motivo (opcional)
             </label>
             <textarea
               id="ban-reason"
               name="reason"
               rows={3}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
+              className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
             />
             {error && <p role="alert" className="text-xs text-red-600 mt-1">{error}</p>}
           </div>
-          <div className="px-5 py-4 border-t border-gray-100 flex gap-2 justify-end">
-            <button type="button" onClick={close} className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">
+          <div className="px-5 py-4 border-t border-[var(--color-border)] flex gap-2 justify-end">
+            <button type="button" onClick={close} className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-subtle)]">
               Cancelar
             </button>
             <button
@@ -122,7 +122,7 @@ function UserActions({ item, onDone }: { item: SerializedItem; onDone: () => voi
       <button
         onClick={handleToggleAdmin}
         disabled={adminPending}
-        className="px-3 py-1 text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors font-medium"
+        className="px-3 py-1 text-xs border border-[var(--color-border)] text-[var(--color-text-muted)] rounded-lg hover:bg-[var(--color-bg-subtle)] disabled:opacity-50 transition-colors font-medium"
       >
         {adminPending ? "…" : item.role === "admin" ? "Remover admin" : "Tornar admin"}
       </button>
@@ -165,17 +165,17 @@ export function AdminUsersClient({
   return (
     <div className="w-full max-w-7xl px-6 sm:px-8 py-8 text-left space-y-6">
       <div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Usuários Registrados</h1>
-        <p className="text-xs text-slate-500 mt-1">{total} usuário{total !== 1 ? "s" : ""} cadastrado(s) na plataforma</p>
+        <h1 className="text-2xl font-extrabold text-[var(--color-text-heading)] tracking-tight">Usuários Registrados</h1>
+        <p className="text-xs text-[var(--color-text-muted)] mt-1">{total} usuário{total !== 1 ? "s" : ""} cadastrado(s) na plataforma</p>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-2xs">
+      <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-5 shadow-2xs">
         <form onSubmit={handleSearch} className="flex gap-2 max-w-md w-full">
           <input
             name="q"
             defaultValue={search}
             placeholder="Buscar por nome ou e-mail..."
-            className="border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] w-full"
+            className="border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] w-full"
           />
           <button
             type="submit"
@@ -184,7 +184,7 @@ export function AdminUsersClient({
             Buscar
           </button>
           {search && (
-            <Link href={pathname} className="px-3 py-2.5 text-xs text-slate-400 hover:text-slate-600 flex items-center">
+            <Link href={pathname} className="px-3 py-2.5 text-xs text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)] flex items-center">
               Limpar
             </Link>
           )}
@@ -192,37 +192,37 @@ export function AdminUsersClient({
       </div>
 
         {items.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-            <p className="text-gray-500 text-sm">Nenhum usuário encontrado.</p>
+          <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+            <p className="text-[var(--color-text-muted)] text-sm">Nenhum usuário encontrado.</p>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <th scope="col" className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Usuário</th>
-                    <th scope="col" className="text-center px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Empresas</th>
-                    <th scope="col" className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Role</th>
-                    <th scope="col" className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                  <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg-subtle)]">
+                    <th scope="col" className="text-left px-5 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Usuário</th>
+                    <th scope="col" className="text-center px-5 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Empresas</th>
+                    <th scope="col" className="text-left px-5 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Role</th>
+                    <th scope="col" className="text-left px-5 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Status</th>
                     <th scope="col" className="px-5 py-3 text-right"><span className="sr-only">Ações</span></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-[var(--color-border)]">
                   {items.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={item.id} className="hover:bg-[var(--color-bg-subtle)] transition-colors">
                       <td className="px-5 py-3">
-                        <p className="font-medium text-gray-900">{item.name}</p>
-                        <p className="text-xs text-gray-400">{item.email}</p>
+                        <p className="font-medium text-[var(--color-text-heading)]">{item.name}</p>
+                        <p className="text-xs text-[var(--color-text-subtle)]">{item.email}</p>
                       </td>
-                      <td className="px-5 py-3 text-center text-gray-700">{item.companyCount}</td>
+                      <td className="px-5 py-3 text-center text-[var(--color-text)]">{item.companyCount}</td>
                       <td className="px-5 py-3">
                         {item.role === "admin" ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                             Admin
                           </span>
                         ) : (
-                          <span className="text-gray-400 text-xs">Usuário</span>
+                          <span className="text-[var(--color-text-subtle)] text-xs">Usuário</span>
                         )}
                       </td>
                       <td className="px-5 py-3">
@@ -246,16 +246,16 @@ export function AdminUsersClient({
             </div>
 
             {pageCount > 1 && (
-              <div className="border-t border-gray-100 px-5 py-3 flex items-center justify-between">
-                <p className="text-xs text-gray-500">Página {page} de {pageCount}</p>
+              <div className="border-t border-[var(--color-border)] px-5 py-3 flex items-center justify-between">
+                <p className="text-xs text-[var(--color-text-muted)]">Página {page} de {pageCount}</p>
                 <div className="flex gap-2">
                   {page > 1 && (
-                    <Link href={buildUrl({ page: page - 1 })} className="px-3 py-1 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <Link href={buildUrl({ page: page - 1 })} className="px-3 py-1 text-xs border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-subtle)] transition-colors">
                       Anterior
                     </Link>
                   )}
                   {page < pageCount && (
-                    <Link href={buildUrl({ page: page + 1 })} className="px-3 py-1 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <Link href={buildUrl({ page: page + 1 })} className="px-3 py-1 text-xs border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-subtle)] transition-colors">
                       Próxima
                     </Link>
                   )}

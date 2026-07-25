@@ -164,7 +164,7 @@ export function AdminCompaniesClient({
   }
 
   function renderSortIndicator(field: SortField) {
-    if (sortField !== field) return <span className="text-slate-300 ml-1 text-[10px]">↕</span>;
+    if (sortField !== field) return <span className="text-[var(--color-text-subtle)] ml-1 text-[10px]">↕</span>;
     return <span className="text-[var(--color-primary)] font-black ml-1 text-xs">{sortDir === "asc" ? "▲" : "▼"}</span>;
   }
 
@@ -181,16 +181,16 @@ export function AdminCompaniesClient({
           <Building2 className="w-4 h-4" />
           <span>Gestão de Empresas</span>
         </div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">
+        <h1 className="text-2xl font-extrabold text-[var(--color-text-heading)] tracking-tight mt-1">
           Empresas Cadastradas ({total})
         </h1>
-        <p className="text-xs text-slate-500 mt-1">
+        <p className="text-xs text-[var(--color-text-muted)] mt-1">
           Filtre por tipo de negócio, plano ou status e ordene as colunas alfabeticamente.
         </p>
       </div>
 
       {/* Controles de Busca e Filtros Combinados */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
+      <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-5 shadow-2xs space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           {/* Busca por texto */}
           <form onSubmit={handleSearch} className="flex gap-2 max-w-md w-full">
@@ -198,7 +198,7 @@ export function AdminCompaniesClient({
               name="q"
               defaultValue={search}
               placeholder="Buscar por nome ou slug..."
-              className="border border-slate-200 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] w-full font-medium"
+              className="border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] w-full font-medium"
             />
             <button
               type="submit"
@@ -207,7 +207,7 @@ export function AdminCompaniesClient({
               Buscar
             </button>
             {search && (
-              <Link href={pathname} className="px-3 py-2.5 text-xs text-slate-400 hover:text-slate-600 flex items-center">
+              <Link href={pathname} className="px-3 py-2.5 text-xs text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)] flex items-center">
                 Limpar
               </Link>
             )}
@@ -220,7 +220,7 @@ export function AdminCompaniesClient({
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl px-3 py-2 text-xs font-bold text-[var(--color-text)] focus:ring-2 focus:ring-[var(--color-primary)]"
               >
                 <option value="ALL">Todos os Tipos</option>
                 {Object.entries(BUSINESS_TYPE_LABELS).map(([k, label]) => (
@@ -234,7 +234,7 @@ export function AdminCompaniesClient({
               <select
                 value={planFilter}
                 onChange={(e) => setPlanFilter(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl px-3 py-2 text-xs font-bold text-[var(--color-text)] focus:ring-2 focus:ring-[var(--color-primary)]"
               >
                 <option value="ALL">Todos os Planos</option>
                 <option value="starter">Starter</option>
@@ -248,7 +248,7 @@ export function AdminCompaniesClient({
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl px-3 py-2 text-xs font-bold text-[var(--color-text)] focus:ring-2 focus:ring-[var(--color-primary)]"
               >
                 <option value="ALL">Todos os Status</option>
                 <option value="ACTIVE">Ativa</option>
@@ -261,73 +261,73 @@ export function AdminCompaniesClient({
 
       {/* Tabela de Empresas com Cabeçalhos Clicáveis de Ordenação */}
       {processedItems.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-12 text-center shadow-2xs">
-          <p className="text-slate-500 text-xs font-semibold">Nenhuma empresa encontrada com os filtros selecionados.</p>
+        <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-12 text-center shadow-2xs">
+          <p className="text-[var(--color-text-muted)] text-xs font-semibold">Nenhuma empresa encontrada com os filtros selecionados.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
+        <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-slate-200/80 bg-slate-50 text-slate-600 font-extrabold uppercase tracking-wider">
+                <tr className="border-b border-[var(--color-border)]/80 bg-[var(--color-bg-subtle)] text-[var(--color-text-muted)] font-extrabold uppercase tracking-wider">
                   <th
                     scope="col"
                     onClick={() => handleHeaderClick("name")}
-                    className="text-left px-5 py-3.5 cursor-pointer hover:bg-slate-100/80 transition-colors select-none"
+                    className="text-left px-5 py-3.5 cursor-pointer hover:bg-[var(--color-bg-muted)]/80 transition-colors select-none"
                   >
                     Empresa {renderSortIndicator("name")}
                   </th>
                   <th
                     scope="col"
                     onClick={() => handleHeaderClick("businessType")}
-                    className="text-left px-5 py-3.5 cursor-pointer hover:bg-slate-100/80 transition-colors select-none"
+                    className="text-left px-5 py-3.5 cursor-pointer hover:bg-[var(--color-bg-muted)]/80 transition-colors select-none"
                   >
                     Tipo {renderSortIndicator("businessType")}
                   </th>
                   <th
                     scope="col"
                     onClick={() => handleHeaderClick("planName")}
-                    className="text-left px-5 py-3.5 cursor-pointer hover:bg-slate-100/80 transition-colors select-none"
+                    className="text-left px-5 py-3.5 cursor-pointer hover:bg-[var(--color-bg-muted)]/80 transition-colors select-none"
                   >
                     Plano {renderSortIndicator("planName")}
                   </th>
                   <th
                     scope="col"
                     onClick={() => handleHeaderClick("memberCount")}
-                    className="text-center px-5 py-3.5 cursor-pointer hover:bg-slate-100/80 transition-colors select-none"
+                    className="text-center px-5 py-3.5 cursor-pointer hover:bg-[var(--color-bg-muted)]/80 transition-colors select-none"
                   >
                     Membros {renderSortIndicator("memberCount")}
                   </th>
                   <th
                     scope="col"
                     onClick={() => handleHeaderClick("bookingCount")}
-                    className="text-center px-5 py-3.5 cursor-pointer hover:bg-slate-100/80 transition-colors select-none"
+                    className="text-center px-5 py-3.5 cursor-pointer hover:bg-[var(--color-bg-muted)]/80 transition-colors select-none"
                   >
                     Agendamentos {renderSortIndicator("bookingCount")}
                   </th>
                   <th
                     scope="col"
                     onClick={() => handleHeaderClick("isActive")}
-                    className="text-left px-5 py-3.5 cursor-pointer hover:bg-slate-100/80 transition-colors select-none"
+                    className="text-left px-5 py-3.5 cursor-pointer hover:bg-[var(--color-bg-muted)]/80 transition-colors select-none"
                   >
                     Status {renderSortIndicator("isActive")}
                   </th>
                   <th scope="col" className="px-5 py-3.5 text-right"><span className="sr-only">Ações</span></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-medium">
+              <tbody className="divide-y divide-[var(--color-border)] font-medium">
                 {processedItems.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
+                  <tr key={item.id} className="hover:bg-[var(--color-bg-subtle)]/60 transition-colors">
                     <td className="px-5 py-3.5">
-                      <p className="font-bold text-slate-900">{item.name}</p>
-                      <p className="text-[11px] text-slate-400">/{item.slug}</p>
+                      <p className="font-bold text-[var(--color-text-heading)]">{item.name}</p>
+                      <p className="text-[11px] text-[var(--color-text-subtle)]">/{item.slug}</p>
                     </td>
-                    <td className="px-5 py-3.5 text-slate-600">
+                    <td className="px-5 py-3.5 text-[var(--color-text-muted)]">
                       {BUSINESS_TYPE_LABELS[item.businessType] ?? item.businessType}
                     </td>
-                    <td className="px-5 py-3.5 text-slate-600 font-semibold">{item.planName}</td>
-                    <td className="px-5 py-3.5 text-center text-slate-700 font-bold">{item.memberCount}</td>
-                    <td className="px-5 py-3.5 text-center text-slate-700 font-bold">{item.bookingCount}</td>
+                    <td className="px-5 py-3.5 text-[var(--color-text-muted)] font-semibold">{item.planName}</td>
+                    <td className="px-5 py-3.5 text-center text-[var(--color-text)] font-bold">{item.memberCount}</td>
+                    <td className="px-5 py-3.5 text-center text-[var(--color-text)] font-bold">{item.bookingCount}</td>
                     <td className="px-5 py-3.5">
                       <span
                         className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold ${
@@ -374,16 +374,16 @@ export function AdminCompaniesClient({
           </div>
 
           {pageCount > 1 && (
-            <div className="border-t border-slate-100 px-5 py-3 flex items-center justify-between text-xs">
-              <p className="text-slate-500 font-medium">Página {page} de {pageCount}</p>
+            <div className="border-t border-[var(--color-border)] px-5 py-3 flex items-center justify-between text-xs">
+              <p className="text-[var(--color-text-muted)] font-medium">Página {page} de {pageCount}</p>
               <div className="flex gap-2">
                 {page > 1 && (
-                  <Link href={buildUrl({ page: page - 1 })} className="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors font-bold text-slate-700">
+                  <Link href={buildUrl({ page: page - 1 })} className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-subtle)] transition-colors font-bold text-[var(--color-text)]">
                     Anterior
                   </Link>
                 )}
                 {page < pageCount && (
-                  <Link href={buildUrl({ page: page + 1 })} className="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors font-bold text-slate-700">
+                  <Link href={buildUrl({ page: page + 1 })} className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-subtle)] transition-colors font-bold text-[var(--color-text)]">
                     Próxima
                   </Link>
                 )}

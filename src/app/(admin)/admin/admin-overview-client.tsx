@@ -121,10 +121,10 @@ export function AdminOverviewClient({ stats }: Props) {
           <TrendingUp className="w-4 h-4" />
           <span>Super Admin Analytics</span>
         </div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">
+        <h1 className="text-2xl font-extrabold text-[var(--color-text-heading)] tracking-tight mt-1">
           Visão Geral & Métricas SaaS
         </h1>
-        <p className="text-xs text-slate-500 mt-1">
+        <p className="text-xs text-[var(--color-text-muted)] mt-1">
           Dashboard com gráficos em curva de área suave no padrão visual oficial do Stripe.
         </p>
       </div>
@@ -141,41 +141,41 @@ export function AdminOverviewClient({ stats }: Props) {
               className={`p-5 rounded-3xl border text-left transition-all cursor-pointer shadow-2xs block ${
                 isActive
                   ? "ring-2 ring-[var(--color-primary)] bg-white border-[var(--color-primary)] shadow-md scale-[1.01]"
-                  : "bg-white border-slate-200/80 hover:border-slate-300 hover:shadow-xs"
+                  : "bg-white border-[var(--color-border)]/80 hover:border-[var(--color-border-strong)] hover:shadow-xs"
               }`}
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                <span className="text-[11px] font-extrabold text-[var(--color-text-subtle)] uppercase tracking-wider">
                   {card.label}
                 </span>
-                <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">{card.icon}</div>
+                <div className="p-2 rounded-xl bg-[var(--color-bg-subtle)] border border-[var(--color-border)]">{card.icon}</div>
               </div>
-              <p className="text-2xl font-black text-slate-900">{card.value}</p>
-              <p className="text-[11px] text-slate-500 mt-1">{card.sub}</p>
+              <p className="text-2xl font-black text-[var(--color-text-heading)]">{card.value}</p>
+              <p className="text-[11px] text-[var(--color-text-muted)] mt-1">{card.sub}</p>
             </button>
           );
         })}
       </div>
 
       {/* Gráfico de Área Suave em SVG (Stripe Aesthetic) */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-6 shadow-xs">
+      <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-6 shadow-xs">
         {/* Barra de Filtros */}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-5">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-border)] pb-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-indigo-100">
+            <div className="w-10 h-10 rounded-2xl bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-[var(--color-primary)]/20">
               <TrendingUp className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-slate-900">
+              <h2 className="text-base font-extrabold text-[var(--color-text-heading)]">
                 Gráfico de Tendência: {metricsCards.find((m) => m.key === activeMetric)?.label}
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                 Curva contínua de crescimento e distribuição temporal.
               </p>
             </div>
           </div>
 
-          <div className="bg-slate-100/80 p-1 rounded-xl border border-slate-200/60 inline-flex flex-wrap gap-1">
+          <div className="bg-[var(--color-bg-muted)]/80 p-1 rounded-xl border border-[var(--color-border)]/60 inline-flex flex-wrap gap-1">
             {[
               { id: "daily", label: "Diário" },
               { id: "monthly", label: "Mensal" },
@@ -189,7 +189,7 @@ export function AdminOverviewClient({ stats }: Props) {
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   timeFilter === f.id
                     ? "bg-white text-[var(--color-primary)] shadow-2xs font-extrabold"
-                    : "text-slate-600 hover:text-slate-900"
+                    : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
                 }`}
               >
                 {f.label}
@@ -222,7 +222,7 @@ export function AdminOverviewClient({ stats }: Props) {
                   y1={y}
                   x2={svgWidth - paddingX}
                   y2={y}
-                  stroke="#f1f5f9"
+                  stroke="var(--color-border)"
                   strokeWidth="1"
                   strokeDasharray="4 4"
                 />
@@ -251,7 +251,7 @@ export function AdminOverviewClient({ stats }: Props) {
                     x={pt.x}
                     y={svgHeight - 8}
                     textAnchor="middle"
-                    className="fill-slate-400 text-[11px] font-bold"
+                    className="fill-[var(--color-text-subtle)] text-[11px] font-bold"
                   >
                     {pt.label}
                   </text>
@@ -267,7 +267,7 @@ export function AdminOverviewClient({ stats }: Props) {
                 left: `${(points[hoveredPointIndex].x / svgWidth) * 100}%`,
                 top: `${(points[hoveredPointIndex].y / svgHeight) * 100 - 40}px`,
               }}
-              className="absolute -translate-x-1/2 bg-slate-900 text-white text-[11px] font-extrabold px-3 py-1.5 rounded-xl shadow-xl border border-slate-700 pointer-events-none z-10 animate-fadeIn"
+              className="absolute -translate-x-1/2 bg-[var(--color-navy)] text-white text-[11px] font-extrabold px-3 py-1.5 rounded-xl shadow-xl border border-[var(--color-navy-hover)] pointer-events-none z-10 animate-fadeIn"
             >
               <span>{points[hoveredPointIndex].label}: </span>
               <span className="text-emerald-400">
@@ -280,8 +280,8 @@ export function AdminOverviewClient({ stats }: Props) {
         </div>
 
         {/* Rodapé Informativo */}
-        <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
-          <span>📊 Métrica Selecionada: <strong className="text-slate-900 uppercase">{activeMetric}</strong></span>
+        <div className="flex items-center justify-between text-xs text-[var(--color-text-muted)] pt-2 border-t border-[var(--color-border)]">
+          <span>📊 Métrica Selecionada: <strong className="text-[var(--color-text-heading)] uppercase">{activeMetric}</strong></span>
           <span className="text-emerald-600 font-bold flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5" /> Curva de crescimento com tendência positiva (+14.2%)
           </span>
@@ -292,64 +292,64 @@ export function AdminOverviewClient({ stats }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <Link
           href="/admin/relatorios"
-          className="bg-white rounded-3xl border border-slate-200/80 p-6 hover:shadow-md hover:border-slate-300 transition-all group block shadow-2xs"
+          className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-6 hover:shadow-md hover:border-[var(--color-border-strong)] transition-all group block shadow-2xs"
         >
           <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs mb-2">
             <FileText className="w-4 h-4" />
             <span>Relatórios</span>
           </div>
-          <h3 className="text-base font-extrabold text-slate-900 group-hover:text-[var(--color-primary)] transition-colors">
+          <h3 className="text-base font-extrabold text-[var(--color-text-heading)] group-hover:text-[var(--color-primary)] transition-colors">
             Relatórios Globais →
           </h3>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">
             Métricas financeiras de MRR, ARR e ranking de empresas.
           </p>
         </Link>
 
         <Link
           href="/admin/financeiro"
-          className="bg-white rounded-3xl border border-slate-200/80 p-6 hover:shadow-md hover:border-slate-300 transition-all group block shadow-2xs"
+          className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-6 hover:shadow-md hover:border-[var(--color-border-strong)] transition-all group block shadow-2xs"
         >
           <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs mb-2">
             <DollarSign className="w-4 h-4" />
             <span>Financeiro</span>
           </div>
-          <h3 className="text-base font-extrabold text-slate-900 group-hover:text-[var(--color-primary)] transition-colors">
+          <h3 className="text-base font-extrabold text-[var(--color-text-heading)] group-hover:text-[var(--color-primary)] transition-colors">
             Gestão Financeira →
           </h3>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">
             Sincronização de planos com o Stripe e cobranças.
           </p>
         </Link>
 
         <Link
           href="/admin/companies"
-          className="bg-white rounded-3xl border border-slate-200/80 p-6 hover:shadow-md hover:border-slate-300 transition-all group block shadow-2xs"
+          className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-6 hover:shadow-md hover:border-[var(--color-border-strong)] transition-all group block shadow-2xs"
         >
           <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs mb-2">
             <Building2 className="w-4 h-4" />
             <span>Empresas</span>
           </div>
-          <h3 className="text-base font-extrabold text-slate-900 group-hover:text-[var(--color-primary)] transition-colors">
+          <h3 className="text-base font-extrabold text-[var(--color-text-heading)] group-hover:text-[var(--color-primary)] transition-colors">
             Empresas Cadastradas →
           </h3>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">
             Filtre e ordene a tabela de empresas alfabeticamente.
           </p>
         </Link>
 
         <Link
           href="/admin/plans"
-          className="bg-white rounded-3xl border border-slate-200/80 p-6 hover:shadow-md hover:border-slate-300 transition-all group block shadow-2xs"
+          className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-6 hover:shadow-md hover:border-[var(--color-border-strong)] transition-all group block shadow-2xs"
         >
           <div className="flex items-center gap-2 text-purple-600 font-bold text-xs mb-2">
             <CreditCard className="w-4 h-4" />
             <span>Planos SaaS</span>
           </div>
-          <h3 className="text-base font-extrabold text-slate-900 group-hover:text-[var(--color-primary)] transition-colors">
+          <h3 className="text-base font-extrabold text-[var(--color-text-heading)] group-hover:text-[var(--color-primary)] transition-colors">
             Planos & Preços →
           </h3>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">
             Reordenação drag-and-drop e plano destaque.
           </p>
         </Link>

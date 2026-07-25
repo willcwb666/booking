@@ -131,8 +131,8 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Templates de Serviços por Nicho</h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <h1 className="text-2xl font-extrabold text-[var(--color-text-heading)] tracking-tight">Templates de Serviços por Nicho</h1>
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">
             Gerencie os modelos de serviços e extras pré-configurados que os novos clientes verão no Onboarding de 1 Clique.
           </p>
         </div>
@@ -145,13 +145,13 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-2 pb-4 border-b border-slate-200">
+      <div className="flex flex-wrap items-center gap-2 pb-4 border-b border-[var(--color-border)]">
         <button
           onClick={() => setSelectedType("ALL")}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             selectedType === "ALL"
               ? "bg-[var(--color-primary)] text-white shadow-xs"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+              : "bg-white text-[var(--color-text-muted)] hover:bg-[var(--color-bg-muted)] border border-[var(--color-border)]"
           }`}
         >
           Todos ({initialPresets.length})
@@ -164,8 +164,8 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
               onClick={() => setSelectedType(code)}
               className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all ${
                 selectedType === code
-                  ? "bg-gray-900 text-white shadow-sm"
-                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                  ? "bg-[var(--color-navy)] text-white shadow-sm"
+                  : "bg-white text-[var(--color-text-muted)] hover:bg-[var(--color-bg-muted)] border border-[var(--color-border)]"
               }`}
             >
               {label} ({count})
@@ -175,11 +175,11 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
       </div>
 
       {/* Table / List */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+      <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <tr className="bg-[var(--color-bg-subtle)] border-b border-[var(--color-border)] text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">
                 <th className="py-3.5 px-5">Segmento</th>
                 <th className="py-3.5 px-5">Serviço / Extra</th>
                 <th className="py-3.5 px-5">Preço Padrão</th>
@@ -188,17 +188,17 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                 <th className="py-3.5 px-5 text-right">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
+            <tbody className="divide-y divide-[var(--color-border)] text-sm">
               {filteredPresets.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-gray-400">
+                  <td colSpan={6} className="text-center py-12 text-[var(--color-text-subtle)]">
                     Nenhum preset cadastrado para este segmento.
                   </td>
                 </tr>
               ) : (
                 filteredPresets.map((preset) => (
-                  <tr key={preset.id} className="hover:bg-gray-50/80 transition-colors">
-                    <td className="py-4 px-5 font-semibold text-gray-800 text-xs">
+                  <tr key={preset.id} className="hover:bg-[var(--color-bg-subtle)]/80 transition-colors">
+                    <td className="py-4 px-5 font-semibold text-[var(--color-text-heading)] text-xs">
                       {segmentsMap[preset.businessType] || preset.businessType}
                     </td>
                     <td className="py-4 px-5">
@@ -212,10 +212,10 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                             PRINCIPAL
                           </span>
                         )}
-                        <span className="font-bold text-gray-900">{preset.title}</span>
+                        <span className="font-bold text-[var(--color-text-heading)]">{preset.title}</span>
                       </div>
                       {preset.description && (
-                        <p className="text-xs text-gray-500 mt-0.5">{preset.description}</p>
+                        <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{preset.description}</p>
                       )}
                       {preset.parentTitle && (
                         <p className="text-[11px] text-purple-600 font-medium mt-0.5">
@@ -223,10 +223,10 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                         </p>
                       )}
                     </td>
-                    <td className="py-4 px-5 font-bold text-gray-900">
+                    <td className="py-4 px-5 font-bold text-[var(--color-text-heading)]">
                       R$ {Number(preset.defaultPrice).toFixed(2)}
                     </td>
-                    <td className="py-4 px-5 text-gray-600 font-medium">
+                    <td className="py-4 px-5 text-[var(--color-text-muted)] font-medium">
                       {preset.durationMin} min
                     </td>
                     <td className="py-4 px-5">
@@ -236,7 +236,7 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                         className={`text-xs px-2.5 py-1 rounded-full font-bold transition-all ${
                           preset.isActive
                             ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
-                            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                            : "bg-[var(--color-bg-muted)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-muted)]"
                         }`}
                       >
                         {preset.isActive ? "Ativo" : "Inativo"}
@@ -267,14 +267,14 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
       {/* Modal Modal (Criar/Editar) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-gray-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-              <h3 className="text-lg font-bold text-gray-900">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-[var(--color-border)] animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
+              <h3 className="text-lg font-bold text-[var(--color-text-heading)]">
                 {editingPreset ? "Editar Preset de Serviço" : "Novo Preset de Serviço"}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 font-bold text-lg"
+                className="text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)] font-bold text-lg"
               >
                 ✕
               </button>
@@ -290,13 +290,13 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
               {editingPreset && <input type="hidden" name="presetId" value={editingPreset.id} />}
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                <label className="block text-xs font-bold text-[var(--color-text)] uppercase mb-1">
                   Segmento de Negócio
                 </label>
                 <select
                   name="businessType"
                   defaultValue={editingPreset?.businessType || (selectedType !== "ALL" ? selectedType : "MECHANIC")}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 >
                   {Object.entries(segmentsMap).map(([code, label]) => (
                     <option key={code} value={code}>
@@ -307,7 +307,7 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                <label className="block text-xs font-bold text-[var(--color-text)] uppercase mb-1">
                   Título do Serviço
                 </label>
                 <input
@@ -316,12 +316,12 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                   required
                   defaultValue={editingPreset?.title || ""}
                   placeholder="Ex: Revisão Geral 10.000km"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                <label className="block text-xs font-bold text-[var(--color-text)] uppercase mb-1">
                   Descrição (Opcional)
                 </label>
                 <input
@@ -329,13 +329,13 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                   name="description"
                   defaultValue={editingPreset?.description || ""}
                   placeholder="Ex: Verificação de 30 itens e fluidos"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                  <label className="block text-xs font-bold text-[var(--color-text)] uppercase mb-1">
                     Preço Padrão (R$)
                   </label>
                   <input
@@ -344,11 +344,11 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                     name="defaultPrice"
                     required
                     defaultValue={editingPreset ? Number(editingPreset.defaultPrice) : 50}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-gray-900"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                  <label className="block text-xs font-bold text-[var(--color-text)] uppercase mb-1">
                     Duração (Minutos)
                   </label>
                   <input
@@ -356,7 +356,7 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                     name="durationMin"
                     required
                     defaultValue={editingPreset?.durationMin || 30}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-gray-900"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   />
                 </div>
               </div>
@@ -367,16 +367,16 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                     type="checkbox"
                     name="isExtra"
                     defaultChecked={editingPreset?.isExtra || false}
-                    className="w-4 h-4 rounded text-gray-900 focus:ring-gray-900"
+                    className="w-4 h-4 rounded text-[var(--color-text-heading)] focus:ring-[var(--color-primary)]"
                   />
-                  <span className="text-xs font-bold text-gray-800">
+                  <span className="text-xs font-bold text-[var(--color-text-heading)]">
                     Este é um Serviço Extra (Upsell opcional)
                   </span>
                 </label>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                <label className="block text-xs font-bold text-[var(--color-text)] uppercase mb-1">
                   Vincular ao Serviço Principal (Opcional)
                 </label>
                 <input
@@ -384,22 +384,22 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                   name="parentTitle"
                   defaultValue={editingPreset?.parentTitle || ""}
                   placeholder="Ex: Revisão Geral 10.000km"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-gray-100">
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-[var(--color-border)]">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2.5 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-xl"
+                  className="px-5 py-2.5 text-xs font-bold text-[var(--color-text-muted)] hover:bg-[var(--color-bg-muted)] rounded-xl"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="px-6 py-2.5 text-xs font-bold text-white bg-gray-900 hover:bg-gray-800 rounded-xl disabled:opacity-50"
+                  className="px-6 py-2.5 text-xs font-bold text-white bg-[var(--color-navy)] hover:bg-[var(--color-navy-hover)] rounded-xl disabled:opacity-50"
                 >
                   {isPending ? "Salvando..." : editingPreset ? "Salvar Alterações" : "Criar Preset"}
                 </button>
