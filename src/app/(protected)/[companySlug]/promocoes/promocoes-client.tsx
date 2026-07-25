@@ -136,9 +136,10 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
   );
 
   return (
-    <div className="p-6 lg:p-8 max-w-4xl">
+    <div className="page-container">
+     <div className="page-content">
       <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
-        <h1 className="text-xl font-bold text-[var(--color-text-heading)]">Promoções</h1>
+        <h1 className="page-title">Promoções</h1>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -443,6 +444,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
           </form>
         )}
       </dialog>
+     </div>
     </div>
   );
 }

@@ -43,7 +43,8 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
   }
 
   return (
-    <div className="p-8 w-full max-w-7xl text-left space-y-8">
+    <div className="page-container">
+     <div className="page-content space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-black text-[var(--color-text-heading)] tracking-tight">
@@ -56,7 +57,7 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
       </div>
 
       {/* Configuração de Regras */}
-      <div className="bg-white rounded-3xl border border-[var(--color-border)] p-6 sm:p-8 space-y-6 shadow-sm">
+      <div className="card p-6 sm:p-8 space-y-6 shadow-sm">
         <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
           <div>
             <h2 className="text-base font-bold text-[var(--color-text-heading)]">Regras de Acúmulo e Resgate</h2>
@@ -75,7 +76,7 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div>
-            <label className="block text-xs font-bold text-[var(--color-text-heading)] mb-1">
+            <label className="input-label">
               Pontos por 1,00 {initialProgram.currency} gasto
             </label>
             <input
@@ -85,13 +86,13 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
               value={pointsPerCurrency}
               onChange={(e) => setPointsPerCurrency(parseFloat(e.target.value) || 1)}
               disabled={!isEnabled}
-              className="w-full border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:bg-[var(--color-bg-subtle)]"
+              className="input"
             />
             <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">Ex: R$ 100 pago = {100 * pointsPerCurrency} pontos</p>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[var(--color-text-heading)] mb-1">
+            <label className="input-label">
               Pontos para Resgate (Meta)
             </label>
             <input
@@ -100,13 +101,13 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
               value={rewardThreshold}
               onChange={(e) => setRewardThreshold(parseInt(e.target.value, 10) || 100)}
               disabled={!isEnabled}
-              className="w-full border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:bg-[var(--color-bg-subtle)]"
+              className="input"
             />
             <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">Pontos necessários para o voucher</p>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[var(--color-text-heading)] mb-1">
+            <label className="input-label">
               Desconto do Voucher ({initialProgram.currency})
             </label>
             <input
@@ -116,7 +117,7 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
               value={discountAmount}
               onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 20)}
               disabled={!isEnabled}
-              className="w-full border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:bg-[var(--color-bg-subtle)]"
+              className="input"
             />
             <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">Desconto aplicado ao atingir a meta</p>
           </div>
@@ -127,7 +128,7 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
             type="button"
             onClick={handleSave}
             disabled={isPending}
-            className="px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold rounded-xl text-xs shadow-md transition-all disabled:opacity-50"
+            className="btn btn-primary"
           >
             {isPending ? "Salvando..." : "Salvar Configurações de Fidelidade"}
           </button>
@@ -135,7 +136,7 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
       </div>
 
       {/* Ranking de Clientes */}
-      <div className="bg-white rounded-3xl border border-[var(--color-border)] p-6 sm:p-8 space-y-4 shadow-sm">
+      <div className="card p-6 sm:p-8 space-y-4 shadow-sm">
         <h2 className="text-base font-bold text-[var(--color-text-heading)]">🏆 Extrato de Pontuação de Clientes</h2>
         
         {customers.length === 0 ? (
@@ -155,6 +156,7 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
           </div>
         )}
       </div>
+     </div>
     </div>
   );
 }

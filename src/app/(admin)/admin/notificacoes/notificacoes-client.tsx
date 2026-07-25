@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import {
   executeResetFromNotificationAction,
   markNotificationReadAction,
+  markNotificationUnreadAction,
   getSystemNotificationsAction,
   type NotificationItem,
 } from "@/server/actions/notifications-system";
@@ -18,10 +19,10 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
   const [activeTab, setActiveTab] = useState<"received" | "sent">("received");
   const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifications);
   const [receivedList, setReceivedList] = useState<NotificationItem[]>(
-    initialNotifications.filter((n) => n.type === "PRESET_RESET_REQUEST")
+    initialNotifications.filter((n) => n.direction === "RECEIVED" || n.type === "PRESET_RESET_REQUEST")
   );
   const [sentList, setSentList] = useState<NotificationItem[]>(
-    initialNotifications.filter((n) => n.type !== "PRESET_RESET_REQUEST")
+    initialNotifications.filter((n) => n.direction === "SENT" && n.type !== "PRESET_RESET_REQUEST")
   );
   const [filter, setFilter] = useState<"all" | "pending" | "resolved">("all");
   const [isPending, startTransition] = useTransition();
@@ -47,9 +48,15 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
     });
   }
 
-  function handleMarkAsRead(notificationId: string) {
+  function handleToggleReadStatus(notif: NotificationItem) {
     startTransition(async () => {
-      await markNotificationReadAction(notificationId);
+      if (notif.isRead) {
+        await markNotificationUnreadAction(notif.id);
+        toast.success("Status Alterado", "Notificação marcada como não lida.");
+      } else {
+        await markNotificationReadAction(notif.id);
+        toast.success("Sucesso", "Notificação marcada como lida.");
+      }
       refreshNotifications();
     });
   }
@@ -57,12 +64,12 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
   const targetList = activeTab === "received" ? receivedList : sentList;
 
   const filteredNotifications = targetList.filter((n) => {
-    if (filter === "pending") return !n.isResolved;
-    if (filter === "resolved") return n.isResolved;
+    if (filter === "pending") return !n.isResolved && !n.isRead;
+    if (filter === "resolved") return n.isResolved || n.isRead;
     return true;
   });
 
-  const pendingCount = receivedList.filter((n) => !n.isResolved).length;
+  const pendingCount = receivedList.filter((n) => !n.isRead || !n.isResolved).length;
 
   return (
     <div className="w-full max-w-7xl text-left space-y-6">
@@ -83,7 +90,7 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
 
         {pendingCount > 0 && (
           <span className="px-3.5 py-1.5 bg-amber-50 border border-amber-200 rounded-full text-xs font-bold text-amber-800 animate-pulse">
-            ⚠️ {pendingCount} solicitação(ões) pendente(s)
+            ⚠️ {pendingCount} notificação(ões) não lida(s)
           </span>
         )}
       </div>
@@ -121,7 +128,7 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
           </button>
         </div>
 
-        {/* Sub-filtros: Todas / Pendentes / Concluídas */}
+        {/* Sub-filtros: Todas / Não Lidas / Concluídas */}
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -139,7 +146,7 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
               filter === "pending" ? "bg-slate-200 text-slate-900 font-bold" : "text-slate-500 hover:text-slate-800"
             }`}
           >
-            Pendentes ({targetList.filter((n) => !n.isResolved).length})
+            Não Lidas ({targetList.filter((n) => !n.isRead).length})
           </button>
           <button
             type="button"
@@ -148,7 +155,7 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
               filter === "resolved" ? "bg-slate-200 text-slate-900 font-bold" : "text-slate-500 hover:text-slate-800"
             }`}
           >
-            Concluídas ({targetList.filter((n) => n.isResolved).length})
+            Lidas / Concluídas ({targetList.filter((n) => n.isRead || n.isResolved).length})
           </button>
         </div>
       </div>
@@ -165,14 +172,14 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
               key={notif.id}
               className={`p-6 rounded-3xl border transition-all space-y-4 shadow-2xs ${
                 !notif.isRead && activeTab === "received"
-                  ? "bg-indigo-50/30 border-indigo-200/80"
+                  ? "bg-indigo-50/40 border-indigo-200 shadow-xs"
                   : "bg-white border-slate-200/80"
               }`}
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0 border border-indigo-200/60 font-bold">
-                    <RotateCcw className="w-5 h-5" />
+                    <Bell className="w-5 h-5 text-indigo-600" />
                   </div>
                   <div>
                     <h3 className="text-sm font-extrabold text-slate-900">{notif.title}</h3>
@@ -192,20 +199,14 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {notif.payload?.paidViaStripe && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-                      💳 Pago via Stripe
-                    </span>
-                  )}
-
-                  {notif.isResolved ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      Status: Concluído
+                  {notif.isRead ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-slate-400" />
+                      Lida
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
-                      Status: Pendente
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
+                      ● Não lida
                     </span>
                   )}
                 </div>
@@ -223,6 +224,7 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
                 </div>
               )}
 
+              {/* Botões de Ação */}
               <div className="ml-13 pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100">
                 {notif.type === "PRESET_RESET_REQUEST" && !notif.isResolved && (
                   <button
@@ -236,13 +238,19 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
                   </button>
                 )}
 
-                {!notif.isRead && activeTab === "received" && (
+                {activeTab === "received" && (
                   <button
                     type="button"
-                    onClick={() => handleMarkAsRead(notif.id)}
-                    className="text-xs text-slate-500 hover:text-slate-900 underline font-medium"
+                    onClick={() => handleToggleReadStatus(notif)}
+                    disabled={isPending}
+                    className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs ${
+                      notif.isRead
+                        ? "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                        : "bg-[#635bff] hover:bg-[#544dc9] text-white"
+                    }`}
                   >
-                    Marcar como lida
+                    <CheckCircle2 className={`w-4 h-4 ${notif.isRead ? "text-slate-500" : "text-white"}`} />
+                    <span>{notif.isRead ? "Marcar como não lida" : "Marcar como Lida"}</span>
                   </button>
                 )}
               </div>

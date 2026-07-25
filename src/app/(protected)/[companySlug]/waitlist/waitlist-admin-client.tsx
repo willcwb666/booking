@@ -58,22 +58,22 @@ export function WaitlistAdminClient({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+    <div className="table-container">
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="table">
           <thead>
-            <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg-subtle)]">
-              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Cliente</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Serviço</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Data preferida</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Status</th>
-              {canEdit && <th className="px-4 py-3" />}
+            <tr>
+              <th>Cliente</th>
+              <th>Serviço</th>
+              <th>Data preferida</th>
+              <th>Status</th>
+              {canEdit && <th />}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[var(--color-border)]">
+          <tbody>
             {entries.map((e) => (
-              <tr key={e.id} className="hover:bg-[var(--color-bg-subtle)] transition-colors">
-                <td className="px-4 py-3">
+              <tr key={e.id}>
+                <td>
                   <p className="font-medium text-[var(--color-text-heading)]">{e.customerName}</p>
                   <p className="text-xs text-[var(--color-text-subtle)]">{e.customerEmail}</p>
                   {e.customerPhone && <p className="text-xs text-[var(--color-text-subtle)]">{e.customerPhone}</p>}

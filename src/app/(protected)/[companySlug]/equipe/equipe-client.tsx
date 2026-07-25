@@ -164,18 +164,19 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
   function refresh() { router.refresh(); }
 
   return (
-    <div className="flex-1 flex flex-col">
-      <div className="px-6 py-5 border-b border-[var(--color-border)] bg-white">
-        <h1 className="text-xl font-bold text-[var(--color-text-heading)]">Equipe</h1>
-        <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
+    <div className="page-container">
+     <div className="page-content space-y-6">
+      <div className="page-header !mb-0">
+        <h1 className="page-title">Equipe</h1>
+        <p className="page-description">
           {active.length} membro{active.length !== 1 ? "s" : ""} ativo{active.length !== 1 ? "s" : ""}
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-5 max-w-3xl">
+      <div className="space-y-5">
         {/* Invite */}
         {canInvite && (
-          <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+          <div className="card card-body">
             <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-3">Convidar membro</h2>
             <p className="text-xs text-[var(--color-text-muted)] mb-3">
               O usuário precisa ter uma conta cadastrada na plataforma.
@@ -186,7 +187,7 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
         )}
 
         {/* Active members */}
-        <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+        <div className="card overflow-hidden">
           <div className="px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-subtle)]">
             <h2 className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
               Membros ativos
@@ -253,7 +254,7 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
 
         {/* Inactive members */}
         {inactive.length > 0 && (
-          <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+          <div className="card overflow-hidden">
             <div className="px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-subtle)]">
               <h2 className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
                 Membros removidos
@@ -283,6 +284,7 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
           </div>
         )}
       </div>
+     </div>
     </div>
   );
 }

@@ -29,18 +29,19 @@ export default async function WaitlistPage({
   });
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 max-w-4xl">
-      <div className="mb-6 flex items-start justify-between gap-4">
+    <div className="page-container">
+     <div className="page-content">
+      <div className="page-header !mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Lista de espera</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="page-title">Lista de espera</h1>
+          <p className="page-description">
             Clientes aguardando disponibilidade de horário
           </p>
         </div>
         <Link
           href={`/book/${companySlug}/waitlist`}
           target="_blank"
-          className="shrink-0 text-xs text-blue-600 hover:underline"
+          className="shrink-0 text-xs text-[var(--color-primary)] hover:underline"
         >
           Ver link público →
         </Link>
@@ -62,6 +63,7 @@ export default async function WaitlistPage({
         companySlug={companySlug}
         canEdit={canEdit}
       />
+     </div>
     </div>
   );
 }

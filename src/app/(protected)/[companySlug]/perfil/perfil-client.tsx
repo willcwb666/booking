@@ -52,7 +52,7 @@ function ProfileForm({ name, bio, location }: Pick<Props, "name" | "bio" | "loca
         <label htmlFor="name" className="block text-sm font-medium text-[var(--color-text-heading)] mb-1">Nome</label>
         <input
           id="name" name="name" type="text" required defaultValue={name} maxLength={100}
-          className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+          className="input"
         />
       </div>
       <div>
@@ -60,7 +60,7 @@ function ProfileForm({ name, bio, location }: Pick<Props, "name" | "bio" | "loca
         <textarea
           id="bio" name="bio" rows={3} defaultValue={bio} maxLength={300}
           placeholder="Uma breve descrição sobre você…"
-          className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
+          className="textarea resize-none"
         />
       </div>
       <div>
@@ -68,7 +68,7 @@ function ProfileForm({ name, bio, location }: Pick<Props, "name" | "bio" | "loca
         <input
           id="location" name="location" type="text" defaultValue={location} maxLength={100}
           placeholder="Ex: São Paulo, SP"
-          className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+          className="input"
         />
       </div>
       {error && <p role="alert" className="text-sm text-[var(--color-danger)]">{error}</p>}
@@ -115,7 +115,7 @@ function PasswordForm() {
             id={field} name={field} type="password" required
             minLength={field !== "currentPassword" ? 8 : undefined}
             autoComplete={field === "currentPassword" ? "current-password" : "new-password"}
-            className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            className="input"
           />
           {field === "newPassword" && (
             <p className="text-xs text-[var(--color-text-subtle)] mt-1">Mínimo de 8 caracteres</p>
@@ -187,7 +187,7 @@ function NotificacoesForm({ prefs }: { prefs: NotifPrefs }) {
             type="tel"
             defaultValue={prefs.whatsappPhone}
             placeholder="Com DDI — ex.: +55 11 99999-9999 ou +1 720 555 0123"
-            className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            className="input"
           />
         </div>
       ) : null,
@@ -207,7 +207,7 @@ function NotificacoesForm({ prefs }: { prefs: NotifPrefs }) {
             type="tel"
             defaultValue={prefs.smsPhone}
             placeholder="Com DDI — ex.: +55 11 99999-9999 ou +1 720 555 0123"
-            className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            className="input"
           />
         </div>
       ) : null,
@@ -276,13 +276,14 @@ export function PerfilClient({ name, email, bio, location, notifPrefs }: Props) 
   ];
 
   return (
-    <div className="flex-1 flex flex-col">
-      <div className="px-6 py-5 border-b border-[var(--color-border)] bg-white">
-        <h1 className="text-xl font-bold text-[var(--color-text-heading)]">Meu perfil</h1>
-        <p className="text-sm text-[var(--color-text-muted)] mt-0.5">{email}</p>
+    <div className="page-container">
+     <div className="page-content space-y-6">
+      <div className="page-header !mb-0">
+        <h1 className="page-title">Meu perfil</h1>
+        <p className="page-description">{email}</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 max-w-2xl space-y-6">
+      <div className="space-y-6">
         {/* Tabs */}
         <div className="flex gap-1 bg-[var(--color-bg-muted)] p-1 rounded-lg w-fit">
           {tabs.map((t) => (
@@ -302,14 +303,14 @@ export function PerfilClient({ name, email, bio, location, notifPrefs }: Props) 
         </div>
 
         {tab === "perfil" && (
-          <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+          <div className="card card-body">
             <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-4">Informações pessoais</h2>
             <ProfileForm name={name} bio={bio} location={location} />
           </div>
         )}
 
         {tab === "seguranca" && (
-          <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+          <div className="card card-body">
             <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-1">Alterar senha</h2>
             <p className="text-xs text-[var(--color-text-muted)] mb-4">
               Depois de alterar a senha, você continuará logado neste dispositivo.
@@ -319,12 +320,13 @@ export function PerfilClient({ name, email, bio, location, notifPrefs }: Props) 
         )}
 
         {tab === "notificacoes" && (
-          <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+          <div className="card card-body">
             <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-4">Preferências de notificação</h2>
             <NotificacoesForm prefs={notifPrefs} />
           </div>
         )}
       </div>
+     </div>
     </div>
   );
 }
