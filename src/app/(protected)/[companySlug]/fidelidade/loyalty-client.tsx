@@ -46,36 +46,36 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
     <div className="p-8 w-full max-w-7xl text-left space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-black text-stone-900 tracking-tight">
-          <Award className="w-6 h-6 text-indigo-600 inline-block mr-2" />
+        <h1 className="text-2xl font-black text-[var(--color-text-heading)] tracking-tight">
+          <Award className="w-6 h-6 text-[var(--color-primary)] inline-block mr-2" />
           Programa de Fidelidade & Pontos
         </h1>
-        <p className="text-sm text-stone-500 mt-1">
+        <p className="text-sm text-[var(--color-text-muted)] mt-1">
           Recompense clientes recorrentes gerando acúmulo de pontos a cada atendimento concluído.
         </p>
       </div>
 
       {/* Configuração de Regras */}
-      <div className="bg-white rounded-3xl border border-stone-200 p-6 sm:p-8 space-y-6 shadow-sm">
-        <div className="flex items-center justify-between border-b border-stone-100 pb-4">
+      <div className="bg-white rounded-3xl border border-[var(--color-border)] p-6 sm:p-8 space-y-6 shadow-sm">
+        <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
           <div>
-            <h2 className="text-base font-bold text-stone-900">Regras de Acúmulo e Resgate</h2>
-            <p className="text-xs text-stone-500">Configure o valor dos pontos concedidos por atendimento.</p>
+            <h2 className="text-base font-bold text-[var(--color-text-heading)]">Regras de Acúmulo e Resgate</h2>
+            <p className="text-xs text-[var(--color-text-muted)]">Configure o valor dos pontos concedidos por atendimento.</p>
           </div>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
               checked={isEnabled}
               onChange={(e) => setIsEnabled(e.target.checked)}
-              className="w-5 h-5 rounded text-amber-600 focus:ring-amber-500 border-stone-300"
+              className="w-5 h-5 rounded text-[var(--color-warning)] focus:ring-[var(--color-primary)] border-[var(--color-border-strong)]"
             />
-            <span className="text-xs font-bold text-stone-800">Programa Ativo</span>
+            <span className="text-xs font-bold text-[var(--color-text-heading)]">Programa Ativo</span>
           </label>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div>
-            <label className="block text-xs font-bold text-stone-700 mb-1">
+            <label className="block text-xs font-bold text-[var(--color-text-heading)] mb-1">
               Pontos por 1,00 {initialProgram.currency} gasto
             </label>
             <input
@@ -85,13 +85,13 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
               value={pointsPerCurrency}
               onChange={(e) => setPointsPerCurrency(parseFloat(e.target.value) || 1)}
               disabled={!isEnabled}
-              className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:bg-stone-50"
+              className="w-full border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:bg-[var(--color-bg-subtle)]"
             />
-            <p className="text-[11px] text-stone-400 mt-1">Ex: R$ 100 pago = {100 * pointsPerCurrency} pontos</p>
+            <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">Ex: R$ 100 pago = {100 * pointsPerCurrency} pontos</p>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-stone-700 mb-1">
+            <label className="block text-xs font-bold text-[var(--color-text-heading)] mb-1">
               Pontos para Resgate (Meta)
             </label>
             <input
@@ -100,13 +100,13 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
               value={rewardThreshold}
               onChange={(e) => setRewardThreshold(parseInt(e.target.value, 10) || 100)}
               disabled={!isEnabled}
-              className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:bg-stone-50"
+              className="w-full border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:bg-[var(--color-bg-subtle)]"
             />
-            <p className="text-[11px] text-stone-400 mt-1">Pontos necessários para o voucher</p>
+            <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">Pontos necessários para o voucher</p>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-stone-700 mb-1">
+            <label className="block text-xs font-bold text-[var(--color-text-heading)] mb-1">
               Desconto do Voucher ({initialProgram.currency})
             </label>
             <input
@@ -116,9 +116,9 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
               value={discountAmount}
               onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 20)}
               disabled={!isEnabled}
-              className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:bg-stone-50"
+              className="w-full border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:bg-[var(--color-bg-subtle)]"
             />
-            <p className="text-[11px] text-stone-400 mt-1">Desconto aplicado ao atingir a meta</p>
+            <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">Desconto aplicado ao atingir a meta</p>
           </div>
         </div>
 
@@ -127,7 +127,7 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
             type="button"
             onClick={handleSave}
             disabled={isPending}
-            className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs shadow-md transition-all disabled:opacity-50"
+            className="px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold rounded-xl text-xs shadow-md transition-all disabled:opacity-50"
           >
             {isPending ? "Salvando..." : "Salvar Configurações de Fidelidade"}
           </button>
@@ -135,19 +135,19 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
       </div>
 
       {/* Ranking de Clientes */}
-      <div className="bg-white rounded-3xl border border-stone-200 p-6 sm:p-8 space-y-4 shadow-sm">
-        <h2 className="text-base font-bold text-stone-900">🏆 Extrato de Pontuação de Clientes</h2>
+      <div className="bg-white rounded-3xl border border-[var(--color-border)] p-6 sm:p-8 space-y-4 shadow-sm">
+        <h2 className="text-base font-bold text-[var(--color-text-heading)]">🏆 Extrato de Pontuação de Clientes</h2>
         
         {customers.length === 0 ? (
-          <p className="text-xs text-stone-400 py-6 text-center">
+          <p className="text-xs text-[var(--color-text-subtle)] py-6 text-center">
             Nenhum ponto acumulado ainda. Os pontos serão creditados automaticamente na conclusão dos atendimentos.
           </p>
         ) : (
-          <div className="divide-y divide-stone-100">
+          <div className="divide-y divide-[var(--color-border)]">
             {customers.map((c, i) => (
               <div key={i} className="py-3 flex items-center justify-between text-xs">
-                <span className="font-semibold text-stone-800">{c.customerEmail}</span>
-                <span className="font-black text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
+                <span className="font-semibold text-[var(--color-text-heading)]">{c.customerEmail}</span>
+                <span className="font-black text-[var(--color-warning)] bg-[var(--color-warning-light)] border border-[var(--color-warning-border)] px-3 py-1 rounded-full">
                   ⭐ {c.points} pontos
                 </span>
               </div>

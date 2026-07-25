@@ -9,7 +9,7 @@ function Stars({ rating }: { rating: number }) {
   return (
     <span aria-label={`${rating} de 5 estrelas`}>
       {[1, 2, 3, 4, 5].map((s) => (
-        <span key={s} className={s <= rating ? "text-yellow-400" : "text-gray-200"}>★</span>
+        <span key={s} className={s <= rating ? "text-[var(--color-warning)]" : "text-[var(--color-border-strong)]"}>★</span>
       ))}
     </span>
   );
@@ -37,54 +37,53 @@ export default async function AvaliacoesPage({
   const pathname = `/${companySlug}/avaliacoes`;
 
   return (
-    <div className="flex-1 flex flex-col">
-      <div className="px-6 py-5 border-b border-gray-200 bg-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Avaliações</h1>
-            <p className="text-sm text-gray-500 mt-0.5">{total} avaliação{total !== 1 ? "ões" : ""}</p>
-          </div>
-          {stats.average !== null && (
-            <div className="text-center bg-yellow-50 border border-yellow-200 rounded-xl px-5 py-3">
-              <p className="text-3xl font-bold text-yellow-600">{stats.average.toFixed(1)}</p>
-              <Stars rating={Math.round(stats.average)} />
-              <p className="text-xs text-gray-500 mt-0.5">{stats.count} avaliações</p>
-            </div>
-          )}
+    <div className="page-container">
+     <div className="page-content space-y-6">
+      <div className="page-header !mb-0 flex items-center justify-between gap-4">
+        <div>
+          <h1 className="page-title">Avaliações</h1>
+          <p className="page-description">{total} avaliação{total !== 1 ? "ões" : ""}</p>
         </div>
+        {stats.average !== null && (
+          <div className="text-center bg-[var(--color-warning-light)] border border-[var(--color-warning-border)] rounded-xl px-5 py-3 shrink-0">
+            <p className="text-3xl font-bold text-[var(--color-warning)]">{stats.average.toFixed(1)}</p>
+            <Stars rating={Math.round(stats.average)} />
+            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{stats.count} avaliações</p>
+          </div>
+        )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
+      <div>
         {items.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-            <p className="text-gray-500 text-sm">Nenhuma avaliação ainda.</p>
-            <p className="text-xs text-gray-400 mt-1">
+          <div className="card p-12 text-center">
+            <p className="text-[var(--color-text-muted)] text-sm">Nenhuma avaliação ainda.</p>
+            <p className="text-xs text-[var(--color-text-subtle)] mt-1">
               Compartilhe o link de avaliação com clientes após concluir um serviço.
             </p>
           </div>
         ) : (
           <div className="space-y-3">
             {items.map((item) => (
-              <div key={item.id} className="bg-white rounded-xl border border-gray-200 p-5">
+              <div key={item.id} className="card card-body">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <Stars rating={item.rating} />
-                      <span className="text-sm font-semibold text-gray-900">
+                      <span className="text-sm font-semibold text-[var(--color-text-heading)]">
                         {item.reviewerName ?? "Cliente"}
                       </span>
                     </div>
                     {item.comment && (
-                      <p className="text-sm text-gray-700 mt-1">{item.comment}</p>
+                      <p className="text-sm text-[var(--color-text)] mt-1">{item.comment}</p>
                     )}
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-[var(--color-text-subtle)]">
                       {item.scheduledDate.split("-").reverse().join("/")}
                     </p>
                     <Link
                       href={`/${companySlug}/agendamentos/${item.bookingId}`}
-                      className="text-xs text-blue-600 hover:underline"
+                      className="text-xs text-[var(--color-primary)] hover:underline"
                     >
                       Ver agendamento
                     </Link>
@@ -96,15 +95,15 @@ export default async function AvaliacoesPage({
             {pageCount > 1 && (
               <div className="flex justify-center gap-2 pt-2">
                 {currentPage > 1 && (
-                  <Link href={`${pathname}?page=${currentPage - 1}`} className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">
+                  <Link href={`${pathname}?page=${currentPage - 1}`} className="btn btn-outline btn-sm">
                     Anterior
                   </Link>
                 )}
-                <span className="px-3 py-1.5 text-sm text-gray-500">
+                <span className="px-3 py-1.5 text-sm text-[var(--color-text-muted)]">
                   {currentPage} / {pageCount}
                 </span>
                 {currentPage < pageCount && (
-                  <Link href={`${pathname}?page=${currentPage + 1}`} className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">
+                  <Link href={`${pathname}?page=${currentPage + 1}`} className="btn btn-outline btn-sm">
                     Próxima
                   </Link>
                 )}
@@ -113,6 +112,7 @@ export default async function AvaliacoesPage({
           </div>
         )}
       </div>
+     </div>
     </div>
   );
 }

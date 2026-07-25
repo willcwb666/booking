@@ -11,10 +11,10 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  WAITING: "bg-yellow-100 text-yellow-800",
-  NOTIFIED: "bg-blue-100 text-blue-800",
-  BOOKED: "bg-green-100 text-green-800",
-  EXPIRED: "bg-gray-100 text-gray-500",
+  WAITING: "bg-[var(--color-warning-light)] text-[var(--color-warning)]",
+  NOTIFIED: "bg-[var(--color-primary-light)] text-[var(--color-primary)]",
+  BOOKED: "bg-[var(--color-success-light)] text-[var(--color-success)]",
+  EXPIRED: "bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]",
 };
 
 type Entry = {
@@ -51,46 +51,46 @@ export function WaitlistAdminClient({
 
   if (entries.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-        <p className="text-gray-500 text-sm">Nenhum cliente na lista de espera.</p>
+      <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+        <p className="text-[var(--color-text-muted)] text-sm">Nenhum cliente na lista de espera.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-100 bg-gray-50">
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Cliente</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Serviço</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Data preferida</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+            <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg-subtle)]">
+              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Cliente</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Serviço</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Data preferida</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Status</th>
               {canEdit && <th className="px-4 py-3" />}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <tbody className="divide-y divide-[var(--color-border)]">
             {entries.map((e) => (
-              <tr key={e.id} className="hover:bg-gray-50 transition-colors">
+              <tr key={e.id} className="hover:bg-[var(--color-bg-subtle)] transition-colors">
                 <td className="px-4 py-3">
-                  <p className="font-medium text-gray-900">{e.customerName}</p>
-                  <p className="text-xs text-gray-400">{e.customerEmail}</p>
-                  {e.customerPhone && <p className="text-xs text-gray-400">{e.customerPhone}</p>}
+                  <p className="font-medium text-[var(--color-text-heading)]">{e.customerName}</p>
+                  <p className="text-xs text-[var(--color-text-subtle)]">{e.customerEmail}</p>
+                  {e.customerPhone && <p className="text-xs text-[var(--color-text-subtle)]">{e.customerPhone}</p>}
                 </td>
-                <td className="px-4 py-3 text-gray-700">{e.configName}</td>
+                <td className="px-4 py-3 text-[var(--color-text-heading)]">{e.configName}</td>
                 <td className="px-4 py-3 whitespace-nowrap">
-                  <p className="text-gray-900">{e.preferredDate.split("-").reverse().join("/")}</p>
+                  <p className="text-[var(--color-text-heading)]">{e.preferredDate.split("-").reverse().join("/")}</p>
                   {e.preferredStartTime && (
-                    <p className="text-xs text-gray-400">{e.preferredStartTime}</p>
+                    <p className="text-xs text-[var(--color-text-subtle)]">{e.preferredStartTime}</p>
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[e.status] ?? "bg-gray-100 text-gray-600"}`}>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[e.status] ?? "bg-[var(--color-bg-muted)] text-[var(--color-text)]"}`}>
                     {STATUS_LABELS[e.status] ?? e.status}
                   </span>
                   {e.notifiedAt && (
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="text-xs text-[var(--color-text-subtle)] mt-0.5">
                       Notif. {new Date(e.notifiedAt).toLocaleDateString("pt-BR")}
                     </p>
                   )}
@@ -101,7 +101,7 @@ export function WaitlistAdminClient({
                       type="button"
                       onClick={() => handleRemove(e.id)}
                       disabled={pending}
-                      className="text-xs text-red-500 hover:text-red-700 disabled:opacity-40 transition-colors"
+                      className="text-xs text-[var(--color-danger)] hover:text-[var(--color-danger)] disabled:opacity-40 transition-colors"
                     >
                       Remover
                     </button>

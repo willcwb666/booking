@@ -49,10 +49,10 @@ function todayStr() {
 
 function promoStatus(p: Promotion): { label: string; className: string } {
   const today = todayStr();
-  if (!p.isActive) return { label: "Inativa", className: "bg-gray-100 text-gray-500" };
-  if (today < p.startDate) return { label: "Agendada", className: "bg-amber-100 text-amber-700" };
-  if (today > p.endDate) return { label: "Expirada", className: "bg-gray-100 text-gray-500" };
-  return { label: "Ativa", className: "bg-emerald-100 text-emerald-700" };
+  if (!p.isActive) return { label: "Inativa", className: "bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]" };
+  if (today < p.startDate) return { label: "Agendada", className: "bg-[var(--color-warning-light)] text-[var(--color-warning)]" };
+  if (today > p.endDate) return { label: "Expirada", className: "bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]" };
+  return { label: "Ativa", className: "bg-[var(--color-success-light)] text-[var(--color-success)]" };
 }
 
 function fmtDate(d: string) {
@@ -64,7 +64,7 @@ function FieldError({ errors, field }: { errors: Record<string, string[]> | null
   const msgs = errors?.[field];
   if (!msgs?.length) return null;
   return (
-    <p className="text-xs text-red-600 mt-1" role="alert">{msgs[0]}</p>
+    <p className="text-xs text-[var(--color-danger)] mt-1" role="alert">{msgs[0]}</p>
   );
 }
 
@@ -138,7 +138,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
   return (
     <div className="p-6 lg:p-8 max-w-4xl">
       <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
-        <h1 className="text-xl font-bold text-gray-900">Promoções</h1>
+        <h1 className="text-xl font-bold text-[var(--color-text-heading)]">Promoções</h1>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -151,20 +151,20 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
                 ? "Nenhum cliente com opt-in de ofertas"
                 : undefined
             }
-            className="px-4 py-2 text-sm font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-semibold bg-[var(--color-success)] text-white rounded-lg hover:opacity-90 disabled:opacity-50"
           >
             ✉ Criar e-mail
           </button>
           <button
             type="button"
             onClick={() => openDialog({ type: "create" })}
-            className="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="px-4 py-2 text-sm font-semibold bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)]"
           >
             Nova promoção
           </button>
         </div>
       </div>
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-[var(--color-text-muted)] mb-6">
         Descontos por período em serviços específicos. O preço promocional é aplicado
         automaticamente nos orçamentos dentro do período.
       </p>
@@ -174,8 +174,8 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
           role={feedback.kind === "err" ? "alert" : "status"}
           className={`mb-4 p-3 rounded-lg text-sm border ${
             feedback.kind === "ok"
-              ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-              : "bg-red-50 border-red-200 text-red-700"
+              ? "bg-[var(--color-success-light)] border-[var(--color-success-border)] text-[var(--color-success)]"
+              : "bg-[var(--color-danger-light)] border-[var(--color-danger-border)] text-[var(--color-danger)]"
           }`}
         >
           {feedback.text}
@@ -183,8 +183,8 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
       )}
 
       {promotions.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
-          <p className="text-gray-500 text-sm">
+        <div className="bg-white rounded-xl border border-[var(--color-border)] p-10 text-center">
+          <p className="text-[var(--color-text-muted)] text-sm">
             Nenhuma promoção cadastrada. Crie a primeira para oferecer descontos aos seus clientes.
           </p>
         </div>
@@ -193,27 +193,27 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
           {promotions.map((p) => {
             const status = promoStatus(p);
             return (
-              <div key={p.id} className="bg-white rounded-xl border border-gray-200 p-5">
+              <div key={p.id} className="bg-white rounded-xl border border-[var(--color-border)] p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-semibold text-gray-900">{p.serviceName}</p>
+                      <p className="text-sm font-semibold text-[var(--color-text-heading)]">{p.serviceName}</p>
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${status.className}`}>
                         {status.label}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">{p.description}</p>
+                    <p className="text-sm text-[var(--color-text)] mt-1">{p.description}</p>
                     <p className="text-sm mt-2">
-                      <s className="text-gray-400">{formatMoney(p.servicePrice, company.currency, company.locale)}</s>{" "}
-                      <span className="font-bold text-emerald-700">
+                      <s className="text-[var(--color-text-subtle)]">{formatMoney(p.servicePrice, company.currency, company.locale)}</s>{" "}
+                      <span className="font-bold text-[var(--color-success)]">
                         {formatMoney(p.promoPrice, company.currency, company.locale)}
                       </span>
-                      <span className="text-xs text-gray-500 ml-2">
+                      <span className="text-xs text-[var(--color-text-muted)] ml-2">
                         {fmtDate(p.startDate)} – {fmtDate(p.endDate)}
                       </span>
                     </p>
                     {p.lastSentAt && (
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-[var(--color-text-subtle)] mt-1">
                         Último envio: {new Date(p.lastSentAt).toLocaleString(company.locale)}
                       </p>
                     )}
@@ -222,14 +222,14 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
                     <button
                       type="button"
                       onClick={() => openDialog({ type: "edit", item: p })}
-                      className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50"
+                      className="px-3 py-1.5 text-xs font-medium text-[var(--color-text)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-subtle)]"
                     >
                       Editar
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDelete(p.id)}
-                      className="px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
+                      className="px-3 py-1.5 text-xs font-medium text-[var(--color-danger)] border border-[var(--color-danger-border)] rounded-lg hover:bg-[var(--color-danger-light)]"
                     >
                       Excluir
                     </button>
@@ -241,7 +241,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
         </div>
       )}
 
-      <p className="text-xs text-gray-400 mt-6">
+      <p className="text-xs text-[var(--color-text-subtle)] mt-6">
         {optInCount} cliente(s) aceitaram receber e-mails de ofertas.
       </p>
 
@@ -253,8 +253,8 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
       >
         {dialog.type !== "none" && (
           <form onSubmit={handleSubmit}>
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h2 className="text-base font-semibold text-gray-900">
+            <div className="px-5 py-4 border-b border-[var(--color-border)]">
+              <h2 className="text-base font-semibold text-[var(--color-text-heading)]">
                 {dialog.type === "compose"
                   ? "Criar e-mail de promoções"
                   : dialog.type === "edit"
@@ -265,7 +265,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
 
             <div className="p-5 space-y-4">
               {fieldErrors?._ && (
-                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2" role="alert">
+                <p className="text-sm text-[var(--color-danger)] bg-[var(--color-danger-light)] border border-[var(--color-danger-border)] rounded-lg px-3 py-2" role="alert">
                   {fieldErrors._[0]}
                 </p>
               )}
@@ -273,7 +273,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
               {dialog.type === "compose" && (
                 <>
                   <div>
-                    <label htmlFor="email-title" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="email-title" className="block text-sm font-medium text-[var(--color-text-heading)] mb-1">
                       Título <span aria-hidden="true">*</span>
                     </label>
                     <input
@@ -284,13 +284,13 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
                       maxLength={120}
                       autoFocus
                       placeholder="Ex.: Ofertas de inverno ❄️"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                     />
                     <FieldError errors={fieldErrors} field="title" />
                   </div>
 
                   <div>
-                    <label htmlFor="email-description" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="email-description" className="block text-sm font-medium text-[var(--color-text-heading)] mb-1">
                       Descrição <span aria-hidden="true">*</span>
                     </label>
                     <textarea
@@ -300,25 +300,25 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
                       required
                       maxLength={1000}
                       placeholder="Texto que aparece no corpo do e-mail, antes da lista de serviços."
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      className="w-full border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
                     />
                     <FieldError errors={fieldErrors} field="description" />
                   </div>
 
-                  <div className="rounded-lg bg-gray-50 border border-gray-200 p-3 text-xs text-gray-600 space-y-1">
-                    <p className="font-semibold text-gray-700">O e-mail incluirá automaticamente:</p>
+                  <div className="rounded-lg bg-[var(--color-bg-subtle)] border border-[var(--color-border)] p-3 text-xs text-[var(--color-text)] space-y-1">
+                    <p className="font-semibold text-[var(--color-text-heading)]">O e-mail incluirá automaticamente:</p>
                     <p>• Logo e nome da empresa no cabeçalho</p>
                     {activePromos.map((p) => (
                       <p key={p.id}>
                         • {p.serviceName} —{" "}
                         <s>{formatMoney(p.servicePrice, company.currency, company.locale)}</s>{" "}
-                        <span className="text-emerald-700 font-semibold">
+                        <span className="text-[var(--color-success)] font-semibold">
                           {formatMoney(p.promoPrice, company.currency, company.locale)}
                         </span>{" "}
                         (até {fmtDate(p.endDate)})
                       </p>
                     ))}
-                    <p className="pt-1 text-gray-500">
+                    <p className="pt-1 text-[var(--color-text-muted)]">
                       Destinatários: <strong>{optInCount}</strong> cliente(s) com opt-in de ofertas.
                     </p>
                   </div>
@@ -328,7 +328,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
               {(dialog.type === "create" || dialog.type === "edit") && (
               <>
               <div>
-                <label htmlFor="serviceTypeId" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="serviceTypeId" className="block text-sm font-medium text-[var(--color-text-heading)] mb-1">
                   Serviço <span aria-hidden="true">*</span>
                 </label>
                 <select
@@ -336,7 +336,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
                   name="serviceTypeId"
                   required
                   defaultValue={dialog.type === "edit" ? dialog.item.serviceTypeId : ""}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="w-full border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-white"
                 >
                   <option value="" disabled>Selecione o serviço</option>
                   {serviceTypes.map((st) => (
@@ -349,7 +349,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
               </div>
 
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="description" className="block text-sm font-medium text-[var(--color-text-heading)] mb-1">
                   Descrição <span aria-hidden="true">*</span>
                 </label>
                 <textarea
@@ -360,13 +360,13 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
                   maxLength={300}
                   placeholder="Ex.: Promoção de inverno — 20% off"
                   defaultValue={dialog.type === "edit" ? dialog.item.description : ""}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
                 />
                 <FieldError errors={fieldErrors} field="description" />
               </div>
 
               <div>
-                <label htmlFor="promoPrice" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="promoPrice" className="block text-sm font-medium text-[var(--color-text-heading)] mb-1">
                   Valor promocional ({company.currency}) <span aria-hidden="true">*</span>
                 </label>
                 <input
@@ -377,14 +377,14 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
                   step="0.01"
                   required
                   defaultValue={dialog.type === "edit" ? dialog.item.promoPrice : ""}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
                 <FieldError errors={fieldErrors} field="promoPrice" />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="startDate" className="block text-sm font-medium text-[var(--color-text-heading)] mb-1">
                     Data inicial <span aria-hidden="true">*</span>
                   </label>
                   <input
@@ -393,12 +393,12 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
                     type="date"
                     required
                     defaultValue={dialog.type === "edit" ? dialog.item.startDate : ""}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   />
                   <FieldError errors={fieldErrors} field="startDate" />
                 </div>
                 <div>
-                  <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="endDate" className="block text-sm font-medium text-[var(--color-text-heading)] mb-1">
                     Data final <span aria-hidden="true">*</span>
                   </label>
                   <input
@@ -407,7 +407,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
                     type="date"
                     required
                     defaultValue={dialog.type === "edit" ? dialog.item.endDate : ""}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   />
                   <FieldError errors={fieldErrors} field="endDate" />
                 </div>
@@ -416,11 +416,11 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
               )}
             </div>
 
-            <div className="px-5 py-4 border-t border-gray-100 flex justify-end gap-2">
+            <div className="px-5 py-4 border-t border-[var(--color-border)] flex justify-end gap-2">
               <button
                 type="button"
                 onClick={closeDialog}
-                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                className="px-4 py-2 text-sm text-[var(--color-text)] hover:text-[var(--color-text-heading)] transition-colors"
               >
                 Cancelar
               </button>
@@ -429,8 +429,8 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
                 disabled={isPending}
                 className={`px-4 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-60 transition-colors ${
                   dialog.type === "compose"
-                    ? "bg-emerald-600 hover:bg-emerald-700"
-                    : "bg-blue-600 hover:bg-blue-700"
+                    ? "bg-[var(--color-success)] hover:opacity-90"
+                    : "bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)]"
                 }`}
               >
                 {isPending

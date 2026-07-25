@@ -21,9 +21,9 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  OWNER: "bg-purple-100 text-purple-800",
-  MANAGER: "bg-blue-100 text-blue-800",
-  EMPLOYEE: "bg-gray-100 text-gray-700",
+  OWNER: "bg-[var(--color-primary-light)] text-[var(--color-primary)]",
+  MANAGER: "bg-[var(--color-primary-light)] text-[var(--color-primary)]",
+  EMPLOYEE: "bg-[var(--color-bg-muted)] text-[var(--color-text-heading)]",
 };
 
 function InviteForm({
@@ -64,18 +64,18 @@ function InviteForm({
         type="email"
         required
         placeholder="E-mail do novo membro…"
-        className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="flex-1 border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
         aria-label="E-mail do membro a convidar"
       />
       <button
         type="submit"
         disabled={pending}
-        className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shrink-0"
+        className="px-4 py-2 bg-[var(--color-primary)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors shrink-0"
       >
         {pending ? "Convidando…" : "Convidar"}
       </button>
-      {error && <p role="alert" className="text-sm text-red-600 self-center">{error}</p>}
-      {success && <p role="status" className="text-sm text-green-700 self-center">Membro adicionado!</p>}
+      {error && <p role="alert" className="text-sm text-[var(--color-danger)] self-center">{error}</p>}
+      {success && <p role="status" className="text-sm text-[var(--color-success)] self-center">Membro adicionado!</p>}
     </form>
   );
 }
@@ -108,12 +108,12 @@ function RoleSelect({
         onChange={handleChange}
         disabled={pending}
         aria-label={`Role de ${member.name}`}
-        className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+        className="text-xs border border-[var(--color-border)] rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
       >
         <option value="MANAGER">Gerente</option>
         <option value="EMPLOYEE">Funcionário</option>
       </select>
-      {error && <p className="text-xs text-red-600 mt-0.5">{error}</p>}
+      {error && <p className="text-xs text-[var(--color-danger)] mt-0.5">{error}</p>}
     </div>
   );
 }
@@ -143,12 +143,12 @@ function RemoveButton({
       <button
         onClick={handleRemove}
         disabled={pending}
-        className="px-3 py-1 text-xs border border-red-200 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors"
+        className="px-3 py-1 text-xs border border-[var(--color-danger-border)] text-[var(--color-danger)] rounded-lg hover:bg-[var(--color-danger-light)] disabled:opacity-50 transition-colors"
         aria-label={`Remover ${member.name} da equipe`}
       >
         {pending ? "…" : "Remover"}
       </button>
-      {error && <p className="text-xs text-red-600 mt-0.5">{error}</p>}
+      {error && <p className="text-xs text-[var(--color-danger)] mt-0.5">{error}</p>}
     </div>
   );
 }
@@ -165,9 +165,9 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
 
   return (
     <div className="flex-1 flex flex-col">
-      <div className="px-6 py-5 border-b border-gray-200 bg-white">
-        <h1 className="text-xl font-bold text-gray-900">Equipe</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
+      <div className="px-6 py-5 border-b border-[var(--color-border)] bg-white">
+        <h1 className="text-xl font-bold text-[var(--color-text-heading)]">Equipe</h1>
+        <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
           {active.length} membro{active.length !== 1 ? "s" : ""} ativo{active.length !== 1 ? "s" : ""}
         </p>
       </div>
@@ -175,9 +175,9 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
       <div className="flex-1 overflow-y-auto p-6 space-y-5 max-w-3xl">
         {/* Invite */}
         {canInvite && (
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h2 className="text-sm font-semibold text-gray-900 mb-3">Convidar membro</h2>
-            <p className="text-xs text-gray-500 mb-3">
+          <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+            <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-3">Convidar membro</h2>
+            <p className="text-xs text-[var(--color-text-muted)] mb-3">
               O usuário precisa ter uma conta cadastrada na plataforma.
               Ao convidar, ele entra com o role de Funcionário.
             </p>
@@ -186,18 +186,18 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
         )}
 
         {/* Active members */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
-            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+        <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+          <div className="px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-subtle)]">
+            <h2 className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
               Membros ativos
             </h2>
           </div>
           {active.length === 0 ? (
-            <p className="px-5 py-8 text-sm text-gray-400 text-center">
+            <p className="px-5 py-8 text-sm text-[var(--color-text-subtle)] text-center">
               Nenhum membro ativo.
             </p>
           ) : (
-            <ul className="divide-y divide-gray-50">
+            <ul className="divide-y divide-[var(--color-border)]">
               {active.map((member) => {
                 const isSelf = member.userId === currentUserId;
                 const canEditRole = isOwner && !isSelf && member.role !== "OWNER";
@@ -211,21 +211,21 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
                     {/* Avatar + info */}
                     <div className="flex items-center gap-3 min-w-0">
                       <div
-                        className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center shrink-0"
+                        className="w-9 h-9 rounded-full bg-[var(--color-primary-light)] flex items-center justify-center shrink-0"
                         aria-hidden="true"
                       >
-                        <span className="text-sm font-bold text-blue-600">
+                        <span className="text-sm font-bold text-[var(--color-primary)]">
                           {member.name[0].toUpperCase()}
                         </span>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                        <p className="text-sm font-medium text-[var(--color-text-heading)] truncate">
                           {member.name}
                           {isSelf && (
-                            <span className="ml-1.5 text-xs text-gray-400">(você)</span>
+                            <span className="ml-1.5 text-xs text-[var(--color-text-subtle)]">(você)</span>
                           )}
                         </p>
-                        <p className="text-xs text-gray-400 truncate">{member.email}</p>
+                        <p className="text-xs text-[var(--color-text-subtle)] truncate">{member.email}</p>
                       </div>
                     </div>
 
@@ -235,7 +235,7 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
                         <RoleSelect companySlug={companySlug} member={member} onDone={refresh} />
                       ) : (
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ROLE_COLORS[member.role] ?? "bg-gray-100 text-gray-600"}`}
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ROLE_COLORS[member.role] ?? "bg-[var(--color-bg-muted)] text-[var(--color-text)]"}`}
                         >
                           {ROLE_LABELS[member.role] ?? member.role}
                         </span>
@@ -253,30 +253,30 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
 
         {/* Inactive members */}
         {inactive.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
-              <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+            <div className="px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-subtle)]">
+              <h2 className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
                 Membros removidos
               </h2>
             </div>
-            <ul className="divide-y divide-gray-50">
+            <ul className="divide-y divide-[var(--color-border)]">
               {inactive.map((member) => (
                 <li
                   key={member.id}
                   className="flex items-center justify-between gap-4 px-5 py-4 opacity-60"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center shrink-0" aria-hidden="true">
-                      <span className="text-sm font-bold text-gray-400">
+                    <div className="w-9 h-9 rounded-full bg-[var(--color-bg-muted)] flex items-center justify-center shrink-0" aria-hidden="true">
+                      <span className="text-sm font-bold text-[var(--color-text-subtle)]">
                         {member.name[0].toUpperCase()}
                       </span>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm text-gray-500 truncate">{member.name}</p>
-                      <p className="text-xs text-gray-400 truncate">{member.email}</p>
+                      <p className="text-sm text-[var(--color-text-muted)] truncate">{member.name}</p>
+                      <p className="text-xs text-[var(--color-text-subtle)] truncate">{member.email}</p>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-400">Inativo</span>
+                  <span className="text-xs text-[var(--color-text-subtle)]">Inativo</span>
                 </li>
               ))}
             </ul>
