@@ -60,11 +60,17 @@ type BookingEmailData = {
   startTime: string; // "HH:MM"
   endTime: string;
   address: string;
+  locale?: string; // e.g. "pt-BR", "en-US" — defaults to "pt-BR"
 };
 
-function formatDate(date: string) {
-  const [y, m, d] = date.split("-");
-  return `${d}/${m}/${y}`;
+function formatDate(date: string, locale = "pt-BR") {
+  const [y, m, d] = date.split("-").map(Number);
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(y, m - 1, d)));
 }
 
 export async function sendBookingConfirmationEmail(data: BookingEmailData) {
@@ -81,7 +87,7 @@ export async function sendBookingConfirmationEmail(data: BookingEmailData) {
           <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:20px;margin:24px 0">
             <p style="margin:0 0 8px 0"><strong>Serviço:</strong> ${escapeHtml(data.serviceName)}</p>
             <p style="margin:0 0 8px 0"><strong>Empresa:</strong> ${escapeHtml(data.companyName)}</p>
-            <p style="margin:0 0 8px 0"><strong>Data:</strong> ${formatDate(data.date)}</p>
+            <p style="margin:0 0 8px 0"><strong>Data:</strong> ${formatDate(data.date, data.locale)}</p>
             <p style="margin:0 0 8px 0"><strong>Horário:</strong> ${data.startTime} – ${data.endTime}</p>
             <p style="margin:0"><strong>Endereço:</strong> ${escapeHtml(data.address)}</p>
           </div>
@@ -110,7 +116,7 @@ export async function sendBookingReminderEmail(data: BookingEmailData) {
           <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:20px;margin:24px 0">
             <p style="margin:0 0 8px 0"><strong>Serviço:</strong> ${escapeHtml(data.serviceName)}</p>
             <p style="margin:0 0 8px 0"><strong>Empresa:</strong> ${escapeHtml(data.companyName)}</p>
-            <p style="margin:0 0 8px 0"><strong>Data:</strong> ${formatDate(data.date)} <strong>amanhã</strong></p>
+            <p style="margin:0 0 8px 0"><strong>Data:</strong> ${formatDate(data.date, data.locale)} <strong>amanhã</strong></p>
             <p style="margin:0 0 8px 0"><strong>Horário:</strong> ${data.startTime} – ${data.endTime}</p>
             <p style="margin:0"><strong>Endereço:</strong> ${escapeHtml(data.address)}</p>
           </div>
@@ -130,7 +136,8 @@ export async function sendWaitlistNotificationEmail({
   customerName,
   companyName,
   date,
-}: Pick<BookingEmailData, "to" | "customerName" | "companyName" | "date">) {
+  locale,
+}: Pick<BookingEmailData, "to" | "customerName" | "companyName" | "date" | "locale">) {
   try {
     await resend.emails.send({
       from: FROM,
@@ -142,7 +149,7 @@ export async function sendWaitlistNotificationEmail({
           <p style="color:#6b7280;margin-top:0">Olá, ${escapeHtml(customerName)}!</p>
           <p style="color:#374151">
             Uma vaga abriu em <strong>${escapeHtml(companyName)}</strong> no dia
-            <strong>${formatDate(date)}</strong>.
+            <strong>${formatDate(date, locale)}</strong>.
           </p>
           <p style="color:#374151">Acesse o link de agendamento para reservar o horário antes que outra pessoa pegue!</p>
           <p style="color:#9ca3af;font-size:12px;margin-top:32px">Agendei · Agendamentos online</p>
@@ -171,6 +178,7 @@ type PromotionEmailData = {
   description: string; // texto criado pelo gestor
   items: PromoItem[];
   validUntil: string; // "YYYY-MM-DD" — maior endDate entre as promoções
+  locale?: string;
 };
 
 /**
@@ -192,7 +200,7 @@ export async function sendPromotionEmail(data: PromotionEmailData) {
             </p>
           </td>
           <td style="padding:12px 16px;border-bottom:1px solid #d1fae5;text-align:right;vertical-align:middle">
-            <span style="color:#6b7280;font-size:12px;white-space:nowrap">até ${formatDate(item.endDate)}</span>
+            <span style="color:#6b7280;font-size:12px;white-space:nowrap">até ${formatDate(item.endDate, data.locale)}</span>
           </td>
         </tr>`
     )
@@ -238,7 +246,7 @@ export async function sendPromotionEmail(data: PromotionEmailData) {
 
         <!-- Validade no fim -->
         <p style="text-align:center;color:#6b7280;font-size:13px;margin:0 0 24px 0">
-          Promoções válidas até <strong>${formatDate(data.validUntil)}</strong>.
+          Promoções válidas até <strong>${formatDate(data.validUntil, data.locale)}</strong>.
         </p>
 
         <p style="color:#9ca3af;font-size:12px">
@@ -257,7 +265,8 @@ export async function sendBookingCancelledEmail({
   companyName,
   date,
   startTime,
-}: Pick<BookingEmailData, "to" | "customerName" | "companyName" | "date" | "startTime">) {
+  locale,
+}: Pick<BookingEmailData, "to" | "customerName" | "companyName" | "date" | "startTime" | "locale">) {
   try {
     await resend.emails.send({
       from: FROM,
@@ -269,7 +278,7 @@ export async function sendBookingCancelledEmail({
           <p style="color:#6b7280;margin-top:0">Olá, ${escapeHtml(customerName)}.</p>
           <p style="color:#374151">
             Seu agendamento em <strong>${escapeHtml(companyName)}</strong> no dia
-            <strong>${formatDate(date)}</strong> às <strong>${startTime}</strong> foi cancelado.
+            <strong>${formatDate(date, locale)}</strong> às <strong>${startTime}</strong> foi cancelado.
           </p>
           <p style="color:#374151">Se precisar reagendar, acesse o app ou o link de agendamento.</p>
           <p style="color:#9ca3af;font-size:12px;margin-top:32px">Agendei · Agendamentos online</p>
@@ -297,6 +306,7 @@ export type CompletedInvoiceEmailData = {
   additionalItems: Array<{ description: string; amount: number }>;
   discountAmount: number;
   finalTotal: number;
+  locale?: string;
 };
 
 export async function sendBookingCompletedInvoiceEmail(data: CompletedInvoiceEmailData) {
@@ -370,7 +380,7 @@ export async function sendBookingCompletedInvoiceEmail(data: CompletedInvoiceEma
 
           <!-- Informações de Data e Local -->
           <div style="color:#6b7280;font-size:13px;line-height:1.6;margin-bottom:24px">
-            <p style="margin:2px 0">📅 <strong>Data:</strong> ${formatDate(data.date)} (${data.startTime} às ${data.endTime})</p>
+            <p style="margin:2px 0">📅 <strong>Data:</strong> ${formatDate(data.date, data.locale)} (${data.startTime} às ${data.endTime})</p>
             <p style="margin:2px 0">📍 <strong>Endereço:</strong> ${escapeHtml(data.address)}</p>
             ${data.companyPhone ? `<p style="margin:2px 0">📞 <strong>Contato da Empresa:</strong> ${escapeHtml(data.companyPhone)}</p>` : ""}
           </div>

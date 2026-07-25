@@ -19,7 +19,7 @@ export async function notifyBookingConfirmed(bookingId: string) {
     const booking = await db.booking.findUnique({
       where: { id: bookingId },
       include: {
-        company: { select: { name: true } },
+        company: { select: { name: true, locale: true } },
         bookingConfig: { select: { name: true } },
         customerDetail: true,
         estimate: { select: { customerId: true } },
@@ -42,6 +42,7 @@ export async function notifyBookingConfirmed(bookingId: string) {
       startTime: booking.scheduledStartTime,
       endTime: booking.scheduledEndTime,
       address,
+      locale: company.locale ?? "pt-BR",
     });
 
     void sendBookingConfirmedWhatsapp({
@@ -70,7 +71,7 @@ export async function notifyBookingReminder(bookingId: string) {
     const booking = await db.booking.findUnique({
       where: { id: bookingId },
       include: {
-        company: { select: { name: true } },
+        company: { select: { name: true, locale: true } },
         bookingConfig: { select: { name: true } },
         customerDetail: true,
         estimate: { select: { customerId: true } },
@@ -93,6 +94,7 @@ export async function notifyBookingReminder(bookingId: string) {
       startTime: booking.scheduledStartTime,
       endTime: booking.scheduledEndTime,
       address,
+      locale: company.locale ?? "pt-BR",
     });
 
     void sendBookingReminderWhatsapp({
@@ -121,7 +123,7 @@ export async function notifyBookingCancelled(bookingId: string) {
     const booking = await db.booking.findUnique({
       where: { id: bookingId },
       include: {
-        company: { select: { name: true } },
+        company: { select: { name: true, locale: true } },
         customerDetail: true,
         estimate: { select: { customerId: true } },
       },
@@ -137,6 +139,7 @@ export async function notifyBookingCancelled(bookingId: string) {
       companyName: company.name,
       date: booking.scheduledDate,
       startTime: booking.scheduledStartTime,
+      locale: company.locale ?? "pt-BR",
     });
 
     void sendBookingCancelledWhatsapp({

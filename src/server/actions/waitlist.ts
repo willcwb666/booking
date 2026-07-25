@@ -88,7 +88,7 @@ export async function notifyWaitlistForDate(
 
   const company = await db.company.findUnique({
     where: { id: companyId },
-    select: { name: true },
+    select: { name: true, locale: true },
   });
 
   await Promise.allSettled(
@@ -98,6 +98,7 @@ export async function notifyWaitlistForDate(
         customerName: entry.customerName,
         companyName: company?.name ?? "empresa",
         date: entry.preferredDate,
+        locale: company?.locale ?? "pt-BR",
       });
 
       await db.waitlistEntry.update({

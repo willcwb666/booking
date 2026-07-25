@@ -23,13 +23,21 @@ export async function POST(req: NextRequest) {
 
   if (event.type === "payment_intent.succeeded") {
     const pi = event.data.object as Stripe.PaymentIntent;
+    // Read before update so we can detect idempotent re-deliveries — Stripe may
+    // send the same event more than once; only notify on the first confirmation.
+    const booking = await db.booking.findFirst({
+      where: { stripePaymentIntentId: pi.id },
+      select: { id: true, paymentStatus: true },
+    });
+    if (!booking) return new Response("ok", { status: 200 });
+
+    const alreadyPaid = booking.paymentStatus === "PAID";
     await db.booking.updateMany({
       where: { stripePaymentIntentId: pi.id },
       data: { paymentStatus: "PAID", status: "CONFIRMED" },
     });
-    // Notify after payment confirmed
-    const booking = await db.booking.findFirst({ where: { stripePaymentIntentId: pi.id } });
-    if (booking) {
+
+    if (!alreadyPaid) {
       void notifyBookingConfirmed(booking.id);
       void notifyCompanyNewBooking(booking.id);
     }
