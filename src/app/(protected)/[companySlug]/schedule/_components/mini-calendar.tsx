@@ -116,7 +116,7 @@ export function MiniCalendar({ selectedDate, onSelectDate }: Props) {
           type="button"
           onClick={prevMonth}
           aria-label="Mês anterior"
-          className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-900 leading-none"
+          className="p-1 rounded hover:bg-[var(--color-bg-muted)] text-[var(--color-text-subtle)] hover:text-[var(--color-text-heading)] leading-none"
         >
           ‹
         </button>
@@ -132,7 +132,7 @@ export function MiniCalendar({ selectedDate, onSelectDate }: Props) {
           type="button"
           onClick={nextMonth}
           aria-label="Próximo mês"
-          className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-900 leading-none"
+          className="p-1 rounded hover:bg-[var(--color-bg-muted)] text-[var(--color-text-subtle)] hover:text-[var(--color-text-heading)] leading-none"
         >
           ›
         </button>
