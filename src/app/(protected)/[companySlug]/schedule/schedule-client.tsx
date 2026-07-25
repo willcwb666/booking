@@ -140,7 +140,7 @@ export function ScheduleClient({
     <div className="flex h-screen overflow-hidden">
       {/* ── Left panel ── */}
       <aside
-        className="w-56 shrink-0 border-r border-gray-200 bg-white flex flex-col overflow-y-auto py-4 gap-5"
+        className="w-56 shrink-0 border-r border-[var(--color-border)] bg-white flex flex-col overflow-y-auto py-4 gap-5"
         aria-label="Painel de navegação do calendário"
       >
         {/* Mini calendar */}
@@ -153,7 +153,7 @@ export function ScheduleClient({
 
         {/* Professional filter */}
         <div className="px-3">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+          <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
             Profissional
           </p>
           <ul className="space-y-0.5" role="list">
@@ -164,8 +164,8 @@ export function ScheduleClient({
                 aria-pressed={selectedProfessional === "all"}
                 className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${
                   selectedProfessional === "all"
-                    ? "bg-blue-50 text-blue-700 font-medium"
-                    : "text-gray-600 hover:bg-gray-50"
+                    ? "bg-[var(--color-primary-light)] text-[var(--color-primary)] font-medium"
+                    : "text-[var(--color-text-muted)] hover:bg-[var(--color-bg-subtle)]"
                 }`}
               >
                 Todos
@@ -179,8 +179,8 @@ export function ScheduleClient({
                   aria-pressed={selectedProfessional === p.id}
                   className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors truncate ${
                     selectedProfessional === p.id
-                      ? "bg-blue-50 text-blue-700 font-medium"
-                      : "text-gray-600 hover:bg-gray-50"
+                      ? "bg-[var(--color-primary-light)] text-[var(--color-primary)] font-medium"
+                      : "text-[var(--color-text-muted)] hover:bg-[var(--color-bg-subtle)]"
                   }`}
                 >
                   {p.name}
@@ -192,7 +192,7 @@ export function ScheduleClient({
 
         {/* Legend */}
         <div className="px-3">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+          <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
             Legenda
           </p>
           <ul className="space-y-1.5" role="list">
@@ -208,7 +208,7 @@ export function ScheduleClient({
                   className={`w-2.5 h-2.5 rounded-full shrink-0 ${dot}`}
                   aria-hidden="true"
                 />
-                <span className="text-xs text-gray-600">{label}</span>
+                <span className="text-xs text-[var(--color-text-muted)]">{label}</span>
               </li>
             ))}
           </ul>
@@ -218,12 +218,12 @@ export function ScheduleClient({
       {/* ── Right panel ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Toolbar */}
-        <header className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white shrink-0 flex-wrap">
+        <header className="flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)] bg-white shrink-0 flex-wrap">
           {/* Today */}
           <button
             type="button"
             onClick={handleToday}
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 font-medium text-gray-700"
+            className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-subtle)] font-medium text-[var(--color-text-heading)]"
           >
             Hoje
           </button>
@@ -234,7 +234,7 @@ export function ScheduleClient({
               type="button"
               onClick={handlePrev}
               aria-label="Período anterior"
-              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"
+              className="p-1.5 rounded-lg hover:bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><polyline points="15 18 9 12 15 6" /></svg>
             </button>
@@ -242,7 +242,7 @@ export function ScheduleClient({
               type="button"
               onClick={handleNext}
               aria-label="Próximo período"
-              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"
+              className="p-1.5 rounded-lg hover:bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><polyline points="9 18 15 12 9 6" /></svg>
             </button>
@@ -250,7 +250,7 @@ export function ScheduleClient({
 
           {/* Period label */}
           <h1
-            className="text-base font-semibold text-gray-900 flex-1 min-w-0 truncate capitalize"
+            className="text-base font-semibold text-[var(--color-text-heading)] flex-1 min-w-0 truncate capitalize"
             aria-live="polite"
             aria-atomic="true"
           >
@@ -261,7 +261,7 @@ export function ScheduleClient({
           <div
             role="group"
             aria-label="Tipo de visualização"
-            className="flex border border-gray-200 rounded-lg overflow-hidden"
+            className="flex border border-[var(--color-border)] rounded-lg overflow-hidden"
           >
             {(["day", "week", "month"] as CalendarView[]).map((v) => (
               <button
@@ -271,8 +271,8 @@ export function ScheduleClient({
                 aria-pressed={view === v}
                 className={`px-3 py-1.5 text-sm font-medium transition-colors ${
                   view === v
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-600 hover:bg-gray-50"
+                    ? "bg-[var(--color-primary)] text-white"
+                    : "text-[var(--color-text-muted)] hover:bg-[var(--color-bg-subtle)]"
                 }`}
               >
                 {VIEW_LABELS[v]}
@@ -293,7 +293,7 @@ export function ScheduleClient({
                     selectedProfessional !== "all" ? selectedProfessional : "",
                 })
               }
-              className="px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="btn btn-primary text-sm py-1.5 px-3"
             >
               + Novo evento
             </button>
