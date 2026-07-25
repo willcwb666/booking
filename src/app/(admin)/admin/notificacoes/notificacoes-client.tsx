@@ -231,7 +231,7 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
                     type="button"
                     onClick={() => handleExecuteReset(notif.id)}
                     disabled={isPending}
-                    className="px-5 py-2.5 bg-[#635bff] hover:bg-[#544dc9] text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                    className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
                   >
                     <RotateCcw className="w-4 h-4" />
                     <span>{isPending ? "Executando Reset..." : "⚡ Executar Reset de Presets Agora"}</span>
@@ -246,7 +246,7 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
                     className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs ${
                       notif.isRead
                         ? "bg-slate-100 hover:bg-slate-200 text-slate-700"
-                        : "bg-[#635bff] hover:bg-[#544dc9] text-white"
+                        : "bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white"
                     }`}
                   >
                     <CheckCircle2 className={`w-4 h-4 ${notif.isRead ? "text-slate-500" : "text-white"}`} />

@@ -180,7 +180,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
     <div className="w-full px-6 sm:px-10 py-8 text-left space-y-8 pb-32">
       {/* Header */}
       <div>
-        <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs">
+        <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs">
           <CreditCard className="w-4 h-4" />
           <span>Gestão de Assinaturas</span>
         </div>
@@ -211,7 +211,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
               onDragEnd={handleDragEnd}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-grab active:cursor-grabbing border ${
                 isActive
-                  ? "bg-white text-indigo-600 shadow-2xs border-slate-200 font-black"
+                  ? "bg-white text-[var(--color-primary)] shadow-2xs border-slate-200 font-black"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 border-transparent"
               }`}
             >
@@ -250,8 +250,8 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
           onClick={() => setActiveTab("new")}
           className={`px-4 py-2 text-xs font-extrabold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
             activeTab === "new"
-              ? "bg-[#635bff] text-white shadow-2xs font-black"
-              : "text-indigo-600 hover:bg-indigo-50 bg-indigo-50/50 border border-indigo-100"
+              ? "bg-[var(--color-primary)] text-white shadow-2xs font-black"
+              : "text-[var(--color-primary)] hover:bg-indigo-50 bg-indigo-50/50 border border-indigo-100"
           }`}
         >
           <Plus className="w-4 h-4" />
@@ -290,7 +290,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
                   placeholder="Ex: Plano Enterprise"
                   value={newPlanName}
                   onChange={(e) => setNewPlanName(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
@@ -302,7 +302,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
                   placeholder="Ex: enterprise"
                   value={newPlanTier}
                   onChange={(e) => setNewPlanTier(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
             </div>
@@ -314,7 +314,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
                 placeholder="Ex: Ideal para grandes redes e franqueadas"
                 value={newPlanDesc}
                 onChange={(e) => setNewPlanDesc(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
               />
             </div>
 
@@ -327,7 +327,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
                   min="0"
                   value={newPlanPriceMonthly}
                   onChange={(e) => setNewPlanPriceMonthly(parseFloat(e.target.value) || 0)}
-                  className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
@@ -339,7 +339,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
                   min="0"
                   value={newPlanPriceYearly}
                   onChange={(e) => setNewPlanPriceYearly(parseFloat(e.target.value) || 0)}
-                  className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
             </div>
@@ -348,7 +348,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
               <button
                 type="submit"
                 disabled={isPending}
-                className="px-6 py-2.5 bg-[#635bff] hover:bg-[#544dc9] text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50"
               >
                 {isPending ? "Cadastrando..." : "Cadastrar Plano no Banco e Stripe ➔"}
               </button>
@@ -371,7 +371,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
             type="button"
             onClick={handleGlobalSaveCurrentPlan}
             disabled={isPending}
-            className="px-5 py-2.5 bg-[#635bff] hover:bg-[#544dc9] text-white font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
+            className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
           >
             <CheckCircle2 className="w-4 h-4" />
             <span>Salvar e Sincronizar Plano</span>
@@ -455,7 +455,7 @@ function PlanCard({
               name="displayName"
               defaultValue={plan.displayName}
               required
-              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
             />
             {errors?.displayName && <p className="text-xs text-red-600 mt-1">{errors.displayName[0]}</p>}
           </div>
@@ -465,7 +465,7 @@ function PlanCard({
             <input
               name="description"
               defaultValue={plan.description}
-              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
             />
           </div>
         </div>
@@ -479,7 +479,7 @@ function PlanCard({
               min="0"
               step="0.01"
               defaultValue={plan.priceMonthly}
-              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
             />
             {errors?.priceMonthly && <p className="text-xs text-red-600 mt-1">{errors.priceMonthly[0]}</p>}
           </div>
@@ -492,14 +492,14 @@ function PlanCard({
               min="0"
               step="0.01"
               defaultValue={plan.priceYearly}
-              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
             />
             {errors?.priceYearly && <p className="text-xs text-red-600 mt-1">{errors.priceYearly[0]}</p>}
           </div>
         </div>
 
         <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer pt-2">
-          <input type="checkbox" name="isActive" defaultChecked={plan.isActive} className="w-4 h-4 text-indigo-600 rounded" />
+          <input type="checkbox" name="isActive" defaultChecked={plan.isActive} className="w-4 h-4 text-[var(--color-primary)] rounded" />
           <span>Plano Ativo (Exibido nas tabelas de preços e landing page)</span>
         </label>
       </form>
@@ -576,13 +576,13 @@ function FeaturesEditor({ planId, features, onSaved }: { planId: string; feature
                     if (e.key === "Enter") { e.preventDefault(); saveEdit(f); }
                     if (e.key === "Escape") setEditingId(null);
                   }}
-                  className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-1 text-xs focus:ring-2 focus:ring-indigo-500"
+                  className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-1 text-xs focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
                 <button
                   type="button"
                   onClick={() => saveEdit(f)}
                   disabled={pending}
-                  className="px-3 py-1 text-xs font-bold bg-[#635bff] text-white rounded-lg hover:bg-[#544dc9]"
+                  className="px-3 py-1 text-xs font-bold bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)]"
                 >
                   Salvar
                 </button>
@@ -599,7 +599,7 @@ function FeaturesEditor({ planId, features, onSaved }: { planId: string; feature
                     type="button"
                     onClick={() => startEdit(f)}
                     title="Editar Recurso"
-                    className="p-1 text-slate-400 hover:text-indigo-600 transition-colors"
+                    className="p-1 text-slate-400 hover:text-[var(--color-primary)] transition-colors"
                   >
                     <IconPencil />
                   </button>
@@ -623,7 +623,7 @@ function FeaturesEditor({ planId, features, onSaved }: { planId: string; feature
           name="featureLabel"
           placeholder="Ex: Suporte prioritário 24/7"
           required
-          className="flex-1 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-900 focus:ring-2 focus:ring-indigo-500"
+          className="flex-1 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-900 focus:ring-2 focus:ring-[var(--color-primary)]"
         />
         <button
           type="submit"

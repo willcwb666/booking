@@ -83,11 +83,11 @@ export function EventDetailDialog({
       onClick={handleDialogClick}
       aria-labelledby="event-detail-title"
       aria-modal="true"
-      className="rounded-2xl shadow-xl border border-gray-200 p-0 w-full max-w-sm backdrop:bg-black/30 backdrop:backdrop-blur-sm open:flex open:flex-col"
+      className="rounded-2xl shadow-xl border border-[var(--color-border)] p-0 w-full max-w-sm backdrop:bg-black/30 backdrop:backdrop-blur-sm open:flex open:flex-col"
     >
       {event && typeCfg && (
         <>
-          <div className="px-6 py-5 border-b border-gray-100 flex items-start justify-between gap-3">
+          <div className="px-6 py-5 border-b border-[var(--color-border)] flex items-start justify-between gap-3">
             <div className="min-w-0">
               <span
                 className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full mb-2 ${typeCfg.bg} ${typeCfg.text}`}
@@ -96,7 +96,7 @@ export function EventDetailDialog({
               </span>
               <h2
                 id="event-detail-title"
-                className="text-base font-semibold text-gray-900"
+                className="text-base font-semibold text-[var(--color-text-heading)]"
               >
                 {event.title}
               </h2>
@@ -105,7 +105,7 @@ export function EventDetailDialog({
               type="button"
               onClick={onClose}
               aria-label="Fechar"
-              className="text-gray-400 hover:text-gray-700 rounded p-1 hover:bg-gray-100 shrink-0"
+              className="text-[var(--color-text-subtle)] hover:text-[var(--color-text-heading)] rounded p-1 hover:bg-[var(--color-bg-muted)] shrink-0"
             >
               ✕
             </button>
@@ -113,34 +113,34 @@ export function EventDetailDialog({
 
           <div className="px-6 py-5 space-y-3">
             <div>
-              <p className="text-xs text-gray-500">Data</p>
-              <p className="text-sm text-gray-800">{formatDate(event.date)}</p>
+              <p className="text-xs text-[var(--color-text-subtle)]">Data</p>
+              <p className="text-sm text-[var(--color-text-heading)]">{formatDate(event.date)}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Horário</p>
-              <p className="text-sm text-gray-800">
+              <p className="text-xs text-[var(--color-text-subtle)]">Horário</p>
+              <p className="text-sm text-[var(--color-text-heading)]">
                 {event.startTime} – {event.endTime}
               </p>
             </div>
             {event.professional && (
               <div>
-                <p className="text-xs text-gray-500">Profissional</p>
-                <p className="text-sm text-gray-800">
+                <p className="text-xs text-[var(--color-text-subtle)]">Profissional</p>
+                <p className="text-sm text-[var(--color-text-heading)]">
                   {event.professional.name}
                 </p>
               </div>
             )}
             {event.notes && (
               <div>
-                <p className="text-xs text-gray-500">Observações</p>
-                <p className="text-sm text-gray-800 whitespace-pre-line">
+                <p className="text-xs text-[var(--color-text-subtle)]">Observações</p>
+                <p className="text-sm text-[var(--color-text-heading)] whitespace-pre-line">
                   {event.notes}
                 </p>
               </div>
             )}
             <div>
-              <p className="text-xs text-gray-500">Criado por</p>
-              <p className="text-sm text-gray-800">{event.createdBy.name}</p>
+              <p className="text-xs text-[var(--color-text-subtle)]">Criado por</p>
+              <p className="text-sm text-[var(--color-text-heading)]">{event.createdBy.name}</p>
             </div>
           </div>
 
@@ -149,7 +149,7 @@ export function EventDetailDialog({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+                className="btn btn-ghost"
               >
                 Fechar
               </button>
@@ -157,7 +157,7 @@ export function EventDetailDialog({
                 type="button"
                 onClick={handleDelete}
                 disabled={isPending}
-                className="px-4 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 disabled:opacity-60"
+                className="btn btn-destructive"
               >
                 {isPending ? "Excluindo..." : "Excluir"}
               </button>

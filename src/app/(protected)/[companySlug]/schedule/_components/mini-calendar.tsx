@@ -122,7 +122,7 @@ export function MiniCalendar({ selectedDate, onSelectDate }: Props) {
         </button>
         <span
           id={titleId}
-          className="text-xs font-semibold text-gray-700"
+          className="text-xs font-semibold text-[var(--color-text-heading)]"
           aria-live="polite"
           aria-atomic="true"
         >
@@ -150,7 +150,7 @@ export function MiniCalendar({ selectedDate, onSelectDate }: Props) {
               <th
                 key={abbr}
                 scope="col"
-                className="text-center text-[10px] font-medium text-gray-400 pb-1"
+                className="text-center text-[10px] font-medium text-[var(--color-text-subtle)] pb-1"
                 aria-label={abbr}
               >
                 {abbr}
@@ -191,12 +191,12 @@ export function MiniCalendar({ selectedDate, onSelectDate }: Props) {
                           className={[
                             "w-7 h-7 text-xs rounded-full transition-colors mx-auto flex items-center justify-center",
                             isSelected
-                              ? "bg-blue-600 text-white font-semibold"
+                              ? "bg-[var(--color-primary)] text-white font-semibold"
                               : isToday
-                              ? "border border-blue-500 text-blue-600 font-semibold hover:bg-blue-50"
+                              ? "border border-[var(--color-primary)] text-[var(--color-primary)] font-semibold hover:bg-[var(--color-primary-light)]"
                               : isCurrentMonth
-                              ? "text-gray-700 hover:bg-gray-100"
-                              : "text-gray-300",
+                              ? "text-[var(--color-text-heading)] hover:bg-[var(--color-bg-muted)]"
+                              : "text-[var(--color-text-subtle)] opacity-50",
                           ]
                             .filter(Boolean)
                             .join(" ")}

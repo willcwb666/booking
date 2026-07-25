@@ -77,7 +77,7 @@ export function TimeGrid({ view, days, events, onSlotClick, onEventClick }: Prop
     >
       {/* Day headers */}
       <div
-        className="flex border-b border-gray-200 bg-white sticky top-0 z-10"
+        className="flex border-b border-[var(--color-border)] bg-white sticky top-0 z-10"
         role="row"
       >
         {/* Time gutter header */}
@@ -94,12 +94,12 @@ export function TimeGrid({ view, days, events, onSlotClick, onEventClick }: Prop
               key={dateStr}
               role="columnheader"
               aria-label={hdr.full}
-              className={`flex-1 min-w-0 text-center py-2 border-l border-gray-100 ${today ? "bg-blue-50" : ""}`}
+              className={`flex-1 min-w-0 text-center py-2 border-l border-[var(--color-border)] ${today ? "bg-[var(--color-primary-light)]" : ""}`}
             >
-              <span className="text-xs text-gray-400 block">{hdr.abbr}</span>
+              <span className="text-xs text-[var(--color-text-subtle)] block">{hdr.abbr}</span>
               <span
                 className={`text-sm font-semibold inline-flex items-center justify-center w-7 h-7 rounded-full mt-0.5 ${
-                  today ? "bg-blue-600 text-white" : "text-gray-800"
+                  today ? "bg-[var(--color-primary)] text-white" : "text-[var(--color-text-heading)]"
                 }`}
               >
                 {hdr.num}
@@ -122,7 +122,7 @@ export function TimeGrid({ view, days, events, onSlotClick, onEventClick }: Prop
               <div
                 key={t}
                 style={{ height: SLOT_HEIGHT, top: i * SLOT_HEIGHT }}
-                className="absolute right-2 text-[10px] text-gray-400 leading-none -translate-y-1/2 select-none"
+                className="absolute right-2 text-[10px] text-[var(--color-text-subtle)] leading-none -translate-y-1/2 select-none"
               >
                 {i > 0 ? t : ""}
               </div>
@@ -139,7 +139,7 @@ export function TimeGrid({ view, days, events, onSlotClick, onEventClick }: Prop
                 key={dateStr}
                 role="gridcell"
                 aria-label={formatDayHeader(dateStr).full}
-                className={`flex-1 min-w-0 relative border-l border-gray-100 ${today ? "bg-blue-50/30" : ""}`}
+                className={`flex-1 min-w-0 relative border-l border-[var(--color-border)] ${today ? "bg-[var(--color-primary-light)]/30" : ""}`}
                 style={{ height: GRID_HEIGHT }}
               >
                 {/* Background grid lines + clickable slots */}
@@ -150,8 +150,8 @@ export function TimeGrid({ view, days, events, onSlotClick, onEventClick }: Prop
                     onClick={() => onSlotClick(dateStr, time)}
                     aria-label={`Criar evento às ${time} em ${formatDayHeader(dateStr).full}`}
                     style={{ height: SLOT_HEIGHT, top: i * SLOT_HEIGHT }}
-                    className={`absolute inset-x-0 w-full hover:bg-blue-50/60 transition-colors border-t ${
-                      i % 2 === 0 ? "border-gray-100" : "border-gray-50"
+                    className={`absolute inset-x-0 w-full hover:bg-[var(--color-primary-light)]/60 transition-colors border-t ${
+                      i % 2 === 0 ? "border-[var(--color-border)]" : "border-[var(--color-border)]/50"
                     }`}
                   />
                 ))}

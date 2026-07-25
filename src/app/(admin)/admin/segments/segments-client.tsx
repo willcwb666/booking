@@ -94,7 +94,7 @@ export function SegmentsClient({ initialSegments }: { initialSegments: SegmentIt
         </div>
         <button
           onClick={handleOpenCreate}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#635bff] hover:bg-[#544dc9] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
         >
           + Criar Novo Segmento
         </button>

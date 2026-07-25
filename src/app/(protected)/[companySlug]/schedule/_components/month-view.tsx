@@ -50,8 +50,8 @@ export function MonthView({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="text-center py-2 border-b border-gray-100">
-        <span id={titleId} className="text-sm font-semibold text-gray-700">
+      <div className="text-center py-2 border-b border-[var(--color-border)]">
+        <span id={titleId} className="text-sm font-semibold text-[var(--color-text-heading)]">
           {MONTH_NAMES[month]} {year}
         </span>
       </div>
@@ -69,7 +69,7 @@ export function MonthView({
                 <th
                   key={abbr}
                   scope="col"
-                  className="text-center text-xs font-medium text-gray-400 py-2 border-b border-gray-100"
+                  className="text-center text-xs font-medium text-[var(--color-text-subtle)] py-2 border-b border-[var(--color-border)]"
                 >
                   {abbr}
                 </th>
@@ -94,19 +94,19 @@ export function MonthView({
                           role="gridcell"
                           aria-selected={isSelected}
                           aria-label={`${date.toLocaleDateString("pt-BR", { day: "numeric", month: "long" })}, ${dayEvents.length} evento(s)`}
-                          className={`border border-gray-100 p-1 cursor-pointer hover:bg-gray-50 align-top ${
-                            !isCurrentMonth ? "bg-gray-50/50" : ""
-                          } ${isSelected ? "ring-2 ring-inset ring-blue-400" : ""}`}
+                          className={`border border-[var(--color-border)] p-1 cursor-pointer hover:bg-[var(--color-bg-subtle)] align-top ${
+                            !isCurrentMonth ? "bg-[var(--color-bg-subtle)]/50" : ""
+                          } ${isSelected ? "ring-2 ring-inset ring-[var(--color-primary)]" : ""}`}
                           onClick={() => onSelectDate(dateStr)}
                         >
                           {/* Day number */}
                           <div
                             className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs mb-1 ${
                               isToday
-                                ? "bg-blue-600 text-white font-semibold"
+                                ? "bg-[var(--color-primary)] text-white font-semibold"
                                 : isCurrentMonth
-                                ? "text-gray-700"
-                                : "text-gray-300"
+                                ? "text-[var(--color-text-heading)]"
+                                : "text-[var(--color-text-subtle)] opacity-50"
                             }`}
                           >
                             {date.getDate()}
@@ -132,7 +132,7 @@ export function MonthView({
                               );
                             })}
                             {dayEvents.length > 3 && (
-                              <p className="text-[10px] text-gray-400 pl-1">
+                              <p className="text-[10px] text-[var(--color-text-subtle)] pl-1">
                                 +{dayEvents.length - 3} mais
                               </p>
                             )}

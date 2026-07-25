@@ -175,11 +175,11 @@ export function AdminUsersClient({
             name="q"
             defaultValue={search}
             placeholder="Buscar por nome ou e-mail..."
-            className="border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+            className="border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] w-full"
           />
           <button
             type="submit"
-            className="px-5 py-2.5 bg-[#635bff] hover:bg-[#544dc9] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer shrink-0"
+            className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer shrink-0"
           >
             Buscar
           </button>

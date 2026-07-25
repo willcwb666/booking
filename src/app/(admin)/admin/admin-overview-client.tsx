@@ -44,7 +44,7 @@ export function AdminOverviewClient({ stats }: Props) {
       label: "ARR (Receita Anual)",
       value: fmtCurrency(stats.arr),
       sub: "Projeção anual das assinaturas",
-      icon: <TrendingUp className="w-5 h-5 text-indigo-600" />,
+      icon: <TrendingUp className="w-5 h-5 text-[var(--color-primary)]" />,
     },
     {
       key: "active" as MetricKey,
@@ -117,7 +117,7 @@ export function AdminOverviewClient({ stats }: Props) {
     <div className="w-full max-w-7xl px-6 sm:px-8 py-8 text-left space-y-8">
       {/* Header */}
       <div>
-        <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs">
+        <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs">
           <TrendingUp className="w-4 h-4" />
           <span>Super Admin Analytics</span>
         </div>
@@ -140,7 +140,7 @@ export function AdminOverviewClient({ stats }: Props) {
               onClick={() => setActiveMetric(card.key)}
               className={`p-5 rounded-3xl border text-left transition-all cursor-pointer shadow-2xs block ${
                 isActive
-                  ? "ring-2 ring-[#635bff] bg-white border-[#635bff] shadow-md scale-[1.01]"
+                  ? "ring-2 ring-[var(--color-primary)] bg-white border-[var(--color-primary)] shadow-md scale-[1.01]"
                   : "bg-white border-slate-200/80 hover:border-slate-300 hover:shadow-xs"
               }`}
             >
@@ -162,7 +162,7 @@ export function AdminOverviewClient({ stats }: Props) {
         {/* Barra de Filtros */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-indigo-100">
               <TrendingUp className="w-5 h-5" />
             </div>
             <div>
@@ -188,7 +188,7 @@ export function AdminOverviewClient({ stats }: Props) {
                 onClick={() => setTimeFilter(f.id as TimeFilter)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   timeFilter === f.id
-                    ? "bg-white text-indigo-600 shadow-2xs font-extrabold"
+                    ? "bg-white text-[var(--color-primary)] shadow-2xs font-extrabold"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
@@ -207,8 +207,8 @@ export function AdminOverviewClient({ stats }: Props) {
           >
             <defs>
               <linearGradient id="stripeGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#635bff" stopOpacity="0.3" />
-                <stop offset="100%" stopColor="#635bff" stopOpacity="0.0" />
+                <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.0" />
               </linearGradient>
             </defs>
 
@@ -233,7 +233,7 @@ export function AdminOverviewClient({ stats }: Props) {
             <path d={areaD} fill="url(#stripeGradient)" />
 
             {/* Linha Curva Principal (Stripe Line) */}
-            <path d={lineD} fill="none" stroke="#635bff" strokeWidth="3" strokeLinecap="round" />
+            <path d={lineD} fill="none" stroke="var(--color-primary)" strokeWidth="3" strokeLinecap="round" />
 
             {/* Pontos de Interação no Gráfico */}
             {points.map((pt, i) => {
@@ -244,7 +244,7 @@ export function AdminOverviewClient({ stats }: Props) {
                     cx={pt.x}
                     cy={pt.y}
                     r={isHovered ? 7 : 4}
-                    className="fill-white stroke-[#635bff] stroke-2 transition-all duration-200"
+                    className="fill-white stroke-[var(--color-primary)] stroke-2 transition-all duration-200"
                   />
                   {/* Rótulo do Eixo X */}
                   <text
@@ -294,11 +294,11 @@ export function AdminOverviewClient({ stats }: Props) {
           href="/admin/relatorios"
           className="bg-white rounded-3xl border border-slate-200/80 p-6 hover:shadow-md hover:border-slate-300 transition-all group block shadow-2xs"
         >
-          <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs mb-2">
+          <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs mb-2">
             <FileText className="w-4 h-4" />
             <span>Relatórios</span>
           </div>
-          <h3 className="text-base font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors">
+          <h3 className="text-base font-extrabold text-slate-900 group-hover:text-[var(--color-primary)] transition-colors">
             Relatórios Globais →
           </h3>
           <p className="text-xs text-slate-500 mt-1">
@@ -314,7 +314,7 @@ export function AdminOverviewClient({ stats }: Props) {
             <DollarSign className="w-4 h-4" />
             <span>Financeiro</span>
           </div>
-          <h3 className="text-base font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors">
+          <h3 className="text-base font-extrabold text-slate-900 group-hover:text-[var(--color-primary)] transition-colors">
             Gestão Financeira →
           </h3>
           <p className="text-xs text-slate-500 mt-1">
@@ -326,11 +326,11 @@ export function AdminOverviewClient({ stats }: Props) {
           href="/admin/companies"
           className="bg-white rounded-3xl border border-slate-200/80 p-6 hover:shadow-md hover:border-slate-300 transition-all group block shadow-2xs"
         >
-          <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs mb-2">
+          <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs mb-2">
             <Building2 className="w-4 h-4" />
             <span>Empresas</span>
           </div>
-          <h3 className="text-base font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors">
+          <h3 className="text-base font-extrabold text-slate-900 group-hover:text-[var(--color-primary)] transition-colors">
             Empresas Cadastradas →
           </h3>
           <p className="text-xs text-slate-500 mt-1">
@@ -346,7 +346,7 @@ export function AdminOverviewClient({ stats }: Props) {
             <CreditCard className="w-4 h-4" />
             <span>Planos SaaS</span>
           </div>
-          <h3 className="text-base font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors">
+          <h3 className="text-base font-extrabold text-slate-900 group-hover:text-[var(--color-primary)] transition-colors">
             Planos & Preços →
           </h3>
           <p className="text-xs text-slate-500 mt-1">

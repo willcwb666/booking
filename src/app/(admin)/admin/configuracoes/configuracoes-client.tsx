@@ -274,7 +274,7 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                 type="button"
                 onClick={handleSaveSettings}
                 disabled={isPending}
-                className="px-6 py-2.5 bg-[#635bff] hover:bg-[#544dc9] text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
+                className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>{isPending ? "Salvando..." : "Salvar Configurações Globais"}</span>
@@ -496,7 +496,7 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                 type="button"
                 onClick={handleBroadcastSubmit}
                 disabled={isPending}
-                className="px-6 py-3 bg-[#635bff] hover:bg-[#544dc9] text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
+                className="px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
               >
                 <span>🚀 Disparar Novidades para Todos os Admins de Empresas</span>
               </button>

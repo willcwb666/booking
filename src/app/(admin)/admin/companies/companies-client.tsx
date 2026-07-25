@@ -165,7 +165,7 @@ export function AdminCompaniesClient({
 
   function renderSortIndicator(field: SortField) {
     if (sortField !== field) return <span className="text-slate-300 ml-1 text-[10px]">↕</span>;
-    return <span className="text-indigo-600 font-black ml-1 text-xs">{sortDir === "asc" ? "▲" : "▼"}</span>;
+    return <span className="text-[var(--color-primary)] font-black ml-1 text-xs">{sortDir === "asc" ? "▲" : "▼"}</span>;
   }
 
   return (
@@ -177,7 +177,7 @@ export function AdminCompaniesClient({
 
       {/* Header */}
       <div>
-        <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs">
+        <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs">
           <Building2 className="w-4 h-4" />
           <span>Gestão de Empresas</span>
         </div>
@@ -198,11 +198,11 @@ export function AdminCompaniesClient({
               name="q"
               defaultValue={search}
               placeholder="Buscar por nome ou slug..."
-              className="border border-slate-200 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full font-medium"
+              className="border border-slate-200 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] w-full font-medium"
             />
             <button
               type="submit"
-              className="px-5 py-2.5 bg-[#635bff] hover:bg-[#544dc9] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer shrink-0"
+              className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer shrink-0"
             >
               Buscar
             </button>
@@ -220,7 +220,7 @@ export function AdminCompaniesClient({
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500"
+                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-[var(--color-primary)]"
               >
                 <option value="ALL">Todos os Tipos</option>
                 {Object.entries(BUSINESS_TYPE_LABELS).map(([k, label]) => (
@@ -234,7 +234,7 @@ export function AdminCompaniesClient({
               <select
                 value={planFilter}
                 onChange={(e) => setPlanFilter(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500"
+                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-[var(--color-primary)]"
               >
                 <option value="ALL">Todos os Planos</option>
                 <option value="starter">Starter</option>
@@ -248,7 +248,7 @@ export function AdminCompaniesClient({
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500"
+                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-[var(--color-primary)]"
               >
                 <option value="ALL">Todos os Status</option>
                 <option value="ACTIVE">Ativa</option>
@@ -357,7 +357,7 @@ export function AdminCompaniesClient({
                           <ActionTooltip label="Acessar Painel da Empresa">
                             <Link
                               href={`/${item.slug}/dashboard`}
-                              className="p-2 text-xs font-bold text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-all"
+                              className="p-2 text-xs font-bold text-[var(--color-primary)] border border-[var(--color-primary)]/30 rounded-lg hover:bg-[var(--color-primary-light)] transition-all"
                             >
                               <ExternalLink className="w-3.5 h-3.5" />
                             </Link>

@@ -138,7 +138,7 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
         </div>
         <button
           onClick={handleOpenCreate}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#635bff] hover:bg-[#544dc9] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
         >
           + Novo Preset de Serviço
         </button>
@@ -150,7 +150,7 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
           onClick={() => setSelectedType("ALL")}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             selectedType === "ALL"
-              ? "bg-[#635bff] text-white shadow-xs"
+              ? "bg-[var(--color-primary)] text-white shadow-xs"
               : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
           }`}
         >

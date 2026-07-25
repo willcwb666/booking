@@ -162,7 +162,7 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
           type="button"
           onClick={handleSyncAllWithStripe}
           disabled={isPending}
-          className="px-5 py-2.5 bg-[#635bff] hover:bg-[#544dc9] text-white rounded-xl font-bold text-xs shadow-xs transition-all shrink-0 disabled:opacity-50 inline-flex items-center gap-2 cursor-pointer"
+          className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-xl font-bold text-xs shadow-xs transition-all shrink-0 disabled:opacity-50 inline-flex items-center gap-2 cursor-pointer"
         >
           <span>⚡ Sincronizar Todos os Planos com o Stripe</span>
         </button>
