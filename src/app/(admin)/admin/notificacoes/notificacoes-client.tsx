@@ -9,6 +9,7 @@ import {
   type NotificationItem,
 } from "@/server/actions/notifications-system";
 import { toast } from "@/lib/toast-service";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Bell, RotateCcw, CheckCircle2, MessageSquare, Building2, Clock } from "@/components/ui/icons";
 
 type Props = {
@@ -72,7 +73,7 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
   const pendingCount = receivedList.filter((n) => !n.isRead || !n.isResolved).length;
 
   return (
-    <div className="w-full max-w-7xl text-left space-y-6">
+    <div className="page-content space-y-6">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -239,19 +240,20 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
                 )}
 
                 {activeTab === "received" && (
-                  <button
-                    type="button"
-                    onClick={() => handleToggleReadStatus(notif)}
-                    disabled={isPending}
-                    className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs ${
-                      notif.isRead
-                        ? "bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)]"
-                        : "bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white"
-                    }`}
-                  >
-                    <CheckCircle2 className={`w-4 h-4 ${notif.isRead ? "text-[var(--color-text-muted)]" : "text-white"}`} />
-                    <span>{notif.isRead ? "Marcar como não lida" : "Marcar como Lida"}</span>
-                  </button>
+                  <ActionTooltip label={notif.isRead ? "Marcar como não lida" : "Marcar como Lida"}>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleReadStatus(notif)}
+                      disabled={isPending}
+                      className={`p-2 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs ${
+                        notif.isRead
+                          ? "bg-slate-100 hover:bg-slate-200 text-slate-500"
+                          : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                      }`}
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                    </button>
+                  </ActionTooltip>
                 )}
               </div>
             </div>

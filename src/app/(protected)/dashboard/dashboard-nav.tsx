@@ -40,13 +40,9 @@ function NavLink({
     <Link
       href={href}
       aria-current={isActive ? "page" : undefined}
-      className={`flex items-center gap-3 px-3 py-2 rounded-md text-[14px] font-semibold transition-colors ${
-        isActive
-          ? "bg-[#e3e8ee] text-[#0a2540]"
-          : "text-[#425466] hover:bg-[#e3e8ee]/50 hover:text-[#0a2540]"
-      }`}
+      className={isActive ? "nav-link nav-link-active" : "nav-link"}
     >
-      <div className={isActive ? "text-[#0a2540]" : "text-[#697386]"}>{icon}</div>
+      <div className={isActive ? "text-primary" : "text-text-muted"}>{icon}</div>
       {label}
     </Link>
   );
@@ -65,7 +61,7 @@ export function DashboardNav({ companies }: { companies: CompanyLink[] }) {
       </nav>
 
       <div className="mt-8">
-        <p className="px-3 mb-1 text-[11px] font-bold uppercase tracking-wider text-[#697386]">
+        <p className="px-3 mb-1 text-[11px] font-bold uppercase tracking-wider text-text-muted">
           Minhas empresas
         </p>
         <nav className="space-y-0.5" aria-label="Minhas empresas">
@@ -78,7 +74,6 @@ export function DashboardNav({ companies }: { companies: CompanyLink[] }) {
               isActive={active(`/${c.slug}`)}
             />
           ))}
-          {/* /onboarding redireciona quem já tem empresa — só mostra para quem não tem */}
           {companies.length === 0 && (
             <NavLink
               href="/onboarding"

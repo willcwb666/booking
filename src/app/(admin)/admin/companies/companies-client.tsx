@@ -6,6 +6,7 @@ import { useTransition, useState, useMemo } from "react";
 import { toggleCompanyActiveAction } from "@/server/actions/admin";
 import type { AdminCompanyItem } from "@/server/queries/admin";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { ResetPresetModal } from "../empresas/_components/reset-preset-modal";
 import { Building2, Search, Filter, RotateCcw, ExternalLink } from "@/components/ui/icons";
 
@@ -69,16 +70,20 @@ function ToggleActiveButton({
   );
 }
 
+import { Pagination } from "@/components/ui/pagination";
+
 export function AdminCompaniesClient({
   items,
   total,
   page,
+  pageSize = 10,
   pageCount,
   search,
 }: {
   items: SerializedItem[];
   total: number;
   page: number;
+  pageSize?: number;
   pageCount: number;
   search: string;
 }) {
@@ -147,12 +152,14 @@ export function AdminCompaniesClient({
     return result;
   }, [items, typeFilter, planFilter, statusFilter, sortField, sortDir]);
 
-  function buildUrl(updates: { q?: string; page?: number }) {
+  function buildUrl(updates: { q?: string; page?: number; pageSize?: number }) {
     const params = new URLSearchParams();
     const q = updates.q ?? search;
     const p = updates.page ?? page;
+    const ps = updates.pageSize ?? pageSize;
     if (q) params.set("q", q);
     if (p > 1) params.set("page", String(p));
+    if (ps && ps !== 10) params.set("pageSize", String(ps));
     const qs = params.toString();
     return `${pathname}${qs ? `?${qs}` : ""}`;
   }
@@ -169,7 +176,7 @@ export function AdminCompaniesClient({
   }
 
   return (
-    <div className="w-full max-w-7xl px-6 sm:px-8 py-8 text-left space-y-6">
+    <div className="page-content space-y-6">
       <ResetPresetModal
         company={selectedForReset}
         onClose={() => setSelectedForReset(null)}
@@ -329,15 +336,9 @@ export function AdminCompaniesClient({
                     <td className="px-5 py-3.5 text-center text-[var(--color-text)] font-bold">{item.memberCount}</td>
                     <td className="px-5 py-3.5 text-center text-[var(--color-text)] font-bold">{item.bookingCount}</td>
                     <td className="px-5 py-3.5">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold ${
-                          item.isActive
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {item.isActive ? "Ativa" : "Inativa"}
-                      </span>
+                      <StatusBadge variant={item.isActive ? "success" : "neutral"}>
+                        {item.isActive ? "Ativo" : "Inativo"}
+                      </StatusBadge>
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-end gap-2">
@@ -373,25 +374,17 @@ export function AdminCompaniesClient({
             </table>
           </div>
 
-          {pageCount > 1 && (
-            <div className="border-t border-[var(--color-border)] px-5 py-3 flex items-center justify-between text-xs">
-              <p className="text-[var(--color-text-muted)] font-medium">Página {page} de {pageCount}</p>
-              <div className="flex gap-2">
-                {page > 1 && (
-                  <Link href={buildUrl({ page: page - 1 })} className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-subtle)] transition-colors font-bold text-[var(--color-text)]">
-                    Anterior
-                  </Link>
-                )}
-                {page < pageCount && (
-                  <Link href={buildUrl({ page: page + 1 })} className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-subtle)] transition-colors font-bold text-[var(--color-text)]">
-                    Próxima
-                  </Link>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+            <Pagination
+              currentPage={page}
+              totalItems={total}
+              pageSize={pageSize}
+              pageSizeOptions={[10, 20, 30, 50, 100]}
+              onPageChange={(newPage) => router.push(buildUrl({ page: newPage }))}
+              onPageSizeChange={(newSize) => router.push(buildUrl({ page: 1, pageSize: newSize }))}
+              itemLabel="empresas"
+            />
+          </div>
+        )}
     </div>
   );
 }

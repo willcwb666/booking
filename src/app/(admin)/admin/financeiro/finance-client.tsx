@@ -5,6 +5,9 @@ import type { AdminFinanceCompanyItem, AdminStats } from "@/server/queries/admin
 import { syncAllCompanyPlansWithStripeAction } from "@/server/actions/admin-subscriptions";
 import { updateCompanySubscriptionAction, cancelDuplicateSubscriptionsAction } from "@/server/actions/admin-finance";
 import { toast } from "@/lib/toast-service";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { CreditCard, Settings } from "@/components/ui/icons";
 
 type PlanOption = {
   id: string;
@@ -20,12 +23,16 @@ type Props = {
 };
 
 import { SubscriptionsModal } from "./_components/subscriptions-modal";
+import { Pagination } from "@/components/ui/pagination";
 
 export function FinanceClient({ initialCompanies, stats, availablePlans }: Props) {
   const [companies, setCompanies] = useState<AdminFinanceCompanyItem[]>(initialCompanies);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isPending, startTransition] = useTransition();
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [editingCompany, setEditingCompany] = useState<AdminFinanceCompanyItem | null>(null);
   const [inspectingCompany, setInspectingCompany] = useState<AdminFinanceCompanyItem | null>(null);
@@ -82,6 +89,11 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
 
     return true;
   });
+
+  const paginatedCompanies = filteredCompanies.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   function handleOpenEdit(c: AdminFinanceCompanyItem) {
     setEditingCompany(c);
@@ -149,7 +161,7 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
   const fmtCurrency = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   return (
-    <div className="w-full max-w-7xl px-6 sm:px-8 py-8 text-left space-y-8">
+    <div className="page-content space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -238,12 +250,12 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
               <th className="py-3.5 px-5">Empresa & Dono</th>
               <th className="py-3.5 px-5">Plano Contratado</th>
               <th className="py-3.5 px-5">Valor Mensal</th>
-              <th className="py-3.5 px-5">Status Financeiro</th>
+              <th className="py-3.5 px-5">Status</th>
               <th className="py-3.5 px-5 text-right">Ação</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--color-border)]">
-            {filteredCompanies.map((c) => {
+            {paginatedCompanies.map((c) => {
               const isOverdue = c.subscriptionStatus === "past_due" || c.subscriptionStatus === "unpaid";
               const isCanceled = c.subscriptionStatus === "canceled";
 
@@ -278,34 +290,39 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
 
                   <td className="py-4 px-5">
                     {isOverdue ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">
-                        <span>🚫</span> Inadimplente
-                      </span>
+                      <StatusBadge variant="danger" tooltip="Assinatura Inadimplente / Fatura Pendente">
+                        Inadimplente
+                      </StatusBadge>
                     ) : isCanceled ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]">
-                        <span>⚪</span> Cancelada
-                      </span>
+                      <StatusBadge variant="neutral" tooltip="Assinatura Cancelada">
+                        Inativo
+                      </StatusBadge>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                        <span>✅</span> Ativa / Em Dia
-                      </span>
+                      <StatusBadge variant="success" tooltip="Assinatura Ativa / Pagamento Em Dia">
+                        Ativo
+                      </StatusBadge>
                     )}
                   </td>
 
                   <td className="py-4 px-5 text-right space-x-2">
-                    <button
-                      type="button"
-                      onClick={() => setInspectingCompany(c)}
-                      className="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 rounded-lg font-semibold text-xs transition-colors"
-                    >
-                      💳 Ver Stripe & Reembolsos
-                    </button>
-                    <button
-                      onClick={() => handleOpenEdit(c)}
-                      className="px-3 py-1.5 bg-[var(--color-navy)] hover:bg-[var(--color-navy-hover)] text-white rounded-lg font-bold text-xs transition-colors"
-                    >
-                      Gerenciar
-                    </button>
+                    <ActionTooltip label="Ver Assinatura Stripe & Reembolsos">
+                      <button
+                        type="button"
+                        onClick={() => setInspectingCompany(c)}
+                        className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
+                      >
+                        <CreditCard className="w-4 h-4" />
+                      </button>
+                    </ActionTooltip>
+                    <ActionTooltip label="Gerenciar Plano & Assinatura">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEdit(c)}
+                        className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
+                      >
+                        <Settings className="w-4 h-4" />
+                      </button>
+                    </ActionTooltip>
                   </td>
                 </tr>
               );
@@ -320,6 +337,18 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
             )}
           </tbody>
         </table>
+
+        {filteredCompanies.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredCompanies.length}
+            pageSize={pageSize}
+            pageSizeOptions={[10, 20, 30, 50, 100]}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            itemLabel="empresas assinantes"
+          />
+        )}
       </div>
 
       {/* Modal de Alteração de Assinatura */}

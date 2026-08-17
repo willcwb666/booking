@@ -25,43 +25,6 @@ export default async function ConfiguracoesPage({
   const canEdit = memberRole === "OWNER" || memberRole === "MANAGER" || session?.user?.role === "admin";
   const isOwner = memberRole === "OWNER" || session?.user?.role === "admin";
 
-  // Garante a existência de cada coluna individualmente sem quebrar o PostgreSQL
-  const cols = [
-    `"minCancellationNoticeHours" INT DEFAULT 24`,
-    `"cancellationFee" DECIMAL(10, 2) DEFAULT 0`,
-    `"lateToleranceMinutes" INT DEFAULT 15`,
-    `"notifyEmailEnabled" BOOLEAN DEFAULT true`,
-    `"notifyTextEnabled" BOOLEAN DEFAULT true`,
-    `"notifySmsEnabled" BOOLEAN DEFAULT false`,
-    `"notifyWhatsappEnabled" BOOLEAN DEFAULT true`,
-    `"heroTitle" TEXT`,
-    `"heroSubtitle" TEXT`,
-    `"brandColor" TEXT DEFAULT '#0f172a'`,
-    `"coverImageUrl" TEXT`,
-    `"socialInstagram" TEXT`,
-    `"socialWhatsapp" TEXT`,
-    `"socialFacebook" TEXT`,
-  ];
-
-  for (const col of cols) {
-    try {
-      await db.$executeRawUnsafe(`ALTER TABLE "company" ADD COLUMN IF NOT EXISTS ${col};`);
-    } catch {
-      // ignora erro individual de DDL
-    }
-  }
-
-  // Busca dados adicionais da empresa com fallback seguro contra erros de banco
-  let extraData: any = null;
-  try {
-    const compExtra = await db.$queryRawUnsafe<Array<any>>(
-      `SELECT "minCancellationNoticeHours", "cancellationFee", "lateToleranceMinutes", "notifyEmailEnabled", "notifyTextEnabled", "notifySmsEnabled", "notifyWhatsappEnabled", "heroTitle", "heroSubtitle", "brandColor", "coverImageUrl", "socialInstagram", "socialWhatsapp", "socialFacebook" FROM "company" WHERE id = '${company.id}' LIMIT 1`
-    );
-    extraData = compExtra[0] || null;
-  } catch (err) {
-    console.error("[ConfiguracoesPage] Fallback para colunas extras:", err);
-  }
-
   const [paymentMethods, fullCompany, availablePlans, availableServices] = await Promise.all([
     db.companyPaymentMethod.findMany({
       where: { companyId: company.id },
@@ -77,21 +40,18 @@ export default async function ConfiguracoesPage({
     }),
     db.company.findUnique({
       where: { id: company.id },
-      select: {
-        planId: true,
-        subscriptionStatus: true,
-        subscriptionInterval: true,
-        subscriptionPeriodEnd: true,
-        stripeCustomerId: true,
-      },
     }),
     db.plan.findMany({
       where: { isActive: true },
       orderBy: { order: "asc" },
       select: {
-        id: true, displayName: true, description: true,
-        priceMonthly: true, priceYearly: true,
-        stripePriceMonthlyId: true, stripePriceYearlyId: true,
+        id: true,
+        displayName: true,
+        description: true,
+        priceMonthly: true,
+        priceYearly: true,
+        stripePriceMonthlyId: true,
+        stripePriceYearlyId: true,
       },
     }),
     db.bookingConfig.findMany({
@@ -114,22 +74,23 @@ export default async function ConfiguracoesPage({
         currency: company.currency,
         locale: company.locale,
         logoUrl: company.logoUrl,
-        minCancellationNoticeHours: Number(extraData?.minCancellationNoticeHours ?? 24),
-        cancellationFee: Number(extraData?.cancellationFee ?? 0),
-        lateToleranceMinutes: Number(extraData?.lateToleranceMinutes ?? 15),
-        notifyEmailEnabled: extraData?.notifyEmailEnabled ?? true,
-        notifyTextEnabled: extraData?.notifyTextEnabled ?? true,
-        notifySmsEnabled: extraData?.notifySmsEnabled ?? false,
-        notifyWhatsappEnabled: extraData?.notifyWhatsappEnabled ?? true,
+        minCancellationNoticeHours: fullCompany?.minCancellationNoticeHours ?? 24,
+        cancellationFee: Number(fullCompany?.cancellationFee ?? 0),
+        lateToleranceMinutes: fullCompany?.lateToleranceMinutes ?? 15,
+        maxAllowedNoShows: fullCompany?.maxAllowedNoShows ?? 2,
+        notifyEmailEnabled: fullCompany?.notifyEmailEnabled ?? true,
+        notifyTextEnabled: fullCompany?.notifyTextEnabled ?? true,
+        notifySmsEnabled: fullCompany?.notifySmsEnabled ?? false,
+        notifyWhatsappEnabled: fullCompany?.notifyWhatsappEnabled ?? true,
       }}
       initialLanding={{
-        heroTitle: extraData?.heroTitle ?? "",
-        heroSubtitle: extraData?.heroSubtitle ?? "",
-        brandColor: extraData?.brandColor ?? "#0f172a",
-        coverImageUrl: extraData?.coverImageUrl ?? "",
-        socialInstagram: extraData?.socialInstagram ?? "",
-        socialWhatsapp: extraData?.socialWhatsapp ?? "",
-        socialFacebook: extraData?.socialFacebook ?? "",
+        heroTitle: fullCompany?.heroTitle ?? "",
+        heroSubtitle: fullCompany?.heroSubtitle ?? "",
+        brandColor: fullCompany?.brandColor ?? "#0f172a",
+        coverImageUrl: fullCompany?.coverImageUrl ?? "",
+        socialInstagram: fullCompany?.socialInstagram ?? "",
+        socialWhatsapp: fullCompany?.socialWhatsapp ?? "",
+        socialFacebook: fullCompany?.socialFacebook ?? "",
       }}
       bookingBaseUrl={`/book/${companySlug}`}
       paymentMethods={paymentMethods}

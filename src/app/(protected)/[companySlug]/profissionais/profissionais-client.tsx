@@ -1,13 +1,31 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import React, { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  createProfessionalAction,
-  updateProfessionalAction,
-  deleteProfessionalAction,
-} from "@/server/actions/professionals";
-import type { ActionResult } from "@/types";
+import { deleteProfessionalAction } from "@/server/actions/professionals";
+import { toast } from "@/lib/toast-service";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
+import { User, Plus, CheckCircle2, DollarSign, Edit2, Trash2 } from "@/components/ui/icons";
+import { Pagination } from "@/components/ui/pagination";
+
+function IconPencil() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+    </svg>
+  );
+}
+
+function IconTrash() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2" />
+    </svg>
+  );
+}
 
 type Professional = {
   id: string;
@@ -16,12 +34,10 @@ type Professional = {
   phone: string | null;
   bio: string | null;
   avatarUrl: string | null;
+  roleTitle?: string | null;
+  commissionRate?: number | null;
+  commissionPercentage?: number | null;
 };
-
-type DialogState =
-  | { type: "none" }
-  | { type: "create" }
-  | { type: "edit"; item: Professional };
 
 type Props = {
   companySlug: string;
@@ -29,333 +45,168 @@ type Props = {
   limit: number | null;
 };
 
-function FieldError({
-  errors,
-  field,
-}: {
-  errors: Record<string, string[]> | null;
-  field: string;
-}) {
-  const msgs = errors?.[field];
-  if (!msgs?.length) return null;
-  return (
-    <p className="text-xs text-[var(--color-danger)] mt-1" role="alert">
-      {msgs[0]}
-    </p>
-  );
-}
-
-function GlobalError({ errors }: { errors: Record<string, string[]> | null }) {
-  const msgs = errors?.["_"];
-  if (!msgs?.length) return null;
-  return (
-    <p
-      className="alert alert-danger"
-      role="alert"
-    >
-      {msgs[0]}
-    </p>
-  );
-}
-
-function Avatar({ name, avatarUrl }: { name: string; avatarUrl: string | null }) {
-  if (avatarUrl) {
-    return (
-      <img
-        src={avatarUrl}
-        alt={`Foto de ${name}`}
-        className="w-8 h-8 rounded-full object-cover"
-      />
-    );
-  }
-  return (
-    <div
-      className="w-8 h-8 rounded-full bg-[var(--color-bg-muted)] flex items-center justify-center shrink-0"
-      aria-hidden="true"
-    >
-      <span className="text-xs font-semibold text-[var(--color-text-muted)]">
-        {name[0].toUpperCase()}
-      </span>
-    </div>
-  );
-}
-
 export function ProfissionaisClient({ companySlug, professionals, limit }: Props) {
   const router = useRouter();
-  const [dialog, setDialog] = useState<DialogState>({ type: "none" });
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]> | null>(null);
   const [isPending, startTransition] = useTransition();
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const paginatedProfessionals = professionals.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   const atLimit = limit !== null && professionals.length >= limit;
 
-  function openDialog(state: DialogState) {
-    setDialog(state);
-    setFieldErrors(null);
-    requestAnimationFrame(() => dialogRef.current?.showModal());
-  }
-
-  function closeDialog() {
-    dialogRef.current?.close();
-    setDialog({ type: "none" });
-    setFieldErrors(null);
-  }
-
-  function handleAction(
-    action: (fd: FormData) => Promise<ActionResult>,
-    formData: FormData
-  ) {
-    startTransition(async () => {
-      const result = await action(formData);
-      if (result.success) {
-        closeDialog();
-        router.refresh();
-      } else {
-        setFieldErrors(result.errors);
-      }
-    });
-  }
-
-  function handleDelete(id: string) {
-    if (!confirm("Tem certeza? O profissional será desativado.")) return;
+  function handleDelete(id: string, name: string) {
+    if (!confirm(`Tem certeza que deseja desativar o profissional ${name}?`)) return;
     const fd = new FormData();
     fd.set("companySlug", companySlug);
     fd.set("id", id);
+
     startTransition(async () => {
       await deleteProfessionalAction(fd);
+      toast.success("Desativado", `Profissional ${name} desativado com sucesso.`);
       router.refresh();
     });
   }
 
   return (
-    <div className="page-container">
-     <div className="page-content">
+    <div className="w-full max-w-7xl px-6 sm:px-10 py-8 text-left space-y-8 pb-32">
       {/* Header */}
-      <div className="page-header !mb-6 flex items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="page-title">Profissionais</h1>
-          <p className="page-description">
+          <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs">
+            <User className="w-4 h-4" />
+            <span>Equipe & Profissionais</span>
+          </div>
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">
+            Profissionais Atendentes
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
             {limit !== null
-              ? `${professionals.length} de ${limit} profissionais ativos`
-              : `${professionals.length} profissional(is) ativo(s)`}
+              ? `${professionals.length} de ${limit} profissionais ativos no plano atual.`
+              : `${professionals.length} profissional(is) ativo(s) cadastrado(s).`}
           </p>
         </div>
-        <button
-          onClick={() => openDialog({ type: "create" })}
-          disabled={atLimit}
-          className="btn btn-primary shrink-0"
-          aria-disabled={atLimit}
-          title={atLimit ? `Limite de ${limit} profissionais atingido` : undefined}
+
+        <Link
+          href={`/${companySlug}/profissionais/novo`}
+          className={`px-6 py-3 bg-[#635bff] hover:bg-[#544dc9] text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer inline-flex items-center gap-2 shrink-0 uppercase ${
+            atLimit ? "opacity-50 pointer-events-none" : ""
+          }`}
         >
-          + Novo Profissional
-        </button>
+          <Plus className="w-4 h-4" />
+          <span>PROFISSIONAL</span>
+        </Link>
       </div>
 
       {atLimit && (
-        <div className="mb-4 bg-[var(--color-warning-light)] border border-[var(--color-warning-border)] rounded-xl px-4 py-3">
-          <p className="text-sm text-[var(--color-warning)]">
-            Limite de <strong>{limit}</strong> profissional(is) atingido no plano atual. Faça upgrade para adicionar mais.
-          </p>
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs font-bold text-amber-900">
+          ⚠️ Limite de {limit} profissional(is) atingido no seu plano. Faça upgrade para adicionar mais profissionais.
         </div>
       )}
 
-      {professionals.length === 0 ? (
-        <div className="card py-16 text-center">
-          <p className="text-sm text-[var(--color-text-subtle)]">Nenhum profissional cadastrado ainda.</p>
+      {/* Tabela de Profissionais */}
+      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-4 shadow-xs">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <h2 className="text-base font-extrabold text-slate-900">Lista de Profissionais Cadastrados</h2>
+          <span className="text-xs text-slate-500 font-medium">
+            Total: {professionals.length}
+          </span>
         </div>
-      ) : (
-        <div className="table-container">
-          <table className="table">
-            <caption className="sr-only">Lista de profissionais</caption>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left">
             <thead>
-              <tr>
-                <th scope="col">Profissional</th>
-                <th scope="col">Email</th>
-                <th scope="col">Telefone</th>
-                <th scope="col" className="!text-right sr-only">Ações</th>
+              <tr className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200/80">
+                <th className="px-4 py-3">Profissional / Cargo</th>
+                <th className="px-4 py-3">Contato (E-mail / WhatsApp)</th>
+                <th className="px-4 py-3 text-center">Comissão</th>
+                <th className="px-4 py-3 text-right">Ações</th>
               </tr>
             </thead>
-            <tbody>
-              {professionals.map((pro) => (
-                <tr key={pro.id}>
-                  <td>
-                    <div className="flex items-center gap-3">
-                      <Avatar name={pro.name} avatarUrl={pro.avatarUrl} />
-                      <div>
-                        <p className="font-medium text-[var(--color-text-heading)]">{pro.name}</p>
-                        {pro.bio && (
-                          <p className="text-xs text-[var(--color-text-subtle)] truncate max-w-48">{pro.bio}</p>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-[var(--color-text)]">
-                    {pro.email ?? <span className="text-[var(--color-text-subtle)]">—</span>}
-                  </td>
-                  <td className="px-4 py-3 text-[var(--color-text)]">
-                    {pro.phone ?? <span className="text-[var(--color-text-subtle)]">—</span>}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div
-                      className="flex items-center justify-end gap-2"
-                      role="group"
-                      aria-label={`Ações para ${pro.name}`}
-                    >
-                      <button
-                        onClick={() => openDialog({ type: "edit", item: pro })}
-                        className="px-3 py-1 text-xs text-[var(--color-text)] hover:text-[var(--color-text-heading)] transition-colors"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleDelete(pro.id)}
-                        className="px-3 py-1 text-xs text-[var(--color-danger)] hover:opacity-80 transition-colors"
-                      >
-                        Desativar
-                      </button>
-                    </div>
+            <tbody className="divide-y divide-slate-100 font-medium">
+              {professionals.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="text-center py-10 text-slate-400">
+                    Nenhum profissional cadastrado. Clique no botão acima para adicionar!
                   </td>
                 </tr>
-              ))}
+              ) : (
+                paginatedProfessionals.map((pro) => (
+                  <tr key={pro.id} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-700 font-extrabold flex items-center justify-center text-xs shrink-0">
+                          {pro.avatarUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={pro.avatarUrl} alt={pro.name} className="w-full h-full object-cover rounded-2xl" />
+                          ) : (
+                            pro.name[0].toUpperCase()
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-extrabold text-slate-900 text-sm">{pro.name}</p>
+                          <span className="text-[11px] font-semibold text-indigo-600 block">
+                            {pro.roleTitle || "Profissional Atendente"}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-3.5 space-y-0.5">
+                      <p className="text-slate-700 font-medium">{pro.email || "Sem e-mail"}</p>
+                      <p className="text-slate-400 font-mono text-[11px]">{pro.phone || "Sem telefone"}</p>
+                    </td>
+
+                    <td className="px-4 py-3.5 text-center">
+                      <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full font-black text-[11px] inline-flex items-center gap-1">
+                        <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                        {pro.commissionRate !== undefined ? `${pro.commissionRate}%` : "Padrão"}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-3.5 text-right space-x-2">
+                      <ActionTooltip label="Editar Profissional">
+                        <Link
+                          href={`/${companySlug}/profissionais/${pro.id}/editar`}
+                          className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-all inline-flex items-center justify-center shadow-2xs"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </Link>
+                      </ActionTooltip>
+
+                      <ActionTooltip label="Remover Profissional">
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(pro.id, pro.name)}
+                          disabled={isPending}
+                          className="p-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-xl transition-all inline-flex items-center justify-center cursor-pointer shadow-2xs"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </ActionTooltip>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
-      )}
 
-      {/* Dialog */}
-      <dialog
-        ref={dialogRef}
-        className="rounded-xl shadow-xl border border-[var(--color-border)] p-0 w-full max-w-md backdrop:bg-black/40"
-        onClose={closeDialog}
-        aria-labelledby="dialog-title"
-      >
-        {dialog.type !== "none" && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const fd = new FormData(e.currentTarget);
-              fd.set("companySlug", companySlug);
-              if (dialog.type === "edit") {
-                fd.set("id", dialog.item.id);
-                handleAction(updateProfessionalAction, fd);
-              } else {
-                handleAction(createProfessionalAction, fd);
-              }
-            }}
-          >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">
-              <h2
-                id="dialog-title"
-                className="text-base font-semibold text-[var(--color-text-heading)]"
-              >
-                {dialog.type === "edit" ? "Editar Profissional" : "Novo Profissional"}
-              </h2>
-              <button
-                type="button"
-                onClick={closeDialog}
-                className="text-[var(--color-text-subtle)] hover:text-[var(--color-text)] transition-colors"
-                aria-label="Fechar"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="px-5 py-5 space-y-4">
-              <GlobalError errors={fieldErrors} />
-
-              <div>
-                <label
-                  htmlFor="name"
-                  className="input-label"
-                >
-                  Nome <span aria-hidden="true">*</span>
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  autoFocus
-                  defaultValue={dialog.type === "edit" ? dialog.item.name : ""}
-                  className="input"
-                  aria-describedby={fieldErrors?.name ? "name-error" : undefined}
-                />
-                <FieldError errors={fieldErrors} field="name" />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="email"
-                  className="input-label"
-                >
-                  Email
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  defaultValue={dialog.type === "edit" ? (dialog.item.email ?? "") : ""}
-                  className="input"
-                  aria-describedby={fieldErrors?.email ? "email-error" : undefined}
-                />
-                <FieldError errors={fieldErrors} field="email" />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="phone"
-                  className="input-label"
-                >
-                  Telefone
-                </label>
-                <input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  defaultValue={dialog.type === "edit" ? (dialog.item.phone ?? "") : ""}
-                  className="input"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="bio"
-                  className="input-label"
-                >
-                  Bio
-                </label>
-                <textarea
-                  id="bio"
-                  name="bio"
-                  rows={3}
-                  defaultValue={dialog.type === "edit" ? (dialog.item.bio ?? "") : ""}
-                  className="textarea resize-none"
-                  aria-describedby={fieldErrors?.bio ? "bio-error" : undefined}
-                />
-                <FieldError errors={fieldErrors} field="bio" />
-              </div>
-            </div>
-
-            <div className="px-5 py-4 border-t border-[var(--color-border)] flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={closeDialog}
-                className="btn btn-ghost"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={isPending}
-                className="btn btn-primary"
-              >
-                {isPending ? "Salvando..." : "Salvar"}
-              </button>
-            </div>
-          </form>
+        {professionals.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalItems={professionals.length}
+            pageSize={pageSize}
+            pageSizeOptions={[10, 20, 30, 50, 100]}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            itemLabel="profissionais"
+          />
         )}
-      </dialog>
-     </div>
+      </div>
     </div>
   );
 }

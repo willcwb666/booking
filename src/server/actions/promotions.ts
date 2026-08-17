@@ -200,15 +200,48 @@ export async function sendPromotionEmailAction(formData: FormData): Promise<Send
   if (promotions.length === 0)
     return { success: false, errors: { _: ["Nenhuma promoção vigente para incluir no e-mail"] } };
 
-  const recipients = await db.user.findMany({
+  // 1. Busca clientes que já agendaram estritamente nesta empresa (Isolamento Multi-Tenant)
+  const companyBookings = await db.bookingCustomerDetail.findMany({
     where: {
-      banned: { not: true },
-      notificationPrefs: { enableMarketing: true },
+      booking: { companyId: company.id },
+      sendReminders: true,
     },
-    select: { name: true, email: true },
+    select: { email: true, firstName: true, lastName: true },
   });
-  if (recipients.length === 0)
-    return { success: false, errors: { _: ["Nenhum cliente aceitou receber e-mails de ofertas ainda"] } };
+
+  const clientMap = new Map<string, string>();
+  for (const b of companyBookings) {
+    const email = b.email.toLowerCase().trim();
+    if (!clientMap.has(email)) {
+      clientMap.set(email, `${b.firstName} ${b.lastName}`.trim());
+    }
+  }
+
+  if (clientMap.size === 0) {
+    return { success: false, errors: { _: ["Nenhum cliente encontrado na base desta empresa"] } };
+  }
+
+  // 2. Exclui usuários banidos ou que desativaram e-mails de marketing
+  const optOutUsers = await db.user.findMany({
+    where: {
+      email: { in: Array.from(clientMap.keys()) },
+      OR: [
+        { banned: true },
+        { notificationPrefs: { enableMarketing: false } },
+      ],
+    },
+    select: { email: true },
+  });
+
+  const excludedEmails = new Set(optOutUsers.map((u) => u.email.toLowerCase()));
+
+  const recipients = Array.from(clientMap.entries())
+    .filter(([email]) => !excludedEmails.has(email))
+    .map(([email, name]) => ({ email, name }));
+
+  if (recipients.length === 0) {
+    return { success: false, errors: { _: ["Nenhum cliente com aceite de ofertas encontrado"] } };
+  }
 
   const items = promotions.map((p) => ({
     serviceName: `${p.serviceType.service.name} — ${p.serviceType.name}`,

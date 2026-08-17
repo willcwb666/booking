@@ -58,6 +58,17 @@ export default async function BookingDetailPage({
     booking.paymentStatus === "PENDING" && booking.status !== "CANCELLED";
   const reviewUrl = `/book/${companySlug}/review/${bookingId}`;
 
+  const availableServices = Array.from(
+    new Set([
+      booking.bookingConfig.name,
+      ...(booking.estimate?.serviceTypes?.map((st) => st.serviceType.name) ?? []),
+      ...(booking.estimate?.extraServices?.map((ex) => ex.extraService.name) ?? []),
+    ])
+  ).filter(Boolean) as string[];
+
+  const todayStr = new Date().toISOString().split("T")[0];
+  const isFuture = booking.scheduledDate > todayStr;
+
   return (
     <div className="flex-1 overflow-y-auto p-6">
       {/* Back + header */}
@@ -90,6 +101,8 @@ export default async function BookingDetailPage({
               currentStatus={booking.status}
               originalTotal={Number(booking.estimate?.total ?? 0)}
               currency={company.currency}
+              availableServices={availableServices}
+              isFuture={isFuture}
             />
             {canReschedule && (
               <RescheduleDialog

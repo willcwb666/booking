@@ -39,21 +39,21 @@ export default async function SelecionarEmpresaPage() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 py-12">
-      <div className="mb-8 text-center">
-        <p className="text-sm text-gray-500 mb-1">Olá, {session.user.name}</p>
-        <h1 className="text-2xl font-bold text-gray-900">Selecione o ambiente</h1>
-        <p className="text-sm text-gray-500 mt-1">Escolha a empresa que deseja gerenciar ou cadastre uma nova.</p>
+    <div className="min-h-screen bg-[var(--color-bg)] flex flex-col items-center justify-center px-4 py-12">
+      <div className="mb-8 text-center space-y-1">
+        <p className="text-xs font-bold text-[var(--color-primary)] uppercase tracking-wider">Olá, {session.user.name}</p>
+        <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-text-heading)] tracking-tight">Selecione o ambiente</h1>
+        <p className="text-xs sm:text-sm text-[var(--color-text-muted)]">Escolha a empresa que deseja gerenciar ou acesse a administração.</p>
       </div>
 
       <div className="w-full max-w-md space-y-3">
         {isSuperAdmin && (
           <Link
             href="/admin"
-            className="flex items-center gap-4 bg-gray-900 rounded-2xl border border-gray-900 p-5 hover:bg-gray-800 hover:shadow-md transition-all group"
+            className="flex items-center gap-4 bg-white rounded-2xl border-2 border-[var(--color-primary)]/40 p-5 hover:border-[var(--color-primary)] hover:shadow-md transition-all group shadow-xs"
           >
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-white/10" aria-hidden="true">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-[var(--color-primary-light)] text-[var(--color-primary)]" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="7" height="9" rx="1" />
                 <rect x="14" y="3" width="7" height="5" rx="1" />
                 <rect x="14" y="12" width="7" height="9" rx="1" />
@@ -61,26 +61,31 @@ export default async function SelecionarEmpresaPage() {
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white truncate">Dashboard</p>
-              <p className="text-xs text-gray-400">Painel de administração da plataforma</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-extrabold text-[var(--color-text-heading)] truncate">Plataforma Super Admin</p>
+                <span className="text-[10px] bg-[var(--color-primary-light)] text-[var(--color-primary)] font-black px-2 py-0.5 rounded-full uppercase">Global</span>
+              </div>
+              <p className="text-xs text-[var(--color-text-muted)]">Painel de controle executivo da plataforma SaaS</p>
             </div>
-            <span className="text-gray-500 group-hover:text-white transition-colors" aria-hidden="true">→</span>
+            <span className="text-[var(--color-text-subtle)] group-hover:text-[var(--color-primary)] transition-colors font-bold" aria-hidden="true">→</span>
           </Link>
         )}
+
         {companies.length === 0 && (
-          <p className="text-sm text-gray-500 text-center py-4 bg-white rounded-2xl border border-gray-200">
+          <p className="text-xs text-[var(--color-text-muted)] text-center py-6 bg-white rounded-2xl border border-[var(--color-border)] shadow-2xs">
             Nenhuma empresa encontrada no seu usuário.
           </p>
         )}
+
         {companies.map((c) => (
           <Link
             key={c.id}
             href={`/${c.slug}/dashboard`}
-            className="flex items-center gap-4 bg-white rounded-2xl border border-gray-200 p-5 hover:border-blue-400 hover:shadow-md transition-all group"
+            className="flex items-center gap-4 bg-white rounded-2xl border border-[var(--color-border)] p-4 sm:p-5 hover:border-[var(--color-primary)] hover:shadow-md transition-all group shadow-xs"
           >
             <div
-              className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 overflow-hidden border border-gray-200 ${
-                c.logoUrl ? "bg-white" : "bg-blue-600"
+              className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 overflow-hidden border border-[var(--color-border)] shadow-2xs ${
+                c.logoUrl ? "bg-white" : "bg-[var(--color-primary)]"
               }`}
               aria-hidden="true"
             >
@@ -88,30 +93,30 @@ export default async function SelecionarEmpresaPage() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={c.logoUrl} alt={c.name} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-white font-bold text-lg">{c.name[0].toUpperCase()}</span>
+                <span className="text-white font-black text-lg">{c.name[0].toUpperCase()}</span>
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">{c.name}</p>
-              <p className="text-xs text-gray-500">{BUSINESS_LABEL[c.businessType] ?? c.businessType}</p>
+              <p className="text-sm font-extrabold text-[var(--color-text-heading)] truncate">{c.name}</p>
+              <p className="text-xs text-[var(--color-text-muted)]">{BUSINESS_LABEL[c.businessType] ?? c.businessType}</p>
             </div>
-            <span className="text-gray-300 group-hover:text-blue-500 transition-colors" aria-hidden="true">→</span>
+            <span className="text-[var(--color-text-subtle)] group-hover:text-[var(--color-primary)] transition-colors font-bold" aria-hidden="true">→</span>
           </Link>
         ))}
 
         <Link
           href="/onboarding"
-          className="flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-300 p-4 text-sm font-medium text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors"
+          className="flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--color-border)] p-4 text-xs font-bold text-[var(--color-text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors bg-white/60 shadow-2xs"
         >
           + Cadastrar nova empresa
         </Link>
       </div>
 
-      <div className="mt-8 flex items-center gap-4 text-xs text-gray-400">
-        <Link href="/orcamentos" className="hover:text-gray-600">Meus orçamentos</Link>
+      <div className="mt-8 flex items-center gap-4 text-xs text-[var(--color-text-subtle)]">
+        <Link href="/orcamentos" className="hover:text-[var(--color-text-heading)] font-semibold transition-colors">Meus orçamentos</Link>
         <span aria-hidden="true">·</span>
         <form action={logoutAction}>
-          <button type="submit" className="hover:text-gray-600">Sair da conta</button>
+          <button type="submit" className="hover:text-[var(--color-danger)] font-semibold transition-colors cursor-pointer">Sair da conta</button>
         </form>
       </div>
     </div>

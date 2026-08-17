@@ -31,22 +31,10 @@ export default async function TenantLandingPage({
     notFound();
   }
 
-  // Dados de customização com fallbacks elegantes
-  const rawExtra = await db.$queryRawUnsafe<Array<{
-    heroTitle: string | null;
-    heroSubtitle: string | null;
-    brandColor: string | null;
-    coverImageUrl: string | null;
-    socialInstagram: string | null;
-    socialWhatsapp: string | null;
-    socialFacebook: string | null;
-  }>>(`SELECT "heroTitle", "heroSubtitle", "brandColor", "coverImageUrl", "socialInstagram", "socialWhatsapp", "socialFacebook" FROM "company" WHERE id = '${company.id}' LIMIT 1`);
-
-  const landing = rawExtra[0] || {};
-  const brandColor = landing.brandColor || "#0f172a";
-  const heroTitle = landing.heroTitle || `Bem-vindo à ${company.name}`;
-  const heroSubtitle = landing.heroSubtitle || "Agende seus serviços online em 1 minuto com atendimento VIP 24/7";
-  const whatsappNum = landing.socialWhatsapp || company.phone || "";
+  const brandColor = company.brandColor || "#0f172a";
+  const heroTitle = company.heroTitle || `Bem-vindo à ${company.name}`;
+  const heroSubtitle = company.heroSubtitle || "Agende seus serviços online em 1 minuto com atendimento VIP 24/7";
+  const whatsappNum = company.socialWhatsapp || company.phone || "";
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 font-sans text-left transition-colors duration-500">
@@ -89,10 +77,10 @@ export default async function TenantLandingPage({
 
       {/* ── Hero Banner ── */}
       <section className="relative w-full py-16 sm:py-24 px-6 border-b border-stone-200 overflow-hidden bg-white">
-        {landing.coverImageUrl && (
+        {company.coverImageUrl && (
           <div
             className="absolute inset-0 opacity-15 bg-cover bg-center"
-            style={{ backgroundImage: `url(${landing.coverImageUrl})` }}
+            style={{ backgroundImage: `url(${company.coverImageUrl})` }}
           />
         )}
 

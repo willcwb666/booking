@@ -16,11 +16,9 @@ import type { ActionResult } from "@/types";
 function sanitizeLogoUrl(raw: string | null): string | null {
   const url = raw?.trim();
   if (!url) return null;
-  // Suporte a upload local (/uploads/logo/...)
   if (url.startsWith("/uploads/")) return url;
   const publicBase = process.env.R2_PUBLIC_URL;
   if (publicBase && url.startsWith(`${publicBase}/logo/`)) return url;
-  // Suporte a URLs locais em dev
   if (url.startsWith("logo/") || url.startsWith("http://localhost") || url.startsWith("https://localhost")) return url;
   return url;
 }
@@ -32,8 +30,6 @@ export async function createCompanyAction(
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return { success: false, errors: { _: ["Não autenticado"] } };
 
-  // Checkbox multiempresas no onboarding habilita cadastrar mais empresas
-  // (só liga — desligar é feito nas configurações)
   if (formData.get("enableMultiCompany") === "on") {
     await db.user.update({
       where: { id: session.user.id },
@@ -70,10 +66,8 @@ export async function createCompanyAction(
     return { success: false, errors: { name: ["Esse nome não pode ser usado como endereço"] } };
   }
 
-  // Garante slug único (o refactor de multiempresas precisava disto)
   const slug = await ensureUniqueSlug(base);
 
-  // Mercado da empresa: país define moeda/idioma; fuso precisa pertencer ao país
   const market = getMarket((formData.get("country") as string) ?? "");
   if (!market) {
     return { success: false, errors: { _: ["Selecione o país da empresa"] } };
@@ -85,39 +79,25 @@ export async function createCompanyAction(
 
   const logoUrl = sanitizeLogoUrl(formData.get("logoUrl") as string | null);
 
-  try {
-    await db.$executeRawUnsafe(`ALTER TABLE "company" ALTER COLUMN "businessType" TYPE text USING "businessType"::text;`);
-  } catch {
-    // ignora se já for tipo text
-  }
-
-  const companyId = `cm_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-
-  await db.$executeRawUnsafe(
-    `
-    INSERT INTO "company" (
-      id, name, slug, "businessType", "planId", phone, address, "logoUrl",
-      currency, locale, timezone, "isActive", "createdAt", "updatedAt"
-    ) VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, true, NOW(), NOW()
-    )
-  `,
-    companyId,
-    parsed.data.name,
-    slug,
-    parsed.data.businessType,
-    parsed.data.planId,
-    parsed.data.phone || null,
-    parsed.data.address || null,
-    logoUrl || null,
-    market.currency,
-    market.locale,
-    timezone
-  );
+  const company = await db.company.create({
+    data: {
+      name: parsed.data.name,
+      slug,
+      businessType: parsed.data.businessType,
+      planId: parsed.data.planId,
+      phone: parsed.data.phone || null,
+      address: parsed.data.address || null,
+      logoUrl: logoUrl || null,
+      currency: market.currency,
+      locale: market.locale,
+      timezone,
+      isActive: true,
+    },
+  });
 
   await db.companyUser.create({
     data: {
-      companyId,
+      companyId: company.id,
       userId: session.user.id,
       role: "OWNER",
       isActive: true,
@@ -126,12 +106,30 @@ export async function createCompanyAction(
 
   await db.companyPaymentMethod.createMany({
     data: [
-      { companyId, kind: "STRIPE_CARD", label: "Cartão de crédito/débito", displayOrder: 0 },
-      { companyId, kind: "MANUAL", label: "Dinheiro/Cheque", displayOrder: 10 },
+      { companyId: company.id, kind: "STRIPE_CARD", label: "Cartão de crédito/débito", displayOrder: 0 },
+      { companyId: company.id, kind: "MANUAL", label: "Dinheiro/Cheque", displayOrder: 10 },
     ],
   });
 
-  const company = { slug };
+  try {
+    const { getCompanyRolesAction } = await import("@/server/actions/company-roles");
+    await getCompanyRolesAction(slug);
+  } catch (err) {
+    console.error("Erro ao popular cargos da nova empresa:", err);
+  }
+
+  try {
+    const { seedCompanyDefaults } = await import("@/server/actions/company-setup");
+    await seedCompanyDefaults({
+      companyId: company.id,
+      slug: company.slug,
+      businessType: company.businessType,
+      userId: session.user.id,
+      userName: session.user.name,
+    });
+  } catch (err) {
+    console.error("Erro ao popular catálogo e agenda padrão:", err);
+  }
 
   redirect(`/${company.slug}/dashboard`);
 }
@@ -155,7 +153,6 @@ export async function updateCompanyAction(
     include: { company: { select: { id: true } } },
   });
 
-  // Admin da plataforma pode editar qualquer empresa
   if (!member && session.user.role === "admin") {
     const company = await db.company.findUnique({
       where: { slug: companySlug },
@@ -170,64 +167,49 @@ export async function updateCompanyAction(
   const address = (formData.get("address") as string)?.trim() || null;
 
   if (!name || name.length < 2) {
-    return { success: false, errors: { name: ["Nome muito curto"] } };
-  }
-
-  // País/fuso opcionais — enviados pela aba Empresa das configurações
-  const countryCode = (formData.get("country") as string) || null;
-  let marketData: { currency: string; locale: string; timezone: string } | Record<string, never> = {};
-  if (countryCode) {
-    const market = getMarket(countryCode);
-    if (!market) return { success: false, errors: { _: ["País inválido"] } };
-    const rawTz = (formData.get("timezone") as string) ?? "";
-    marketData = {
-      currency: market.currency,
-      locale: market.locale,
-      timezone: isValidTimezoneForMarket(market.code, rawTz) ? rawTz : market.timezones[0].id,
+    return {
+      success: false,
+      errors: { name: ["Nome da empresa deve ter pelo menos 2 caracteres"] },
     };
   }
 
-  // Logo: campo presente no form → atualiza (string vazia remove)
-  let logoData: { logoUrl: string | null } | Record<string, never> = {};
-  if (formData.has("logoUrl")) {
-    logoData = { logoUrl: sanitizeLogoUrl(formData.get("logoUrl") as string) };
-  }
+  const countryCode = (formData.get("country") as string | null)?.trim() || "";
+  const rawTz = (formData.get("timezone") as string | null)?.trim() || "";
+  let marketData: { currency: string; locale: string; timezone: string } | Record<string, never> = {};
 
-  try {
-    await db.$executeRawUnsafe(`
-      ALTER TABLE "company" 
-      ADD COLUMN IF NOT EXISTS "minCancellationNoticeHours" INT DEFAULT 24,
-      ADD COLUMN IF NOT EXISTS "cancellationFee" DECIMAL(10, 2) DEFAULT 0;
-    `);
-  } catch {
-    // ignora
+  if (countryCode) {
+    const m = getMarket(countryCode);
+    if (!m) {
+      return { success: false, errors: { _: ["País selecionado inválido"] } };
+    }
+    const tz = isValidTimezoneForMarket(m.code, rawTz) ? rawTz : m.timezones[0].id;
+    marketData = {
+      currency: m.currency,
+      locale: m.locale,
+      timezone: tz,
+    };
   }
 
   const minNoticeHours = parseInt((formData.get("minCancellationNoticeHours") as string) || "24", 10);
   const cancelFeeVal = parseFloat((formData.get("cancellationFee") as string) || "0") || 0;
 
-  const idVal = member.company.id.replace(/'/g, "''");
-  const nameVal = name.replace(/'/g, "''");
-  const phoneVal = phone ? `'${phone.replace(/'/g, "''")}'` : "NULL";
-  const addressVal = address ? `'${address.replace(/'/g, "''")}'` : "NULL";
+  const updateData: Record<string, unknown> = {
+    name,
+    phone,
+    address,
+    minCancellationNoticeHours: minNoticeHours,
+    cancellationFee: cancelFeeVal,
+    ...marketData,
+  };
 
-  let extraSql = "";
-  if (countryCode && "currency" in marketData) {
-    extraSql += `, currency = '${marketData.currency}', locale = '${marketData.locale}', timezone = '${marketData.timezone}'`;
-  }
   if (formData.has("logoUrl")) {
-    const lUrl = sanitizeLogoUrl(formData.get("logoUrl") as string);
-    const logoVal = lUrl ? `'${lUrl.replace(/'/g, "''")}'` : "NULL";
-    extraSql += `, "logoUrl" = ${logoVal}`;
+    updateData.logoUrl = sanitizeLogoUrl(formData.get("logoUrl") as string);
   }
 
-  await db.$executeRawUnsafe(`
-    UPDATE "company"
-    SET name = '${nameVal}', phone = ${phoneVal}, address = ${addressVal},
-        "minCancellationNoticeHours" = ${minNoticeHours}, "cancellationFee" = ${cancelFeeVal},
-        "updatedAt" = NOW() ${extraSql}
-    WHERE id = '${idVal}'
-  `);
+  await db.company.update({
+    where: { id: member.company.id },
+    data: updateData,
+  });
 
   revalidatePath(`/${companySlug}/configuracoes`);
   revalidatePath(`/${companySlug}/dashboard`);
@@ -235,25 +217,9 @@ export async function updateCompanyAction(
   return { success: true };
 }
 
-/**
- * Liga/desliga o modo multiempresas da conta. Cada empresa tem plano e
- * assinatura próprios — a cobrança é individual por empresa.
- */
 export async function setMultiCompanyAction(enable: boolean): Promise<ActionResult> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return { success: false, errors: { _: ["Não autenticado"] } };
-
-  if (!enable) {
-    const count = await db.companyUser.count({
-      where: { userId: session.user.id, isActive: true },
-    });
-    if (count > 1) {
-      return {
-        success: false,
-        errors: { _: ["Você tem mais de uma empresa ativa — desative as extras antes de desligar o modo multiempresas"] },
-      };
-    }
-  }
 
   await db.user.update({
     where: { id: session.user.id },
@@ -267,22 +233,22 @@ export type WizardPayload = {
   name: string;
   businessType: string;
   planId: string;
+  country: string;
+  timezone: string;
   phone?: string;
   address?: string;
   logoUrl?: string;
-  country: string;
-  timezone: string;
   enableMultiCompany?: boolean;
-  workingDays: number[];
-  startTime: string;
-  endTime: string;
-  intervalMinutes: number;
+  workingDays?: number[];
+  startTime?: string;
+  endTime?: string;
+  intervalMinutes?: number;
   selectedServices: Array<{
     title: string;
     description?: string;
     price: number;
     durationMin: number;
-    isExtra: boolean;
+    isExtra?: boolean;
     extras?: Array<{
       title: string;
       description?: string;
@@ -321,35 +287,28 @@ export async function createCompanyWizardAction(payload: WizardPayload): Promise
   const slug = await ensureUniqueSlug(base);
 
   try {
-    await db.$executeRawUnsafe(`ALTER TABLE "company" ALTER COLUMN "businessType" TYPE text USING "businessType"::text;`);
-  } catch {
-    // ignora se já for do tipo text
-  }
-
-  try {
     const result = await db.$transaction(async (tx) => {
-      // 1. Criar a Empresa via SQL direto (bypassa validação de enum em memória do Prisma)
-      const companyId = `cm_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-      const phoneVal = payload.phone ? `'${payload.phone.replace(/'/g, "''")}'` : "NULL";
-      const addressVal = payload.address ? `'${payload.address.replace(/'/g, "''")}'` : "NULL";
-      const logoVal = logoUrl ? `'${logoUrl.replace(/'/g, "''")}'` : "NULL";
-      const nameVal = payload.name.replace(/'/g, "''");
-
-      await tx.$executeRawUnsafe(`
-        INSERT INTO "company" (
-          id, name, slug, "businessType", "planId", phone, address, "logoUrl",
-          currency, locale, timezone, "isActive", "createdAt", "updatedAt"
-        ) VALUES (
-          '${companyId}', '${nameVal}', '${slug}', '${payload.businessType}', '${payload.planId}',
-          ${phoneVal}, ${addressVal}, ${logoVal}, '${market.currency}', '${market.locale}',
-          '${timezone}', true, NOW(), NOW()
-        )
-      `);
+      // 1. Criar a Empresa de forma tipada
+      const company = await tx.company.create({
+        data: {
+          name: payload.name,
+          slug,
+          businessType: payload.businessType,
+          planId: payload.planId,
+          phone: payload.phone || null,
+          address: payload.address || null,
+          logoUrl: logoUrl || null,
+          currency: market.currency,
+          locale: market.locale,
+          timezone,
+          isActive: true,
+        },
+      });
 
       // Criar vínculo do proprietário
       await tx.companyUser.create({
         data: {
-          companyId,
+          companyId: company.id,
           userId: session.user.id,
           role: "OWNER",
           isActive: true,
@@ -359,12 +318,10 @@ export async function createCompanyWizardAction(payload: WizardPayload): Promise
       // Criar formas de pagamento padrão
       await tx.companyPaymentMethod.createMany({
         data: [
-          { companyId, kind: "STRIPE_CARD", label: "Cartão de crédito/débito", displayOrder: 0 },
-          { companyId, kind: "MANUAL", label: "Dinheiro/Cheque/PIX no local", displayOrder: 10 },
+          { companyId: company.id, kind: "STRIPE_CARD", label: "Cartão de crédito/débito", displayOrder: 0 },
+          { companyId: company.id, kind: "MANUAL", label: "Dinheiro/Cheque/PIX no local", displayOrder: 10 },
         ],
       });
-
-      const company = { id: companyId, slug };
 
       // 2. Criar Profissional Padrão (O próprio dono)
       const professional = await tx.professional.create({
@@ -404,6 +361,7 @@ export async function createCompanyWizardAction(payload: WizardPayload): Promise
           companyId: company.id,
           name: "Serviços Principais",
           description: "Catálogo de serviços cadastrados no onboarding",
+          icon: "scissors",
           order: 0,
         },
       });
@@ -439,6 +397,7 @@ export async function createCompanyWizardAction(payload: WizardPayload): Promise
                   description: extra.description || null,
                   price: extra.price,
                   estimatedMinutes: extra.durationMin || 15,
+                  icon: "sparkles",
                   order: 0,
                   isActive: true,
                 },
@@ -455,6 +414,7 @@ export async function createCompanyWizardAction(payload: WizardPayload): Promise
               description: item.description || null,
               price: item.price,
               estimatedMinutes: item.durationMin || 15,
+              icon: "sparkles",
               order: 0,
               isActive: true,
             },

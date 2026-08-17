@@ -5,6 +5,7 @@ import { CompanySettingsTab } from "./_tabs/company-settings-tab";
 import { LandingTab } from "./_tabs/landing-tab";
 import { NotificationsTab } from "./_tabs/notifications-tab";
 import { CancellationTab } from "./_tabs/cancellation-tab";
+import { CustomersTab } from "./_tabs/customers-tab";
 import { ResetTab } from "./_tabs/reset-tab";
 import { PlanoTab } from "./_tabs/plano-tab";
 import { PaymentsTab } from "./_tabs/payments-tab";
@@ -23,6 +24,7 @@ import {
   RotateCcw,
   AlertTriangle,
   Globe,
+  Users,
 } from "@/components/ui/icons";
 
 type PaymentMethodItem = {
@@ -50,6 +52,7 @@ type Props = {
     minCancellationNoticeHours: number;
     cancellationFee: number;
     lateToleranceMinutes: number;
+    maxAllowedNoShows?: number;
     notifyEmailEnabled: boolean;
     notifyTextEnabled: boolean;
     notifySmsEnabled: boolean;
@@ -86,7 +89,7 @@ type Props = {
   };
 };
 
-type Tab = "empresa" | "landing" | "pagamentos" | "plano" | "notificacoes" | "cancelamento" | "reset";
+type Tab = "empresa" | "landing" | "pagamentos" | "plano" | "notificacoes" | "cancelamento" | "clientes" | "reset";
 
 export function SettingsClient({
   companySlug,
@@ -124,6 +127,7 @@ export function SettingsClient({
     minCancellationNoticeHours: initial.minCancellationNoticeHours ?? 24,
     cancellationFee: initial.cancellationFee ?? 0,
     lateToleranceMinutes: initial.lateToleranceMinutes ?? 15,
+    maxAllowedNoShows: initial.maxAllowedNoShows ?? 2,
   });
 
   const [formState, setFormState] = useState<UnifiedCompanySettingsPayload>(buildPayload);
@@ -155,6 +159,7 @@ export function SettingsClient({
     { id: "plano", label: "Plano", icon: <CreditCard className="w-4 h-4 shrink-0" /> },
     { id: "notificacoes", label: "Notificações", icon: <Bell className="w-4 h-4 shrink-0" /> },
     { id: "cancelamento", label: "Política de Cancelamentos", icon: <FileText className="w-4 h-4 shrink-0" /> },
+    { id: "clientes", label: "Clientes & Faltas", icon: <Users className="w-4 h-4 shrink-0" /> },
     { id: "reset", label: "Reset de Presets", icon: <RotateCcw className="w-4 h-4 shrink-0" /> },
   ];
 
@@ -172,7 +177,7 @@ export function SettingsClient({
         <div>
           <h1 className="page-title">Configurações Gerais</h1>
           <p className="page-description">
-            Gerencie dados operacionais, comunicação, aparência e assinatura da sua empresa.
+            Gerencie dados operacionais, comunicação, tolerância de faltas e assinatura da sua empresa.
           </p>
         </div>
 
@@ -184,7 +189,7 @@ export function SettingsClient({
         )}
       </div>
 
-      {/* Navegação por Abas Organizadas (Estilo Stripe Tab Bar) */}
+      {/* Navegação por Abas Organizadas */}
       <div className="bg-[var(--color-bg-muted)] p-1.5 rounded-xl border border-[var(--color-border)] inline-flex flex-wrap gap-1 mb-8">
         {tabs.map((t) => {
           const isActive = tab === t.id;
@@ -249,6 +254,14 @@ export function SettingsClient({
           currency={initial.currency || "BRL"}
           formState={formState}
           onChange={handleChange}
+        />
+      )}
+
+      {tab === "clientes" && (
+        <CustomersTab
+          canEdit={canEdit}
+          maxAllowedNoShows={formState.maxAllowedNoShows}
+          onChangeMaxAllowedNoShows={(val) => handleChange("maxAllowedNoShows", val)}
         />
       )}
 

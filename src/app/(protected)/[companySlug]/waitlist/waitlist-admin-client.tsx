@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { removeWaitlistEntryAction } from "@/server/actions/waitlist";
+import { Pagination } from "@/components/ui/pagination";
 
 const STATUS_LABELS: Record<string, string> = {
   WAITING: "Aguardando",
@@ -40,7 +41,14 @@ export function WaitlistAdminClient({
   canEdit: boolean;
 }) {
   const [entries, setEntries] = useState(initial);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [pending, startTransition] = useTransition();
+
+  const paginatedEntries = entries.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   function handleRemove(id: string) {
     startTransition(async () => {
@@ -71,7 +79,7 @@ export function WaitlistAdminClient({
             </tr>
           </thead>
           <tbody>
-            {entries.map((e) => (
+            {paginatedEntries.map((e) => (
               <tr key={e.id}>
                 <td>
                   <p className="font-medium text-[var(--color-text-heading)]">{e.customerName}</p>
@@ -112,6 +120,18 @@ export function WaitlistAdminClient({
           </tbody>
         </table>
       </div>
+
+      {entries.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={entries.length}
+          pageSize={pageSize}
+          pageSizeOptions={[10, 20, 30, 50, 100]}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          itemLabel="clientes em espera"
+        />
+      )}
     </div>
   );
 }

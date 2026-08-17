@@ -44,6 +44,181 @@ export async function createServiceAction(
   return { success: true };
 }
 
+export async function createFullServiceAction(formData: FormData): Promise<ActionResult> {
+  const slug = formData.get("companySlug") as string;
+  const company = await resolveCompany(slug);
+  if (!company) return { success: false, errors: { _: ["Não autorizado"] } };
+
+  const name = ((formData.get("name") as string) || "").trim();
+  if (!name) return { success: false, errors: { name: ["Nome do serviço é obrigatório"] } };
+
+  const description = ((formData.get("description") as string) || "").trim() || null;
+  const price = parseFloat(formData.get("price") as string) || 0;
+  const estimatedMinutes = parseInt(formData.get("estimatedMinutes") as string) || 30;
+  const category = (formData.get("category") as string) || "DEFAULT";
+  const icon = (formData.get("icon") as string) || (category === "EXTRA" ? "sparkles" : "scissors");
+
+  if (category === "EXTRA") {
+    const count = await db.extraService.count({ where: { companyId: company.id } });
+    await db.extraService.create({
+      data: {
+        companyId: company.id,
+        name,
+        description,
+        price,
+        estimatedMinutes,
+        icon,
+        isActive: true,
+        order: count,
+      },
+    });
+  } else {
+    const count = await db.service.count({ where: { companyId: company.id } });
+    const service = await db.service.create({
+      data: {
+        companyId: company.id,
+        name,
+        description,
+        icon,
+        order: count,
+        isActive: true,
+      },
+    });
+
+    await db.serviceType.create({
+      data: {
+        companyId: company.id,
+        serviceId: service.id,
+        name: "Atendimento Padrão",
+        description,
+        price,
+        estimatedMinutes,
+        order: 0,
+        isActive: true,
+      },
+    });
+  }
+
+  revalidatePath(`/${slug}/servicos`);
+  return { success: true };
+}
+
+export async function getServiceByIdAction(companySlug: string, id: string) {
+  const company = await resolveCompany(companySlug);
+  if (!company) return null;
+
+  const srv = await db.service.findFirst({
+    where: { id, companyId: company.id },
+    include: { serviceTypes: { take: 1 } },
+  });
+
+  if (srv) {
+    const st = srv.serviceTypes[0];
+    return {
+      id: srv.id,
+      name: srv.name,
+      description: srv.description || null,
+      price: st ? Number(st.price) : 0,
+      estimatedMinutes: st ? st.estimatedMinutes : 30,
+      category: "DEFAULT" as const,
+      icon: srv.icon || "scissors",
+      isActive: Boolean(srv.isActive),
+    };
+  }
+
+  const extra = await db.extraService.findFirst({
+    where: { id, companyId: company.id },
+  });
+
+  if (extra) {
+    return {
+      id: extra.id,
+      name: extra.name,
+      description: extra.description || null,
+      price: Number(extra.price),
+      estimatedMinutes: Number(extra.estimatedMinutes),
+      category: "EXTRA" as const,
+      icon: extra.icon || "sparkles",
+      isActive: Boolean(extra.isActive),
+    };
+  }
+
+  return null;
+}
+
+export async function updateFullServiceAction(formData: FormData): Promise<ActionResult> {
+  const slug = formData.get("companySlug") as string;
+  const id = formData.get("id") as string;
+  const company = await resolveCompany(slug);
+  if (!company) return { success: false, errors: { _: ["Não autorizado"] } };
+
+  const name = ((formData.get("name") as string) || "").trim();
+  if (!name) return { success: false, errors: { name: ["Nome do serviço é obrigatório"] } };
+
+  const description = ((formData.get("description") as string) || "").trim() || null;
+  const price = parseFloat(formData.get("price") as string) || 0;
+  const estimatedMinutes = parseInt(formData.get("estimatedMinutes") as string) || 30;
+  const icon = (formData.get("icon") as string) || "scissors";
+
+  const existingExtra = await db.extraService.findFirst({ where: { id, companyId: company.id } });
+  if (existingExtra) {
+    await db.extraService.update({
+      where: { id },
+      data: {
+        name,
+        description,
+        price,
+        estimatedMinutes,
+        icon,
+      },
+    });
+  } else {
+    await db.service.update({
+      where: { id },
+      data: {
+        name,
+        description,
+        icon,
+      },
+    });
+
+    const st = await db.serviceType.findFirst({ where: { serviceId: id, companyId: company.id } });
+    if (st) {
+      await db.serviceType.update({
+        where: { id: st.id },
+        data: { price, estimatedMinutes, description },
+      });
+    }
+  }
+
+  revalidatePath(`/${slug}/servicos`);
+  return { success: true };
+}
+
+export async function toggleDisableServiceAction(companySlug: string, id: string): Promise<ActionResult> {
+  const company = await resolveCompany(companySlug);
+  if (!company) return { success: false, errors: { _: ["Não autorizado"] } };
+
+  const extra = await db.extraService.findFirst({ where: { id, companyId: company.id } });
+  if (extra) {
+    await db.extraService.update({
+      where: { id },
+      data: { isActive: !extra.isActive },
+    });
+  } else {
+    const srv = await db.service.findFirst({ where: { id, companyId: company.id } });
+    if (srv) {
+      await db.service.update({
+        where: { id },
+        data: { isActive: !srv.isActive },
+      });
+    }
+  }
+
+  revalidatePath(`/${companySlug}/servicos`);
+  return { success: true };
+}
+
 export async function updateServiceAction(
   formData: FormData
 ): Promise<ActionResult> {
@@ -151,7 +326,6 @@ export async function createServiceTypeAction(
   if (!parsed.success)
     return { success: false, errors: parsed.error.flatten().fieldErrors };
 
-  // Verify the parent service belongs to this company
   const parent = await db.service.findFirst({
     where: { id: parsed.data.serviceId, companyId: company.id, isActive: true },
   });

@@ -100,16 +100,23 @@ export async function getCachedSlots(
 /**
  * Slots disponíveis de uma agenda ativa em uma data: grade da agenda,
  * menos exceções (dia bloqueado / horário especial), menos slots já
- * reservados, menos horários já passados (quando a data é hoje).
- *
- * Fonte única de disponibilidade — usada tanto para exibir slots quanto
- * para validar no servidor o horário enviado pelo cliente ao criar booking.
+ * reservados pelo profissional (ou por todos os profissionais da equipe),
+ * menos horários já passados (quando a data é hoje).
  */
-export async function getAvailableSlots(agendaId: string, date: string): Promise<TimeSlot[]> {
+export async function getAvailableSlots(
+  agendaId: string,
+  date: string,
+  professionalId?: string | null
+): Promise<TimeSlot[]> {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return [];
 
   const agenda = await db.agenda.findFirst({
     where: { id: agendaId, status: "ACTIVE" },
+    include: {
+      professionals: {
+        include: { professional: true },
+      },
+    },
   });
   if (!agenda) return [];
 
@@ -132,18 +139,61 @@ export async function getAvailableSlots(agendaId: string, date: string): Promise
   );
   if (allSlots.length === 0) return [];
 
-  const booked = await db.bookingSlot.findMany({
-    where: { agendaId, date },
-    select: { startTime: true },
+  // Se um profissional específico foi escolhido:
+  if (professionalId) {
+    const bookedForProf = await db.booking.findMany({
+      where: {
+        agendaId,
+        scheduledDate: date,
+        professionalId,
+        status: { notIn: ["CANCELLED"] },
+      },
+      select: { scheduledStartTime: true },
+    });
+    const bookedTimes = new Set(bookedForProf.map((b) => b.scheduledStartTime));
+
+    const today = new Date().toISOString().split("T")[0];
+    const now = new Date();
+    const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+
+    return allSlots.filter((slot) => {
+      if (bookedTimes.has(slot.startTime)) return false;
+      if (date === today && slot.startTime <= currentTime) return false;
+      return true;
+    });
+  }
+
+  // Se "Qualquer Profissional" (auto-assignment):
+  // Um horário só é bloqueado se TODOS os profissionais ativos da agenda estiverem ocupados naquele horário.
+  const activeStaffCount = Math.max(
+    1,
+    agenda.professionals.filter((p) => p.professional.isActive).length
+  );
+
+  const bookingsOnDate = await db.booking.findMany({
+    where: {
+      agendaId,
+      scheduledDate: date,
+      status: { notIn: ["CANCELLED"] },
+    },
+    select: { scheduledStartTime: true },
   });
-  const bookedTimes = new Set(booked.map((s) => s.startTime));
+
+  const busyCountPerTime = new Map<string, number>();
+  for (const b of bookingsOnDate) {
+    busyCountPerTime.set(
+      b.scheduledStartTime,
+      (busyCountPerTime.get(b.scheduledStartTime) || 0) + 1
+    );
+  }
 
   const today = new Date().toISOString().split("T")[0];
   const now = new Date();
   const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
 
   return allSlots.filter((slot) => {
-    if (bookedTimes.has(slot.startTime)) return false;
+    const busyCount = busyCountPerTime.get(slot.startTime) || 0;
+    if (busyCount >= activeStaffCount) return false;
     if (date === today && slot.startTime <= currentTime) return false;
     return true;
   });
@@ -158,9 +208,10 @@ export async function isSlotAvailable(
   agendaId: string,
   date: string,
   startTime: string,
-  endTime: string
+  endTime: string,
+  professionalId?: string | null
 ): Promise<boolean> {
-  const available = await getAvailableSlots(agendaId, date);
+  const available = await getAvailableSlots(agendaId, date, professionalId);
   return available.some((s) => s.startTime === startTime && s.endTime === endTime);
 }
 

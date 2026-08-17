@@ -11,6 +11,8 @@ type Props = {
   currentStatus: string;
   originalTotal?: number;
   currency?: string;
+  availableServices?: string[];
+  isFuture?: boolean;
 };
 
 const TRANSITIONS: Record<string, { label: string; next: string; color: string }> = {
@@ -32,12 +34,22 @@ export function StatusActions({
   currentStatus,
   originalTotal = 0,
   currency = "BRL",
+  availableServices = [],
+  isFuture = false,
 }: Props) {
   const transition = TRANSITIONS[currentStatus];
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const router = useRouter();
+
+  if (isFuture) {
+    return (
+      <span className="text-xs text-amber-700 bg-amber-50 px-2.5 py-1.5 rounded-lg border border-amber-200 font-medium inline-flex items-center gap-1">
+        <span>🗓️</span> Data Futura
+      </span>
+    );
+  }
 
   if (!transition) return null;
 
@@ -85,6 +97,7 @@ export function StatusActions({
           companySlug={companySlug}
           originalTotal={originalTotal}
           currency={currency}
+          availableServices={availableServices}
           onClose={() => setShowCompletionModal(false)}
         />
       )}

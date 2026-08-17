@@ -86,7 +86,7 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
   }
 
   return (
-    <div className="w-full max-w-7xl text-left space-y-8 pb-20">
+    <div className="page-content space-y-8 pb-20">
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs">

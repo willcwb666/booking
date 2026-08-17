@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { upsertEstimateAction, submitEstimateAction, saveEstimateAction } from "@/server/actions/estimate";
 import { formatMoney } from "@/lib/format";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import { AIBookingCopilot } from "@/components/ui/ai-booking-copilot";
 
 export type ServiceTypeData = {
   id: string;
@@ -295,6 +296,9 @@ export function BookingClient({
       <div className="max-w-5xl mx-auto px-4 py-8 lg:flex lg:gap-8 lg:items-start print:hidden">
         {/* ── Left: Selection ── */}
         <div className="flex-1 min-w-0 space-y-6">
+
+          {/* AI Booking Assistant Copilot */}
+          <AIBookingCopilot companySlug={companySlug} />
 
           {/* Frequency */}
           <section className="bg-white rounded-xl border border-gray-200 p-5">

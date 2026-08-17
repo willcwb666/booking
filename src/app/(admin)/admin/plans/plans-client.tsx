@@ -177,7 +177,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
   }
 
   return (
-    <div className="w-full px-6 sm:px-10 py-8 text-left space-y-8 pb-32">
+    <div className="page-content space-y-8 pb-32">
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs">

@@ -108,20 +108,45 @@ export function LandingTab({ companySlug, canEdit, availableServices }: Props) {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[var(--color-text-heading)] mb-1">Cor Principal de Destaque</label>
-              <div className="flex gap-2 items-center">
-                <input
-                  type="color"
-                  value={config.accentColor}
-                  onChange={(e) => setConfig({ ...config, accentColor: e.target.value })}
-                  className="w-10 h-10 rounded-xl border border-[var(--color-border)] cursor-pointer p-0.5"
-                />
-                <input
-                  type="text"
-                  value={config.accentColor}
-                  onChange={(e) => setConfig({ ...config, accentColor: e.target.value })}
-                  className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-mono text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
-                />
+              <label className="block text-xs font-bold text-[var(--color-text-heading)] mb-1">Cor Principal da Marca</label>
+              <div className="space-y-2">
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="color"
+                    value={config.accentColor}
+                    onChange={(e) => setConfig({ ...config, accentColor: e.target.value })}
+                    className="w-10 h-10 rounded-xl border border-[var(--color-border)] cursor-pointer p-0.5"
+                  />
+                  <input
+                    type="text"
+                    value={config.accentColor}
+                    onChange={(e) => setConfig({ ...config, accentColor: e.target.value })}
+                    className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-mono text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                  />
+                </div>
+
+                {/* Paletas de Cor Rápidas com 1 Clique */}
+                <div className="flex flex-wrap gap-1.5 items-center pt-1">
+                  <span className="text-[10px] text-[var(--color-text-subtle)] font-bold mr-1">Sugestões:</span>
+                  {[
+                    { label: "💈 Azul Royal", color: "#2563eb" },
+                    { label: "💅 Rosa Beauty", color: "#db2777" },
+                    { label: "🌿 Verde Esmeralda", color: "#059669" },
+                    { label: "👑 Dourado Gold", color: "#d97706" },
+                    { label: "💜 Roxo Velvet", color: "#7c3aed" },
+                    { label: "🖤 Dark Minimalista", color: "#0f172a" },
+                  ].map((p) => (
+                    <button
+                      key={p.color}
+                      type="button"
+                      onClick={() => setConfig({ ...config, accentColor: p.color })}
+                      className="px-2 py-1 rounded-lg border border-[var(--color-border)] text-[10px] font-bold transition-all hover:scale-105 flex items-center gap-1 cursor-pointer bg-white"
+                    >
+                      <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: p.color }} />
+                      <span>{p.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -146,6 +171,35 @@ export function LandingTab({ companySlug, canEdit, availableServices }: Props) {
               className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
               placeholder="https://exemplo.com/imagem-estabelecimento.jpg"
             />
+          </div>
+
+          {/* Prévia ao Vivo da Bio do Estabelecimento */}
+          <div className="p-4 rounded-2xl bg-[var(--color-bg-subtle)] border border-[var(--color-border)] space-y-2">
+            <span className="text-[10px] font-black uppercase tracking-wider text-[var(--color-text-muted)] block">
+              👁️ Prévia ao Vivo do seu Card Público:
+            </span>
+            <div className="p-4 rounded-2xl bg-white border border-[var(--color-border)] shadow-xs flex items-center gap-4">
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-lg shrink-0 shadow-xs"
+                style={{ backgroundColor: config.accentColor || "#2563eb" }}
+              >
+                {companySlug[0]?.toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-extrabold text-[var(--color-text-heading)] truncate">
+                  {config.heroTitle || "Nome do Estabelecimento"}
+                </h4>
+                <p className="text-xs text-[var(--color-text-muted)] truncate">
+                  {config.heroSubtitle || "Atendimento profissional com agendamento online rápido."}
+                </p>
+              </div>
+              <span
+                className="px-3 py-1.5 rounded-xl text-white font-extrabold text-xs shrink-0 shadow-xs hidden sm:inline-block"
+                style={{ backgroundColor: config.accentColor || "#2563eb" }}
+              >
+                Agendar Horário
+              </span>
+            </div>
           </div>
 
           {/* Seleção de Serviços em Destaque (Máximo 6) */}

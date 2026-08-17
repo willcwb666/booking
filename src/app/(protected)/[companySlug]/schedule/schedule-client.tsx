@@ -27,6 +27,7 @@ type ScheduleEvent = {
   notes: string | null;
   professional: { id: string; name: string } | null;
   createdBy: { id: string; name: string };
+  bookingId?: string | null;
 };
 
 type Props = {

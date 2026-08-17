@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 };
 
 import { ToastProvider } from "@/components/ui/toast-provider";
+import { ThemeSwitcher } from "@/components/ui/theme-switcher";
 
 export default async function RootLayout({
   children,
@@ -34,13 +35,16 @@ export default async function RootLayout({
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
       </head>
       <body className="min-h-full flex flex-col font-sans">
         <NextIntlClientProvider>
-          <ToastProvider>{children}</ToastProvider>
+          <ToastProvider>
+            {children}
+            <ThemeSwitcher />
+          </ToastProvider>
         </NextIntlClientProvider>
       </body>
     </html>

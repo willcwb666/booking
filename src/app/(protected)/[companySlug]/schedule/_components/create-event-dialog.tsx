@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useTransition, useState } from "react";
+import { useTransition, useState } from "react";
 import { createScheduleEventAction } from "@/server/actions/schedule";
 
 type Professional = { id: string; name: string };
@@ -30,25 +30,8 @@ export function CreateEventDialog({
   defaultStartTime = "09:00",
   defaultProfessionalId = "",
 }: Props) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const [isPending, startTransition] = useTransition();
   const [errors, setErrors] = useState<Record<string, string[]> | null>(null);
-
-  useEffect(() => {
-    if (open) {
-      dialogRef.current?.showModal();
-      setErrors(null);
-    } else {
-      dialogRef.current?.close();
-    }
-  }, [open]);
-
-  function handleDialogClick(e: React.MouseEvent<HTMLDialogElement>) {
-    const rect = dialogRef.current?.getBoundingClientRect();
-    if (rect && (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom)) {
-      onClose();
-    }
-  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -65,30 +48,34 @@ export function CreateEventDialog({
     });
   }
 
-  return (
-    <dialog
-      ref={dialogRef}
-      onCancel={onClose}
-      onClick={handleDialogClick}
-      aria-labelledby="create-event-title"
-      aria-modal="true"
-      className="rounded-2xl shadow-xl border border-[var(--color-border)] p-0 w-full max-w-md backdrop:bg-black/30 backdrop:backdrop-blur-sm open:flex open:flex-col"
-    >
-      <div className="px-6 py-5 border-b border-[var(--color-border)] flex items-center justify-between">
-        <h2 id="create-event-title" className="text-base font-semibold text-[var(--color-text-heading)]">
-          Novo evento
-        </h2>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Fechar"
-          className="text-[var(--color-text-subtle)] hover:text-[var(--color-text-heading)] rounded p-1 hover:bg-[var(--color-bg-muted)]"
-        >
-          ✕
-        </button>
-      </div>
+  if (!open) return null;
 
-      <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="create-event-title"
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-white rounded-2xl shadow-2xl border border-stone-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="px-6 py-5 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
+          <h2 id="create-event-title" className="text-base font-bold text-stone-900">
+            Novo evento
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fechar"
+            className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
         {errors?.["_"] && (
           <div className="bg-[var(--color-danger-light)] border border-[var(--color-danger-border)] rounded-lg px-3 py-2" role="alert">
             <p className="text-sm text-[var(--color-danger)]">{errors["_"][0]}</p>
@@ -223,6 +210,7 @@ export function CreateEventDialog({
           </button>
         </div>
       </form>
-    </dialog>
+    </div>
+  </div>
   );
 }

@@ -124,6 +124,23 @@ export type AdminCompanyItem = {
   createdAt: Date;
 };
 
+export type CompanySelectorItem = {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl: string | null;
+};
+
+/** Busca todas as empresas ativas para o seletor de ambiente do super admin */
+export async function getCompaniesForSelector(): Promise<CompanySelectorItem[]> {
+  const rows = await db.company.findMany({
+    where: { isActive: true },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, slug: true, logoUrl: true },
+  });
+  return rows;
+}
+
 type GetAdminCompaniesOptions = {
   search?: string;
   page?: number;

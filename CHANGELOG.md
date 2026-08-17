@@ -4,7 +4,103 @@ Todas as alterações notáveis, novas funcionalidades, melhorias de UX/UI e cor
 
 ---
 
-## 🟢 [v2.14.1] - 2026-07-24 (Release Atual)
+## 🟢 [v3.3.0] - 2026-07-26 (Release Atual - Política de Faltas No-Show & Remarcações)
+### 🛑 Gestão Inteligente de Faltas (No-Show) & Regra Dinâmica de Antecedência para Remarcação
+
+- **🛑 Registro Inteligente de Faltas (`markBookingNoShowAction`)**:
+  - Adicionado botão de ação rápida de **Falta/No-Show** na tabela de agendamentos (`/[companySlug]/agendamentos`).
+  - Ao clicar, abre modal perguntando *"O cliente avisou com antecedência?"*:
+    - **Sim (Avisou)**: Marca o status como `CANCELLED` regular, sem penalizar o contador de faltas.
+    - **Não (Faltou sem aviso)**: Marca o novo status `NO_SHOW` e contabiliza a falta no perfil do cliente.
+
+- **⚙️ Aba "Clientes & Faltas" nas Configurações da Empresa (`/[companySlug]/configuracoes`)**:
+  - Adicionado campo **"Limite de Faltas Sem Aviso Permitidas"** (padrão: 2 faltas).
+  - Define a regra de tolerância: ao atingir o limite, o atendente recebe alerta vermelho no painel e o cliente online é obrigado a pagar sinal prévio.
+
+- **⏰ Regra Dinâmica de Remarcação Sincronizada (`rescheduleBookingAction`)**:
+  - A regra de reagendamento consulta dinamicamente o valor de `minCancellationNoticeHours` (ex: 12h, 24h ou o configurado na empresa).
+  - Para o cliente no portal público, bloqueia reagendamentos dentro da janela mínima com mensagem explicativa.
+  - Para o atendente no painel, permite remarcar emitindo alerta de remarcação emergencial de última hora.
+
+---
+
+## 🟢 [v3.2.0] - 2026-07-26 (Super Admin AI Suite & Auto-Healing)
+### 🛡️ Copilot Executivo por IA & Central de Auto-Healing de Instâncias (Tenants)
+
+- **🤖 Copilot Executivo do Super Admin (`SuperAdminAICopilot`)**:
+  - Implementado assistente de IA exclusivo no topo do Dashboard Executivo (`/admin`).
+  - Permite consultar em linguagem natural sobre risco de cancelamentos (churn), métricas de faturamento (MRR/ARR) e empresas inadimplentes com cards de diagnóstico instantâneo.
+
+- **⚡ Auto-Healing de Instâncias / Tenants (`repairCompanyTenantAction`)**:
+  - Módulo inteligente adicionado ao Monitor de Infraestrutura (`/admin/infraestrutura`).
+  - Permite disparar rotinas automáticas de reparo de presets, reinicialização de serviços padrão e reconexão de webhooks Stripe sem interromper o serviço das empresas.
+
+---
+
+## 🟢 [v3.1.0] - 2026-07-26 (AI Suite & Portal Enterprise)
+### 🤖 Suíte de Inteligência Artificial Nativa (AI Suite) & Portal do Cliente Self-Service
+
+- **💬 Copilot de Agendamento por Linguagem Natural (`AIBookingCopilot`)**:
+  - Implementado processador de linguagem natural (NLP) no topo da tela pública de agendamento (`/book/[companySlug]/...`).
+  - O cliente digita frases livres como *"Quero corte e barba no sábado de manhã com o Renato"* e a IA extrai serviços, profissional, data e horário exato em 1 clique.
+
+- **🛡️ Previsor Inteligente de Faltas & No-Show (`AI Risk Score`)**:
+  - Algoritmo de classificação de risco de falta por cliente (pontuação de 0 a 100 com fatores explicativos e nível *Low*, *Medium*, *High*).
+  - Sugestão automática de exigência de sinal (Pix/Stripe) para clientes de alto risco de no-show.
+
+- **✍️ Gerador de Campanhas de Retenção por IA (`AI Campaign Writer`)**:
+  - Integrado à ficha do cliente no CRM (`/[companySlug]/clientes`). Gera com 1 clique textos ultra-personalizados de reativação para WhatsApp e E-mail com botão de cópia instantânea.
+
+- **👤 Portal do Cliente Self-Service (`/[companySlug]/meus-agendamentos`)**:
+  - Área cliente dedicada para visualização de reservas ativas e históricas, reagendamento, cancelamento e download de comprovantes.
+  - Adicionado atalho no menu lateral sob a seção Operação.
+
+---
+
+## 🟢 [v3.0.0] - 2026-07-26 (Major Release)
+### 💎 Reformulação Completa do Tema Stripe, CRM 360°, Monitor de Infraestrutura & UX/UI
+
+- **Tema de Design System Stripe Unificado**:
+  - Aplicação dos tokens de design do Stripe (gradientes corporativos `navy-950`, botões primários com efeito elevado, sombras ultra suaves `shadow-2xs`, pílulas de status elegantes).
+  - Atualização completa em todas as telas da plataforma (`/servicos`, `/equipe`, `/agendas`, `/clientes`, `/admin/...`).
+
+- **Módulo CRM 360° de Clientes (`/[companySlug]/clientes`)**:
+  - LTV (Lifetime Value), contagem total de agendamentos (concluídos vs cancelados), data da última visita e busca inteligente em tempo real.
+  - Ficha completa do cliente com histórico financeiro e atalho dedicado no menu da empresa.
+
+- **Painel de Infraestrutura & Saúde do Sistema (`/admin/infraestrutura`)**:
+  - Monitoramento em tempo real da latência de PostgreSQL, Redis Cache, Stripe API, Mercado Pago, Resend, S3/R2 Storage e Push Notifications (Expo).
+  - Server Action isolada com `"use server"` para verificações síncronas com tratamento de falhas por fallback.
+  - Adicionada opção no menu do Super Admin com ícone de escudo.
+
+- **Padronização Universal de Botões de Ação (Icon-Only + Tooltips)**:
+  - Removido texto estático de todos os botões de ação em listas e tabelas (Editar, Excluir, Banir, Desbanir, Cancelar, Publicar, Gerenciar, Resetar Presets).
+  - Convertidos para botões de ícones puros envolvidos pelo componente `<ActionTooltip label="...">`, exibindo dicas flutuantes minimalistas ao passar o cursor do mouse.
+
+- **Padronização Universal de Status (Dot-Only Pills + Tooltips)**:
+  - Eliminação de rótulos inconsistentes ("Habilitado", "Desabilitado", "Ativa", "Inativa").
+  - Substituição por pílulas minimais de status contendo exclusivamente a bolinha de cor dinâmica (🟢 Verde pulsante para *Ativo*, ⚪ Cinza para *Inativo*, 🟡 Amarelo para *Pendente*, 🔴 Vermelho para *Inadimplente*).
+  - Exibição contextual do significado do status no tooltip ao passar o mouse (`ActionTooltip`).
+
+- **Dashboard Executivo do Super Admin Reformulado (`/admin`)**:
+  - Banner com gradiente executivo `navy-950`, efeito glow e badge pulsante de status da plataforma (*SISTEMA 100% ONLINE*).
+  - Cards de KPI com efeitos de iluminação em hover, variação percentual (+18.4% / +22.1%) e alternância no gráfico.
+  - Gráfico em curva suave Bezier (SVG vetorial) com gradiente e inspetor de hover dinâmico em moeda.
+  - Feed de Atividades do SaaS em Tempo Real e Central de Ações Rápidas.
+
+- **Biblioteca de Componentes UI Primitivos Reutilizáveis (`src/components/ui/` & `src/components/forms/`)**:
+  - `modal.tsx`, `confirm-dialog.tsx`, `page-header.tsx`, `status-badge.tsx`, `empty-state.tsx`, `search-input.tsx`, `form-elements.tsx`, `action-tooltip.tsx`.
+
+---
+
+## 🟢 [v2.14.2] - 2026-07-25
+### 📐 Largura Uniforme das Páginas do Painel Admin
+
+- **Container de página padronizado (`.page-content`)**: as 11 telas do Super Admin usavam wrappers inconsistentes — algumas com `max-w-7xl` (mais estreitas, ex. Financeiro), outras sem limite de largura (bem mais largas, ex. Planos/Relatórios/Módulos), e ainda variações de padding (`px-8` vs `px-10`, com/sem `py-8`). Como o layout já envolve o conteúdo em `.page-container` (que aplica o padding e o scroll), o padding inline das páginas gerava espaçamento duplicado. Agora todas as páginas usam a classe `.page-content` do design system (largura máxima de 80rem, centralizada, alinhada à esquerda), eliminando o padding redundante e alinhando o admin ao mesmo padrão das telas de empresa. Resultado: todas as páginas admin têm exatamente a mesma largura e recuo.
+
+---
+
+## 🟢 [v2.14.1] - 2026-07-24
 ### 🎨 Padronização de Neutros Secundários no Painel Admin
 
 - **Escala de cinzas unificada nos tokens do design system**: as 11 telas administrativas + os modais (`reset-preset`, `subscriptions`) usavam cinzas Tailwind crus de famílias misturadas (`slate-*`, `gray-*`, `stone-*`) para texto, bordas e fundos. Agora todos consomem os tokens neutros: textos → `var(--color-text-heading/text/muted/subtle)`, bordas → `var(--color-border)` / `var(--color-border-strong)`, fundos → `var(--color-bg-subtle/muted)`, botões escuros → `var(--color-navy)` / `var(--color-navy-hover)`. Acentos suaves da marca (`indigo-50/100/200`) foram mapeados para `var(--color-primary-light)` e `var(--color-primary)/20-40`, e os hex fixos do gráfico SVG (grade e linha) também passaram a usar as variáveis. Cores semânticas de status (verde/vermelho/âmbar/azul/violeta) foram preservadas propositalmente.

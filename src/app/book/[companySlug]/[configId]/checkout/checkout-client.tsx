@@ -14,6 +14,7 @@ import { getAvailableSlotsAction } from "@/server/actions/booking-slots";
 import { createBookingAction, checkPixPaymentAction } from "@/server/actions/booking";
 import type { TimeSlot } from "@/lib/agenda";
 import { formatMoney } from "@/lib/format";
+import { calculateDeposit } from "@/lib/pricing";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import Link from "next/link";
 
@@ -38,6 +39,14 @@ type CheckoutPaymentMethod = {
   instructions: string | null;
 };
 
+export type ProfessionalItem = {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  roleTitle?: string | null;
+};
+
 type Props = {
   companySlug: string;
   configId: string;
@@ -50,8 +59,12 @@ type Props = {
   agendaId: string;
   agendaConfig: AgendaConfig;
   paymentMethods: CheckoutPaymentMethod[];
+  professionals?: ProfessionalItem[];
   currency: string;
   locale: string;
+  businessType?: string;
+  requireDeposit?: boolean;
+  depositPercentage?: number;
 };
 
 // Enum legado do fluxo de criação, derivado do kind
@@ -264,16 +277,28 @@ export function CheckoutClient({
   agendaId,
   agendaConfig,
   paymentMethods,
+  professionals = [],
   currency,
   locale,
+  businessType,
+  requireDeposit,
+  depositPercentage,
 }: Props) {
   const router = useRouter();
   const t = useTranslations("checkout");
   const tb = useTranslations("booking");
   const uiLocale = useLocale();
 
+  const isHomeService =
+    businessType === "HOME_CLEANING" ||
+    businessType === "LAWN_CARE" ||
+    businessType === "POOL_CLEANING";
+
   // Step state
   const [step, setStep] = useState<Step>("datetime");
+
+  // Professional state
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState<string | null>(null);
 
   // DateTime state
   const today = new Date();
@@ -298,15 +323,22 @@ export function CheckoutClient({
   const calGridRef = useRef<HTMLTableSectionElement>(null);
   const [focusedDate, setFocusedDate] = useState<string | null>(null);
 
-  function handleDateSelect(dateStr: string) {
+  function handleDateSelect(dateStr: string, profId: string | null = selectedProfessionalId) {
     if (isDateDisabled(dateStr, agendaConfig)) return;
     setSelectedDate(dateStr);
     setSelectedSlot(null);
     setAvailableSlots([]);
     startSlotTransition(async () => {
-      const slots = await getAvailableSlotsAction(agendaId, dateStr);
+      const slots = await getAvailableSlotsAction(agendaId, dateStr, profId);
       setAvailableSlots(slots);
     });
+  }
+
+  function handleProfessionalSelect(profId: string | null) {
+    setSelectedProfessionalId(profId);
+    if (selectedDate) {
+      handleDateSelect(selectedDate, profId);
+    }
   }
 
   const handleCalKeyDown = useCallback(
@@ -377,6 +409,10 @@ export function CheckoutClient({
     fd.set("scheduledEndTime", selectedSlot!.endTime);
     fd.set("companyPaymentMethodId", method.id);
     fd.set("paymentMethod", legacyEnumFor(method.kind));
+
+    if (selectedProfessionalId) {
+      fd.set("professionalId", selectedProfessionalId);
+    }
 
     startSubmitTransition(async () => {
       const result = await createBookingAction(fd);
@@ -460,6 +496,73 @@ export function CheckoutClient({
             {/* ── Step: datetime ── */}
             {step === "datetime" && (
               <form onSubmit={handleSubmitDetails}>
+                {/* Seletor de Profissional */}
+                {professionals.length > 0 && (
+                  <div className="bg-white rounded-2xl border border-gray-200 p-5 mb-4 shadow-xs">
+                    <div className="mb-3">
+                      <h2 className="text-sm font-bold text-gray-900">
+                        Escolha o Profissional
+                      </h2>
+                      <p className="text-xs text-gray-500">
+                        Selecione seu profissional de preferência ou deixe com qualquer disponível.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {/* Qualquer Profissional */}
+                      <button
+                        type="button"
+                        onClick={() => handleProfessionalSelect(null)}
+                        className={`p-3 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
+                          selectedProfessionalId === null
+                            ? "border-blue-600 bg-blue-50/60 ring-2 ring-blue-600/20"
+                            : "border-gray-200 hover:border-gray-300 bg-white"
+                        }`}
+                      >
+                        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">
+                          ✨
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-gray-900">Qualquer Profissional</p>
+                          <p className="text-[11px] text-gray-500">Primeiro horário livre</p>
+                        </div>
+                      </button>
+
+                      {/* Profissionais Específicos */}
+                      {professionals.map((prof) => (
+                        <button
+                          key={prof.id}
+                          type="button"
+                          onClick={() => handleProfessionalSelect(prof.id)}
+                          className={`p-3 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
+                            selectedProfessionalId === prof.id
+                              ? "border-blue-600 bg-blue-50/60 ring-2 ring-blue-600/20"
+                              : "border-gray-200 hover:border-gray-300 bg-white"
+                          }`}
+                        >
+                          {prof.avatarUrl ? (
+                            <img
+                              src={prof.avatarUrl}
+                              alt={prof.name}
+                              className="w-10 h-10 rounded-full object-cover shrink-0 border border-gray-200"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-stone-100 text-stone-700 flex items-center justify-center font-bold text-xs shrink-0 uppercase border border-stone-200">
+                              {prof.name.slice(0, 2)}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-gray-900 truncate">{prof.name}</p>
+                            <p className="text-[11px] text-gray-500 truncate">
+                              {prof.roleTitle || "Profissional"}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Calendar */}
                 <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
                   <div className="flex items-center justify-between mb-4">
@@ -679,109 +782,132 @@ export function CheckoutClient({
                   </label>
                 </div>
 
-                {/* Address */}
-                <div className="bg-white rounded-xl border border-gray-200 p-5">
-                  <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("serviceAddress")}</h2>
-                  <div className="space-y-3">
-                    <div>
-                      <label htmlFor="address" className="block text-xs text-gray-600 mb-1">
-                        {t("address")} <span aria-hidden="true">*</span>
-                      </label>
-                      <input
-                        id="address"
-                        name="address"
-                        required
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label htmlFor="aptNo" className="block text-xs text-gray-600 mb-1">
-                          {t("apt")}
-                        </label>
-                        <input
-                          id="aptNo"
-                          name="aptNo"
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
+                {/* Address & Home Access Contextual */}
+                {isHomeService ? (
+                  <>
+                    {/* Address */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("serviceAddress")}</h2>
+                      <div className="space-y-3">
+                        <div>
+                          <label htmlFor="address" className="block text-xs text-gray-600 mb-1">
+                            {t("address")} <span aria-hidden="true">*</span>
+                          </label>
+                          <input
+                            id="address"
+                            name="address"
+                            required
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label htmlFor="aptNo" className="block text-xs text-gray-600 mb-1">
+                              {t("apt")}
+                            </label>
+                            <input
+                              id="aptNo"
+                              name="aptNo"
+                              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="zip" className="block text-xs text-gray-600 mb-1">
+                              {t("zip")} <span aria-hidden="true">*</span>
+                            </label>
+                            <input
+                              id="zip"
+                              name="zip"
+                              required
+                              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label htmlFor="city" className="block text-xs text-gray-600 mb-1">
+                            {t("city")} <span aria-hidden="true">*</span>
+                          </label>
+                          <input
+                            id="city"
+                            name="city"
+                            required
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label htmlFor="zip" className="block text-xs text-gray-600 mb-1">
-                          {t("zip")} <span aria-hidden="true">*</span>
-                        </label>
-                        <input
-                          id="zip"
-                          name="zip"
-                          required
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
                     </div>
-                    <div>
-                      <label htmlFor="city" className="block text-xs text-gray-600 mb-1">
-                        {t("city")} <span aria-hidden="true">*</span>
-                      </label>
-                      <input
-                        id="city"
-                        name="city"
-                        required
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-                </div>
 
-                {/* Home access */}
-                <div className="bg-white rounded-xl border border-gray-200 p-5">
-                  <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("homeAccess")}</h2>
-                  <fieldset className="space-y-2 mb-3">
-                    <legend className="text-xs text-gray-600 mb-2">{t("howEnter")}</legend>
-                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="accessType"
-                        value="someone_home"
-                        defaultChecked
+                    {/* Home access */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("homeAccess")}</h2>
+                      <fieldset className="space-y-2 mb-3">
+                        <legend className="text-xs text-gray-600 mb-2">{t("howEnter")}</legend>
+                        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="accessType"
+                            value="someone_home"
+                            defaultChecked
+                          />
+                          {t("someoneHome")}
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                          <input type="radio" name="accessType" value="hide_keys" />
+                          {t("hideKeys")}
+                        </label>
+                      </fieldset>
+                      <label className="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                        <input
+                          type="checkbox"
+                          name="keepKeyWithProvider"
+                          value="true"
+                        />
+                        {t("keepKey")}
+                      </label>
+                      <div className="mb-3">
+                        <label htmlFor="accessNote" className="block text-xs text-gray-600 mb-1">
+                          {t("accessNote")}
+                        </label>
+                        <textarea
+                          id="accessNote"
+                          name="accessNote"
+                          rows={2}
+                          placeholder={t("accessNotePlaceholder")}
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="additionalNote" className="block text-xs text-gray-600 mb-1">
+                          {t("additionalNote")}
+                        </label>
+                        <textarea
+                          id="additionalNote"
+                          name="additionalNote"
+                          rows={2}
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <input type="hidden" name="address" value="No local / Estabelecimento" />
+                    <input type="hidden" name="city" value="Principal" />
+                    <input type="hidden" name="zip" value="00000-000" />
+                    <input type="hidden" name="accessType" value="someone_home" />
+                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <h2 className="text-sm font-semibold text-gray-900 mb-1">Observações do Agendamento</h2>
+                      <p className="text-xs text-gray-500 mb-3">Deseja adicionar alguma preferência ou aviso especial? (opcional)</p>
+                      <textarea
+                        id="additionalNote"
+                        name="additionalNote"
+                        rows={2}
+                        placeholder="Ex: preferência de profissional, estilo, restrições..."
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                       />
-                      {t("someoneHome")}
-                    </label>
-                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                      <input type="radio" name="accessType" value="hide_keys" />
-                      {t("hideKeys")}
-                    </label>
-                  </fieldset>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 mb-3">
-                    <input
-                      type="checkbox"
-                      name="keepKeyWithProvider"
-                      value="true"
-                    />
-                    {t("keepKey")}
-                  </label>
-                  <div className="mb-3">
-                    <label htmlFor="accessNote" className="block text-xs text-gray-600 mb-1">
-                      {t("accessNote")}
-                    </label>
-                    <textarea
-                      id="accessNote"
-                      name="accessNote"
-                      rows={2}
-                      placeholder={t("accessNotePlaceholder")}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="additionalNote" className="block text-xs text-gray-600 mb-1">
-                      {t("additionalNote")}
-                    </label>
-                    <textarea
-                      id="additionalNote"
-                      name="additionalNote"
-                      rows={2}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                    />
-                  </div>
-                </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Payment method */}
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
@@ -893,13 +1019,28 @@ export function CheckoutClient({
                   </li>
                 ))}
               </ul>
-              <div className="border-t border-gray-100 pt-3 flex justify-between">
-                <span className="text-sm font-semibold text-gray-700">{t("total")}</span>
-                <span className="text-base font-bold text-gray-900">
-                  {formatMoney(estimateTotal, currency, locale)}
-                </span>
+              <div className="border-t border-gray-100 pt-3 space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-sm font-semibold text-gray-700">{t("total")}</span>
+                  <span className="text-base font-bold text-gray-900">
+                    {formatMoney(estimateTotal, currency, locale)}
+                  </span>
+                </div>
+
+                {requireDeposit && (
+                  <div className="pt-2 mt-2 border-t border-dashed border-gray-200 space-y-1">
+                    <div className="flex justify-between text-xs font-bold text-indigo-700 bg-indigo-50 p-2 rounded-lg">
+                      <span>Sinal para Reserva ({depositPercentage}%):</span>
+                      <span>{formatMoney(calculateDeposit(estimateTotal, depositPercentage ?? 30).deposit, currency, locale)}</span>
+                    </div>
+                    <div className="flex justify-between text-[11px] text-gray-500 px-1">
+                      <span>Restante no local:</span>
+                      <span>{formatMoney(calculateDeposit(estimateTotal, depositPercentage ?? 30).remaining, currency, locale)}</span>
+                    </div>
+                  </div>
+                )}
               </div>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-gray-400 mt-2">
                 {t("frequencyLabel", {
                   value:
                     frequency === "WEEKLY" ? tb("freqWeekly")

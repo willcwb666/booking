@@ -7,6 +7,7 @@ import {
   StripeSubscriptionDetail,
 } from "@/server/actions/admin-subscriptions";
 import { toast } from "@/lib/toast-service";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 type Props = {
   companySlug: string;
@@ -140,15 +141,12 @@ export function SubscriptionsModal({ companySlug, companyName, onClose }: Props)
                           <span className="font-bold text-[var(--color-text-heading)] text-sm">
                             {sub.planName}
                           </span>
-                          <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                              isActive
-                                ? "bg-emerald-100 text-emerald-800"
-                                : "bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]"
-                            }`}
+                          <StatusBadge
+                            variant={isActive ? "success" : "neutral"}
+                            tooltip={`Status no Stripe: ${sub.status}`}
                           >
-                            {sub.status}
-                          </span>
+                            {isActive ? "Ativo" : "Inativo"}
+                          </StatusBadge>
                         </div>
                         <p className="text-xs font-mono text-[var(--color-text-subtle)] mt-1">ID: {sub.id}</p>
                       </div>

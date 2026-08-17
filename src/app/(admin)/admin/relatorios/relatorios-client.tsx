@@ -15,7 +15,7 @@ export function AdminRelatoriosClient({ reports }: Props) {
     val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   return (
-    <div className="w-full px-6 sm:px-10 py-8 text-left space-y-8">
+    <div className="page-content space-y-8">
       <div>
         <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs">
           <FileText className="w-4 h-4" />

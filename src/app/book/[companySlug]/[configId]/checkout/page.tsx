@@ -23,7 +23,7 @@ export default async function CheckoutPage({
     include: {
       bookingConfig: {
         include: {
-          company: { select: { name: true, logoUrl: true, currency: true, locale: true } },
+          company: { select: { name: true, logoUrl: true, currency: true, locale: true, businessType: true } },
           agenda: true,
         },
       },
@@ -86,6 +86,27 @@ export default async function CheckoutPage({
     MONTHLY: "Mensal",
   };
 
+  const paymentSettings = await db.companyPaymentSettings.findUnique({
+    where: { companyId: estimate.companyId },
+    select: { requireDeposit: true, depositPercentage: true },
+  });
+
+  const professionals = await db.professional.findMany({
+    where: {
+      companyId: estimate.companyId,
+      isActive: true,
+      agendas: { some: { agendaId: agenda.id } },
+    },
+    select: {
+      id: true,
+      name: true,
+      avatarUrl: true,
+      bio: true,
+      roleTitle: true,
+    },
+    orderBy: { name: "asc" },
+  });
+
   return (
     <CheckoutClient
       companySlug={companySlug}
@@ -97,9 +118,13 @@ export default async function CheckoutPage({
       frequency={FREQ_LABELS[estimate.frequency] ?? estimate.frequency}
       orderItems={orderItems}
       agendaId={agenda.id}
+      professionals={professionals}
       paymentMethods={paymentMethods}
       currency={config.company.currency}
       locale={config.company.locale}
+      businessType={config.company.businessType}
+      requireDeposit={paymentSettings?.requireDeposit ?? false}
+      depositPercentage={paymentSettings?.depositPercentage ?? 30}
       agendaConfig={{
         startDate: agenda.startDate,
         endDate: agenda.endDate,

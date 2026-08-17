@@ -7,6 +7,11 @@ import {
   sendBookingReminderWhatsapp,
   sendBookingCancelledWhatsapp,
 } from "./whatsapp";
+import {
+  sendBookingConfirmedSms,
+  sendBookingReminderSms,
+  sendBookingCancelledSms,
+} from "./sms";
 
 async function getUserPushTokens(customerId: string | null | undefined): Promise<string[]> {
   if (!customerId) return [];
@@ -32,6 +37,7 @@ export async function notifyBookingConfirmed(bookingId: string) {
 
     const address = `${cd.address}${cd.aptNo ? `, ${cd.aptNo}` : ""}, ${cd.city}`;
     const customerName = `${cd.firstName} ${cd.lastName}`;
+    const locale = company.locale ?? "pt-BR";
 
     await sendBookingConfirmationEmail({
       to: cd.email,
@@ -42,7 +48,7 @@ export async function notifyBookingConfirmed(bookingId: string) {
       startTime: booking.scheduledStartTime,
       endTime: booking.scheduledEndTime,
       address,
-      locale: company.locale ?? "pt-BR",
+      locale,
     });
 
     void sendBookingConfirmedWhatsapp({
@@ -52,6 +58,16 @@ export async function notifyBookingConfirmed(bookingId: string) {
       serviceName: bookingConfig.name,
       date: booking.scheduledDate,
       startTime: booking.scheduledStartTime,
+    });
+
+    void sendBookingConfirmedSms({
+      phone: cd.phone,
+      customerName,
+      companyName: company.name,
+      serviceName: bookingConfig.name,
+      date: booking.scheduledDate,
+      startTime: booking.scheduledStartTime,
+      locale,
     });
 
     const tokens = await getUserPushTokens(booking.estimate?.customerId);
@@ -84,6 +100,7 @@ export async function notifyBookingReminder(bookingId: string) {
 
     const address = `${cd.address}${cd.aptNo ? `, ${cd.aptNo}` : ""}, ${cd.city}`;
     const customerName = `${cd.firstName} ${cd.lastName}`;
+    const locale = company.locale ?? "pt-BR";
 
     await sendBookingReminderEmail({
       to: cd.email,
@@ -94,7 +111,7 @@ export async function notifyBookingReminder(bookingId: string) {
       startTime: booking.scheduledStartTime,
       endTime: booking.scheduledEndTime,
       address,
-      locale: company.locale ?? "pt-BR",
+      locale,
     });
 
     void sendBookingReminderWhatsapp({
@@ -104,6 +121,16 @@ export async function notifyBookingReminder(bookingId: string) {
       serviceName: bookingConfig.name,
       date: booking.scheduledDate,
       startTime: booking.scheduledStartTime,
+    });
+
+    void sendBookingReminderSms({
+      phone: cd.phone,
+      customerName,
+      companyName: company.name,
+      serviceName: bookingConfig.name,
+      date: booking.scheduledDate,
+      startTime: booking.scheduledStartTime,
+      locale,
     });
 
     const tokens = await getUserPushTokens(booking.estimate?.customerId);
@@ -131,6 +158,7 @@ export async function notifyBookingCancelled(bookingId: string) {
     if (!booking?.customerDetail) return;
 
     const { customerDetail: cd, company } = booking;
+    const locale = company.locale ?? "pt-BR";
 
     const customerName = `${cd.firstName} ${cd.lastName}`;
     await sendBookingCancelledEmail({
@@ -139,7 +167,7 @@ export async function notifyBookingCancelled(bookingId: string) {
       companyName: company.name,
       date: booking.scheduledDate,
       startTime: booking.scheduledStartTime,
-      locale: company.locale ?? "pt-BR",
+      locale,
     });
 
     void sendBookingCancelledWhatsapp({
@@ -147,6 +175,15 @@ export async function notifyBookingCancelled(bookingId: string) {
       customerName,
       companyName: company.name,
       date: booking.scheduledDate,
+    });
+
+    void sendBookingCancelledSms({
+      phone: cd.phone,
+      customerName,
+      companyName: company.name,
+      date: booking.scheduledDate,
+      startTime: booking.scheduledStartTime,
+      locale,
     });
 
     const tokens = await getUserPushTokens(booking.estimate?.customerId);

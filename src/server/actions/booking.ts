@@ -6,12 +6,14 @@ import { encrypt } from "@/lib/encrypt";
 import { decrypt } from "@/lib/encrypt";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
 import { notifyBookingConfirmed, notifyBookingCancelled, notifyStatusChanged, notifyCompanyNewBooking, notifyBookingCompletedWithInvoice } from "@/lib/notifications";
 import { rateLimit } from "@/lib/rate-limit";
 import { createPixPayment } from "@/lib/mercadopago";
 import { triggerWebhooks } from "@/lib/webhooks";
 import { createCalendarEvent } from "@/lib/google-calendar";
 import { isSlotAvailable } from "@/lib/agenda";
+import { calculateCancellationRefund, resolveOnlineChargeAmount, toStripeCents } from "@/lib/pricing";
 import { notifyWaitlistForDate } from "./waitlist";
 import { randomUUID } from "crypto";
 
@@ -112,12 +114,48 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
     return { success: false, errors: { _: ["Agenda não encontrada"] } };
   }
 
+  const chosenProfessionalId = (formData.get("professionalId") as string) || null;
+
   // Server-side slot validation: o horário precisa coincidir com um slot
   // disponível da grade (bloqueia horários arbitrários, overlaps, dias
   // bloqueados e datas fora da agenda)
-  const slotOk = await isSlotAvailable(agendaId, scheduledDate, scheduledStartTime, scheduledEndTime);
+  const slotOk = await isSlotAvailable(
+    agendaId,
+    scheduledDate,
+    scheduledStartTime,
+    scheduledEndTime,
+    chosenProfessionalId
+  );
   if (!slotOk) {
     return { success: false, errors: { _: ["Horário indisponível. Por favor, escolha outro horário."] } };
+  }
+
+  // Validação de Política Anti-No-Show e Bloqueio de Clientes
+  const companyPolicy = await db.company.findUnique({
+    where: { id: estimate.companyId },
+    select: { maxAllowedNoShows: true },
+  });
+
+  const existingCustomer = await db.customer.findUnique({
+    where: {
+      companyId_email: {
+        companyId: estimate.companyId,
+        email: email.toLowerCase().trim(),
+      },
+    },
+    select: { noShowCount: true },
+  });
+
+  const maxNoShows = companyPolicy?.maxAllowedNoShows ?? 2;
+  if (existingCustomer && existingCustomer.noShowCount >= maxNoShows) {
+    return {
+      success: false,
+      errors: {
+        _: [
+          `Agendamento online bloqueado: limite de ${maxNoShows} falta(s) sem aviso atingido. Entre em contato diretamente com a empresa.`,
+        ],
+      },
+    };
   }
 
   const accessNote = accessNotePlain ? encrypt(accessNotePlain) : null;
@@ -144,6 +182,36 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
   const recurrenceGroupId = rawFrequency !== "ONCE" ? randomUUID() : null;
   const recurrenceFrequency = rawFrequency !== "ONCE" ? rawFrequency : null;
 
+  // Resolução do profissional atribuído (específico ou auto-assignment inteligente)
+  let finalProfessionalId = chosenProfessionalId;
+  if (!finalProfessionalId) {
+    const agendaWithStaff = await db.agenda.findUnique({
+      where: { id: agendaId },
+      include: {
+        professionals: {
+          where: { professional: { isActive: true } },
+          select: { professionalId: true },
+        },
+      },
+    });
+    const staffIds = (agendaWithStaff?.professionals ?? []).map((p) => p.professionalId);
+    if (staffIds.length > 0) {
+      const busyBookings = await db.booking.findMany({
+        where: {
+          agendaId,
+          scheduledDate,
+          scheduledStartTime,
+          status: { notIn: ["CANCELLED"] },
+          professionalId: { in: staffIds },
+        },
+        select: { professionalId: true },
+      });
+      const busyIds = new Set(busyBookings.map((b) => b.professionalId));
+      const availableStaffId = staffIds.find((id) => !busyIds.has(id));
+      finalProfessionalId = availableStaffId ?? staffIds[0];
+    }
+  }
+
   try {
     const booking = await db.$transaction(async (tx) => {
       const newBooking = await tx.booking.create({
@@ -152,6 +220,7 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
           estimateId,
           bookingConfigId: estimate.bookingConfigId,
           agendaId,
+          professionalId: finalProfessionalId,
           scheduledDate,
           scheduledStartTime,
           scheduledEndTime,
@@ -204,6 +273,44 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
         where: { id: estimateId },
         data: { status: "CONVERTED" },
       });
+
+      // Upsert e vinculação da entidade Customer de alta performance
+      try {
+        const normalizedEmail = email.toLowerCase().trim();
+        const customer = await tx.customer.upsert({
+          where: {
+            companyId_email: {
+              companyId: estimate.companyId,
+              email: normalizedEmail,
+            },
+          },
+          update: {
+            firstName,
+            lastName,
+            phone,
+            city,
+            totalBookings: { increment: 1 },
+            lastBookingDate: scheduledDate,
+          },
+          create: {
+            companyId: estimate.companyId,
+            email: normalizedEmail,
+            firstName,
+            lastName,
+            phone,
+            city,
+            totalBookings: 1,
+            lastBookingDate: scheduledDate,
+          },
+        });
+
+        await tx.booking.update({
+          where: { id: newBooking.id },
+          data: { customerId: customer.id },
+        });
+      } catch (custErr) {
+        console.error("[createBookingAction] Falha ao upsertar Customer:", custErr);
+      }
 
       return newBooking;
     });
@@ -292,10 +399,19 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
       return { success: true, bookingId: booking.id, paymentMethod: "CASH_CHECK" };
     }
 
+    // Quando a empresa exige sinal, a cobrança online é apenas o percentual de
+    // reserva (o restante é pago no local); senão, cobra-se o total.
+    // estimate.total permanece o valor cheio.
+    const chargedAmount = resolveOnlineChargeAmount({
+      total: Number(estimate.total),
+      requireDeposit: paymentSettings?.requireDeposit ?? false,
+      depositPercentage: paymentSettings?.depositPercentage ?? 30,
+    });
+
     if (paymentMethod === "PIX") {
       const pixResult = await createPixPayment(paymentSettings!.mercadoPagoAccessToken!, {
         bookingId: booking.id,
-        amount: Number(estimate.total),
+        amount: chargedAmount,
         description: `Agendamento #${booking.id.slice(-8)}`,
         payerEmail: email,
         payerName: `${firstName} ${lastName}`,
@@ -316,7 +432,7 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
     }
 
     // Create Stripe PaymentIntent na moeda da empresa (multi-mercado)
-    const amountCents = Math.round(Number(estimate.total) * 100);
+    const amountCents = toStripeCents(chargedAmount);
     const pi = await stripe.paymentIntents.create({
       amount: amountCents,
       currency: (estimate.company?.currency ?? "BRL").toLowerCase(),
@@ -484,17 +600,20 @@ export async function cancelBookingAction(formData: FormData): Promise<CancelRes
 
   // Issue refund if paid by card
   if (booking.stripePaymentIntentId && booking.paymentStatus === "PAID") {
-    if (isLateCancellation && cancelFeeAmount > 0) {
-      const originalTotal = Number(booking.estimate?.total ?? 0);
-      const refundAmount = Math.max(0, originalTotal - cancelFeeAmount);
-      if (refundAmount > 0) {
-        await stripe.refunds.create({
-          payment_intent: booking.stripePaymentIntentId,
-          amount: Math.round(refundAmount * 100),
-        });
-      }
-    } else {
+    const originalTotal = Number(booking.estimate?.total ?? 0);
+    const { refundAmount, isFullRefund } = calculateCancellationRefund({
+      total: originalTotal,
+      cancellationFee: cancelFeeAmount,
+      isLateCancellation,
+    });
+
+    if (isFullRefund) {
       await stripe.refunds.create({ payment_intent: booking.stripePaymentIntentId });
+    } else if (refundAmount > 0) {
+      await stripe.refunds.create({
+        payment_intent: booking.stripePaymentIntentId,
+        amount: toStripeCents(refundAmount),
+      });
     }
 
     await db.booking.update({
@@ -605,8 +724,9 @@ export async function rescheduleBookingAction(
   companySlug: string,
   newDate: string,
   newStartTime: string,
-  newEndTime: string
-): Promise<StatusResult> {
+  newEndTime: string,
+  isClientInitiated?: boolean
+): Promise<StatusResult & { warning?: string }> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return { success: false, error: "Não autenticado" };
 
@@ -620,10 +740,31 @@ export async function rescheduleBookingAction(
 
   const booking = await db.booking.findFirst({
     where: { id: bookingId, company: { slug: companySlug } },
+    include: { company: true },
   });
   if (!booking) return { success: false, error: "Agendamento não encontrado" };
   if (booking.status !== "CONFIRMED" && booking.status !== "PENDING") {
     return { success: false, error: "Somente agendamentos confirmados podem ser reagendados" };
+  }
+
+  // Verificação dinâmica de antecedência mínima configurada na empresa
+  const minNoticeHours = (booking.company as any).minCancellationNoticeHours ?? 24;
+  const [sYear, sMonth, sDay] = booking.scheduledDate.split("-").map(Number);
+  const [sHour, sMin] = booking.scheduledStartTime.split(":").map(Number);
+  const appointmentTime = new Date(sYear, sMonth - 1, sDay, sHour, sMin);
+  const diffHours = (appointmentTime.getTime() - Date.now()) / (1000 * 60 * 60);
+
+  let warning: string | undefined = undefined;
+
+  if (diffHours < minNoticeHours) {
+    if (isClientInitiated) {
+      return {
+        success: false,
+        error: `Reagendamentos online exigem pelo menos ${minNoticeHours}h de antecedência. Entre em contato diretamente com o estabelecimento.`,
+      };
+    } else {
+      warning = `Aviso: Reagendamento realizado dentro da janela de antecedência mínima (${minNoticeHours}h).`;
+    }
   }
 
   // Server-side slot validation (grade da agenda + exceções + ocupados)
@@ -703,6 +844,15 @@ export async function updateBookingStatusAction(
     return { success: false, error: "Transição de status não permitida" };
   }
 
+  // Validação de integridade de data: Agendamentos futuros NÃO podem ser iniciados nem concluídos
+  const todayStr = new Date().toISOString().split("T")[0];
+  if ((newStatus === "IN_PROGRESS" || newStatus === "COMPLETED") && booking.scheduledDate > todayStr) {
+    return {
+      success: false,
+      error: "Não é permitido iniciar ou concluir agendamentos com data futura.",
+    };
+  }
+
   await db.booking.update({
     where: { id: bookingId },
     data: { status: newStatus as "IN_PROGRESS" | "COMPLETED" },
@@ -720,6 +870,8 @@ export async function updateBookingStatusAction(
 export type ExtraItemInput = {
   description: string;
   amount: number;
+  category?: "SURCHARGE" | "PRODUCT";
+  parentServiceName?: string;
 };
 
 export type CompleteBookingAdjustmentsPayload = {
@@ -752,6 +904,15 @@ export async function completeBookingWithAdjustmentsAction(
   });
   if (!booking) return { success: false, error: "Agendamento não encontrado" };
 
+  // Validação de integridade de data: Agendamentos futuros NÃO podem ser concluídos
+  const todayStr = new Date().toISOString().split("T")[0];
+  if (booking.scheduledDate > todayStr) {
+    return {
+      success: false,
+      error: "Não é permitido concluir agendamentos com data futura.",
+    };
+  }
+
   // Cálculo financeiro do fechamento
   const originalTotal = Number(booking.estimate?.total ?? 0);
   const additionalsTotal = payload.additionalItems.reduce((acc, item) => acc + (Number(item.amount) || 0), 0);
@@ -782,13 +943,25 @@ export async function completeBookingWithAdjustmentsAction(
     }
   }
 
+  const adjustmentsJson = JSON.stringify({
+    additionalItems: payload.additionalItems,
+    discount: discountAmount > 0 ? {
+      type: payload.discountType,
+      value: payload.discountValue,
+      amount: discountAmount,
+      reason: payload.discountReason || "Desconto no atendimento",
+    } : null,
+  });
+
   // Atualizar estimativa e booking para COMPLETED
   await db.$transaction(async (tx) => {
     if (booking.estimateId) {
       await tx.estimate.update({
         where: { id: booking.estimateId },
         data: {
+          subtotal,
           total: finalTotal,
+          notes: adjustmentsJson,
         },
       });
     }
@@ -811,5 +984,217 @@ export async function completeBookingWithAdjustmentsAction(
   );
   void triggerWebhooks(booking.companyId, "BOOKING_COMPLETED", { bookingId: payload.bookingId });
 
+  return { success: true };
+}
+
+export type WalkInPayload = {
+  companySlug: string;
+  customerName: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  serviceTypeId: string;
+  professionalId?: string;
+  status: "IN_PROGRESS" | "CONFIRMED";
+  paymentMethod?: "CASH_CHECK" | "CARD" | "PIX";
+};
+
+export type WalkInResult =
+  | { success: true; data: { bookingId: string } }
+  | { success: false; errors: Record<string, string[]> };
+
+export async function createWalkInBookingAction(
+  payload: WalkInPayload
+): Promise<WalkInResult> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { success: false, errors: { _: ["Não autenticado"] } };
+
+  const company = await db.company.findUnique({
+    where: { slug: payload.companySlug },
+    include: {
+      agendas: { where: { status: "ACTIVE" }, take: 1 },
+      bookingConfigs: { where: { status: "PUBLISHED" }, take: 1 },
+    },
+  });
+  if (!company) return { success: false, errors: { _: ["Empresa não encontrada"] } };
+
+  const member = await db.companyUser.findFirst({
+    where: { companyId: company.id, userId: session.user.id, isActive: true },
+  });
+  if (!member && session.user.role !== "admin") {
+    return { success: false, errors: { _: ["Acesso negado"] } };
+  }
+
+  const serviceType = await db.serviceType.findUnique({
+    where: { id: payload.serviceTypeId },
+  });
+  if (!serviceType) {
+    return { success: false, errors: { _: ["Serviço selecionado não encontrado"] } };
+  }
+
+  // Get active agenda and config
+  let agendaId: string | undefined = company.agendas[0]?.id;
+  if (!agendaId) {
+    const defaultAgenda = await db.agenda.findFirst({ where: { companyId: company.id } });
+    agendaId = defaultAgenda?.id;
+  }
+
+  let bookingConfigId: string | undefined = company.bookingConfigs[0]?.id;
+  if (!bookingConfigId) {
+    const defaultConfig = await db.bookingConfig.findFirst({ where: { companyId: company.id } });
+    bookingConfigId = defaultConfig?.id;
+  }
+
+  if (!agendaId || !bookingConfigId) {
+    return { success: false, errors: { _: ["É necessário ter ao menos uma agenda e configuração de agendamento ativas"] } };
+  }
+
+  const now = new Date();
+  const scheduledDate = now.toISOString().split("T")[0];
+  const startHour = String(now.getHours()).padStart(2, "0");
+  const startMin = String(now.getMinutes()).padStart(2, "0");
+  const scheduledStartTime = `${startHour}:${startMin}`;
+
+  const durationMin = serviceType.estimatedMinutes || 30;
+  const endDateTime = new Date(now.getTime() + durationMin * 60000);
+  const endHour = String(endDateTime.getHours()).padStart(2, "0");
+  const endMin = String(endDateTime.getMinutes()).padStart(2, "0");
+  const scheduledEndTime = `${endHour}:${endMin}`;
+
+  const nameParts = payload.customerName.trim().split(" ");
+  const firstName = nameParts[0] || "Cliente";
+  const lastName = nameParts.slice(1).join(" ") || "Presencial";
+  const email = payload.customerEmail?.trim() || `cliente.${Date.now()}@local.com`;
+  const phone = payload.customerPhone?.trim() || "00000000000";
+
+  const result = await db.$transaction(async (tx) => {
+    // 1. Criar Orçamento convertido
+    const estimate = await tx.estimate.create({
+      data: {
+        companyId: company.id,
+        bookingConfigId,
+        customerName: payload.customerName.trim(),
+        customerEmail: email,
+        status: "CONVERTED",
+        subtotal: serviceType.price,
+        total: serviceType.price,
+        serviceTypes: {
+          create: {
+            serviceTypeId: serviceType.id,
+            quantity: 1,
+            unitPrice: serviceType.price,
+            subtotal: serviceType.price,
+          },
+        },
+      },
+    });
+
+    // 2. Criar Booking
+    const booking = await tx.booking.create({
+      data: {
+        companyId: company.id,
+        bookingConfigId,
+        agendaId,
+        estimateId: estimate.id,
+        scheduledDate,
+        scheduledStartTime,
+        scheduledEndTime,
+        professionalId: payload.professionalId || null,
+        status: payload.status || "IN_PROGRESS",
+        paymentMethod: payload.paymentMethod || "CASH_CHECK",
+        paymentStatus: "PENDING",
+      },
+    });
+
+    // 3. Customer detail
+    await tx.bookingCustomerDetail.create({
+      data: {
+        bookingId: booking.id,
+        firstName,
+        lastName,
+        email,
+        phone,
+        address: "Presencial / Walk-In",
+        city: "Local",
+        zip: "00000-000",
+      },
+    });
+
+    // 4. Upsert Customer entity
+    try {
+      const customer = await tx.customer.upsert({
+        where: {
+          companyId_email: {
+            companyId: company.id,
+            email: email.toLowerCase().trim(),
+          },
+        },
+        update: {
+          firstName,
+          lastName,
+          phone,
+          totalBookings: { increment: 1 },
+          lastBookingDate: scheduledDate,
+        },
+        create: {
+          companyId: company.id,
+          email: email.toLowerCase().trim(),
+          firstName,
+          lastName,
+          phone,
+          totalBookings: 1,
+          lastBookingDate: scheduledDate,
+        },
+      });
+
+      await tx.booking.update({
+        where: { id: booking.id },
+        data: { customerId: customer.id },
+      });
+    } catch {}
+
+    return booking;
+  });
+
+  revalidatePath(`/${payload.companySlug}/agendamentos`);
+  revalidatePath(`/${payload.companySlug}/dashboard`);
+  revalidatePath(`/${payload.companySlug}/comissoes`);
+
+  return { success: true, data: { bookingId: result.id } };
+}
+
+/**
+ * Registrar Faltou (No-Show com ou sem aviso prévio)
+ */
+export async function markBookingNoShowAction(payload: {
+  bookingId: string;
+  companySlug: string;
+  didNotify: boolean;
+}): Promise<{ success: boolean; error?: string }> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { success: false, error: "Não autenticado" };
+
+  const booking = await db.booking.findFirst({
+    where: { id: payload.bookingId, company: { slug: payload.companySlug } },
+    include: { company: true },
+  });
+
+  if (!booking) return { success: false, error: "Agendamento não encontrado" };
+
+  const newStatus = payload.didNotify ? "CANCELLED" : "NO_SHOW";
+  const reason = payload.didNotify
+    ? "Cliente avisou previamente que não poderia comparecer"
+    : "Cliente faltou sem aviso prévio (No-Show registrado)";
+
+  await db.booking.update({
+    where: { id: payload.bookingId },
+    data: {
+      status: newStatus as any,
+      cancelledAt: new Date(),
+      cancelledById: session.user.id,
+      cancellationReason: reason,
+    },
+  });
+
+  revalidatePath(`/${payload.companySlug}/agendamentos`);
   return { success: true };
 }

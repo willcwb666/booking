@@ -29,6 +29,32 @@ export type NotificationItem = {
   createdAt: string;
 };
 
+export async function createSystemNotificationAction(
+  title: string,
+  message: string,
+  type: string = "INFO",
+  companyId?: string,
+  senderUserId?: string
+) {
+  try {
+    const id = `snot_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    await db.$executeRawUnsafe(
+      `INSERT INTO "system_notification" (id, "companyId", "senderUserId", title, message, type, "isRead", "isResolved", "createdAt")
+       VALUES ($1, $2, $3, $4, $5, $6, false, false, NOW())`,
+      id,
+      companyId || null,
+      senderUserId || null,
+      title,
+      message,
+      type
+    );
+    return { success: true };
+  } catch (err) {
+    console.error("Erro ao criar notificação de sistema:", err);
+    return { success: false };
+  }
+}
+
 /**
  * Busca as notificações separadas em Recebidas e Enviadas.
  */
@@ -110,15 +136,13 @@ export async function getSystemNotificationsAction(): Promise<{
       };
 
       if (isSuperAdmin) {
-        // Super Admin recebe solicitações enviadas por clientes (type PRESET_RESET_REQUEST)
         if (r.type === "PRESET_RESET_REQUEST") {
           received.push({ ...item, direction: "RECEIVED" });
         } else {
           sent.push({ ...item, direction: "SENT" });
         }
       } else {
-        // Para empresas comuns: se senderUserId é o próprio usuário -> SENT, senão -> RECEIVED
-        if (r.senderUserId === userId) {
+        if (r.type === "PRESET_RESET_REQUEST" || r.senderUserId === userId) {
           sent.push({ ...item, direction: "SENT" });
         } else {
           received.push({ ...item, direction: "RECEIVED" });
@@ -142,6 +166,17 @@ export async function getSystemNotificationsAction(): Promise<{
 export async function markNotificationReadAction(notificationId: string) {
   await db.$executeRawUnsafe(
     `UPDATE "system_notification" SET "isRead" = true WHERE id = $1`,
+    notificationId
+  );
+  return { success: true };
+}
+
+/**
+ * Marcar notificação como não lida.
+ */
+export async function markNotificationUnreadAction(notificationId: string) {
+  await db.$executeRawUnsafe(
+    `UPDATE "system_notification" SET "isRead" = false WHERE id = $1`,
     notificationId
   );
   return { success: true };
@@ -191,7 +226,7 @@ export async function executeResetFromNotificationAction(
     notificationId
   );
 
-  // 3. Notificar de volta a empresa que o reset foi concluído (com isRead: false para acender o sino do cliente)
+  // 3. Notificar de volta a empresa que o reset foi concluído
   const confirmNotifId = `snot_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
   await db.$executeRawUnsafe(
     `

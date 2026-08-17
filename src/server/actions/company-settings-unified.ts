@@ -32,6 +32,11 @@ export type UnifiedCompanySettingsPayload = {
   minCancellationNoticeHours: number;
   cancellationFee: number;
   lateToleranceMinutes: number;
+  // Política de Clientes & Faltas
+  maxAllowedNoShows: number;
+  // Sinal / Depósito Anti-No-Show
+  requireDeposit?: boolean;
+  depositPercentage?: number;
 };
 
 export async function updateCompanySettingsUnifiedAction(
@@ -66,86 +71,53 @@ export async function updateCompanySettingsUnifiedAction(
     return { success: false, error: "Acesso negado — Sem permissão para alterar as configurações" };
   }
 
-  const cols = [
-    `"minCancellationNoticeHours" INT DEFAULT 24`,
-    `"cancellationFee" DECIMAL(10, 2) DEFAULT 0`,
-    `"lateToleranceMinutes" INT DEFAULT 15`,
-    `"notifyEmailEnabled" BOOLEAN DEFAULT true`,
-    `"notifyTextEnabled" BOOLEAN DEFAULT true`,
-    `"notifySmsEnabled" BOOLEAN DEFAULT false`,
-    `"notifyWhatsappEnabled" BOOLEAN DEFAULT true`,
-    `"heroTitle" TEXT`,
-    `"heroSubtitle" TEXT`,
-    `"brandColor" TEXT DEFAULT '#0f172a'`,
-    `"coverImageUrl" TEXT`,
-    `"socialInstagram" TEXT`,
-    `"socialWhatsapp" TEXT`,
-    `"socialFacebook" TEXT`,
-  ];
-
-  for (const col of cols) {
-    try {
-      await db.$executeRawUnsafe(`ALTER TABLE "company" ADD COLUMN IF NOT EXISTS ${col};`);
-    } catch {
-      // ignora erro individual
-    }
-  }
-
   const market = getMarket(payload.country || "BR") || getMarket("BR")!;
   const timezone = isValidTimezoneForMarket(market.code, payload.timezone)
     ? payload.timezone
     : market.timezones[0].id;
 
-  await db.$executeRawUnsafe(
-    `
-    UPDATE "company"
-    SET name = $1,
-        phone = $2,
-        address = $3,
-        currency = $4,
-        locale = $5,
-        timezone = $6,
-        "logoUrl" = $7,
-        "heroTitle" = $8,
-        "heroSubtitle" = $9,
-        "brandColor" = $10,
-        "coverImageUrl" = $11,
-        "socialInstagram" = $12,
-        "socialWhatsapp" = $13,
-        "socialFacebook" = $14,
-        "notifyEmailEnabled" = $15,
-        "notifyTextEnabled" = $16,
-        "notifySmsEnabled" = $17,
-        "notifyWhatsappEnabled" = $18,
-        "minCancellationNoticeHours" = $19,
-        "cancellationFee" = $20,
-        "lateToleranceMinutes" = $21,
-        "updatedAt" = NOW()
-    WHERE id = $22
-  `,
-    payload.name,
-    payload.phone || null,
-    payload.address || null,
-    market.currency,
-    market.locale,
-    timezone,
-    payload.logoUrl || null,
-    payload.heroTitle || null,
-    payload.heroSubtitle || null,
-    payload.brandColor || "#0f172a",
-    payload.coverImageUrl || null,
-    payload.socialInstagram || null,
-    payload.socialWhatsapp || null,
-    payload.socialFacebook || null,
-    payload.notifyEmailEnabled,
-    payload.notifyTextEnabled,
-    payload.notifySmsEnabled,
-    payload.notifyWhatsappEnabled,
-    payload.minCancellationNoticeHours,
-    payload.cancellationFee,
-    payload.lateToleranceMinutes,
-    targetCompanyId
-  );
+  await db.company.update({
+    where: { id: targetCompanyId },
+    data: {
+      name: payload.name,
+      phone: payload.phone || null,
+      address: payload.address || null,
+      currency: market.currency,
+      locale: market.locale,
+      timezone,
+      logoUrl: payload.logoUrl || null,
+      heroTitle: payload.heroTitle || null,
+      heroSubtitle: payload.heroSubtitle || null,
+      brandColor: payload.brandColor || "#0f172a",
+      coverImageUrl: payload.coverImageUrl || null,
+      socialInstagram: payload.socialInstagram || null,
+      socialWhatsapp: payload.socialWhatsapp || null,
+      socialFacebook: payload.socialFacebook || null,
+      notifyEmailEnabled: payload.notifyEmailEnabled,
+      notifyTextEnabled: payload.notifyTextEnabled,
+      notifySmsEnabled: payload.notifySmsEnabled,
+      notifyWhatsappEnabled: payload.notifyWhatsappEnabled,
+      minCancellationNoticeHours: payload.minCancellationNoticeHours,
+      cancellationFee: payload.cancellationFee,
+      lateToleranceMinutes: payload.lateToleranceMinutes,
+      maxAllowedNoShows: payload.maxAllowedNoShows || 2,
+    },
+  });
+
+  if (payload.requireDeposit !== undefined) {
+    await db.companyPaymentSettings.upsert({
+      where: { companyId: targetCompanyId },
+      update: {
+        requireDeposit: payload.requireDeposit,
+        depositPercentage: payload.depositPercentage ?? 30,
+      },
+      create: {
+        companyId: targetCompanyId,
+        requireDeposit: payload.requireDeposit,
+        depositPercentage: payload.depositPercentage ?? 30,
+      },
+    });
+  }
 
   await logAuditEvent({
     companyId: targetCompanyId,

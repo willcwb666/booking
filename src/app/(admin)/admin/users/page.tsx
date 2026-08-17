@@ -4,12 +4,13 @@ import { AdminUsersClient } from "./users-client";
 export default async function AdminUsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; pageSize?: string }>;
 }) {
-  const { q, page } = await searchParams;
+  const { q, page, pageSize } = await searchParams;
   const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
+  const currentPageSize = [10, 20, 30, 50, 100].includes(Number(pageSize)) ? Number(pageSize) : 10;
 
-  const result = await getAdminUsers({ search: q, page: currentPage });
+  const result = await getAdminUsers({ search: q, page: currentPage, pageSize: currentPageSize });
 
   return (
     <AdminUsersClient
@@ -19,6 +20,7 @@ export default async function AdminUsersPage({
       }))}
       total={result.total}
       page={result.page}
+      pageSize={currentPageSize}
       pageCount={result.pageCount}
       search={q ?? ""}
     />

@@ -63,6 +63,7 @@ export default async function SchedulePage({
         notes: e.notes,
         professional: e.professional,
         createdBy: e.createdBy,
+        bookingId: (e as any).bookingId ?? null,
       }))}
       canManage={role !== "EMPLOYEE"}
       isOwner={role === "OWNER"}

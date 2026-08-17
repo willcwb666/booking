@@ -80,6 +80,7 @@ export function OnboardingWizardClient({
   const [timezone, setTimezone] = useState("America/Sao_Paulo");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [enableMultiCompany, setEnableMultiCompany] = useState(false);
+  const [setupMode, setSetupMode] = useState<"STANDARD" | "CUSTOM">("STANDARD");
 
   // ── Step 2 State (Schedule) ──
   const [workingDays, setWorkingDays] = useState<number[]>([1, 2, 3, 4, 5]);
@@ -190,6 +191,12 @@ export function OnboardingWizardClient({
       setErrorMsg("Digite o nome da empresa (mínimo 2 caracteres).");
       return;
     }
+
+    if (setupMode === "STANDARD") {
+      handleFinalizeStandard();
+      return;
+    }
+
     setStep(2);
   }
 
@@ -201,6 +208,92 @@ export function OnboardingWizardClient({
       return;
     }
     setStep(3);
+  }
+
+  async function handleFinalizeStandard() {
+    if (isSubmitting || isPending) return;
+    setIsSubmitting(true);
+    setErrorMsg(null);
+
+    let activePresets = presets;
+    if (activePresets.length === 0) {
+      try {
+        const res = await fetch(`/api/presets?businessType=${businessType}`);
+        if (res.ok) {
+          const data = await res.json();
+          activePresets = (data.presets || []).map((p: any) => ({
+            id: p.id,
+            title: p.title,
+            description: p.description,
+            defaultPrice: Number(p.defaultPrice),
+            durationMin: p.durationMin,
+            isExtra: p.isExtra,
+            parentTitle: p.parentTitle,
+            selected: true,
+            customPrice: Number(p.defaultPrice),
+            customDuration: p.durationMin,
+          }));
+        }
+      } catch {}
+    }
+
+    const mainServices = activePresets.filter((p) => !p.isExtra);
+    const extraServices = activePresets.filter((p) => p.isExtra);
+
+    const payload: WizardPayload = {
+      name,
+      businessType,
+      planId,
+      phone: phone || undefined,
+      address: address || undefined,
+      logoUrl: logoUrl || undefined,
+      country,
+      timezone,
+      enableMultiCompany,
+      workingDays: [1, 2, 3, 4, 5, 6],
+      startTime: "09:00",
+      endTime: "19:00",
+      intervalMinutes: 30,
+      selectedServices: mainServices.length > 0 ? mainServices.map((m) => ({
+        title: m.title,
+        description: m.description || undefined,
+        price: m.customPrice,
+        durationMin: m.customDuration,
+        isExtra: false,
+        extras: extraServices
+          .filter((ex) => !ex.parentTitle || ex.parentTitle === m.title)
+          .map((ex) => ({
+            title: ex.title,
+            description: ex.description || undefined,
+            price: ex.customPrice,
+            durationMin: ex.customDuration,
+          })),
+      })) : [
+        {
+          title: "Atendimento Principal",
+          price: 50,
+          durationMin: 30,
+          isExtra: false,
+        }
+      ],
+    };
+
+    startTransition(async () => {
+      toast.help("Criando Empresa...", "Configurando o catálogo padrão e ativando o link de agendamento.");
+      const res = await createCompanyWizardAction(payload);
+      if (res.success && res.companySlug) {
+        toast.success("Empresa Criada!", "Sua empresa foi cadastrada com sucesso.");
+        if (res.checkoutUrl) {
+          window.location.href = res.checkoutUrl;
+        } else {
+          router.push(`/${res.companySlug}/dashboard`);
+        }
+      } else {
+        toast.error("Erro no Cadastro", res.error || "Erro ao criar empresa. Tente novamente.");
+        setErrorMsg(res.error || "Erro ao criar empresa. Tente novamente.");
+        setIsSubmitting(false);
+      }
+    });
   }
 
   async function handleFinalizeWizard() {
@@ -421,14 +514,75 @@ export function OnboardingWizardClient({
                   </select>
                 </div>
               </div>
+
+              {/* ── SELETOR DE MODO DE CONFIGURAÇÃO ── */}
+              <div className="pt-3 space-y-2 border-t border-stone-200">
+                <label className="block text-xs font-bold text-stone-700 uppercase">
+                  Como deseja começar?
+                </label>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {/* Card Padrão Recomendado */}
+                  <div
+                    onClick={() => setSetupMode("STANDARD")}
+                    className={`p-4 rounded-2xl border-2 transition-all cursor-pointer text-left relative ${
+                      setupMode === "STANDARD"
+                        ? "border-emerald-600 bg-emerald-50/60 shadow-xs"
+                        : "border-stone-200 bg-white hover:border-stone-300"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-extrabold text-stone-900 flex items-center gap-1.5">
+                        ⚡ Configuração Padrão
+                      </span>
+                      <span className="px-2 py-0.5 bg-emerald-600 text-white rounded-full text-[10px] font-black uppercase tracking-wider">
+                        Recomendado
+                      </span>
+                    </div>
+                    <p className="text-xs text-stone-600 font-medium mt-2 leading-relaxed">
+                      Criamos automaticamente seu catálogo de serviços de {segmentsList.find((s) => s.value === businessType)?.label || "seu segmento"}, grade comercial (Seg a Sáb) e link de agendamento online pronto para uso em segundos. Você pode mudar tudo depois.
+                    </p>
+                  </div>
+
+                  {/* Card Personalizado */}
+                  <div
+                    onClick={() => setSetupMode("CUSTOM")}
+                    className={`p-4 rounded-2xl border-2 transition-all cursor-pointer text-left relative ${
+                      setupMode === "CUSTOM"
+                        ? "border-stone-900 bg-stone-50 shadow-xs"
+                        : "border-stone-200 bg-white hover:border-stone-300"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-extrabold text-stone-900 flex items-center gap-1.5">
+                        🛠️ Personalizada
+                      </span>
+                      <span className="px-2 py-0.5 bg-stone-200 text-stone-700 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                        Passo a Passo
+                      </span>
+                    </div>
+                    <p className="text-xs text-stone-600 font-medium mt-2 leading-relaxed">
+                      Permite ajustar manualmente os dias de atendimento, horários de abertura/fechamento, selecionar quais serviços incluir e definir preços antes de entrar no painel.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="pt-4 flex justify-end">
               <button
                 type="submit"
-                className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-stone-900 text-white font-bold text-sm hover:bg-stone-800 transition-all shadow-md"
+                disabled={isSubmitting || isPending}
+                className={`w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm transition-all shadow-md ${
+                  setupMode === "STANDARD"
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                    : "bg-stone-900 hover:bg-stone-800 text-white"
+                }`}
               >
-                Próximo: Configurar Agenda →
+                {isSubmitting || isPending
+                  ? "Configurando..."
+                  : setupMode === "STANDARD"
+                  ? "🚀 Concluir Cadastro em 1 Clique"
+                  : "Continuar: Personalizar Horários & Serviços →"}
               </button>
             </div>
           </form>

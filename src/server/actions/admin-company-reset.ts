@@ -29,31 +29,33 @@ export async function resetCompanyPresetServicesAction(companyId: string) {
     await db.extraService.deleteMany({ where: { companyId } });
     await db.service.deleteMany({ where: { companyId } });
 
-    // 2. Criar Categoria Principal
-    const serviceCategory = await db.service.create({
-      data: {
-        companyId,
-        name: "Serviços do Segmento (Preset Restaurado)",
-        description: "Catálogo padrão restaurado pelo Super Admin",
-        order: 0,
-      },
-    });
-
-    // 3. Buscar presets do banco para esse segmento via função resiliente
+    // 2. Buscar presets do banco para esse segmento
     const presets = await findActiveSystemPresets(company.businessType);
 
     if (presets.length > 0) {
+      let orderIndex = 0;
       for (const p of presets) {
         if (!p.isExtra) {
+          // Criar cada serviço do preset como um SERVIÇO REAL INDIVIDUAL
+          const srv = await db.service.create({
+            data: {
+              companyId,
+              name: p.title,
+              description: p.description || null,
+              order: orderIndex++,
+              isActive: true,
+            },
+          });
+
           await db.serviceType.create({
             data: {
               companyId,
-              serviceId: serviceCategory.id,
+              serviceId: srv.id,
               name: p.title,
               description: p.description || null,
               price: p.defaultPrice,
-              estimatedMinutes: p.durationMin,
-              order: p.displayOrder,
+              estimatedMinutes: p.durationMin || 30,
+              order: 0,
               isActive: true,
             },
           });
@@ -65,7 +67,7 @@ export async function resetCompanyPresetServicesAction(companyId: string) {
               description: p.description || null,
               price: p.defaultPrice,
               estimatedMinutes: p.durationMin || 15,
-              order: p.displayOrder,
+              order: orderIndex++,
               isActive: true,
             },
           });
@@ -73,7 +75,7 @@ export async function resetCompanyPresetServicesAction(companyId: string) {
       }
     }
 
-    // 4. Criar notificação para a empresa informando a conclusão do reset
+    // 3. Criar notificação para a empresa informando a conclusão do reset
     const notifId = `snot_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     await db.$executeRawUnsafe(
       `
@@ -98,6 +100,7 @@ export async function resetCompanyPresetServicesAction(companyId: string) {
 
     revalidatePath(`/admin/companies`);
     revalidatePath(`/${company.slug}/dashboard`);
+    revalidatePath(`/${company.slug}/servicos`);
 
     return { success: true, message: "Catálogo de serviços resetado com sucesso para o preset padrão e notificação enviada à empresa!" };
   } catch (err) {

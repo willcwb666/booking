@@ -217,3 +217,10 @@ export async function ensureUniqueSlug(baseSlug: string): Promise<string> {
   }
   return slug;
 }
+
+export async function getCompanyBySlug(slug: string) {
+  return db.company.findFirst({
+    where: { slug, isActive: true },
+  });
+}
+

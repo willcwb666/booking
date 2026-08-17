@@ -5,6 +5,7 @@ import { useCompany } from "@/lib/company-context";
 import { formatMoney } from "@/lib/format";
 import type { BookingDashboardStats } from "@/server/queries/bookings";
 import { ClipboardList, Calendar, Globe, Star, Clock, DollarSign, CalendarRange, Tag } from "@/components/ui/icons";
+import { MetricCard } from "@/components/ui/metric-card";
 
 type Props = {
   userName: string;
@@ -29,7 +30,8 @@ export function DashboardClient({ userName, stats, reviewStats }: Props) {
       value: String(stats.todayCount),
       sub: "Confirmados e pendentes",
       href: `/${company.slug}/agendamentos`,
-      icon: <Calendar className="w-5 h-5 text-[var(--color-primary)]" />,
+      icon: <Calendar className="w-4 h-4" />,
+      variant: "primary" as const,
     },
     {
       label: "Aguardando confirmação",
@@ -37,28 +39,32 @@ export function DashboardClient({ userName, stats, reviewStats }: Props) {
       sub: "Pagamento pendente",
       href: `/${company.slug}/agendamentos?status=PENDING`,
       highlight: stats.pendingCount > 0,
-      icon: <Clock className="w-5 h-5 text-[var(--color-warning)]" />,
+      icon: <Clock className="w-4 h-4" />,
+      variant: (stats.pendingCount > 0 ? "warning" : "default") as "warning" | "default",
     },
     {
       label: "Receita do mês",
       value: formatMoney(stats.monthRevenue, company.currency, company.locale),
       sub: "Pagamentos confirmados",
       href: `/${company.slug}/agendamentos`,
-      icon: <DollarSign className="w-5 h-5 text-[var(--color-success)]" />,
+      icon: <DollarSign className="w-4 h-4" />,
+      variant: "success" as const,
     },
     {
       label: "Próximos 7 dias",
       value: String(stats.upcomingWeekCount),
       sub: "Agendamentos futuros",
       href: `/${company.slug}/agendamentos`,
-      icon: <CalendarRange className="w-5 h-5 text-[var(--color-primary)]" />,
+      icon: <CalendarRange className="w-4 h-4" />,
+      variant: "default" as const,
     },
     {
       label: "Avaliação média",
       value: reviewStats.average !== null ? `${reviewStats.average.toFixed(1)} ★` : "—",
       sub: reviewStats.count > 0 ? `${reviewStats.count} avaliação${reviewStats.count !== 1 ? "ões" : ""}` : "Sem avaliações ainda",
       href: `/${company.slug}/avaliacoes`,
-      icon: <Star className="w-5 h-5 text-[var(--color-warning)]" />,
+      icon: <Star className="w-4 h-4" />,
+      variant: "default" as const,
     },
   ];
 
@@ -84,22 +90,22 @@ export function DashboardClient({ userName, stats, reviewStats }: Props) {
         </p>
       </div>
 
-      {/* KPI Cards (Stripe Style) */}
+      {/* KPI Cards Reutilizáveis */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {cards.map((card) => (
           <Link
             key={card.label}
             href={card.href}
-            className={`stat-card block cursor-pointer ${
-              card.highlight ? "!border-[var(--color-warning-border)] bg-[var(--color-warning-light)]" : ""
-            }`}
+            className="block group"
           >
-            <div className="flex items-center justify-between mb-3">
-              <span className="stat-card-label">{card.label}</span>
-              <div className="p-2 rounded-xl bg-[var(--color-bg-subtle)] border border-[var(--color-border)]">{card.icon}</div>
-            </div>
-            <p className="stat-card-value">{card.value}</p>
-            <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">{card.sub}</p>
+            <MetricCard
+              title={card.label}
+              value={card.value}
+              description={card.sub}
+              icon={card.icon}
+              variant={card.variant}
+              className="h-full group-hover:border-indigo-300 transition-colors"
+            />
           </Link>
         ))}
       </div>

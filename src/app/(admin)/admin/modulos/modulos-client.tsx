@@ -9,6 +9,7 @@ import {
   type ActiveCompanyLicenseRow,
 } from "@/server/actions/admin-modules";
 import { toast } from "@/lib/toast-service";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
 import {
   Tag,
   CheckCircle2,
@@ -18,6 +19,7 @@ import {
   Search,
   Check,
   Sparkles,
+  Trash2,
 } from "@/components/ui/icons";
 
 function IconPencil() {
@@ -187,7 +189,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
   }
 
   return (
-    <div className="w-full px-6 sm:px-10 py-8 text-left space-y-8 pb-32">
+    <div className="page-content space-y-8 pb-32">
       {/* Header com Botão + Liberar Módulo(s) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -266,23 +268,27 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                     <td className="px-4 py-3 text-center text-[var(--color-text-muted)]">{lic.grantedAt}</td>
                     <td className="px-4 py-3 text-right space-x-2">
                       {lic.status === "TRIAL" && (
+                        <ActionTooltip label="Renovar Licença (+30d)">
+                          <button
+                            type="button"
+                            onClick={() => handleRenew(lic.companyId, lic.moduleCode)}
+                            disabled={isPending}
+                            className="p-2 bg-[var(--color-primary-light)] hover:bg-[var(--color-primary-light)] text-[var(--color-primary)] font-bold text-xs rounded-lg transition-colors cursor-pointer inline-flex items-center justify-center shadow-2xs"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </button>
+                        </ActionTooltip>
+                      )}
+                      <ActionTooltip label="Revogar Módulo">
                         <button
                           type="button"
-                          onClick={() => handleRenew(lic.companyId, lic.moduleCode)}
+                          onClick={() => handleRevoke(lic.companyId, lic.moduleCode)}
                           disabled={isPending}
-                          className="px-3 py-1.5 bg-[var(--color-primary-light)] hover:bg-[var(--color-primary-light)] text-[var(--color-primary)] font-bold text-[11px] rounded-lg transition-colors"
+                          className="p-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-lg transition-colors cursor-pointer inline-flex items-center justify-center shadow-2xs"
                         >
-                          Renovar (+30d)
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => handleRevoke(lic.companyId, lic.moduleCode)}
-                        disabled={isPending}
-                        className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] rounded-lg transition-colors"
-                      >
-                        Revogar
-                      </button>
+                      </ActionTooltip>
                     </td>
                   </tr>
                 ))

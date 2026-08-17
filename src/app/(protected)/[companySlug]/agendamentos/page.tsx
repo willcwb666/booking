@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { getCompanyBySlugForUser } from "@/server/queries/companies";
 import { getBookings } from "@/server/queries/bookings";
 import { notFound } from "next/navigation";
@@ -19,10 +20,11 @@ export default async function AgendamentosPage({
     to?: string;
     q?: string;
     page?: string;
+    pageSize?: string;
   }>;
 }) {
   const { companySlug } = await params;
-  const { status, from, to, q, page } = await searchParams;
+  const { status, from, to, q, page, pageSize } = await searchParams;
 
   const session = await auth.api.getSession({ headers: await headers() });
   const company = await getCompanyBySlugForUser(companySlug, session!.user.id);
@@ -31,15 +33,29 @@ export default async function AgendamentosPage({
   const safeStatus =
     status && VALID_STATUSES.includes(status) ? (status as BookingStatus | "ALL") : "ALL";
   const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
+  const currentPageSize = [10, 20, 30, 50, 100].includes(Number(pageSize)) ? Number(pageSize) : 10;
 
-  const result = await getBookings({
-    companyId: company.id,
-    status: safeStatus,
-    dateFrom: from,
-    dateTo: to,
-    search: q,
-    page: currentPage,
-  });
+  const [result, services, professionals] = await Promise.all([
+    getBookings({
+      companyId: company.id,
+      status: safeStatus,
+      dateFrom: from,
+      dateTo: to,
+      search: q,
+      page: currentPage,
+      pageSize: currentPageSize,
+    }),
+    db.serviceType.findMany({
+      where: { companyId: company.id, isActive: true },
+      select: { id: true, name: true, price: true, estimatedMinutes: true, service: { select: { name: true } } },
+      orderBy: { name: "asc" },
+    }),
+    db.professional.findMany({
+      where: { companyId: company.id, isActive: true },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
   return (
     <AgendamentosClient
@@ -50,8 +66,17 @@ export default async function AgendamentosPage({
       }))}
       total={result.total}
       page={result.page}
+      pageSize={currentPageSize}
       pageCount={result.pageCount}
       filters={{ status: safeStatus, from: from ?? "", to: to ?? "", q: q ?? "" }}
+      services={services.map((s) => ({
+        id: s.id,
+        name: s.name,
+        price: Number(s.price),
+        category: s.service.name,
+        duration: s.estimatedMinutes,
+      }))}
+      professionals={professionals}
     />
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useTransition } from "react";
+import { useTransition } from "react";
+import Link from "next/link";
 import { deleteScheduleEventAction } from "@/server/actions/schedule";
 import { EVENT_TYPE_CONFIG } from "@/lib/calendar";
 
@@ -14,6 +15,7 @@ type ScheduleEvent = {
   notes: string | null;
   professional: { id: string; name: string } | null;
   createdBy: { id: string; name: string };
+  bookingId?: string | null;
 };
 
 type Props = {
@@ -29,29 +31,11 @@ export function EventDetailDialog({
   companySlug,
   canDelete,
 }: Props) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const [isPending, startTransition] = useTransition();
 
-  useEffect(() => {
-    if (event) {
-      dialogRef.current?.showModal();
-    } else {
-      dialogRef.current?.close();
-    }
-  }, [event]);
+  if (!event) return null;
 
-  function handleDialogClick(e: React.MouseEvent<HTMLDialogElement>) {
-    const rect = dialogRef.current?.getBoundingClientRect();
-    if (
-      rect &&
-      (e.clientX < rect.left ||
-        e.clientX > rect.right ||
-        e.clientY < rect.top ||
-        e.clientY > rect.bottom)
-    ) {
-      onClose();
-    }
-  }
+  const typeCfg = EVENT_TYPE_CONFIG[event.type] ?? EVENT_TYPE_CONFIG.APPOINTMENT;
 
   function handleDelete() {
     if (!event) return;
@@ -65,8 +49,6 @@ export function EventDetailDialog({
     });
   }
 
-  const typeCfg = event ? EVENT_TYPE_CONFIG[event.type] : null;
-
   function formatDate(d: string) {
     return new Date(d + "T12:00:00").toLocaleDateString("pt-BR", {
       weekday: "long",
@@ -77,94 +59,106 @@ export function EventDetailDialog({
   }
 
   return (
-    <dialog
-      ref={dialogRef}
-      onCancel={onClose}
-      onClick={handleDialogClick}
-      aria-labelledby="event-detail-title"
+    <div
+      role="dialog"
       aria-modal="true"
-      className="rounded-2xl shadow-xl border border-[var(--color-border)] p-0 w-full max-w-sm backdrop:bg-black/30 backdrop:backdrop-blur-sm open:flex open:flex-col"
+      aria-labelledby="event-detail-title"
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
-      {event && typeCfg && (
-        <>
-          <div className="px-6 py-5 border-b border-[var(--color-border)] flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <span
-                className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full mb-2 ${typeCfg.bg} ${typeCfg.text}`}
-              >
-                {typeCfg.label}
-              </span>
-              <h2
-                id="event-detail-title"
-                className="text-base font-semibold text-[var(--color-text-heading)]"
-              >
-                {event.title}
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Fechar"
-              className="text-[var(--color-text-subtle)] hover:text-[var(--color-text-heading)] rounded p-1 hover:bg-[var(--color-bg-muted)] shrink-0"
+      <div className="bg-white rounded-2xl shadow-2xl border border-stone-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="px-6 py-5 border-b border-stone-100 flex items-start justify-between gap-3 bg-stone-50/50">
+          <div className="min-w-0">
+            <span
+              className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full mb-2 ${typeCfg.bg} ${typeCfg.text}`}
             >
-              ✕
-            </button>
+              {typeCfg.label}
+            </span>
+            <h2
+              id="event-detail-title"
+              className="text-base font-bold text-stone-900 leading-tight"
+            >
+              {event.title}
+            </h2>
           </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+            aria-label="Fechar modal"
+          >
+            ✕
+          </button>
+        </div>
 
-          <div className="px-6 py-5 space-y-3">
-            <div>
-              <p className="text-xs text-[var(--color-text-subtle)]">Data</p>
-              <p className="text-sm text-[var(--color-text-heading)]">{formatDate(event.date)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-[var(--color-text-subtle)]">Horário</p>
-              <p className="text-sm text-[var(--color-text-heading)]">
-                {event.startTime} – {event.endTime}
+        <div className="px-6 py-4 space-y-3.5">
+          <div className="flex items-center justify-between py-1 border-b border-stone-100">
+            <p className="text-xs font-medium text-stone-500">Data</p>
+            <p className="text-sm font-semibold text-stone-800 capitalize">
+              {formatDate(event.date)}
+            </p>
+          </div>
+          <div className="flex items-center justify-between py-1 border-b border-stone-100">
+            <p className="text-xs font-medium text-stone-500">Horário</p>
+            <p className="text-sm font-semibold text-stone-800">
+              {event.startTime} – {event.endTime}
+            </p>
+          </div>
+          {event.professional && (
+            <div className="flex items-center justify-between py-1 border-b border-stone-100">
+              <p className="text-xs font-medium text-stone-500">Profissional</p>
+              <p className="text-sm font-semibold text-stone-800">
+                {event.professional.name}
               </p>
             </div>
-            {event.professional && (
-              <div>
-                <p className="text-xs text-[var(--color-text-subtle)]">Profissional</p>
-                <p className="text-sm text-[var(--color-text-heading)]">
-                  {event.professional.name}
-                </p>
-              </div>
-            )}
-            {event.notes && (
-              <div>
-                <p className="text-xs text-[var(--color-text-subtle)]">Observações</p>
-                <p className="text-sm text-[var(--color-text-heading)] whitespace-pre-line">
-                  {event.notes}
-                </p>
-              </div>
-            )}
-            <div>
-              <p className="text-xs text-[var(--color-text-subtle)]">Criado por</p>
-              <p className="text-sm text-[var(--color-text-heading)]">{event.createdBy.name}</p>
+          )}
+          {event.notes && (
+            <div className="py-1">
+              <p className="text-xs font-medium text-stone-500 mb-1">Observações</p>
+              <p className="text-xs text-stone-700 bg-stone-50 p-2.5 rounded-xl border border-stone-200/70 whitespace-pre-line leading-relaxed">
+                {event.notes}
+              </p>
             </div>
+          )}
+          <div className="flex items-center justify-between pt-1">
+            <p className="text-xs font-medium text-stone-400">Origem</p>
+            <p className="text-xs text-stone-500">{event.createdBy.name}</p>
           </div>
+        </div>
 
-          {canDelete && (
-            <div className="px-6 pb-5 flex justify-end gap-3">
+        <div className="px-6 py-4 bg-stone-50/70 border-t border-stone-100 flex items-center justify-end gap-3">
+          {event.bookingId ? (
+            <Link
+              href={`/${companySlug}/agendamentos/${event.bookingId}`}
+              className="w-full text-center px-4 py-2.5 bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold rounded-xl shadow-sm transition-all"
+            >
+              Ver Detalhes do Agendamento / Comanda →
+            </Link>
+          ) : (
+            <>
               <button
                 type="button"
                 onClick={onClose}
-                className="btn btn-ghost"
+                className="px-4 py-2 text-xs font-medium text-stone-600 hover:bg-stone-200/60 rounded-xl transition-colors"
               >
                 Fechar
               </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={isPending}
-                className="btn btn-destructive"
-              >
-                {isPending ? "Excluindo..." : "Excluir"}
-              </button>
-            </div>
+              {canDelete && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isPending}
+                  className="px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
+                >
+                  {isPending ? "Excluindo..." : "Excluir Evento"}
+                </button>
+              )}
+            </>
           )}
-        </>
-      )}
-    </dialog>
+        </div>
+      </div>
+    </div>
   );
 }

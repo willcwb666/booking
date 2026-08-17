@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { AdminSidebar } from "@/components/ui/admin-sidebar";
 import { AdminHeader } from "@/components/ui/admin-header";
+import { getCompaniesForSelector } from "@/server/queries/admin";
 
 export default async function AdminLayout({
   children,
@@ -19,11 +20,13 @@ export default async function AdminLayout({
     redirect("/dashboard");
   }
 
+  const companies = await getCompaniesForSelector();
+
   return (
     <div className="app-shell">
-      <AdminSidebar userName={session.user.name} />
+      <AdminSidebar userName={session.user.name} companies={companies} />
       <div className="app-main">
-        <AdminHeader />
+        <AdminHeader companies={companies} />
         <main className="page-container">
           {children}
         </main>

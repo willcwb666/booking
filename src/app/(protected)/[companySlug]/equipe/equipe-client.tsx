@@ -4,6 +4,14 @@ import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { inviteMemberAction, changeRoleAction, removeMemberAction } from "@/server/actions/team";
 import type { TeamMember } from "@/server/queries/team";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { TextInput } from "@/components/forms/form-elements";
+import { Users, UserPlus, Trash2 } from "@/components/ui/icons";
+import { toast } from "@/lib/toast-service";
 
 type SerializedMember = Omit<TeamMember, "joinedAt"> & { joinedAt: string };
 
@@ -20,10 +28,10 @@ const ROLE_LABELS: Record<string, string> = {
   EMPLOYEE: "Funcionário",
 };
 
-const ROLE_COLORS: Record<string, string> = {
-  OWNER: "bg-[var(--color-primary-light)] text-[var(--color-primary)]",
-  MANAGER: "bg-[var(--color-primary-light)] text-[var(--color-primary)]",
-  EMPLOYEE: "bg-[var(--color-bg-muted)] text-[var(--color-text-heading)]",
+const ROLE_VARIANTS: Record<string, "primary" | "secondary" | "neutral"> = {
+  OWNER: "primary",
+  MANAGER: "secondary",
+  EMPLOYEE: "neutral",
 };
 
 function InviteForm({
@@ -34,48 +42,43 @@ function InviteForm({
   onDone: () => void;
 }) {
   const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const email = inputRef.current?.value.trim() ?? "";
     if (!email) return;
-    setError(null);
-    setSuccess(false);
 
     startTransition(async () => {
       const result = await inviteMemberAction(companySlug, email);
       if (!result.success) {
-        setError(result.error);
+        toast.error("Erro ao convidar", result.error);
         return;
       }
-      setSuccess(true);
+      toast.success("Membro convidado!", `O convite foi enviado para ${email}.`);
       if (inputRef.current) inputRef.current.value = "";
       onDone();
     });
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2">
-      <input
+    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
+      <TextInput
         ref={inputRef}
         type="email"
         required
         placeholder="E-mail do novo membro…"
-        className="flex-1 border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+        className="flex-1"
         aria-label="E-mail do membro a convidar"
       />
       <button
         type="submit"
         disabled={pending}
-        className="px-4 py-2 bg-[var(--color-primary)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors shrink-0"
+        className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 cursor-pointer shrink-0 inline-flex items-center justify-center gap-2"
       >
-        {pending ? "Convidando…" : "Convidar"}
+        <UserPlus className="w-4 h-4" />
+        <span>{pending ? "Convidando…" : "Convidar"}</span>
       </button>
-      {error && <p role="alert" className="text-sm text-[var(--color-danger)] self-center">{error}</p>}
-      {success && <p role="status" className="text-sm text-[var(--color-success)] self-center">Membro adicionado!</p>}
     </form>
   );
 }
@@ -90,66 +93,31 @@ function RoleSelect({
   onDone: () => void;
 }) {
   const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
 
   function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const newRole = e.target.value as "MANAGER" | "EMPLOYEE";
     startTransition(async () => {
       const result = await changeRoleAction(companySlug, member.id, newRole);
-      if (!result.success) { setError(result.error); return; }
+      if (!result.success) {
+        toast.error("Falha ao alterar perfil", result.error);
+        return;
+      }
+      toast.success("Perfil atualizado!", `Permissão de ${member.name} alterada para ${ROLE_LABELS[newRole]}.`);
       onDone();
     });
   }
 
   return (
-    <div>
-      <select
-        value={member.role}
-        onChange={handleChange}
-        disabled={pending}
-        aria-label={`Role de ${member.name}`}
-        className="text-xs border border-[var(--color-border)] rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
-      >
-        <option value="MANAGER">Gerente</option>
-        <option value="EMPLOYEE">Funcionário</option>
-      </select>
-      {error && <p className="text-xs text-[var(--color-danger)] mt-0.5">{error}</p>}
-    </div>
-  );
-}
-
-function RemoveButton({
-  companySlug,
-  member,
-  onDone,
-}: {
-  companySlug: string;
-  member: SerializedMember;
-  onDone: () => void;
-}) {
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-
-  function handleRemove() {
-    startTransition(async () => {
-      const result = await removeMemberAction(companySlug, member.id);
-      if (!result.success) { setError(result.error); return; }
-      onDone();
-    });
-  }
-
-  return (
-    <div>
-      <button
-        onClick={handleRemove}
-        disabled={pending}
-        className="px-3 py-1 text-xs border border-[var(--color-danger-border)] text-[var(--color-danger)] rounded-lg hover:bg-[var(--color-danger-light)] disabled:opacity-50 transition-colors"
-        aria-label={`Remover ${member.name} da equipe`}
-      >
-        {pending ? "…" : "Remover"}
-      </button>
-      {error && <p className="text-xs text-[var(--color-danger)] mt-0.5">{error}</p>}
-    </div>
+    <select
+      value={member.role}
+      onChange={handleChange}
+      disabled={pending}
+      aria-label={`Role de ${member.name}`}
+      className="text-xs border border-slate-200 rounded-xl px-3 py-1.5 font-bold text-slate-700 bg-white focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50"
+    >
+      <option value="MANAGER">Gerente</option>
+      <option value="EMPLOYEE">Funcionário</option>
+    </select>
   );
 }
 
@@ -161,44 +129,66 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
   const active = members.filter((m) => m.isActive);
   const inactive = members.filter((m) => !m.isActive);
 
+  // ConfirmDialog State
+  const [memberToRemove, setMemberToRemove] = useState<SerializedMember | null>(null);
+  const [isRemoving, startRemoveTransition] = useTransition();
+
   function refresh() { router.refresh(); }
 
-  return (
-    <div className="page-container">
-     <div className="page-content space-y-6">
-      <div className="page-header !mb-0">
-        <h1 className="page-title">Equipe</h1>
-        <p className="page-description">
-          {active.length} membro{active.length !== 1 ? "s" : ""} ativo{active.length !== 1 ? "s" : ""}
-        </p>
-      </div>
+  function handleConfirmRemove() {
+    if (!memberToRemove) return;
 
-      <div className="space-y-5">
-        {/* Invite */}
+    startRemoveTransition(async () => {
+      const result = await removeMemberAction(companySlug, memberToRemove.id);
+      if (!result.success) {
+        toast.error("Erro ao remover", result.error);
+        return;
+      }
+      toast.success("Membro removido!", `${memberToRemove.name} foi removido da equipe com sucesso.`);
+      setMemberToRemove(null);
+      refresh();
+    });
+  }
+
+  return (
+    <div className="w-full max-w-7xl px-6 sm:px-10 py-8 text-left space-y-8 pb-32">
+      <PageHeader
+        category="Gestão de Acessos"
+        categoryIcon={<Users className="w-4 h-4" />}
+        title="Equipe da Empresa"
+        description={`${active.length} membro${active.length !== 1 ? "s" : ""} ativo${active.length !== 1 ? "s" : ""} no sistema.`}
+      />
+
+      <div className="space-y-6">
+        {/* Convidar membro */}
         {canInvite && (
-          <div className="card card-body">
-            <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-3">Convidar membro</h2>
-            <p className="text-xs text-[var(--color-text-muted)] mb-3">
-              O usuário precisa ter uma conta cadastrada na plataforma.
-              Ao convidar, ele entra com o role de Funcionário.
-            </p>
+          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-4 shadow-xs">
+            <div>
+              <h2 className="text-sm font-extrabold text-slate-900">Convidar novo membro</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                O usuário precisa ter uma conta cadastrada no sistema. Ao convidar, ele ingressa como Funcionário.
+              </p>
+            </div>
             <InviteForm companySlug={companySlug} onDone={refresh} />
           </div>
         )}
 
-        {/* Active members */}
-        <div className="card overflow-hidden">
-          <div className="px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-subtle)]">
-            <h2 className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
-              Membros ativos
+        {/* Membros ativos */}
+        <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+            <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              Membros Ativos ({active.length})
             </h2>
           </div>
+
           {active.length === 0 ? (
-            <p className="px-5 py-8 text-sm text-[var(--color-text-subtle)] text-center">
-              Nenhum membro ativo.
-            </p>
+            <EmptyState
+              icon={<Users className="w-6 h-6" />}
+              title="Nenhum membro ativo"
+              description="Sua equipe ainda não possui membros ativos."
+            />
           ) : (
-            <ul className="divide-y divide-[var(--color-border)]">
+            <ul className="divide-y divide-slate-100">
               {active.map((member) => {
                 const isSelf = member.userId === currentUserId;
                 const canEditRole = isOwner && !isSelf && member.role !== "OWNER";
@@ -207,42 +197,51 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
                 return (
                   <li
                     key={member.id}
-                    className="flex items-center justify-between gap-4 px-5 py-4"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors"
                   >
-                    {/* Avatar + info */}
-                    <div className="flex items-center gap-3 min-w-0">
+                    {/* Avatar + Info */}
+                    <div className="flex items-center gap-3.5 min-w-0">
                       <div
-                        className="w-9 h-9 rounded-full bg-[var(--color-primary-light)] flex items-center justify-center shrink-0"
+                        className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0"
                         aria-hidden="true"
                       >
-                        <span className="text-sm font-bold text-[var(--color-primary)]">
-                          {member.name[0].toUpperCase()}
+                        <span className="text-sm font-extrabold text-indigo-600">
+                          {member.name[0]?.toUpperCase()}
                         </span>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-[var(--color-text-heading)] truncate">
+                        <p className="text-sm font-bold text-slate-900 truncate">
                           {member.name}
                           {isSelf && (
-                            <span className="ml-1.5 text-xs text-[var(--color-text-subtle)]">(você)</span>
+                            <span className="ml-2 text-xs text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded-md">
+                              você
+                            </span>
                           )}
                         </p>
-                        <p className="text-xs text-[var(--color-text-subtle)] truncate">{member.email}</p>
+                        <p className="text-xs text-slate-500 truncate">{member.email}</p>
                       </div>
                     </div>
 
-                    {/* Role + actions */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    {/* Role + Actions */}
+                    <div className="flex items-center gap-3 shrink-0 justify-end">
                       {canEditRole ? (
                         <RoleSelect companySlug={companySlug} member={member} onDone={refresh} />
                       ) : (
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ROLE_COLORS[member.role] ?? "bg-[var(--color-bg-muted)] text-[var(--color-text)]"}`}
-                        >
+                        <StatusBadge variant={ROLE_VARIANTS[member.role] ?? "neutral"}>
                           {ROLE_LABELS[member.role] ?? member.role}
-                        </span>
+                        </StatusBadge>
                       )}
+
                       {canRemove && (
-                        <RemoveButton companySlug={companySlug} member={member} onDone={refresh} />
+                        <ActionTooltip label={`Remover ${member.name}`}>
+                          <button
+                            type="button"
+                            onClick={() => setMemberToRemove(member)}
+                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </ActionTooltip>
                       )}
                     </div>
                   </li>
@@ -252,39 +251,52 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
           )}
         </div>
 
-        {/* Inactive members */}
+        {/* Membros inativos */}
         {inactive.length > 0 && (
-          <div className="card overflow-hidden">
-            <div className="px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-subtle)]">
-              <h2 className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
-                Membros removidos
+          <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs opacity-75">
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Membros Removidos ({inactive.length})
               </h2>
             </div>
-            <ul className="divide-y divide-[var(--color-border)]">
+            <ul className="divide-y divide-slate-100">
               {inactive.map((member) => (
                 <li
                   key={member.id}
-                  className="flex items-center justify-between gap-4 px-5 py-4 opacity-60"
+                  className="flex items-center justify-between gap-4 px-6 py-4 opacity-60"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-full bg-[var(--color-bg-muted)] flex items-center justify-center shrink-0" aria-hidden="true">
-                      <span className="text-sm font-bold text-[var(--color-text-subtle)]">
-                        {member.name[0].toUpperCase()}
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center shrink-0">
+                      <span className="text-sm font-bold text-slate-500">
+                        {member.name[0]?.toUpperCase()}
                       </span>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm text-[var(--color-text-muted)] truncate">{member.name}</p>
-                      <p className="text-xs text-[var(--color-text-subtle)] truncate">{member.email}</p>
+                      <p className="text-sm font-medium text-slate-700 truncate">{member.name}</p>
+                      <p className="text-xs text-slate-400 truncate">{member.email}</p>
                     </div>
                   </div>
-                  <span className="text-xs text-[var(--color-text-subtle)]">Inativo</span>
+                  <StatusBadge variant="neutral">Inativo</StatusBadge>
                 </li>
               ))}
             </ul>
           </div>
         )}
       </div>
-     </div>
+
+      {/* ConfirmDialog de Remoção de Membro */}
+      {memberToRemove && (
+        <ConfirmDialog
+          isOpen={Boolean(memberToRemove)}
+          onClose={() => setMemberToRemove(null)}
+          onConfirm={handleConfirmRemove}
+          title="Remover Membro"
+          description={`Tem certeza que deseja remover ${memberToRemove.name} (${memberToRemove.email}) da equipe da empresa? Ele perderá o acesso ao painel.`}
+          confirmText="Remover Membro"
+          variant="danger"
+          isLoading={isRemoving}
+        />
+      )}
     </div>
   );
 }

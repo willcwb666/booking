@@ -1,780 +1,289 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import React, { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCompany } from "@/lib/company-context";
 import { formatMoney } from "@/lib/format";
-import {
-  createServiceAction,
-  updateServiceAction,
-  deleteServiceAction,
-  reorderServiceAction,
-  createServiceTypeAction,
-  updateServiceTypeAction,
-  deleteServiceTypeAction,
-  reorderServiceTypeAction,
-  createExtraServiceAction,
-  updateExtraServiceAction,
-  deleteExtraServiceAction,
-  reorderExtraServiceAction,
-} from "@/server/actions/services";
-import type { ActionResult } from "@/types";
+import { toggleDisableServiceAction } from "@/server/actions/services";
+import { toast } from "@/lib/toast-service";
+import { Scissors, Plus, Edit2, Ban, CheckCircle2 } from "@/components/ui/icons";
+import { RenderServiceIcon } from "@/components/ui/service-icon-picker";
+import { PageHeader } from "@/components/ui/page-header";
+import { SearchInput } from "@/components/ui/search-input";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Pagination } from "@/components/ui/pagination";
 
-type ServiceType = {
+export type UnifiedServiceRow = {
   id: string;
-  serviceId: string;
   name: string;
   description: string | null;
+  type: "PADRÃO" | "EXTRA";
   price: number;
   estimatedMinutes: number;
-  allowQuantity: boolean;
-  order: number;
+  icon?: string | null;
+  isActive: boolean;
 };
-
-type Service = {
-  id: string;
-  name: string;
-  description: string | null;
-  order: number;
-  serviceTypes: ServiceType[];
-};
-
-type ExtraService = {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  estimatedMinutes: number;
-  allowQuantity: boolean;
-  order: number;
-};
-
-type DialogState =
-  | { type: "none" }
-  | { type: "create-service" }
-  | { type: "edit-service"; item: Service }
-  | { type: "create-service-type"; serviceId: string }
-  | { type: "edit-service-type"; item: ServiceType }
-  | { type: "create-extra" }
-  | { type: "edit-extra"; item: ExtraService };
 
 type Props = {
   companySlug: string;
-  services: Service[];
-  extraServices: ExtraService[];
-  extrasEnabled: boolean;
+  services: UnifiedServiceRow[];
 };
 
 function formatDuration(minutes: number) {
   if (minutes < 60) return `${minutes} min`;
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return m > 0 ? `${h}h ${m}min` : `${h}h`;
+  return m === 0 ? `${h}h` : `${h}h ${m}min`;
 }
 
-function formatCurrency(value: number, currency: string, locale: string) {
-  return formatMoney(value, currency, locale);
-}
-
-function FieldError({ errors, field }: { errors: Record<string, string[]> | null; field: string }) {
-  const msgs = errors?.[field];
-  if (!msgs?.length) return null;
-  return (
-    <p className="text-xs text-red-600 mt-1" role="alert" id={`${field}-error`}>
-      {msgs[0]}
-    </p>
-  );
-}
-
-function GlobalError({ errors }: { errors: Record<string, string[]> | null }) {
-  const msgs = errors?.["_"];
-  if (!msgs?.length) return null;
-  return (
-    <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2" role="alert">
-      {msgs[0]}
-    </p>
-  );
-}
-
-export function ServicosClient({
-  companySlug,
-  services,
-  extraServices,
-  extrasEnabled,
-}: Props) {
-  const router = useRouter();
+export function ServicosClient({ companySlug, services: initialServices }: Props) {
   const company = useCompany();
-  const [activeTab, setActiveTab] = useState<"services" | "extras">("services");
+  const router = useRouter();
+
+  const [servicesList, setServicesList] = useState<UnifiedServiceRow[]>(initialServices);
   const [searchTerm, setSearchTerm] = useState("");
-  const [expandedService, setExpandedService] = useState<string | null>(null);
-  const [dialog, setDialog] = useState<DialogState>({ type: "none" });
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]> | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [isPending, startTransition] = useTransition();
-  const dialogRef = useRef<HTMLDialogElement>(null);
 
-  function openDialog(state: DialogState) {
-    setDialog(state);
-    setFieldErrors(null);
-    // Use rAF to ensure state is set before showModal
-    requestAnimationFrame(() => dialogRef.current?.showModal());
-  }
+  // ConfirmDialog State
+  const [confirmService, setConfirmService] = useState<{
+    id: string;
+    name: string;
+    currentIsActive: boolean;
+  } | null>(null);
 
-  function closeDialog() {
-    dialogRef.current?.close();
-    setDialog({ type: "none" });
-    setFieldErrors(null);
-  }
+  function executeToggleDisable() {
+    if (!confirmService) return;
+    const { id, name, currentIsActive } = confirmService;
 
-  function handleAction(action: (fd: FormData) => Promise<ActionResult>, formData: FormData) {
     startTransition(async () => {
-      const result = await action(formData);
-      if (result.success) {
-        closeDialog();
+      const res = await toggleDisableServiceAction(companySlug, id);
+      if (res.success) {
+        toast.success(
+          currentIsActive ? "Desabilitado!" : "Reativado!",
+          `Serviço '${name}' ${currentIsActive ? "desabilitado" : "reativado"} com sucesso.`
+        );
+        setServicesList(
+          servicesList.map((s) =>
+            s.id === id ? { ...s, isActive: !currentIsActive } : s
+          )
+        );
         router.refresh();
       } else {
-        setFieldErrors(result.errors);
+        toast.error("Erro", "Falha ao alterar status do serviço.");
       }
     });
   }
 
-  function handleReorder(
-    action: (fd: FormData) => Promise<ActionResult>,
-    id: string,
-    direction: "up" | "down",
-    extra?: Record<string, string>
-  ) {
-    const fd = new FormData();
-    fd.set("companySlug", companySlug);
-    fd.set("id", id);
-    fd.set("direction", direction);
-    if (extra) Object.entries(extra).forEach(([k, v]) => fd.set(k, v));
-    startTransition(async () => {
-      await action(fd);
-      router.refresh();
-    });
-  }
+  const filteredServices = servicesList.filter((s) =>
+    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (s.description && s.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
-  function handleDelete(
-    action: (fd: FormData) => Promise<ActionResult>,
-    id: string
-  ) {
-    if (!confirm("Tem certeza? O item será desativado.")) return;
-    const fd = new FormData();
-    fd.set("companySlug", companySlug);
-    fd.set("id", id);
-    startTransition(async () => {
-      await action(fd);
-      router.refresh();
-    });
-  }
-
-  const dialogTitle = {
-    none: "",
-    "create-service": "Novo Serviço",
-    "edit-service": "Editar Serviço",
-    "create-service-type": "Novo Tipo de Serviço",
-    "edit-service-type": "Editar Tipo de Serviço",
-    "create-extra": "Novo Serviço Extra",
-    "edit-extra": "Editar Serviço Extra",
-  }[dialog.type];
+  const paginatedServices = filteredServices.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   return (
-    <div className="page-container">
-     <div className="page-content">
-      {/* Header */}
-      <div className="page-header !mb-6">
-        <h1 className="page-title">Serviços</h1>
-        <p className="page-description">
-          Gerencie os serviços, tipos e extras da sua empresa.
-        </p>
-      </div>
-
-      {/* Tabs */}
-      <div className="border-b border-[var(--color-border)] mb-6" role="tablist" aria-label="Seções de serviços">
-        {(["services", "extras"] as const).map((tab) => (
-          <button
-            key={tab}
-            role="tab"
-            aria-selected={activeTab === tab}
-            aria-controls={`tabpanel-${tab}`}
-            id={`tab-${tab}`}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
-              activeTab === tab
-                ? "border-[var(--color-primary)] text-[var(--color-primary)]"
-                : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
-            }`}
+    <div className="w-full max-w-7xl px-6 sm:px-10 py-8 text-left space-y-8 pb-32">
+      {/* Header Padronizado */}
+      <PageHeader
+        category="Catálogo de Atendimentos"
+        categoryIcon={<Scissors className="w-4 h-4" />}
+        title="Lista de Serviços"
+        description="Gerencie o catálogo de serviços, modalidades e adicionais oferecidos na sua empresa."
+        action={
+          <Link
+            href={`/${companySlug}/servicos/novo`}
+            className="px-6 py-3 bg-[#635bff] hover:bg-[#544dc9] text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer inline-flex items-center gap-2 shrink-0 uppercase"
           >
-            {tab === "services" ? "Serviços e Tipos" : "Extras"}
-          </button>
-        ))}
-      </div>
+            <Plus className="w-4 h-4" />
+            <span>+ SERVIÇO</span>
+          </Link>
+        }
+      />
 
-      {/* Tab: Services */}
-      <div
-        id="tabpanel-services"
-        role="tabpanel"
-        aria-labelledby="tab-services"
-        hidden={activeTab !== "services"}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <div className="relative max-w-xs w-full">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar serviço por nome..."
-              className="input !w-full !pl-9"
-            />
-            <svg className="w-4 h-4 text-[var(--color-text-subtle)] absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
+      {/* Busca Rápida & Tabela Principal */}
+      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-6 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <SearchInput
+            value={searchTerm}
+            onChange={(val) => {
+              setSearchTerm(val);
+              setCurrentPage(1);
+            }}
+            placeholder="Buscar serviço por nome ou descrição..."
+          />
 
-          <button
-            onClick={() => openDialog({ type: "create-service" })}
-            className="btn btn-primary"
-          >
-            + Novo Serviço
-          </button>
+          <span className="text-xs text-slate-500 font-medium">
+            Total: {filteredServices.length} serviço(s)
+          </span>
         </div>
 
-        {services.filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
-          <p className="card text-xs text-[var(--color-text-subtle)] text-center py-12">
-            Nenhum serviço encontrado para essa busca.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {services
-              .filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
-              .map((service, sIdx) => (
-              <div key={service.id} className="card">
-                {/* Service row */}
-                <div className="flex items-center gap-3 px-4 py-3">
-                  <button
-                    onClick={() =>
-                      setExpandedService(
-                        expandedService === service.id ? null : service.id
-                      )
-                    }
-                    className="flex-1 flex items-center gap-3 text-left"
-                    aria-expanded={expandedService === service.id}
-                    aria-controls={`service-types-${service.id}`}
+        {/* TABELA DE SERVIÇOS */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left">
+            <thead>
+              <tr className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200/80">
+                <th className="px-4 py-3">Ícone & Descrição do Serviço</th>
+                <th className="px-4 py-3 text-center">Tipo</th>
+                <th className="px-4 py-3 text-right">Valor</th>
+                <th className="px-4 py-3 text-center">Duração</th>
+                <th className="px-4 py-3 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 font-medium">
+              {filteredServices.length === 0 ? (
+                <tr>
+                  <td colSpan={5}>
+                    <EmptyState
+                      icon={<Scissors className="w-6 h-6" />}
+                      title="Nenhum serviço encontrado"
+                      description="Não encontramos nenhum serviço com o termo buscado ou no catálogo atual."
+                      action={
+                        <Link
+                          href={`/${companySlug}/servicos/novo`}
+                          className="px-4 py-2 bg-indigo-50 text-indigo-700 font-bold text-xs rounded-xl hover:bg-indigo-100 transition-colors inline-block"
+                        >
+                          Cadastrar Novo Serviço
+                        </Link>
+                      }
+                    />
+                  </td>
+                </tr>
+              ) : (
+                paginatedServices.map((srv) => (
+                  <tr
+                    key={srv.id}
+                    className={`hover:bg-slate-50/60 transition-colors ${
+                      !srv.isActive ? "opacity-50 bg-slate-50/30" : ""
+                    }`}
                   >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className={`shrink-0 text-gray-400 transition-transform ${
-                        expandedService === service.id ? "rotate-90" : ""
-                      }`}
-                      aria-hidden="true"
-                    >
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {service.name}
-                      </p>
-                      {service.description && (
-                        <p className="text-xs text-gray-400">{service.description}</p>
-                      )}
-                    </div>
-                    <span className="ml-auto text-xs text-gray-400">
-                      {service.serviceTypes.length} tipo(s)
-                    </span>
-                  </button>
-
-                  <div className="flex items-center gap-1 shrink-0" role="group" aria-label={`Ações para ${service.name}`}>
-                    <button
-                      onClick={() => handleReorder(reorderServiceAction, service.id, "up")}
-                      disabled={sIdx === 0 || isPending}
-                      className="p-1.5 text-gray-400 hover:text-gray-600 disabled:opacity-30 transition-colors"
-                      aria-label="Mover para cima"
-                    >
-                      ↑
-                    </button>
-                    <button
-                      onClick={() => handleReorder(reorderServiceAction, service.id, "down")}
-                      disabled={sIdx === services.length - 1 || isPending}
-                      className="p-1.5 text-gray-400 hover:text-gray-600 disabled:opacity-30 transition-colors"
-                      aria-label="Mover para baixo"
-                    >
-                      ↓
-                    </button>
-                    <button
-                      onClick={() => openDialog({ type: "edit-service", item: service })}
-                      className="px-2.5 py-1 text-xs text-gray-600 hover:text-gray-900 transition-colors"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(deleteServiceAction, service.id)}
-                      className="px-2.5 py-1 text-xs text-red-500 hover:text-red-700 transition-colors"
-                    >
-                      Desativar
-                    </button>
-                  </div>
-                </div>
-
-                {/* Service Types */}
-                {expandedService === service.id && (
-                  <div
-                    id={`service-types-${service.id}`}
-                    className="border-t border-gray-100 px-4 py-3"
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        Tipos
-                      </p>
-                      <button
-                        onClick={() =>
-                          openDialog({
-                            type: "create-service-type",
-                            serviceId: service.id,
-                          })
-                        }
-                        className="text-xs text-[var(--color-primary)] hover:opacity-80 font-medium"
-                      >
-                        + Adicionar tipo
-                      </button>
-                    </div>
-
-                    {service.serviceTypes.length === 0 ? (
-                      <p className="text-xs text-gray-400 py-2">
-                        Nenhum tipo cadastrado.
-                      </p>
-                    ) : (
-                      <table className="w-full text-sm" aria-label={`Tipos do serviço ${service.name}`}>
-                        <caption className="sr-only">
-                          Tipos do serviço {service.name}
-                        </caption>
-                        <thead>
-                          <tr className="text-xs text-gray-400 uppercase">
-                            <th scope="col" className="text-left pb-2 font-medium">Nome</th>
-                            <th scope="col" className="text-right pb-2 font-medium">Preço</th>
-                            <th scope="col" className="text-right pb-2 font-medium">Duração</th>
-                            <th scope="col" className="text-right pb-2 font-medium sr-only">Ações</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {service.serviceTypes.map((st, stIdx) => (
-                            <tr key={st.id} className="border-t border-gray-50">
-                              <td className="py-2">
-                                <p className="font-medium text-gray-800">{st.name}</p>
-                                {st.description && (
-                                  <p className="text-xs text-gray-400">{st.description}</p>
-                                )}
-                              </td>
-                              <td className="py-2 text-right font-medium text-gray-800">
-                                {formatCurrency(st.price, company.currency, company.locale)}
-                              </td>
-                              <td className="py-2 text-right text-gray-500">
-                                {formatDuration(st.estimatedMinutes)}
-                              </td>
-                              <td className="py-2 text-right">
-                                <div className="flex items-center justify-end gap-1" role="group" aria-label={`Ações para tipo ${st.name}`}>
-                                  <button
-                                    onClick={() => handleReorder(reorderServiceTypeAction, st.id, "up", { serviceId: service.id })}
-                                    disabled={stIdx === 0 || isPending}
-                                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 text-xs"
-                                    aria-label="Mover para cima"
-                                  >↑</button>
-                                  <button
-                                    onClick={() => handleReorder(reorderServiceTypeAction, st.id, "down", { serviceId: service.id })}
-                                    disabled={stIdx === service.serviceTypes.length - 1 || isPending}
-                                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 text-xs"
-                                    aria-label="Mover para baixo"
-                                  >↓</button>
-                                  <button
-                                    onClick={() => openDialog({ type: "edit-service-type", item: st })}
-                                    className="px-2 py-0.5 text-xs text-gray-600 hover:text-gray-900"
-                                  >Editar</button>
-                                  <button
-                                    onClick={() => handleDelete(deleteServiceTypeAction, st.id)}
-                                    className="px-2 py-0.5 text-xs text-red-500 hover:text-red-700"
-                                  >Desativar</button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Tab: Extras */}
-      <div
-        id="tabpanel-extras"
-        role="tabpanel"
-        aria-labelledby="tab-extras"
-        hidden={activeTab !== "extras"}
-      >
-        {!extrasEnabled ? (
-          <div className="bg-[var(--color-warning-light)] border border-[var(--color-warning-border)] rounded-xl p-6 text-center">
-            <p className="text-sm font-medium text-[var(--color-warning)] mb-1">
-              Recurso não disponível no plano atual
-            </p>
-            <p className="text-sm text-[var(--color-text-muted)]">
-              Serviços extras estão disponíveis nos planos Normal e Advanced.
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="flex justify-end mb-4">
-              <button
-                onClick={() => openDialog({ type: "create-extra" })}
-                className="btn btn-primary"
-              >
-                + Novo Extra
-              </button>
-            </div>
-
-            {extraServices.length === 0 ? (
-              <p className="card text-sm text-[var(--color-text-subtle)] text-center py-12">
-                Nenhum extra cadastrado ainda.
-              </p>
-            ) : (
-              <div className="table-container">
-                <table className="table">
-                  <caption className="sr-only">Lista de serviços extras</caption>
-                  <thead>
-                    <tr>
-                      <th scope="col">Nome</th>
-                      <th scope="col" className="!text-right">Preço</th>
-                      <th scope="col" className="!text-right">Duração</th>
-                      <th scope="col" className="!text-right sr-only">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {extraServices.map((extra, idx) => (
-                      <tr key={extra.id}>
-                        <td>
-                          <p className="font-medium text-[var(--color-text-heading)]">{extra.name}</p>
-                          {extra.description && (
-                            <p className="text-xs text-[var(--color-text-subtle)]">{extra.description}</p>
+                    {/* Ícone + Descrição */}
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100/80">
+                          {srv.icon ? (
+                            <RenderServiceIcon iconName={srv.icon} className="w-5 h-5" />
+                          ) : (
+                            <Scissors className="w-5 h-5" />
                           )}
-                        </td>
-                        <td className="!text-right font-medium text-[var(--color-text-heading)]">
-                          {formatCurrency(extra.price, company.currency, company.locale)}
-                        </td>
-                        <td className="!text-right text-[var(--color-text-muted)]">
-                          {formatDuration(extra.estimatedMinutes)}
-                        </td>
-                        <td className="!text-right">
-                          <div className="flex items-center justify-end gap-1" role="group" aria-label={`Ações para extra ${extra.name}`}>
-                            <button
-                              onClick={() => handleReorder(reorderExtraServiceAction, extra.id, "up")}
-                              disabled={idx === 0 || isPending}
-                              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 text-xs"
-                              aria-label="Mover para cima"
-                            >↑</button>
-                            <button
-                              onClick={() => handleReorder(reorderExtraServiceAction, extra.id, "down")}
-                              disabled={idx === extraServices.length - 1 || isPending}
-                              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 text-xs"
-                              aria-label="Mover para baixo"
-                            >↓</button>
-                            <button
-                              onClick={() => openDialog({ type: "edit-extra", item: extra })}
-                              className="px-2 py-0.5 text-xs text-gray-600 hover:text-gray-900"
-                            >Editar</button>
-                            <button
-                              onClick={() => handleDelete(deleteExtraServiceAction, extra.id)}
-                              className="px-2 py-0.5 text-xs text-red-500 hover:text-red-700"
-                            >Desativar</button>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-extrabold text-slate-900 text-sm">{srv.name}</p>
+                            {!srv.isActive && (
+                              <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold">
+                                Desativado
+                              </span>
+                            )}
                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </>
+                          {srv.description && (
+                            <p className="text-slate-500 text-[11px] mt-0.5 max-w-sm truncate">
+                              {srv.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Tipo */}
+                    <td className="px-4 py-3.5 text-center">
+                      <StatusBadge
+                        variant={srv.type === "PADRÃO" ? "primary" : "warning"}
+                        size="sm"
+                      >
+                        {srv.type}
+                      </StatusBadge>
+                    </td>
+
+                    {/* Valor */}
+                    <td className="px-4 py-3.5 text-right font-extrabold text-slate-900 text-sm">
+                      {formatMoney(srv.price, company.currency, company.locale)}
+                    </td>
+
+                    {/* Duração */}
+                    <td className="px-4 py-3.5 text-center text-slate-600 font-semibold">
+                      {formatDuration(srv.estimatedMinutes)}
+                    </td>
+
+                    {/* Ações */}
+                    <td className="px-4 py-3.5 text-right space-x-2">
+                      <ActionTooltip label="Editar Serviço">
+                        <Link
+                          href={`/${companySlug}/servicos/${srv.id}/editar`}
+                          className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-all inline-flex items-center justify-center shadow-2xs"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </Link>
+                      </ActionTooltip>
+
+                      <ActionTooltip label={srv.isActive ? "Desabilitar Serviço" : "Reativar Serviço"}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setConfirmService({
+                              id: srv.id,
+                              name: srv.name,
+                              currentIsActive: srv.isActive,
+                            })
+                          }
+                          disabled={isPending}
+                          className={`p-2 rounded-xl transition-all inline-flex items-center justify-center cursor-pointer shadow-2xs ${
+                            srv.isActive
+                              ? "bg-amber-50 hover:bg-amber-100 text-amber-700"
+                              : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700"
+                          }`}
+                        >
+                          {srv.isActive ? <Ban className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                        </button>
+                      </ActionTooltip>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {filteredServices.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredServices.length}
+            pageSize={pageSize}
+            pageSizeOptions={[10, 20, 30, 50, 100]}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            itemLabel="serviços"
+          />
         )}
       </div>
 
-      {/* Dialog */}
-      <dialog
-        ref={dialogRef}
-        className="rounded-xl shadow-xl border border-gray-200 p-0 w-full max-w-md backdrop:bg-black/40"
-        onClose={closeDialog}
-        aria-labelledby="dialog-title"
-      >
-        {dialog.type !== "none" && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const fd = new FormData(e.currentTarget);
-              fd.set("companySlug", companySlug);
-
-              if (dialog.type === "create-service")
-                handleAction(createServiceAction, fd);
-              else if (dialog.type === "edit-service") {
-                fd.set("id", dialog.item.id);
-                handleAction(updateServiceAction, fd);
-              } else if (dialog.type === "create-service-type") {
-                fd.set("serviceId", dialog.serviceId);
-                handleAction(createServiceTypeAction, fd);
-              } else if (dialog.type === "edit-service-type") {
-                fd.set("id", dialog.item.id);
-                fd.set("serviceId", dialog.item.serviceId);
-                handleAction(updateServiceTypeAction, fd);
-              } else if (dialog.type === "create-extra")
-                handleAction(createExtraServiceAction, fd);
-              else if (dialog.type === "edit-extra") {
-                fd.set("id", dialog.item.id);
-                handleAction(updateExtraServiceAction, fd);
-              }
-            }}
-          >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">
-              <h2 id="dialog-title" className="text-base font-semibold text-[var(--color-text-heading)]">
-                {dialogTitle}
-              </h2>
-              <button
-                type="button"
-                onClick={closeDialog}
-                className="text-[var(--color-text-subtle)] hover:text-[var(--color-text)] transition-colors"
-                aria-label="Fechar"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="px-5 py-5 space-y-4">
-              <GlobalError errors={fieldErrors} />
-
-              {/* Service fields */}
-              {(dialog.type === "create-service" || dialog.type === "edit-service") && (
-                <>
-                  <div>
-                    <label htmlFor="name" className="input-label">
-                      Nome <span aria-hidden="true">*</span>
-                    </label>
-                    <input
-                      id="name"
-                      name="name"
-                      type="text"
-                      required
-                      autoFocus
-                      defaultValue={dialog.type === "edit-service" ? dialog.item.name : ""}
-                      className="input"
-                      aria-describedby={fieldErrors?.name ? "name-error" : undefined}
-                    />
-                    <FieldError errors={fieldErrors} field="name" />
-                  </div>
-                  <div>
-                    <label htmlFor="description" className="input-label">
-                      Descrição
-                    </label>
-                    <textarea
-                      id="description"
-                      name="description"
-                      rows={2}
-                      defaultValue={dialog.type === "edit-service" ? (dialog.item.description ?? "") : ""}
-                      className="textarea resize-none"
-                    />
-                    <FieldError errors={fieldErrors} field="description" />
-                  </div>
-                </>
-              )}
-
-              {/* ServiceType fields */}
-              {(dialog.type === "create-service-type" || dialog.type === "edit-service-type") && (
-                <>
-                  <div>
-                    <label htmlFor="name" className="input-label">
-                      Nome <span aria-hidden="true">*</span>
-                    </label>
-                    <input
-                      id="name"
-                      name="name"
-                      type="text"
-                      required
-                      autoFocus
-                      defaultValue={dialog.type === "edit-service-type" ? dialog.item.name : ""}
-                      className="input"
-                    />
-                    <FieldError errors={fieldErrors} field="name" />
-                  </div>
-                  <div>
-                    <label htmlFor="description" className="input-label">
-                      Descrição
-                    </label>
-                    <textarea
-                      id="description"
-                      name="description"
-                      rows={2}
-                      defaultValue={dialog.type === "edit-service-type" ? (dialog.item.description ?? "") : ""}
-                      className="textarea resize-none"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label htmlFor="price" className="input-label">
-                        Preço ({company.currency}) <span aria-hidden="true">*</span>
-                      </label>
-                      <input
-                        id="price"
-                        name="price"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        required
-                        defaultValue={dialog.type === "edit-service-type" ? dialog.item.price : ""}
-                        className="input"
-                        aria-describedby={fieldErrors?.price ? "price-error" : undefined}
-                      />
-                      <FieldError errors={fieldErrors} field="price" />
-                    </div>
-                    <div>
-                      <label htmlFor="estimatedMinutes" className="input-label">
-                        Duração (min) <span aria-hidden="true">*</span>
-                      </label>
-                      <input
-                        id="estimatedMinutes"
-                        name="estimatedMinutes"
-                        type="number"
-                        min="1"
-                        step="1"
-                        required
-                        defaultValue={dialog.type === "edit-service-type" ? dialog.item.estimatedMinutes : ""}
-                        className="input"
-                        aria-describedby={fieldErrors?.estimatedMinutes ? "estimatedMinutes-error" : undefined}
-                      />
-                      <FieldError errors={fieldErrors} field="estimatedMinutes" />
-                    </div>
-                  </div>
-                  <label className="flex items-start gap-2.5 cursor-pointer select-none pt-1">
-                    <input
-                      type="checkbox"
-                      name="allowQuantity"
-                      defaultChecked={dialog.type === "edit-service-type" ? dialog.item.allowQuantity : false}
-                      className="w-4 h-4 mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">
-                      Habilitar quantidade
-                      <span className="block text-xs text-gray-500">
-                        O cliente informa quantas unidades deseja (ex.: troca de pneus → nº de pneus)
-                      </span>
-                    </span>
-                  </label>
-                </>
-              )}
-
-              {/* ExtraService fields */}
-              {(dialog.type === "create-extra" || dialog.type === "edit-extra") && (
-                <>
-                  <div>
-                    <label htmlFor="name" className="input-label">
-                      Nome <span aria-hidden="true">*</span>
-                    </label>
-                    <input
-                      id="name"
-                      name="name"
-                      type="text"
-                      required
-                      autoFocus
-                      defaultValue={dialog.type === "edit-extra" ? dialog.item.name : ""}
-                      className="input"
-                    />
-                    <FieldError errors={fieldErrors} field="name" />
-                  </div>
-                  <div>
-                    <label htmlFor="description" className="input-label">
-                      Descrição
-                    </label>
-                    <textarea
-                      id="description"
-                      name="description"
-                      rows={2}
-                      defaultValue={dialog.type === "edit-extra" ? (dialog.item.description ?? "") : ""}
-                      className="textarea resize-none"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label htmlFor="price" className="input-label">
-                        Preço ({company.currency}) <span aria-hidden="true">*</span>
-                      </label>
-                      <input
-                        id="price"
-                        name="price"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        required
-                        defaultValue={dialog.type === "edit-extra" ? dialog.item.price : ""}
-                        className="input"
-                      />
-                      <FieldError errors={fieldErrors} field="price" />
-                    </div>
-                    <div>
-                      <label htmlFor="estimatedMinutes" className="input-label">
-                        Duração (min) <span aria-hidden="true">*</span>
-                      </label>
-                      <input
-                        id="estimatedMinutes"
-                        name="estimatedMinutes"
-                        type="number"
-                        min="1"
-                        step="1"
-                        required
-                        defaultValue={dialog.type === "edit-extra" ? dialog.item.estimatedMinutes : ""}
-                        className="input"
-                      />
-                      <FieldError errors={fieldErrors} field="estimatedMinutes" />
-                    </div>
-                  </div>
-                  <label className="flex items-start gap-2.5 cursor-pointer select-none pt-1">
-                    <input
-                      type="checkbox"
-                      name="allowQuantity"
-                      defaultChecked={dialog.type === "edit-extra" ? dialog.item.allowQuantity : false}
-                      className="w-4 h-4 mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">
-                      Habilitar quantidade
-                      <span className="block text-xs text-gray-500">
-                        O cliente informa quantas unidades deseja ao selecionar este extra
-                      </span>
-                    </span>
-                  </label>
-                </>
-              )}
-            </div>
-
-            <div className="px-5 py-4 border-t border-[var(--color-border)] flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={closeDialog}
-                className="btn btn-ghost"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={isPending}
-                className="btn btn-primary"
-              >
-                {isPending ? "Salvando..." : "Salvar"}
-              </button>
-            </div>
-          </form>
-        )}
-      </dialog>
-     </div>
+      {/* Modal de Confirmação Reutilizável */}
+      {confirmService && (
+        <ConfirmDialog
+          isOpen={Boolean(confirmService)}
+          onClose={() => setConfirmService(null)}
+          onConfirm={executeToggleDisable}
+          title={
+            confirmService.currentIsActive
+              ? "Desabilitar Serviço"
+              : "Reativar Serviço"
+          }
+          description={`Tem certeza que deseja ${
+            confirmService.currentIsActive ? "desabilitar" : "reativar"
+          } o serviço '${confirmService.name}'?`}
+          variant={confirmService.currentIsActive ? "warning" : "success"}
+          confirmText={confirmService.currentIsActive ? "Desabilitar" : "Reativar"}
+          isLoading={isPending}
+        />
+      )}
     </div>
   );
 }

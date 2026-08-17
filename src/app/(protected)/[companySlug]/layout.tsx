@@ -9,6 +9,8 @@ import { MaintenanceBanner } from "@/components/ui/maintenance-banner";
 import { evaluateSubscriptionAccess } from "@/lib/subscription-access";
 import { getPlatformSettingsAction } from "@/server/actions/admin-settings";
 import { SubscriptionBlock } from "./_components/subscription-block";
+import { ModuleGrantPopup } from "@/components/ui/module-grant-popup";
+import { getCompanyLicensedModuleCodesAction } from "@/server/actions/admin-modules";
 
 export default async function CompanyLayout({
   children,
@@ -27,12 +29,13 @@ export default async function CompanyLayout({
 
   const memberRole = company.members?.[0]?.role || "OWNER";
 
-  const [dbUser, userCompanies] = await Promise.all([
+  const [dbUser, userCompanies, licensedModules] = await Promise.all([
     db.user.findUnique({
       where: { id: session.user.id },
       select: { allowMultiCompany: true },
     }),
     getUserCompanies(session.user.id),
+    getCompanyLicensedModuleCodesAction(companySlug),
   ]);
 
   const hasMultiCompanies = (dbUser?.allowMultiCompany ?? false) || userCompanies.length > 1;
@@ -102,6 +105,7 @@ export default async function CompanyLayout({
         <AppSidebar
           userName={session.user.name}
           multiCompany={hasMultiCompanies}
+          licensedModules={licensedModules}
         />
         <main className="app-main overflow-auto">
           <MaintenanceBanner />
@@ -147,6 +151,7 @@ export default async function CompanyLayout({
           )}
 
           <div className="flex-1">
+            <ModuleGrantPopup />
             {children}
           </div>
         </main>

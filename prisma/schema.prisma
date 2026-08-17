@@ -67,6 +67,7 @@ enum BookingStatus {
   COMPLETED
   CANCELLED
   RESCHEDULED
+  NO_SHOW
 }
 
 enum PaymentMethod {
@@ -227,6 +228,7 @@ model Plan {
   stripeProductId      String?
   stripePriceMonthlyId String?
   stripePriceYearlyId  String?
+  isPopular            Boolean?      @default(false)
   features     PlanFeature[]
   companies    Company[]
   createdAt    DateTime      @default(now())
@@ -276,6 +278,7 @@ model Company {
   minCancellationNoticeHours Int     @default(24)
   cancellationFee            Decimal @default(0) @db.Decimal(10, 2)
   lateToleranceMinutes       Int     @default(15)
+  maxAllowedNoShows          Int     @default(2)
   // Notificações e Canais
   notifyEmailEnabled         Boolean @default(true)
   notifyTextEnabled          Boolean @default(true)
@@ -307,6 +310,7 @@ model Company {
   promotions      Promotion[]
   loyaltyProgram  LoyaltyProgram?
   loyaltyAccounts LoyaltyAccount[]
+  customers       Customer[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
@@ -337,6 +341,7 @@ model Service {
   company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   name         String
   description  String?
+  icon         String        @default("scissors")
   isActive     Boolean       @default(true)
   order        Int           @default(0)
   serviceTypes ServiceType[]
@@ -382,6 +387,7 @@ model ExtraService {
   description      String?
   price            Decimal  @db.Decimal(10, 2)
   estimatedMinutes Int
+  icon             String   @default("sparkles")
   allowQuantity    Boolean  @default(false)
   isActive         Boolean  @default(true)
   order            Int      @default(0)
@@ -406,6 +412,14 @@ model Professional {
   phone     String?
   bio       String?
   avatarUrl String?
+  commissionPercentage Float @default(0)
+  commissionRate       Decimal? @default(0) @db.Decimal(5, 2)
+  productCommissionRate Decimal? @default(0) @db.Decimal(5, 2)
+  pixKey               String?
+  pixKeyType           String?
+  roleTitle            String?
+  servicesJson         String?
+  showOnLanding        Boolean? @default(true)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -635,6 +649,9 @@ model Booking {
   rescheduledFrom       Booking?        @relation("RescheduledFrom", fields: [rescheduledFromId], references: [id], onDelete: SetNull)
   rescheduledTo         Booking[]       @relation("RescheduledFrom")
   rescheduledAt         DateTime?
+  // Customer link
+  customerId            String?
+  customer              Customer?       @relation(fields: [customerId], references: [id], onDelete: SetNull)
   // Recurrence
   recurrenceGroupId     String?
   recurrenceFrequency   EstimateFrequency?
@@ -647,6 +664,7 @@ model Booking {
   updatedAt             DateTime        @updatedAt
 
   @@index([companyId, scheduledDate])
+  @@index([companyId, customerId])
   @@index([agendaId, scheduledDate])
   @@map("booking")
 }
@@ -693,6 +711,35 @@ model BookingHomeAccess {
   additionalNote      String?
 
   @@map("booking_home_access")
+}
+
+// ─── Customer ─────────────────────────────────────────────────────────────────
+
+model Customer {
+  id                String    @id @default(cuid())
+  companyId         String
+  company           Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  firstName         String
+  lastName          String
+  email             String
+  phone             String
+  city              String?
+  notes             String?
+  totalBookings     Int       @default(0)
+  completedBookings Int       @default(0)
+  cancelledBookings Int       @default(0)
+  noShowCount       Int       @default(0)
+  totalSpent        Decimal   @default(0) @db.Decimal(10, 2)
+  lastBookingDate   String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  bookings          Booking[]
+
+  @@unique([companyId, email])
+  @@index([companyId])
+  @@index([companyId, phone])
+  @@map("customer")
 }
 
 // ─── Reviews ──────────────────────────────────────────────────────────────────
@@ -802,6 +849,8 @@ model CompanyPaymentSettings {
   enablePix       Boolean  @default(false)
   pixKey          String?
   pixKeyType      String?  // "cpf" | "cnpj" | "email" | "phone" | "random"
+  requireDeposit  Boolean  @default(false)
+  depositPercentage Float  @default(30)
   mercadoPagoAccessToken String? // encrypted
   updatedAt       DateTime @updatedAt
 
@@ -993,4 +1042,44 @@ model SystemNotification {
   @@index([recipientUserId])
   @@index([isRead])
   @@map("system_notification")
+}
+
+model SystemModule {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  name          String
+  description   String
+  icon          String   @default("Tag")
+  monthlyPrice  Decimal  @default(0) @db.Decimal(10, 2)
+  lifetimePrice Decimal  @default(0) @db.Decimal(10, 2)
+  billingType   String   @default("SUBSCRIPTION")
+  category      String   @default("GROWTH")
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  @@map("system_module")
+}
+
+model CompanyModuleLicense {
+  id         String    @id @default(cuid())
+  companyId  String
+  moduleCode String
+  status     String    @default("ACTIVE")
+  expiresAt  DateTime?
+  grantedAt  DateTime  @default(now())
+  grantedBy  String    @default("SYSTEM")
+
+  @@unique([companyId, moduleCode], map: "uniq_company_module")
+  @@map("company_module_license")
+}
+
+model CompanyRole {
+  id          String   @id @default(cuid())
+  companyId   String
+  name        String
+  description String?
+  isPreset    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@map("company_role")
 }

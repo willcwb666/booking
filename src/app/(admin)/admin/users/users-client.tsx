@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useTransition, useState, useRef } from "react";
 import { banUserAction, unbanUserAction, toggleUserAdminAction } from "@/server/actions/admin";
 import type { AdminUserItem } from "@/server/queries/admin";
+import { ActionTooltip } from "@/components/ui/action-tooltip";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { Ban, CheckCircle2, Shield } from "@/components/ui/icons";
 
 type SerializedItem = Omit<AdminUserItem, "createdAt"> & { createdAt: string };
 
@@ -39,12 +42,14 @@ function BanDialog({ userId, onDone }: { userId: string; onDone: () => void }) {
 
   return (
     <>
-      <button
-        onClick={open}
-        className="px-3 py-1 text-xs border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-medium"
-      >
-        Banir
-      </button>
+      <ActionTooltip label="Banir Usuário">
+        <button
+          onClick={open}
+          className="p-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-medium cursor-pointer inline-flex items-center justify-center"
+        >
+          <Ban className="w-4 h-4" />
+        </button>
+      </ActionTooltip>
       <dialog
         ref={dialogRef}
         onClick={(e) => { if (e.target === dialogRef.current) close(); }}
@@ -109,49 +114,63 @@ function UserActions({ item, onDone }: { item: SerializedItem; onDone: () => voi
     <div className="flex gap-2 items-center justify-end flex-wrap">
       {error && <p className="text-xs text-red-600">{error}</p>}
       {item.banned ? (
-        <button
-          onClick={handleUnban}
-          disabled={unbanPending}
-          className="px-3 py-1 text-xs border border-green-200 text-green-700 rounded-lg hover:bg-green-50 disabled:opacity-50 transition-colors font-medium"
-        >
-          {unbanPending ? "…" : "Desbanir"}
-        </button>
+        <ActionTooltip label="Desbanir Usuário">
+          <button
+            onClick={handleUnban}
+            disabled={unbanPending}
+            className="p-2 border border-emerald-200 text-emerald-700 rounded-lg hover:bg-emerald-50 disabled:opacity-50 transition-colors font-medium inline-flex items-center justify-center cursor-pointer"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+          </button>
+        </ActionTooltip>
       ) : (
         <BanDialog userId={item.id} onDone={onDone} />
       )}
-      <button
-        onClick={handleToggleAdmin}
-        disabled={adminPending}
-        className="px-3 py-1 text-xs border border-[var(--color-border)] text-[var(--color-text-muted)] rounded-lg hover:bg-[var(--color-bg-subtle)] disabled:opacity-50 transition-colors font-medium"
-      >
-        {adminPending ? "…" : item.role === "admin" ? "Remover admin" : "Tornar admin"}
-      </button>
+      <ActionTooltip label={item.role === "admin" ? "Remover Privilégios de Admin" : "Promover a Super Admin"}>
+        <button
+          onClick={handleToggleAdmin}
+          disabled={adminPending}
+          className={`p-2 border rounded-lg transition-colors font-medium inline-flex items-center justify-center cursor-pointer disabled:opacity-50 ${
+            item.role === "admin"
+              ? "border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100"
+              : "border-slate-200 text-slate-600 hover:bg-slate-100"
+          }`}
+        >
+          <Shield className="w-4 h-4" />
+        </button>
+      </ActionTooltip>
     </div>
   );
 }
+
+import { Pagination } from "@/components/ui/pagination";
 
 export function AdminUsersClient({
   items,
   total,
   page,
+  pageSize = 10,
   pageCount,
   search,
 }: {
   items: SerializedItem[];
   total: number;
   page: number;
+  pageSize?: number;
   pageCount: number;
   search: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  function buildUrl(updates: { q?: string; page?: number }) {
+  function buildUrl(updates: { q?: string; page?: number; pageSize?: number }) {
     const params = new URLSearchParams();
     const q = updates.q ?? search;
     const p = updates.page ?? page;
+    const ps = updates.pageSize ?? pageSize;
     if (q) params.set("q", q);
     if (p > 1) params.set("page", String(p));
+    if (ps && ps !== 10) params.set("pageSize", String(ps));
     const qs = params.toString();
     return `${pathname}${qs ? `?${qs}` : ""}`;
   }
@@ -163,7 +182,7 @@ export function AdminUsersClient({
   }
 
   return (
-    <div className="w-full max-w-7xl px-6 sm:px-8 py-8 text-left space-y-6">
+    <div className="page-content space-y-6">
       <div>
         <h1 className="text-2xl font-extrabold text-[var(--color-text-heading)] tracking-tight">Usuários Registrados</h1>
         <p className="text-xs text-[var(--color-text-muted)] mt-1">{total} usuário{total !== 1 ? "s" : ""} cadastrado(s) na plataforma</p>
@@ -218,22 +237,22 @@ export function AdminUsersClient({
                       <td className="px-5 py-3 text-center text-[var(--color-text)]">{item.companyCount}</td>
                       <td className="px-5 py-3">
                         {item.role === "admin" ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          <StatusBadge variant="secondary" tooltip="Super Admin da Plataforma">
                             Admin
-                          </span>
+                          </StatusBadge>
                         ) : (
-                          <span className="text-[var(--color-text-subtle)] text-xs">Usuário</span>
+                          <span className="text-[var(--color-text-subtle)] text-xs font-medium">Usuário</span>
                         )}
                       </td>
                       <td className="px-5 py-3">
                         {item.banned ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          <StatusBadge variant="danger" tooltip="Usuário Banido">
                             Banido
-                          </span>
+                          </StatusBadge>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          <StatusBadge variant="success" tooltip="Usuário Ativo">
                             Ativo
-                          </span>
+                          </StatusBadge>
                         )}
                       </td>
                       <td className="px-5 py-3 text-right">
@@ -245,23 +264,15 @@ export function AdminUsersClient({
               </table>
             </div>
 
-            {pageCount > 1 && (
-              <div className="border-t border-[var(--color-border)] px-5 py-3 flex items-center justify-between">
-                <p className="text-xs text-[var(--color-text-muted)]">Página {page} de {pageCount}</p>
-                <div className="flex gap-2">
-                  {page > 1 && (
-                    <Link href={buildUrl({ page: page - 1 })} className="px-3 py-1 text-xs border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-subtle)] transition-colors">
-                      Anterior
-                    </Link>
-                  )}
-                  {page < pageCount && (
-                    <Link href={buildUrl({ page: page + 1 })} className="px-3 py-1 text-xs border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-subtle)] transition-colors">
-                      Próxima
-                    </Link>
-                  )}
-                </div>
-              </div>
-            )}
+            <Pagination
+              currentPage={page}
+              totalItems={total}
+              pageSize={pageSize}
+              pageSizeOptions={[10, 20, 30, 50, 100]}
+              onPageChange={(newPage) => router.push(buildUrl({ page: newPage }))}
+              onPageSizeChange={(newSize) => router.push(buildUrl({ page: 1, pageSize: newSize }))}
+              itemLabel="usuários"
+            />
           </div>
         )}
     </div>
