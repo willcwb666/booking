@@ -47,16 +47,50 @@ export async function POST(req: NextRequest) {
     const pi = event.data.object as Stripe.PaymentIntent;
     const failedBooking = await db.booking.findFirst({
       where: { stripePaymentIntentId: pi.id },
+      select: { id: true },
     });
     if (failedBooking) {
-      await db.$transaction([
-        db.booking.update({
+      await db.$transaction(async (tx) => {
+        // Estorna resgates de gift card: devolve o saldo debitado e reativa o
+        // cartão (pode ter ficado EXHAUSTED), removendo o registro de resgate.
+        const redemptions = await tx.giftCardRedemption.findMany({
+          where: { bookingId: failedBooking.id },
+          select: { id: true, giftCardId: true, amount: true },
+        });
+        for (const r of redemptions) {
+          await tx.giftCard.update({
+            where: { id: r.giftCardId },
+            data: { currentBalance: { increment: Number(r.amount) }, status: "ACTIVE" },
+          });
+          await tx.giftCardRedemption.delete({ where: { id: r.id } });
+        }
+
+        // Estorna crédito de sessão de assinatura/pacote (apenas planos com
+        // saldo finito; ilimitados têm remainingSessions null e não decrementam).
+        const usages = await tx.membershipUsage.findMany({
+          where: { bookingId: failedBooking.id },
+          select: { id: true, customerMembershipId: true },
+        });
+        for (const u of usages) {
+          await tx.customerMembership.updateMany({
+            where: { id: u.customerMembershipId, remainingSessions: { not: null } },
+            data: { remainingSessions: { increment: 1 } },
+          });
+          await tx.membershipUsage.delete({ where: { id: u.id } });
+        }
+
+        await tx.booking.update({
           where: { id: failedBooking.id },
-          data: { paymentStatus: "FAILED", status: "CANCELLED", cancelledAt: new Date(), cancellationReason: "Pagamento falhou" },
-        }),
+          data: {
+            paymentStatus: "FAILED",
+            status: "CANCELLED",
+            cancelledAt: new Date(),
+            cancellationReason: "Pagamento falhou",
+          },
+        });
         // Release the slot so other customers can book this time
-        db.bookingSlot.deleteMany({ where: { bookingId: failedBooking.id } }),
-      ]);
+        await tx.bookingSlot.deleteMany({ where: { bookingId: failedBooking.id } });
+      });
     }
   }
 

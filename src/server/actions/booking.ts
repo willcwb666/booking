@@ -13,7 +13,7 @@ import { createPixPayment } from "@/lib/mercadopago";
 import { triggerWebhooks } from "@/lib/webhooks";
 import { createCalendarEvent } from "@/lib/google-calendar";
 import { isSlotAvailable } from "@/lib/agenda";
-import { calculateCancellationRefund, resolveOnlineChargeAmount, toStripeCents } from "@/lib/pricing";
+import { calculateCancellationRefund, computeBookingCharge, roundMoney, toStripeCents } from "@/lib/pricing";
 import { notifyWaitlistForDate } from "./waitlist";
 import { randomUUID } from "crypto";
 
@@ -54,6 +54,7 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
   const aptNo = (formData.get("aptNo") as string) || null;
   const city = formData.get("city") as string;
   const zip = formData.get("zip") as string;
+  const giftCardCode = (formData.get("giftCardCode") as string)?.trim() || null;
 
   // Home access
   const accessType = (formData.get("accessType") as string) || "someone_home";
@@ -213,7 +214,8 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
   }
 
   try {
-    const booking = await db.$transaction(async (tx) => {
+    const { newBooking, membershipCovered, membershipDiscount, giftCardDebit } =
+      await db.$transaction(async (tx) => {
       const newBooking = await tx.booking.create({
         data: {
           companyId: estimate.companyId,
@@ -312,8 +314,122 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
         console.error("[createBookingAction] Falha ao upsertar Customer:", custErr);
       }
 
-      return newBooking;
+      // ── Clube de Assinaturas / Pacotes: cobertura + débito atômico ──
+      // Erros aqui NÃO são engolidos: propagam e revertem a transação, para
+      // nunca criar um booking cujo débito ficou inconsistente.
+      let membershipCovered = false;
+      let membershipDiscount = 0;
+      {
+        const customerEmail = email.toLowerCase().trim();
+        const activeMembership = await tx.customerMembership.findFirst({
+          where: { companyId: estimate.companyId, customerEmail, status: "ACTIVE" },
+          include: { plan: true },
+          orderBy: { createdAt: "desc" },
+        });
+
+        if (activeMembership) {
+          const plan = activeMembership.plan;
+
+          // O plano cobre este serviço? (serviceIdsJson nulo/vazio = cobre todos).
+          // Usa o bookingConfigId — mesmo identificador do checkCustomerMembershipCoverage.
+          let serviceCovered = true;
+          if (plan.serviceIdsJson) {
+            try {
+              const ids: string[] = JSON.parse(plan.serviceIdsJson);
+              if (ids.length > 0 && !ids.includes(estimate.bookingConfigId)) serviceCovered = false;
+            } catch {
+              /* JSON inválido → trata como cobre tudo */
+            }
+          }
+
+          const isUnlimited = plan.includedSessionsCount === null;
+          const discount = () =>
+            roundMoney((Number(estimate.total) * Number(plan.discountPercent ?? 0)) / 100);
+
+          if (serviceCovered && isUnlimited) {
+            membershipCovered = true;
+            await tx.membershipUsage.create({
+              data: {
+                customerMembershipId: activeMembership.id,
+                bookingId: newBooking.id,
+                serviceName: estimate.bookingConfig.name,
+                notes: "Sessão coberta por plano ilimitado",
+              },
+            });
+          } else if (serviceCovered) {
+            // Débito condicional: só decrementa se ainda há saldo (evita corrida/double-spend)
+            const dec = await tx.customerMembership.updateMany({
+              where: { id: activeMembership.id, remainingSessions: { gt: 0 } },
+              data: { remainingSessions: { decrement: 1 } },
+            });
+            if (dec.count === 1) {
+              membershipCovered = true;
+              await tx.membershipUsage.create({
+                data: {
+                  customerMembershipId: activeMembership.id,
+                  bookingId: newBooking.id,
+                  serviceName: estimate.bookingConfig.name,
+                  notes: "1 crédito de pacote debitado",
+                },
+              });
+            } else {
+              // Sem saldo restante → não coberto, mas o plano pode dar desconto percentual
+              membershipDiscount = discount();
+            }
+          } else {
+            // Serviço fora do plano → aplica apenas o desconto de membro
+            membershipDiscount = discount();
+          }
+        }
+      }
+
+      // ── Gift Card / Vale-Presente: débito atômico sobre o valor após desconto ──
+      let giftCardDebit = 0;
+      if (giftCardCode && !membershipCovered) {
+        const amountBeforeGift = roundMoney(Math.max(0, Number(estimate.total) - membershipDiscount));
+        if (amountBeforeGift > 0) {
+          const card = await tx.giftCard.findFirst({
+            where: {
+              companyId: estimate.companyId,
+              code: giftCardCode.toUpperCase(),
+              status: "ACTIVE",
+              OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+            },
+          });
+
+          if (card && Number(card.currentBalance) > 0) {
+            const debit = roundMoney(Math.min(Number(card.currentBalance), amountBeforeGift));
+            // Débito condicional (race-safe): só aplica se o saldo ainda cobre o valor
+            const upd = await tx.giftCard.updateMany({
+              where: { id: card.id, currentBalance: { gte: debit } },
+              data: { currentBalance: { decrement: debit } },
+            });
+
+            if (upd.count === 1) {
+              giftCardDebit = debit;
+              const refreshed = await tx.giftCard.findUnique({
+                where: { id: card.id },
+                select: { currentBalance: true },
+              });
+              if (refreshed && Number(refreshed.currentBalance) <= 0) {
+                await tx.giftCard.update({ where: { id: card.id }, data: { status: "EXHAUSTED" } });
+              }
+              await tx.giftCardRedemption.create({
+                data: {
+                  giftCardId: card.id,
+                  bookingId: newBooking.id,
+                  amount: debit,
+                  notes: `Resgate aplicado no agendamento #${newBooking.id.slice(-6)}`,
+                },
+              });
+            }
+          }
+        }
+      }
+
+      return { newBooking, membershipCovered, membershipDiscount, giftCardDebit };
     });
+    const booking = newBooking;
 
     // Create recurring series (additional slots for WEEKLY/BIWEEKLY/MONTHLY)
     if (recurrenceGroupId && recurrenceFrequency) {
@@ -390,8 +506,24 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
       }
     }
 
-    if (paymentMethod === "CASH_CHECK") {
-      // CASH_CHECK bookings are immediately CONFIRMED — notify now
+    // Valor devido após cobertura de plano/pacote, desconto de membro e gift card;
+    // e o quanto cobrar online agora (aplicando sinal, se exigido).
+    const { amountDue, onlineCharge } = computeBookingCharge({
+      total: Number(estimate.total),
+      membershipCovered,
+      membershipDiscount,
+      giftCardDebit,
+      requireDeposit: paymentSettings?.requireDeposit ?? false,
+      depositPercentage: paymentSettings?.depositPercentage ?? 30,
+    });
+
+    // Totalmente coberto (plano/pacote ou gift card): nada a cobrar online —
+    // confirma e marca como pago, independente do método escolhido.
+    if (amountDue <= 0) {
+      await db.booking.update({
+        where: { id: booking.id },
+        data: { status: "CONFIRMED", paymentStatus: "PAID" },
+      });
       void notifyBookingConfirmed(booking.id);
       void notifyCompanyNewBooking(booking.id);
       void triggerWebhooks(booking.companyId, "BOOKING_CONFIRMED", { bookingId: booking.id });
@@ -399,19 +531,21 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
       return { success: true, bookingId: booking.id, paymentMethod: "CASH_CHECK" };
     }
 
-    // Quando a empresa exige sinal, a cobrança online é apenas o percentual de
-    // reserva (o restante é pago no local); senão, cobra-se o total.
-    // estimate.total permanece o valor cheio.
-    const chargedAmount = resolveOnlineChargeAmount({
-      total: Number(estimate.total),
-      requireDeposit: paymentSettings?.requireDeposit ?? false,
-      depositPercentage: paymentSettings?.depositPercentage ?? 30,
-    });
+    if (paymentMethod === "CASH_CHECK") {
+      // CASH_CHECK bookings are immediately CONFIRMED — notify now.
+      // O eventual abatimento (gift card) já está registrado; o cliente paga
+      // o restante (amountDue) no local.
+      void notifyBookingConfirmed(booking.id);
+      void notifyCompanyNewBooking(booking.id);
+      void triggerWebhooks(booking.companyId, "BOOKING_CONFIRMED", { bookingId: booking.id });
+      void syncToGoogleCalendar(booking.id);
+      return { success: true, bookingId: booking.id, paymentMethod: "CASH_CHECK" };
+    }
 
     if (paymentMethod === "PIX") {
       const pixResult = await createPixPayment(paymentSettings!.mercadoPagoAccessToken!, {
         bookingId: booking.id,
-        amount: chargedAmount,
+        amount: onlineCharge,
         description: `Agendamento #${booking.id.slice(-8)}`,
         payerEmail: email,
         payerName: `${firstName} ${lastName}`,
@@ -432,7 +566,7 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
     }
 
     // Create Stripe PaymentIntent na moeda da empresa (multi-mercado)
-    const amountCents = toStripeCents(chargedAmount);
+    const amountCents = toStripeCents(onlineCharge);
     const pi = await stripe.paymentIntents.create({
       amount: amountCents,
       currency: (estimate.company?.currency ?? "BRL").toLowerCase(),

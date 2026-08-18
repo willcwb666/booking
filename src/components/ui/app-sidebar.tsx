@@ -26,6 +26,7 @@ import {
   DollarSign,
   CreditCard,
   Bell,
+  Gift,
 } from "./icons";
 
 const ICON = "h-4 w-4 shrink-0";
@@ -94,6 +95,9 @@ export function AppSidebar({
           : []),
         ...(isLicensed("clube_assinaturas")
           ? [{ href: `${base}/assinaturas`, label: "Clube de Assinaturas", icon: <CreditCard className={ICON} /> }]
+          : []),
+        ...(isLicensed("gift_cards")
+          ? [{ href: `${base}/gift-cards`, label: "Vales-Presente", icon: <Gift className={ICON} /> }]
           : []),
       ],
     },

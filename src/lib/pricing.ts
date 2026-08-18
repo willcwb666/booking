@@ -13,6 +13,11 @@ export function toStripeCents(amount: number): number {
   return Math.round(amount * 100);
 }
 
+/** Arredonda um valor monetário para 2 casas decimais. */
+export function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
 export type CommissionResult = {
   /** Valor devido ao profissional. */
   commission: number;
@@ -85,4 +90,48 @@ export function calculateCancellationRefund(params: {
   }
 
   return { refundAmount: total, feeApplied: 0, isFullRefund: true };
+}
+
+export type BookingChargeBreakdown = {
+  /** Valor devido pelo cliente após cobertura de plano, desconto e gift card. */
+  amountDue: number;
+  /** Valor a cobrar online agora (sinal ou total de amountDue). 0 = nada a cobrar. */
+  onlineCharge: number;
+};
+
+/**
+ * Cobrança final de um agendamento, combinando (nesta ordem):
+ * 1. Cobertura total por plano/pacote (`membershipCovered`) → agendamento gratuito;
+ * 2. Desconto percentual de membro (`membershipDiscount`, já em valor);
+ * 3. Abatimento por gift card (`giftCardDebit`, valor já debitado);
+ * 4. Sinal (deposit), se a empresa exigir, sobre o valor devido.
+ *
+ * Os valores de cobertura/desconto/gift já vêm resolvidos (e debitados
+ * atomicamente no banco); esta função apenas deriva o que o cliente paga.
+ */
+export function computeBookingCharge(params: {
+  total: number;
+  membershipCovered: boolean;
+  membershipDiscount: number;
+  giftCardDebit: number;
+  requireDeposit: boolean;
+  depositPercentage: number;
+}): BookingChargeBreakdown {
+  if (params.membershipCovered) {
+    return { amountDue: 0, onlineCharge: 0 };
+  }
+
+  const afterDiscount = roundMoney(Math.max(0, params.total - params.membershipDiscount));
+  const amountDue = roundMoney(Math.max(0, afterDiscount - params.giftCardDebit));
+
+  const onlineCharge =
+    amountDue <= 0
+      ? 0
+      : resolveOnlineChargeAmount({
+          total: amountDue,
+          requireDeposit: params.requireDeposit,
+          depositPercentage: params.depositPercentage,
+        });
+
+  return { amountDue, onlineCharge };
 }

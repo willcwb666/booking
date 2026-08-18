@@ -5,6 +5,7 @@ import {
   calculateDeposit,
   calculateCancellationRefund,
   resolveOnlineChargeAmount,
+  computeBookingCharge,
 } from "./pricing";
 
 describe("toStripeCents", () => {
@@ -81,6 +82,68 @@ describe("resolveOnlineChargeAmount", () => {
     expect(
       resolveOnlineChargeAmount({ total: 150, requireDeposit: true, depositPercentage: 100 }),
     ).toBe(150);
+  });
+});
+
+describe("computeBookingCharge", () => {
+  const base = { requireDeposit: false, depositPercentage: 30 };
+
+  it("sem cobertura/desconto/gift: cobra o total", () => {
+    expect(
+      computeBookingCharge({ total: 200, membershipCovered: false, membershipDiscount: 0, giftCardDebit: 0, ...base }),
+    ).toEqual({ amountDue: 200, onlineCharge: 200 });
+  });
+
+  it("cobertura total do plano: nada a pagar", () => {
+    expect(
+      computeBookingCharge({ total: 200, membershipCovered: true, membershipDiscount: 0, giftCardDebit: 0, ...base }),
+    ).toEqual({ amountDue: 0, onlineCharge: 0 });
+  });
+
+  it("cobertura total ignora gift/desconto residual", () => {
+    expect(
+      computeBookingCharge({ total: 200, membershipCovered: true, membershipDiscount: 50, giftCardDebit: 30, ...base }),
+    ).toEqual({ amountDue: 0, onlineCharge: 0 });
+  });
+
+  it("desconto de membro reduz o valor devido", () => {
+    // 20% de desconto sobre 200 = 160
+    expect(
+      computeBookingCharge({ total: 200, membershipCovered: false, membershipDiscount: 40, giftCardDebit: 0, ...base }),
+    ).toEqual({ amountDue: 160, onlineCharge: 160 });
+  });
+
+  it("gift card parcial abate do valor devido", () => {
+    expect(
+      computeBookingCharge({ total: 200, membershipCovered: false, membershipDiscount: 0, giftCardDebit: 75, ...base }),
+    ).toEqual({ amountDue: 125, onlineCharge: 125 });
+  });
+
+  it("gift card >= total: nada a pagar online", () => {
+    expect(
+      computeBookingCharge({ total: 200, membershipCovered: false, membershipDiscount: 0, giftCardDebit: 200, ...base }),
+    ).toEqual({ amountDue: 0, onlineCharge: 0 });
+  });
+
+  it("desconto + gift combinados", () => {
+    // 200 - 40 (20%) = 160; gift 60 → devido 100
+    expect(
+      computeBookingCharge({ total: 200, membershipCovered: false, membershipDiscount: 40, giftCardDebit: 60, ...base }),
+    ).toEqual({ amountDue: 100, onlineCharge: 100 });
+  });
+
+  it("com sinal exigido, cobra o percentual do valor devido (não do total)", () => {
+    // devido = 200 - 100 (gift) = 100; sinal 30% = 30
+    expect(
+      computeBookingCharge({
+        total: 200,
+        membershipCovered: false,
+        membershipDiscount: 0,
+        giftCardDebit: 100,
+        requireDeposit: true,
+        depositPercentage: 30,
+      }),
+    ).toEqual({ amountDue: 100, onlineCharge: 30 });
   });
 });
 

@@ -317,11 +317,82 @@ export function CheckoutClient({
   const [formErrors, setFormErrors] = useState<Record<string, string[]>>({});
   const [selectedMethodIdx, setSelectedMethodIdx] = useState(0);
 
+  // Membership Club State
+  const [membershipCoverage, setMembershipCoverage] = useState<{
+    isCovered: boolean;
+    planName?: string;
+    membershipId?: string;
+    isUnlimited?: boolean;
+    remainingSessions?: number | null;
+    discountPercent?: number;
+  } | null>(null);
+  const [checkingMembership, setCheckingMembership] = useState(false);
+
+  // Gift Card State
+  const [giftCardInput, setGiftCardInput] = useState("");
+  const [appliedGiftCard, setAppliedGiftCard] = useState<{
+    code: string;
+    balance: number;
+    discountAmount: number;
+  } | null>(null);
+  const [validatingGiftCard, setValidatingGiftCard] = useState(false);
+  const [giftCardError, setGiftCardError] = useState<string | null>(null);
+
   const formRef = useRef<HTMLFormElement>(null);
 
   // Calendar keyboard nav
   const calGridRef = useRef<HTMLTableSectionElement>(null);
   const [focusedDate, setFocusedDate] = useState<string | null>(null);
+
+  async function handleApplyGiftCard() {
+    if (!giftCardInput.trim()) return;
+    setValidatingGiftCard(true);
+    setGiftCardError(null);
+
+    try {
+      const { validateGiftCardAction } = await import("@/server/actions/gift-cards");
+      const res = await validateGiftCardAction(companySlug, giftCardInput.trim());
+      if (res.success && res.data) {
+        const balance = res.data.currentBalance;
+        const discount = Math.min(balance, estimateTotal);
+        setAppliedGiftCard({
+          code: res.data.code,
+          balance,
+          discountAmount: discount,
+        });
+      } else {
+        setGiftCardError(res.error || "Vale-presente inválido");
+      }
+    } catch {
+      setGiftCardError("Erro ao validar vale-presente");
+    } finally {
+      setValidatingGiftCard(false);
+    }
+  }
+
+  function handleRemoveGiftCard() {
+    setAppliedGiftCard(null);
+    setGiftCardInput("");
+    setGiftCardError(null);
+  }
+
+  async function handleEmailCheck(emailStr: string) {
+    const email = emailStr.trim();
+    if (!email || !email.includes("@")) return;
+
+    setCheckingMembership(true);
+    try {
+      const { checkCustomerMembershipCoverageAction } = await import("@/server/actions/memberships");
+      const res = await checkCustomerMembershipCoverageAction(companySlug, email, configId);
+      if (res.success && res.data) {
+        setMembershipCoverage(res.data);
+      }
+    } catch {
+      // ignora
+    } finally {
+      setCheckingMembership(false);
+    }
+  }
 
   function handleDateSelect(dateStr: string, profId: string | null = selectedProfessionalId) {
     if (isDateDisabled(dateStr, agendaConfig)) return;
@@ -754,6 +825,7 @@ export function CheckoutClient({
                         name="email"
                         type="email"
                         required
+                        onBlur={(e) => handleEmailCheck(e.target.value)}
                         className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
@@ -770,6 +842,36 @@ export function CheckoutClient({
                       />
                     </div>
                   </div>
+
+                  {/* BANNER DE COBERTURA DO CLUBE DE ASSINATURAS */}
+                  {checkingMembership && (
+                    <p className="text-xs text-blue-600 animate-pulse mb-3">
+                      Verificando cobertura do Clube de Assinaturas...
+                    </p>
+                  )}
+
+                  {membershipCoverage?.isCovered && (
+                    <div className="mb-3 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs space-y-1">
+                      <div className="flex items-center gap-1.5 font-black text-emerald-900">
+                        <span>✨ Agendamento coberto pelo seu plano:</span>
+                        <span className="underline">{membershipCoverage.planName}</span>
+                      </div>
+                      <p className="text-[11px] text-emerald-700">
+                        {membershipCoverage.isUnlimited
+                          ? "Você possui agendamentos ilimitados ativos. Valor a pagar: R$ 0,00."
+                          : `Será debitado 1 crédito do seu pacote (${membershipCoverage.remainingSessions ?? 0} restante(s)). Valor a pagar: R$ 0,00.`}
+                      </p>
+                    </div>
+                  )}
+
+                  {membershipCoverage && !membershipCoverage.isCovered && membershipCoverage.discountPercent && membershipCoverage.discountPercent > 0 && (
+                    <div className="mb-3 p-3 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs">
+                      <p className="font-bold">
+                        🎁 Membro {membershipCoverage.planName}: {membershipCoverage.discountPercent}% de desconto aplicado!
+                      </p>
+                    </div>
+                  )}
+
                   <label className="flex items-center gap-2 text-sm text-gray-700">
                     <input
                       type="checkbox"
@@ -780,6 +882,61 @@ export function CheckoutClient({
                     />
                     {t("reminders")}
                   </label>
+
+                  {/* VALE-PRESENTE / GIFT CARD */}
+                  <div className="mt-4 pt-3 border-t border-gray-100 space-y-2">
+                    <label className="block text-xs font-bold text-gray-700">
+                      Possui um Vale-Presente / Gift Card?
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={giftCardInput}
+                        onChange={(e) => setGiftCardInput(e.target.value.toUpperCase())}
+                        placeholder="Ex: GIFT-8X9K-42M1"
+                        disabled={!!appliedGiftCard}
+                        className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs uppercase font-mono text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                      />
+                      {appliedGiftCard ? (
+                        <button
+                          type="button"
+                          onClick={handleRemoveGiftCard}
+                          className="px-3 py-2 text-xs font-bold text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 rounded-lg transition-colors cursor-pointer"
+                        >
+                          Remover
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleApplyGiftCard}
+                          disabled={validatingGiftCard || !giftCardInput.trim()}
+                          className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg transition-colors cursor-pointer"
+                        >
+                          {validatingGiftCard ? "Validando..." : "Aplicar"}
+                        </button>
+                      )}
+                    </div>
+
+                    {giftCardError && (
+                      <p className="text-[11px] text-red-600 font-medium">{giftCardError}</p>
+                    )}
+
+                    {appliedGiftCard && (
+                      <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between">
+                        <span>
+                          ✓ Vale {appliedGiftCard.code} aplicado (Saldo: {formatMoney(appliedGiftCard.balance, currency, locale)})
+                        </span>
+                        <span className="font-bold">
+                          - {formatMoney(appliedGiftCard.discountAmount, currency, locale)}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Hidden input para submissão no form */}
+                    {appliedGiftCard && (
+                      <input type="hidden" name="giftCardCode" value={appliedGiftCard.code} />
+                    )}
+                  </div>
                 </div>
 
                 {/* Address & Home Access Contextual */}
@@ -1020,12 +1177,52 @@ export function CheckoutClient({
                 ))}
               </ul>
               <div className="border-t border-gray-100 pt-3 space-y-1.5">
-                <div className="flex justify-between">
-                  <span className="text-sm font-semibold text-gray-700">{t("total")}</span>
-                  <span className="text-base font-bold text-gray-900">
-                    {formatMoney(estimateTotal, currency, locale)}
-                  </span>
-                </div>
+                {membershipCoverage?.isCovered ? (
+                  <>
+                    <div className="flex justify-between text-xs text-emerald-700 font-semibold bg-emerald-50 p-2 rounded-lg">
+                      <span>Plano {membershipCoverage.planName}:</span>
+                      <span>- {formatMoney(estimateTotal, currency, locale)}</span>
+                    </div>
+                    <div className="flex justify-between pt-1">
+                      <span className="text-sm font-semibold text-gray-700">{t("total")}</span>
+                      <span className="text-base font-bold text-emerald-700">
+                        {formatMoney(0, currency, locale)} (Coberto)
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {membershipCoverage?.discountPercent && membershipCoverage.discountPercent > 0 && (
+                      <div className="flex justify-between text-xs text-indigo-700 font-semibold bg-indigo-50 p-2 rounded-lg">
+                        <span>Desconto Membro ({membershipCoverage.discountPercent}%):</span>
+                        <span>- {formatMoney((estimateTotal * membershipCoverage.discountPercent) / 100, currency, locale)}</span>
+                      </div>
+                    )}
+
+                    {appliedGiftCard && (
+                      <div className="flex justify-between text-xs text-emerald-700 font-semibold bg-emerald-50 p-2 rounded-lg">
+                        <span>Vale-Presente ({appliedGiftCard.code}):</span>
+                        <span>- {formatMoney(appliedGiftCard.discountAmount, currency, locale)}</span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between pt-1">
+                      <span className="text-sm font-semibold text-gray-700">{t("total")}</span>
+                      <span className="text-base font-bold text-gray-900">
+                        {formatMoney(
+                          Math.max(
+                            0,
+                            (membershipCoverage?.discountPercent
+                              ? estimateTotal * (1 - membershipCoverage.discountPercent / 100)
+                              : estimateTotal) - (appliedGiftCard?.discountAmount || 0)
+                          ),
+                          currency,
+                          locale
+                        )}
+                      </span>
+                    </div>
+                  </>
+                )}
 
                 {requireDeposit && (
                   <div className="pt-2 mt-2 border-t border-dashed border-gray-200 space-y-1">

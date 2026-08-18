@@ -311,6 +311,9 @@ model Company {
   loyaltyProgram  LoyaltyProgram?
   loyaltyAccounts LoyaltyAccount[]
   customers       Customer[]
+  membershipPlans     MembershipPlan[]
+  customerMemberships CustomerMembership[]
+  giftCards           GiftCard[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
@@ -1083,3 +1086,110 @@ model CompanyRole {
 
   @@map("company_role")
 }
+
+// ─── Clube de Assinaturas & Pacotes de Sessões ──────────────────────────────────
+
+model MembershipPlan {
+  id                    String               @id @default(cuid())
+  companyId             String
+  name                  String
+  description           String?
+  price                 Decimal              @db.Decimal(10, 2)
+  interval              String               @default("month") // month | quarter | year | one_time_package
+  includedSessionsCount Int?                 // null = sessões ilimitadas no período, ou número fixo (ex: 4)
+  discountPercent       Decimal?             @default(0) @db.Decimal(5, 2)
+  serviceIdsJson        String?              // Array JSON de IDs de serviços cobertos ou null (todos)
+  stripePriceId         String?
+  isActive              Boolean              @default(true)
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  company               Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  memberships           CustomerMembership[]
+
+  @@index([companyId, isActive])
+  @@map("membership_plan")
+}
+
+model CustomerMembership {
+  id                   String            @id @default(cuid())
+  companyId            String
+  planId               String
+  customerEmail        String
+  customerName         String
+  customerPhone        String?
+  status               String            @default("ACTIVE") // ACTIVE | PAUSED | CANCELLED | EXPIRED
+  startDate            DateTime          @default(now())
+  renewsAt             DateTime?
+  remainingSessions    Int?              // Saldo de sessões restantes (decrementado a cada agendamento)
+  stripeSubscriptionId String?
+  notes                String?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  company              Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  plan                 MembershipPlan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  usages               MembershipUsage[]
+
+  @@index([companyId, customerEmail])
+  @@index([companyId, status])
+  @@map("customer_membership")
+}
+
+model MembershipUsage {
+  id                   String             @id @default(cuid())
+  customerMembershipId String
+  bookingId            String?
+  serviceName          String
+  usedAt               DateTime           @default(now())
+  notes                String?
+
+  customerMembership   CustomerMembership @relation(fields: [customerMembershipId], references: [id], onDelete: Cascade)
+
+  @@index([customerMembershipId])
+  @@map("membership_usage")
+}
+
+// ─── Gift Cards & Vales-Presente Digitais ─────────────────────────────────────
+
+model GiftCard {
+  id             String               @id @default(cuid())
+  companyId      String
+  code           String               @unique // ex: GIFT-8X9K-42M1
+  initialBalance Decimal              @db.Decimal(10, 2)
+  currentBalance Decimal              @db.Decimal(10, 2)
+  currency       String               @default("BRL") // BRL, USD
+  buyerName      String?
+  buyerEmail     String?
+  recipientName  String?
+  recipientEmail String?
+  recipientPhone String?
+  message        String?
+  status         String               @default("ACTIVE") // ACTIVE | EXHAUSTED | EXPIRED | CANCELLED
+  expiresAt      DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  company        Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  redemptions    GiftCardRedemption[]
+
+  @@index([companyId, status])
+  @@index([companyId, code])
+  @@map("gift_card")
+}
+
+model GiftCardRedemption {
+  id         String   @id @default(cuid())
+  giftCardId String
+  bookingId  String?
+  amount     Decimal  @db.Decimal(10, 2)
+  redeemedAt DateTime @default(now())
+  notes      String?
+
+  giftCard   GiftCard @relation(fields: [giftCardId], references: [id], onDelete: Cascade)
+
+  @@index([giftCardId])
+  @@map("gift_card_redemption")
+}
+
+
