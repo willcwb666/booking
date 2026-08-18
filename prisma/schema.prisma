@@ -101,6 +101,7 @@ enum WaitlistStatus {
 enum CalendarProvider {
   GOOGLE
   APPLE
+  ICAL_FEED
 }
 
 enum WebhookEvent {
@@ -314,6 +315,8 @@ model Company {
   membershipPlans     MembershipPlan[]
   customerMemberships CustomerMembership[]
   giftCards           GiftCard[]
+  products            Product[]
+  posSales            PosSale[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
@@ -535,23 +538,26 @@ model BookingConfigExtraService {
 // ─── Schedule ─────────────────────────────────────────────────────────────────
 
 model ScheduleEvent {
-  id             String            @id @default(cuid())
-  companyId      String
-  company        Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  professionalId String?
-  professional   Professional?     @relation(fields: [professionalId], references: [id], onDelete: SetNull)
-  title          String
-  type           ScheduleEventType @default(EVENT)
-  date           String            // "YYYY-MM-DD"
-  startTime      String            // "HH:MM"
-  endTime        String            // "HH:MM"
-  notes          String?
-  createdById    String
-  createdBy      User              @relation("ScheduleEventCreatedBy", fields: [createdById], references: [id])
-  createdAt      DateTime          @default(now())
+  id              String            @id @default(cuid())
+  companyId       String
+  company         Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  professionalId  String?
+  professional    Professional?     @relation(fields: [professionalId], references: [id], onDelete: SetNull)
+  title           String
+  type            ScheduleEventType @default(EVENT)
+  date            String            // "YYYY-MM-DD"
+  startTime       String            // "HH:MM"
+  endTime         String            // "HH:MM"
+  notes           String?
+  externalEventId String?           // ID do evento no Google Calendar ou UID do iCal
+  source          String?           @default("MANUAL") // MANUAL | GOOGLE_CALENDAR | ICAL_FEED
+  createdById     String
+  createdBy       User              @relation("ScheduleEventCreatedBy", fields: [createdById], references: [id])
+  createdAt       DateTime          @default(now())
 
   @@index([companyId, date])
   @@index([professionalId, date])
+  @@index([companyId, externalEventId])
   @@map("schedule_event")
 }
 
@@ -925,20 +931,25 @@ model CompanyWebhook {
 // ─── Calendar Integrations ────────────────────────────────────────────────────
 
 model CalendarIntegration {
-  id           String           @id @default(cuid())
-  userId       String
-  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  provider     CalendarProvider
-  accessToken  String           // AES-256-GCM encrypted
-  refreshToken String?          // AES-256-GCM encrypted
-  expiresAt    DateTime?
-  calendarId   String?
-  isActive     Boolean          @default(true)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  id                 String           @id @default(cuid())
+  userId             String
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  professionalId     String?
+  provider           CalendarProvider
+  accessToken        String?          // AES-256-GCM encrypted (opcional para feeds ical)
+  refreshToken       String?          // AES-256-GCM encrypted
+  expiresAt          DateTime?
+  calendarId         String?
+  externalIcalUrl    String?          // URL de feed .ics / webcal externo
+  syncExternalEvents Boolean          @default(true) // Bloquear horários ocupados no booking
+  lastSyncedAt       DateTime?
+  isActive           Boolean          @default(true)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
   @@unique([userId, provider])
   @@index([userId])
+  @@index([professionalId])
   @@map("calendar_integration")
 }
 
@@ -1191,5 +1202,98 @@ model GiftCardRedemption {
   @@index([giftCardId])
   @@map("gift_card_redemption")
 }
+
+// ─── Produtos Físicos & Controle de Estoque ────────────────────────────────────
+
+model Product {
+  id                String          @id @default(cuid())
+  companyId         String
+  name              String
+  sku               String?         // Código de referência interno
+  barcode           String?         // Código de barras EAN/UPC
+  costPrice         Decimal         @default(0) @db.Decimal(10, 2)
+  salePrice         Decimal         @db.Decimal(10, 2)
+  stockQuantity     Int             @default(0)
+  minStockThreshold Int             @default(3) // Alerta de estoque baixo
+  category          String?         // Cabelo, Barba, Pele, Limpeza, etc.
+  description       String?
+  imageUrl          String?
+  isActive          Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  company           Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  stockMovements    StockMovement[]
+  saleItems         SaleItem[]
+
+  @@index([companyId, isActive])
+  @@index([companyId, category])
+  @@map("product")
+}
+
+model StockMovement {
+  id            String   @id @default(cuid())
+  productId     String
+  type          String   // IN (Entrada/Compra), OUT (Saída/Ajuste), SALE (Venda POS), RETURN (Devolução)
+  quantity      Int      // Quantidade movimentada (positiva para IN/RETURN, negativa para OUT/SALE)
+  previousStock Int
+  newStock      Int
+  reason        String?  // Motivo da movimentação
+  userId        String?  // Usuário que registrou a movimentação
+  createdAt     DateTime @default(now())
+
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("stock_movement")
+}
+
+// ─── Frente de Caixa / Comanda Rápida POS ─────────────────────────────────────
+
+model PosSale {
+  id               String     @id @default(cuid())
+  companyId        String
+  bookingId        String?    // Agendamento vinculado
+  professionalId   String?    // Profissional vinculado para cálculo de comissão
+  customerName     String?
+  customerEmail    String?
+  customerPhone    String?
+  subtotal         Decimal    @db.Decimal(10, 2)
+  discountAmount   Decimal    @default(0) @db.Decimal(10, 2)
+  total            Decimal    @db.Decimal(10, 2)
+  paymentMethod    String     @default("CASH") // CASH | CARD_CREDIT | CARD_DEBIT | PIX | GIFT_CARD | MEMBERSHIP | MIXED
+  status           String     @default("COMPLETED") // COMPLETED | REFUNDED | CANCELLED
+  commissionAmount Decimal    @default(0) @db.Decimal(10, 2)
+  notes            String?
+  createdById      String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  company          Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  items            SaleItem[]
+
+  @@index([companyId, createdAt])
+  @@index([companyId, status])
+  @@map("pos_sale")
+}
+
+model SaleItem {
+  id         String   @id @default(cuid())
+  saleId     String
+  type       String   @default("PRODUCT") // PRODUCT | SERVICE | FEE
+  productId  String?
+  serviceId  String?
+  name       String
+  quantity   Int      @default(1)
+  unitPrice  Decimal  @db.Decimal(10, 2)
+  totalPrice Decimal  @db.Decimal(10, 2)
+
+  sale       PosSale  @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product    Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([saleId])
+  @@map("sale_item")
+}
+
 
 

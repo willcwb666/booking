@@ -619,9 +619,11 @@ async function syncToGoogleCalendar(bookingId: string): Promise<void> {
       const integration = await db.calendarIntegration.findUnique({
         where: { userId_provider: { userId, provider: "GOOGLE" } },
       });
-      if (!integration?.isActive) continue;
+      if (!integration?.isActive || !integration.accessToken) continue;
 
-      await createCalendarEvent(integration.accessToken, integration.refreshToken ?? null, {
+      // O guard acima garante accessToken não-nulo (o narrowing do TS não
+      // propaga pela condição composta com optional chaining).
+      await createCalendarEvent(integration.accessToken!, integration.refreshToken ?? null, {
         summary: `${booking.bookingConfig.name} — ${booking.company.name}`,
         description: `Agendamento #${bookingId}`,
         date: booking.scheduledDate,

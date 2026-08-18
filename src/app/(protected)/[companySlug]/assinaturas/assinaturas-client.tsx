@@ -172,7 +172,7 @@ export function AssinaturasClient({
           setIsPlanModalOpen(false);
           router.refresh();
         } else {
-          toast.error(res.error);
+          toast.error(res.error ?? "Ocorreu um erro");
         }
       } else {
         const res = await createMembershipPlanAction(companySlug, {
@@ -189,7 +189,7 @@ export function AssinaturasClient({
           setIsPlanModalOpen(false);
           router.refresh();
         } else {
-          toast.error(res.error);
+          toast.error(res.error ?? "Ocorreu um erro");
         }
       }
     });
@@ -202,7 +202,7 @@ export function AssinaturasClient({
         toast.success("Status do plano alterado!");
         router.refresh();
       } else {
-        toast.error(res.error);
+        toast.error(res.error ?? "Ocorreu um erro");
       }
     });
   }
@@ -231,7 +231,7 @@ export function AssinaturasClient({
         setMemberNotes("");
         router.refresh();
       } else {
-        toast.error(res.error);
+        toast.error(res.error ?? "Ocorreu um erro");
       }
     });
   }
@@ -245,7 +245,7 @@ export function AssinaturasClient({
         toast.success("Assinatura cancelada.");
         router.refresh();
       } else {
-        toast.error(res.error);
+        toast.error(res.error ?? "Ocorreu um erro");
       }
     });
   }
@@ -259,7 +259,7 @@ export function AssinaturasClient({
         setAdjustingMember(null);
         router.refresh();
       } else {
-        toast.error(res.error);
+        toast.error(res.error ?? "Ocorreu um erro");
       }
     });
   }

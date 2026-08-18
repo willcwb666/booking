@@ -27,6 +27,7 @@ import {
   CreditCard,
   Bell,
   Gift,
+  Package,
 } from "./icons";
 
 const ICON = "h-4 w-4 shrink-0";
@@ -51,7 +52,8 @@ export function AppSidebar({
       label: "Operação",
       items: [
         { href: `${base}/dashboard`, label: "Dashboard", icon: <LayoutDashboard className={ICON} /> },
-        { href: `${base}/agendamentos`, label: "Agendamentos", icon: <ClipboardList className={ICON} /> },
+        { href: `${base}/pos`, label: "Frente de Caixa (POS)", icon: <ClipboardList className={ICON} /> },
+        { href: `${base}/agendamentos`, label: "Agendamentos", icon: <Calendar className={ICON} /> },
         { href: `${base}/comissoes`, label: "Comissões da Equipe", icon: <Award className={ICON} /> },
         { href: `${base}/clientes`, label: "Clientes (CRM 360°)", icon: <Users className={ICON} /> },
         { href: `${base}/relatorios`, label: "Relatórios & DRE", icon: <FileText className={ICON} /> },
@@ -63,15 +65,13 @@ export function AppSidebar({
         ...(isLicensed("waitlist")
           ? [{ href: `${base}/waitlist`, label: "Lista de espera", icon: <UserCheck className={ICON} /> }]
           : []),
-        ...(isLicensed("comanda_pos")
-          ? [{ href: `${base}/comanda`, label: "Comanda POS", icon: <ClipboardList className={ICON} /> }]
-          : []),
       ],
     },
     {
       label: "Catálogo",
       items: [
         { href: `${base}/servicos`, label: "Serviços", icon: <Scissors className={ICON} /> },
+        { href: `${base}/produtos`, label: "Produtos & Estoque", icon: <Package className={ICON} /> },
         { href: `${base}/cargos`, label: "Cargos & Especialidades", icon: <User className={ICON} /> },
         { href: `${base}/agendas`, label: "Agendas", icon: <CalendarRange className={ICON} /> },
         { href: `${base}/profissionais`, label: "Profissionais", icon: <Users className={ICON} /> },

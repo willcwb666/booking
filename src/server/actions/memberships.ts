@@ -83,8 +83,8 @@ export async function createMembershipPlanAction(
 
     revalidatePath(`/${companySlug}/assinaturas`);
     return { success: true, data: plan };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Erro ao criar plano" };
+  } catch (err: unknown) {
+    return { success: false, error: (err as Error).message ||"Erro ao criar plano" };
   }
 }
 
@@ -120,8 +120,8 @@ export async function updateMembershipPlanAction(
 
     revalidatePath(`/${companySlug}/assinaturas`);
     return { success: true, data: plan };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Erro ao atualizar plano" };
+  } catch (err: unknown) {
+    return { success: false, error: (err as Error).message ||"Erro ao atualizar plano" };
   }
 }
 
@@ -142,8 +142,8 @@ export async function toggleMembershipPlanAction(companySlug: string, planId: st
 
     revalidatePath(`/${companySlug}/assinaturas`);
     return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Erro ao alterar status do plano" };
+  } catch (err: unknown) {
+    return { success: false, error: (err as Error).message ||"Erro ao alterar status do plano" };
   }
 }
 
@@ -202,8 +202,8 @@ export async function createCustomerMembershipAction(
 
     revalidatePath(`/${companySlug}/assinaturas`);
     return { success: true, data: membership };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Erro ao adicionar membro" };
+  } catch (err: unknown) {
+    return { success: false, error: (err as Error).message ||"Erro ao adicionar membro" };
   }
 }
 
@@ -219,8 +219,8 @@ export async function cancelCustomerMembershipAction(companySlug: string, member
 
     revalidatePath(`/${companySlug}/assinaturas`);
     return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Erro ao cancelar assinatura" };
+  } catch (err: unknown) {
+    return { success: false, error: (err as Error).message ||"Erro ao cancelar assinatura" };
   }
 }
 
@@ -240,8 +240,8 @@ export async function adjustCustomerMembershipSessionsAction(
 
     revalidatePath(`/${companySlug}/assinaturas`);
     return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Erro ao ajustar saldo de sessões" };
+  } catch (err: unknown) {
+    return { success: false, error: (err as Error).message ||"Erro ao ajustar saldo de sessões" };
   }
 }
 
@@ -262,7 +262,7 @@ export async function checkCustomerMembershipCoverageAction(
 
     const result = await checkCustomerMembershipCoverage(companySlug, customerEmail, serviceId);
     return { success: true, data: result };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Erro ao verificar plano" };
+  } catch (err: unknown) {
+    return { success: false, error: (err as Error).message ||"Erro ao verificar plano" };
   }
 }

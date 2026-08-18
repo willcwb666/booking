@@ -184,7 +184,7 @@ export async function sendBookingReminderSms({
   const isEn = locale.startsWith("en");
 
   const message = isEn
-    ? `[${companyName}] Reminder: You have an appointment tomorrow at ${startTime} for ${serviceName}. See you soon!`
+    ? `[${companyName}] Reminder: You have an appointment tomorrow at ${startTime} for ${serviceName}. See you soon! Reply STOP to opt out.`
     : `[${companyName}] Lembrete: Você tem um agendamento amanhã às ${startTime} (${serviceName}). Até breve!`;
 
   await sendSmsMessage({
@@ -205,7 +205,7 @@ export async function sendBookingCancelledSms({
   const isEn = locale.startsWith("en");
 
   const message = isEn
-    ? `[${companyName}] Hi ${customerName}, your appointment on ${date} at ${startTime} has been cancelled.`
+    ? `[${companyName}] Hi ${customerName}, your appointment on ${date} at ${startTime} has been cancelled. Reply STOP to opt out.`
     : `[${companyName}] Olá ${customerName}, seu agendamento para ${date} às ${startTime} foi cancelado.`;
 
   await sendSmsMessage({

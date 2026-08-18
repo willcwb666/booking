@@ -4,6 +4,7 @@ import { MercadoPagoConfig, Payment } from "mercadopago";
 import { decrypt } from "@/lib/encrypt";
 import { notifyBookingConfirmed, notifyCompanyNewBooking } from "@/lib/notifications";
 import { triggerWebhooks } from "@/lib/webhooks";
+import { revertAndCancelUnpaidBooking } from "@/lib/booking-reversal";
 import { createHmac, timingSafeEqual } from "crypto";
 
 /**
@@ -97,6 +98,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const payment = await paymentApi.get({ id: paymentId });
 
     if (payment.status === "approved") {
+      // Idempotente: só notifica na primeira confirmação — o MP pode reentregar
+      // o mesmo evento mais de uma vez.
+      const alreadyPaid = booking.paymentStatus === "PAID";
       await db.booking.update({
         where: { id: booking.id },
         data: {
@@ -105,9 +109,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         },
       });
 
-      void notifyBookingConfirmed(booking.id);
-      void notifyCompanyNewBooking(booking.id);
-      void triggerWebhooks(booking.companyId, "BOOKING_CONFIRMED", { bookingId: booking.id });
+      if (!alreadyPaid) {
+        void notifyBookingConfirmed(booking.id);
+        void notifyCompanyNewBooking(booking.id);
+        void triggerWebhooks(booking.companyId, "BOOKING_CONFIRMED", { bookingId: booking.id });
+      }
+    } else if (payment.status === "rejected" || payment.status === "cancelled") {
+      // PIX recusado ou expirado: estorna gift card/sessão e libera o slot.
+      // (Idempotente — não reverte de novo se o booking já estiver cancelado.)
+      await revertAndCancelUnpaidBooking(booking.id, "Pagamento PIX não concluído");
     }
 
     return NextResponse.json({ ok: true });

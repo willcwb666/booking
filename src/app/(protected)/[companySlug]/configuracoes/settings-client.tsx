@@ -9,6 +9,7 @@ import { CustomersTab } from "./_tabs/customers-tab";
 import { ResetTab } from "./_tabs/reset-tab";
 import { PlanoTab } from "./_tabs/plano-tab";
 import { PaymentsTab } from "./_tabs/payments-tab";
+import { CalendarTab } from "./_tabs/calendar-tab";
 import { PresetResetRequestModal } from "./_components/preset-reset-request-modal";
 import {
   updateCompanySettingsUnifiedAction,
@@ -25,6 +26,7 @@ import {
   AlertTriangle,
   Globe,
   Users,
+  Calendar,
 } from "@/components/ui/icons";
 
 type PaymentMethodItem = {
@@ -89,7 +91,7 @@ type Props = {
   };
 };
 
-type Tab = "empresa" | "landing" | "pagamentos" | "plano" | "notificacoes" | "cancelamento" | "clientes" | "reset";
+type Tab = "empresa" | "landing" | "pagamentos" | "calendario" | "plano" | "notificacoes" | "cancelamento" | "clientes" | "reset";
 
 export function SettingsClient({
   companySlug,
@@ -156,6 +158,7 @@ export function SettingsClient({
     { id: "empresa", label: "Empresa", icon: <Building2 className="w-4 h-4 shrink-0" /> },
     { id: "landing", label: "Landing Page Pública", icon: <Globe className="w-4 h-4 shrink-0" /> },
     { id: "pagamentos", label: "Métodos de Pagamento", icon: <CreditCard className="w-4 h-4 shrink-0" /> },
+    { id: "calendario", label: "Calendários & 2-Way Sync", icon: <Calendar className="w-4 h-4 shrink-0" /> },
     { id: "plano", label: "Plano", icon: <CreditCard className="w-4 h-4 shrink-0" /> },
     { id: "notificacoes", label: "Notificações", icon: <Bell className="w-4 h-4 shrink-0" /> },
     { id: "cancelamento", label: "Política de Cancelamentos", icon: <FileText className="w-4 h-4 shrink-0" /> },
@@ -235,6 +238,14 @@ export function SettingsClient({
         <PaymentsTab
           companySlug={companySlug}
           canEdit={canEdit}
+        />
+      )}
+
+      {tab === "calendario" && (
+        <CalendarTab
+          companySlug={companySlug}
+          canEdit={canEdit}
+          bookingBaseUrl={bookingBaseUrl}
         />
       )}
 

@@ -125,8 +125,8 @@ export async function createGiftCardAction(
 
     revalidatePath(`/${companySlug}/gift-cards`);
     return { success: true, data: card };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Erro ao criar Gift Card" };
+  } catch (err: unknown) {
+    return { success: false, error: (err as Error).message ||"Erro ao criar Gift Card" };
   }
 }
 
@@ -142,8 +142,8 @@ export async function cancelGiftCardAction(companySlug: string, giftCardId: stri
 
     revalidatePath(`/${companySlug}/gift-cards`);
     return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Erro ao cancelar Gift Card" };
+  } catch (err: unknown) {
+    return { success: false, error: (err as Error).message ||"Erro ao cancelar Gift Card" };
   }
 }
 
@@ -184,7 +184,7 @@ export async function validateGiftCardAction(companySlug: string, code: string) 
         recipientName: card.recipientName,
       },
     };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Erro ao validar vale-presente" };
+  } catch (err: unknown) {
+    return { success: false, error: (err as Error).message ||"Erro ao validar vale-presente" };
   }
 }

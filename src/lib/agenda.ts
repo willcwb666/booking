@@ -141,15 +141,26 @@ export async function getAvailableSlots(
 
   // Se um profissional específico foi escolhido:
   if (professionalId) {
-    const bookedForProf = await db.booking.findMany({
-      where: {
-        agendaId,
-        scheduledDate: date,
-        professionalId,
-        status: { notIn: ["CANCELLED"] },
-      },
-      select: { scheduledStartTime: true },
-    });
+    const [bookedForProf, scheduleEvents] = await Promise.all([
+      db.booking.findMany({
+        where: {
+          agendaId,
+          scheduledDate: date,
+          professionalId,
+          status: { notIn: ["CANCELLED"] },
+        },
+        select: { scheduledStartTime: true, scheduledEndTime: true },
+      }),
+      db.scheduleEvent.findMany({
+        where: {
+          companyId: agenda.companyId,
+          professionalId,
+          date,
+        },
+        select: { startTime: true, endTime: true },
+      }),
+    ]);
+
     const bookedTimes = new Set(bookedForProf.map((b) => b.scheduledStartTime));
 
     const today = new Date().toISOString().split("T")[0];
@@ -157,7 +168,17 @@ export async function getAvailableSlots(
     const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
 
     return allSlots.filter((slot) => {
+      // 1. Bloqueio por agendamento existente
       if (bookedTimes.has(slot.startTime)) return false;
+
+      // 2. Bloqueio por evento externo (Google Calendar / iCal / Bloqueio Manual)
+      for (const ev of scheduleEvents) {
+        if (slot.startTime < ev.endTime && slot.endTime > ev.startTime) {
+          return false;
+        }
+      }
+
+      // 3. Horário já passado hoje
       if (date === today && slot.startTime <= currentTime) return false;
       return true;
     });
@@ -165,35 +186,55 @@ export async function getAvailableSlots(
 
   // Se "Qualquer Profissional" (auto-assignment):
   // Um horário só é bloqueado se TODOS os profissionais ativos da agenda estiverem ocupados naquele horário.
-  const activeStaffCount = Math.max(
-    1,
-    agenda.professionals.filter((p) => p.professional.isActive).length
-  );
+  const activeStaff = agenda.professionals.filter((p) => p.professional.isActive);
+  const activeStaffCount = Math.max(1, activeStaff.length);
+  const activeProfIds = activeStaff.map((p) => p.professionalId);
 
-  const bookingsOnDate = await db.booking.findMany({
-    where: {
-      agendaId,
-      scheduledDate: date,
-      status: { notIn: ["CANCELLED"] },
-    },
-    select: { scheduledStartTime: true },
-  });
-
-  const busyCountPerTime = new Map<string, number>();
-  for (const b of bookingsOnDate) {
-    busyCountPerTime.set(
-      b.scheduledStartTime,
-      (busyCountPerTime.get(b.scheduledStartTime) || 0) + 1
-    );
-  }
+  const [bookingsOnDate, externalEventsOnDate] = await Promise.all([
+    db.booking.findMany({
+      where: {
+        agendaId,
+        scheduledDate: date,
+        status: { notIn: ["CANCELLED"] },
+      },
+      select: { scheduledStartTime: true, professionalId: true },
+    }),
+    db.scheduleEvent.findMany({
+      where: {
+        companyId: agenda.companyId,
+        professionalId: { in: activeProfIds },
+        date,
+      },
+      select: { startTime: true, endTime: true, professionalId: true },
+    }),
+  ]);
 
   const today = new Date().toISOString().split("T")[0];
   const now = new Date();
   const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
 
   return allSlots.filter((slot) => {
-    const busyCount = busyCountPerTime.get(slot.startTime) || 0;
-    if (busyCount >= activeStaffCount) return false;
+    // Conta quantos profissionais estão ocupados neste slot (seja por booking ou por evento externo)
+    let busyProfCount = 0;
+
+    for (const profId of activeProfIds) {
+      const isBooked = bookingsOnDate.some(
+        (b) => b.professionalId === profId && b.scheduledStartTime === slot.startTime
+      );
+      if (isBooked) {
+        busyProfCount++;
+        continue;
+      }
+
+      const hasEvent = externalEventsOnDate.some(
+        (ev) => ev.professionalId === profId && slot.startTime < ev.endTime && slot.endTime > ev.startTime
+      );
+      if (hasEvent) {
+        busyProfCount++;
+      }
+    }
+
+    if (busyProfCount >= activeStaffCount) return false;
     if (date === today && slot.startTime <= currentTime) return false;
     return true;
   });

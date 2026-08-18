@@ -133,7 +133,7 @@ export function GiftCardsClient({
         setIsCreateModalOpen(false);
         router.refresh();
       } else {
-        toast.error(res.error);
+        toast.error(res.error || "Erro ao emitir Gift Card");
       }
     });
   }
@@ -147,7 +147,7 @@ export function GiftCardsClient({
         toast.success("Gift Card cancelado.");
         router.refresh();
       } else {
-        toast.error(res.error);
+        toast.error(res.error || "Erro ao cancelar Gift Card");
       }
     });
   }
