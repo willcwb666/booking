@@ -34,7 +34,7 @@ menor. As features abaixo defendem essa posição; não a substituem.
 | # | Ideia | Veredito | Esforço |
 |---|---|---|---|
 | 05 | Smart Dynamic Deposit | **Fazer primeiro** — sem score de IA | 3–4 d |
-| 12 | Split POS: comissão híbrida | **Fazer** — é terminar o que existe | 3–4 d |
+| 12 | Split POS: comissão híbrida | **Fazer** — falta menos do que parecia, ver ficha | 2 d |
 | 03 | 2FA | **Fazer** — via plugin do better-auth, sem WhatsApp | 4–5 d |
 | 06 | Win-back de inativos | **Fazer** — campanha aprovada, não agente autônomo | 4–5 d |
 | 08 | Review & Google Maps Booster | **Fazer** — a forma proposta é ilegal, ver ficha | 3–4 d |
@@ -94,7 +94,7 @@ prontos. Ignorar isso distorce a priorização inteira.
 | 01 DDI Engine | `src/lib/markets.ts` mapeia DDI → moeda, locale, timezone e máscara telefônica. `Company.currency/timezone/locale` existem. `messages/` tem pt-BR, pt-PT, en, es |
 | 04 Yield | `src/lib/agenda/ghost-slot-buster.ts` já calcula desconto de última hora para slot vago |
 | 05 Sinal | `CompanyPaymentSettings.requireDeposit` / `depositPercentage`; `Customer.noShowCount`, `completedBookings`, `cancelledBookings`, `totalSpent`, `lastBookingDate`; `Company.maxAllowedNoShows`, `minCancellationNoticeHours`, `cancellationFee` |
-| 12 Split POS | `PosSale.professionalId` e `commissionAmount`; `SaleItem.type` (PRODUCT/SERVICE/FEE); `Product.barcode`; `src/server/actions/commissions.ts` |
+| 12 Split POS | `PosSale.professionalId` e `commissionAmount`; `SaleItem.type` (PRODUCT/SERVICE/FEE); `Product.barcode`; **`Professional.productCommissionRate` já separado de `commissionRate`**, e `pos.ts` já aplica as duas taxas por tipo de item |
 | 13 Estoque | `Product.minStockThreshold`, `StockMovement` com tipos IN/OUT/SALE/RETURN |
 
 Outras peças relevantes já disponíveis:
@@ -170,10 +170,22 @@ que o documento anterior dizia.
 Serviço e produto têm regras de comissão diferentes (50% no corte, 10% na
 pomada). Misturar os dois no fechamento da quinzena gera erro de planilha.
 
-### O gap real
-`Professional.commissionPercentage` é **um número só**. Não existe taxa separada
-por tipo de item. A feature não é o leitor de código de barras — é uma **tabela
-de regra de comissão**:
+### O gap real (corrigido em 2026-08-19)
+A avaliação anterior deste item estava errada. `Professional` **já tem**
+`commissionRate` e `productCommissionRate` separados, e `pos.ts` já aplica cada
+uma ao seu tipo de item no cálculo da venda. A divisão serviço vs. produto
+existe.
+
+O que falta é mais estreito:
+
+- **Granularidade por categoria ou serviço.** Hoje é uma taxa de produto e uma
+  de serviço por profissional. Não dá para "10% em cosmético, 5% em bebida".
+- **O extrato separado.** `PosSale.commissionAmount` guarda o total já somado —
+  o fechamento da quinzena não consegue mostrar as duas colunas, que é a dor
+  original descrita neste item.
+
+Se a granularidade por categoria for necessária, a forma é uma **tabela de
+regra**:
 
 ```
 CommissionRule
@@ -512,6 +524,13 @@ valor que o estabelecimento nunca definiu, que muda sozinho com o câmbio, e pel
 qual ele será cobrado a honrar. Exibir o preço na moeda da empresa é correto e é
 o que Fresha faz.
 
+**Implementado em 2026-08-19** (commit `68fd608`): `Estimate.currency` e
+`PosSale.currency` carimbam a moeda no ato da venda, e o painel da plataforma
+agrega por moeda em vez de somar. Antes disso, trocar `Company.currency` — que é
+exatamente o que a inferência por DDI vai fazer no onboarding — reinterpretava
+todo o histórico da empresa em silêncio. Era pré-requisito do item 1.1, não
+consequência dele.
+
 ### 1.2 — Cache de tradução: boa arquitetura, fazer depois
 Hash SHA-256 do texto de origem + locale destino, consulta ao banco, geração via
 Gemini Flash apenas no *miss*, gravação permanente. Custo tende a zero.
@@ -653,6 +672,12 @@ age sobre a conversão do trial, que é onde o funil vaza mais.
 
 ## Histórico
 
+- **2026-08-19** — Moeda por transação e painel da plataforma segmentado por
+  mercado (`68fd608`). Pré-requisito do item 01 que não estava mapeado: sem
+  carimbar a moeda no registro, a inferência por DDI reinterpretaria o histórico
+  de qualquer empresa que trocasse de mercado. Corrigida a ficha do item 12 — a
+  separação serviço/produto já existia em `Professional.productCommissionRate`;
+  o que falta é granularidade por categoria e o extrato em duas colunas.
 - **2026-08-18** — Revisão completa. Vereditos, escopos corrigidos e ordem de
   execução incorporados. Removidos os números de resultado sem base. Corrigidos
   os cinco itens descritos como novos que já estavam parcialmente construídos.
