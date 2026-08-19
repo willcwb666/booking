@@ -97,6 +97,7 @@ export default async function ConfiguracoesPage({
         brandColor: fullCompany?.brandColor ?? "#0f172a",
         coverImageUrl: fullCompany?.coverImageUrl ?? "",
         socialInstagram: fullCompany?.socialInstagram ?? "",
+        googleReviewUrl: fullCompany?.googleReviewUrl ?? "",
         socialWhatsapp: fullCompany?.socialWhatsapp ?? "",
         socialFacebook: fullCompany?.socialFacebook ?? "",
       }}

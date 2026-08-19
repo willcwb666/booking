@@ -19,6 +19,7 @@ import { resolveDeposit } from "@/lib/trust-tier";
 import { getCustomerTrust } from "@/server/queries/customer-trust";
 import { randomUUID } from "crypto";
 import { enqueueNotification } from "@/lib/notification-outbox";
+import { enqueueReviewRequest } from "@/lib/review-request";
 
 type CreateResult =
   | { success: true; bookingId: string; paymentMethod: "CASH_CHECK" }
@@ -1037,6 +1038,7 @@ export async function updateBookingStatusAction(
 
   void enqueueNotification({ kind: "STATUS_CHANGED", bookingId: bookingId, payload: { newStatus: newStatus } });
   if (newStatus === "COMPLETED") {
+    void enqueueReviewRequest(bookingId);
     void triggerWebhooks(booking.companyId, "BOOKING_COMPLETED", { bookingId });
   } else if (newStatus === "CONFIRMED") {
     void triggerWebhooks(booking.companyId, "BOOKING_CONFIRMED", { bookingId });
@@ -1152,6 +1154,7 @@ export async function completeBookingWithAdjustmentsAction(
   });
 
   void enqueueNotification({ kind: "STATUS_CHANGED", bookingId: payload.bookingId, payload: { newStatus: "COMPLETED" } });
+  void enqueueReviewRequest(payload.bookingId);
   void notifyBookingCompletedWithInvoice(
     payload.bookingId,
     originalTotal,

@@ -6,6 +6,7 @@ import {
   notifyBookingConfirmed,
   notifyBookingReminder,
   notifyCompanyNewBooking,
+  notifyReviewRequest,
   notifyStatusChanged,
 } from "@/lib/notifications";
 
@@ -28,7 +29,8 @@ export type NotificationKind =
   | "BOOKING_REMINDER"
   | "COMPANY_NEW_BOOKING"
   | "STATUS_CHANGED"
-  | "BOOKING_COMPLETED_INVOICE";
+  | "BOOKING_COMPLETED_INVOICE"
+  | "REVIEW_REQUEST";
 
 /** Espera antes da tentativa N: 1min, 5min, 15min, 1h, 6h. */
 const BACKOFF_MINUTES = [1, 5, 15, 60, 360];
@@ -109,6 +111,9 @@ async function dispatch(row: {
         Number(payload.discountAmount ?? 0),
         Number(payload.finalTotal ?? 0)
       );
+      return;
+    case "REVIEW_REQUEST":
+      await notifyReviewRequest(row.bookingId);
       return;
     default:
       throw new Error(`Tipo de notificação desconhecido: ${row.kind}`);

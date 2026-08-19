@@ -11,6 +11,7 @@ type Props = {
     brandColor: string;
     coverImageUrl: string;
     socialInstagram: string;
+    googleReviewUrl?: string;
     socialWhatsapp: string;
     socialFacebook: string;
   };
@@ -100,6 +101,27 @@ export function LandingTab({ canEdit, initial, onChange }: Props) {
                 className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-warning)] disabled:bg-[var(--color-bg-subtle)]"
               />
             </div>
+          </div>
+
+          <div>
+            <label htmlFor="googleReviewUrl" className="block text-xs text-[var(--color-text-muted)] mb-1">
+              Link de avaliação do Google
+            </label>
+            <input
+              id="googleReviewUrl"
+              value={initial?.googleReviewUrl ?? ""}
+              onChange={(e) => handleChange("googleReviewUrl", e.target.value)}
+              disabled={!canEdit}
+              placeholder="https://g.page/r/.../review"
+              className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-warning)] disabled:bg-[var(--color-bg-subtle)]"
+            />
+            <p className="text-[var(--color-text-muted)] mt-1 leading-relaxed" style={{ fontSize: "var(--text-2xs)" }}>
+              No Google Meu Negócio: Pedir avaliações → copiar link. Depois de
+              avaliar aqui, o cliente é convidado a publicar no Google —
+              {" "}<strong>independente da nota que deu</strong>. Filtrar quem
+              avaliou mal viola a política do Google e pode custar o perfil da
+              empresa no Maps.
+            </p>
           </div>
         </div>
 

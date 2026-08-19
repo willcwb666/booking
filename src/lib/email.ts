@@ -659,3 +659,111 @@ export async function sendWinBackEmail({
     `,
   });
 }
+
+/**
+ * Pedido de avaliação após o atendimento.
+ *
+ * O link carrega token assinado — o cliente avalia sem criar conta, que é a
+ * única forma de o recurso alcançar a maioria da base.
+ */
+export async function sendReviewRequestEmail({
+  to,
+  customerName,
+  companyName,
+  companyLogoUrl,
+  serviceName,
+  reviewUrl,
+}: {
+  to: string;
+  customerName: string;
+  companyName: string;
+  companyLogoUrl: string | null;
+  serviceName: string;
+  reviewUrl: string;
+}) {
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Como foi seu atendimento na ${companyName}?`,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
+        ${
+          companyLogoUrl
+            ? `<img src="${escapeHtml(companyLogoUrl)}" alt="${escapeHtml(companyName)}" style="max-height:48px;margin-bottom:16px">`
+            : `<h3 style="color:#111827;margin:0 0 16px 0">${escapeHtml(companyName)}</h3>`
+        }
+        <p style="color:#6b7280;margin-top:0">Olá, ${escapeHtml(customerName)}.</p>
+        <p style="color:#374151">
+          Você foi atendido para <strong>${escapeHtml(serviceName)}</strong>.
+          Leva menos de um minuto para nos contar como foi.
+        </p>
+        <p style="margin:24px 0">
+          <a href="${reviewUrl}" style="display:inline-block;background:#1d4ed8;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">
+            Avaliar atendimento
+          </a>
+        </p>
+        <p style="color:#9ca3af;font-size:12px">
+          Se algo não foi bem, conte aqui — dá para resolver.
+        </p>
+        <p style="color:#9ca3af;font-size:12px;margin-top:32px">Kreator · Agendamentos online</p>
+      </div>
+    `,
+  });
+}
+
+/**
+ * Alerta de nota baixa ao gerente.
+ *
+ * Chega em PARALELO ao convite público, nunca no lugar dele. O valor está na
+ * velocidade: saber do problema em minutos, com telefone do cliente à mão,
+ * enquanto ainda dá para consertar.
+ */
+export async function sendLowRatingAlertEmail({
+  to,
+  managerName,
+  companyName,
+  customerName,
+  customerPhone,
+  serviceName,
+  scheduledDate,
+  rating,
+  comment,
+}: {
+  to: string;
+  managerName: string;
+  companyName: string;
+  customerName: string;
+  customerPhone: string | null;
+  serviceName: string;
+  scheduledDate: string;
+  rating: number;
+  comment: string | null;
+}) {
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `${"★".repeat(rating)}${"☆".repeat(5 - rating)} — ${customerName} avaliou o atendimento`,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
+        <h2 style="color:#b45309;margin-bottom:4px">Avaliação de ${rating} estrela${rating === 1 ? "" : "s"}</h2>
+        <p style="color:#6b7280;margin-top:0">Olá, ${escapeHtml(managerName)}.</p>
+        <p style="color:#374151">
+          Um cliente da ${escapeHtml(companyName)} avaliou o atendimento abaixo da média.
+          Ainda dá tempo de falar com ele.
+        </p>
+        <table style="width:100%;margin:16px 0;border-collapse:collapse;font-size:14px">
+          <tr><td style="padding:6px 0;color:#6b7280">Cliente</td><td style="padding:6px 0;color:#111827;font-weight:bold">${escapeHtml(customerName)}</td></tr>
+          ${customerPhone ? `<tr><td style="padding:6px 0;color:#6b7280">Telefone</td><td style="padding:6px 0;color:#111827;font-weight:bold">${escapeHtml(customerPhone)}</td></tr>` : ""}
+          <tr><td style="padding:6px 0;color:#6b7280">Serviço</td><td style="padding:6px 0;color:#111827">${escapeHtml(serviceName)}</td></tr>
+          <tr><td style="padding:6px 0;color:#6b7280">Data</td><td style="padding:6px 0;color:#111827">${escapeHtml(scheduledDate)}</td></tr>
+        </table>
+        ${
+          comment
+            ? `<blockquote style="margin:16px 0;padding:12px 16px;border-left:3px solid #fcd34d;background:#fffbeb;color:#374151">${escapeHtml(comment)}</blockquote>`
+            : `<p style="color:#9ca3af;font-size:13px">O cliente não deixou comentário.</p>`
+        }
+        <p style="color:#9ca3af;font-size:12px;margin-top:32px">Kreator · Agendamentos online</p>
+      </div>
+    `,
+  });
+}

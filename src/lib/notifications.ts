@@ -1,6 +1,13 @@
 import "server-only";
 import { db } from "./db";
-import { sendBookingConfirmationEmail, sendBookingReminderEmail, sendBookingCancelledEmail } from "./email";
+import {
+  sendBookingConfirmationEmail,
+  sendBookingReminderEmail,
+  sendBookingCancelledEmail,
+  sendReviewRequestEmail,
+} from "./email";
+import { generateSignedReviewToken } from "./security/signed-token";
+import { REVIEW_LINK_TTL_DAYS } from "./review-policy";
 import { sendPushNotifications } from "./push";
 import {
   sendBookingConfirmedWhatsapp,
@@ -316,4 +323,56 @@ export async function notifyBookingCompletedWithInvoice(
   } catch (err) {
     console.error("[notifications] notifyBookingCompletedWithInvoice failed:", err);
   }
+}
+
+/**
+ * Pedido de avaliação — enviado depois do atendimento, com link assinado.
+ *
+ * Idempotente por `booking.reviewRequestedAt`: a fila de saída reprocessa em
+ * falha, e sem esta marca o cliente receberia o mesmo pedido a cada tentativa.
+ */
+export async function notifyReviewRequest(bookingId: string) {
+  const booking = await db.booking.findUnique({
+    where: { id: bookingId },
+    select: {
+      id: true,
+      companyId: true,
+      status: true,
+      reviewRequestedAt: true,
+      company: { select: { name: true, slug: true, logoUrl: true } },
+      bookingConfig: { select: { name: true } },
+      customerDetail: { select: { firstName: true, email: true, sendReminders: true } },
+      review: { select: { id: true } },
+    },
+  });
+
+  if (!booking) return;
+  if (booking.status !== "COMPLETED") return;
+  if (booking.reviewRequestedAt) return;
+  if (booking.review) return;
+  // Sem e-mail não há como pedir; e quem desmarcou os lembretes não pediu para
+  // ser procurado. Pedido de avaliação é comunicação de serviço, mas respeitar
+  // a única escolha que o cliente fez ali é o mínimo.
+  if (!booking.customerDetail?.email || !booking.customerDetail.sendReminders) return;
+
+  const expires =
+    Math.floor(Date.now() / 1000) + REVIEW_LINK_TTL_DAYS * 24 * 60 * 60;
+  const token = generateSignedReviewToken(booking.id, booking.companyId, expires);
+  const appUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+  const reviewUrl = `${appUrl}/avaliar/${booking.id}?t=${token}&e=${expires}`;
+
+  await sendReviewRequestEmail({
+    to: booking.customerDetail.email,
+    customerName: booking.customerDetail.firstName || "Cliente",
+    companyName: booking.company.name,
+    companyLogoUrl: booking.company.logoUrl,
+    serviceName: booking.bookingConfig.name,
+    reviewUrl,
+  });
+
+  // Marcado só depois do envio: falha antes daqui deixa a fila tentar de novo.
+  await db.booking.update({
+    where: { id: booking.id },
+    data: { reviewRequestedAt: new Date() },
+  });
 }

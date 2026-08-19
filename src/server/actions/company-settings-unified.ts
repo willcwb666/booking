@@ -23,6 +23,8 @@ export type UnifiedCompanySettingsPayload = {
   socialInstagram: string;
   socialWhatsapp: string;
   socialFacebook: string;
+  /** Link "escrever avaliação" do Google Meu Negócio. */
+  googleReviewUrl?: string;
   // Notificações
   notifyEmailEnabled: boolean;
   notifyTextEnabled: boolean;
@@ -95,6 +97,7 @@ export async function updateCompanySettingsUnifiedAction(
       socialInstagram: payload.socialInstagram || null,
       socialWhatsapp: payload.socialWhatsapp || null,
       socialFacebook: payload.socialFacebook || null,
+      googleReviewUrl: payload.googleReviewUrl?.trim() || null,
       notifyEmailEnabled: payload.notifyEmailEnabled,
       notifyTextEnabled: payload.notifyTextEnabled,
       notifySmsEnabled: payload.notifySmsEnabled,

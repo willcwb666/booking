@@ -412,6 +412,13 @@ model Company {
   heroSubtitle               String?
   brandColor                 String?   @default("#0f172a")
   coverImageUrl              String?
+  // Link "escrever avaliação" do Google Meu Negócio.
+  //
+  // O pedido de avaliação convida TODO MUNDO para cá, independente da nota.
+  // Filtrar quem avaliou mal antes do Google ("review gating") viola a política
+  // do Google Business Profile e a regra da FTC de 2024 — a punição possível é
+  // a remoção do perfil da empresa do Maps.
+  googleReviewUrl            String?
   socialInstagram            String?
   socialWhatsapp             String?
   socialFacebook             String?
@@ -786,6 +793,8 @@ model Booking {
   // rastro: o estado "já fez check-in" era inalcançável e o operador não
   // tinha como saber quem chegou.
   checkedInAt           DateTime?
+  // Pedido de avaliação já enviado — impede reenvio a cada reprocessamento.
+  reviewRequestedAt     DateTime?
   // Rescheduling
   rescheduledFromId     String?
   rescheduledFrom       Booking?        @relation("RescheduledFrom", fields: [rescheduledFromId], references: [id], onDelete: SetNull)
@@ -919,6 +928,11 @@ model Review {
   rating      Int      // 1–5
   comment     String?
   reviewerName String? // customer name snapshot
+  // Nota baixa vira alerta imediato ao gerente. O carimbo evita disparo
+  // duplicado se a avaliação for reprocessada.
+  alertSentAt DateTime?
+  // Origem: LINK (token assinado no e-mail) ou ACCOUNT (cliente logado).
+  source      String   @default("ACCOUNT")
   createdAt   DateTime @default(now())
 
   @@index([companyId])

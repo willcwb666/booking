@@ -69,6 +69,8 @@ const PUBLIC_ACTIONS: Record<string, string> = {
   // Check-in do cliente, autorizado por token assinado na URL
   "checkin.ts:getBookingCheckinInfoAction": "token assinado faz o papel da sessão",
   "checkin.ts:performSmartCheckinAction": "token assinado faz o papel da sessão",
+  "review-request.ts:getReviewLinkInfoAction": "token assinado no e-mail; a maioria dos clientes não tem conta",
+  "review-request.ts:submitReviewByLinkAction": "token assinado no e-mail; a maioria dos clientes não tem conta",
 
   // Delega para uma action guardada
   "professionals.ts:deleteProfessionalAction": "encaminha para setProfessionalActiveAction",

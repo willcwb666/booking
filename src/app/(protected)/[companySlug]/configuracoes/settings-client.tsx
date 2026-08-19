@@ -69,6 +69,7 @@ type Props = {
     brandColor: string;
     coverImageUrl: string;
     socialInstagram: string;
+    googleReviewUrl?: string;
     socialWhatsapp: string;
     socialFacebook: string;
   };
@@ -123,6 +124,7 @@ export function SettingsClient({
     brandColor: initialLanding?.brandColor || "#0f172a",
     coverImageUrl: initialLanding?.coverImageUrl ?? "",
     socialInstagram: initialLanding?.socialInstagram ?? "",
+    googleReviewUrl: initialLanding?.googleReviewUrl ?? "",
     socialWhatsapp: initialLanding?.socialWhatsapp ?? "",
     socialFacebook: initialLanding?.socialFacebook ?? "",
     notifyEmailEnabled: initial.notifyEmailEnabled ?? true,
