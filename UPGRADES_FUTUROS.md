@@ -38,11 +38,11 @@ menor. As features abaixo defendem essa posição; não a substituem.
 | 05 | Smart Dynamic Deposit | ✅ **Concluído** — `cc53ed2` | — |
 | 12 | Split POS: comissão híbrida | ✅ **Concluído** — `c01e462` | — |
 | 03 | 2FA | ✅ **Concluído** — `0bbdb7c` + `61695db` | — |
-| 06 | Win-back de inativos | **Fazer** — campanha aprovada, não agente autônomo | 4–5 d |
-| 08 | Review & Google Maps Booster | **Fazer** — a forma proposta é ilegal, ver ficha | 3–4 d |
-| 04 | Yield management | **Fazer metade** — só o desconto em horário ocioso | 3 d |
-| 13 | Estoque | **Fazer só o alerta** — sem dedução por ficha técnica | 2 d |
-| 02 | Kreator Pass | **Fazer** — com uma correção estrutural, ver ficha | 5–7 d |
+| 06 | Win-back de inativos | ✅ **Concluído** — `9e13414` (+ `0fd4b60`) | — |
+| 08 | Review & Google Maps Booster | ✅ **Concluído** — `5dfcd18`, sem review gating | — |
+| 04 | Yield management | ✅ **Concluído** — `e7fa3ab`, só o desconto | — |
+| 13 | Estoque | ✅ **Concluído** — `f273dfb`, só o alerta | — |
+| 02 | Kreator Pass | ✅ **Concluído** — `4404d96` | — |
 | 11 | Drive-time & buffer de trânsito | **Fazer a versão barata** (haversine, sem Google) | 2–3 d |
 | 09 | Before/After Vault | **Fazer o cofre, não a IA** | 5–6 d |
 | 14 | Metas da equipe | **Fazer só o painel individual** | 3 d |
@@ -63,13 +63,15 @@ grosseira para ordenar, não compromisso.
 
 Os três atacavam perda direta de receita e risco de conta.
 
-### Bloco 2 — Retenção (3–4 semanas) — **próximo**
-`06 win-back` → `08 review` → `04 desconto ocioso` → `13 alerta de estoque`
+### Bloco 2 — Retenção — ✅ concluído
+~~`06 win-back`~~ → ~~`08 review`~~ → ~~`04 desconto ocioso`~~ →
+~~`13 alerta de estoque`~~
 
-Tudo calculado sobre dado que já existe. Nenhuma integração externa nova.
+Tudo calculado sobre dado que já existe. Nenhuma integração externa nova — e
+assim ficou: nenhum dos quatro precisou de serviço de terceiro.
 
-### Bloco 3 — Diferenciação (4–6 semanas)
-`02 Kreator Pass` → `11 drive-time` → `09 vault` → `14 painel individual`
+### Bloco 3 — Diferenciação (4–6 semanas) — **em andamento**
+~~`02 Kreator Pass`~~ → `11 drive-time` → `09 vault` → `14 painel individual`
 
 ### Bloco 4 — A aposta
 `07 AI Receptionist`, como módulo licenciado (`SystemModule` +
@@ -372,9 +374,11 @@ e-mail de resgate (*rescue email*) é opcional e barato — pode entrar junto.
 
 # Bloco 2 — Retenção
 
-## 06. Win-back de clientes inativos
+## 06. Win-back de clientes inativos — ✅ CONCLUÍDO (`9e13414`, 2026-08-19)
 
-**Veredito: fazer, como campanha que o dono aprova.**
+**Veredito: fazer, como campanha que o dono aprova.** Foi o que se fez — o
+consentimento de marketing sem conta (`0fd4b60`) era pré-requisito e não estava
+mapeado.
 
 ### A ideia que se sustenta
 Calcular o ciclo médio de retorno de cada cliente e sinalizar quem passou dele.
@@ -407,7 +411,7 @@ disparo.
 
 ---
 
-## 08. Review & Google Maps Booster
+## 08. Review & Google Maps Booster — ✅ CONCLUÍDO (`5dfcd18`, 2026-08-19)
 
 **Veredito: fazer — mas a forma proposta viola a política do Google e a lei
 americana.** É a melhor relação valor/hora do documento na forma correta.
@@ -441,7 +445,7 @@ a escrever sem escrever por ele.
 
 ---
 
-## 04. Yield management — só a metade de baixo
+## 04. Yield management — ✅ CONCLUÍDO (`e7fa3ab`, 2026-08-19)
 
 **Veredito: fazer o desconto em horário ocioso. Não fazer o acréscimo no pico.**
 
@@ -469,7 +473,7 @@ Aqui é generalizar para o horário estruturalmente vago.
 
 ---
 
-## 13. Estoque — alerta sim, ficha técnica não
+## 13. Estoque — ✅ CONCLUÍDO (`f273dfb`, 2026-08-19)
 
 **Veredito: fazer o alerta de reposição. Não fazer a dedução teórica por
 serviço.**
@@ -498,10 +502,31 @@ Zero cadastro novo. Dado real.
 
 # Bloco 3 — Diferenciação
 
-## 02. Kreator Pass
+## 02. Kreator Pass — ✅ CONCLUÍDO (`4404d96`, 2026-08-19)
 
 **Veredito: fazer — com uma correção estrutural que também simplifica a
-construção.**
+construção.** A correção foi feita: o perfil pertence ao usuário, e o
+preenchimento nunca lê a ficha que a pessoa tem em outra empresa.
+
+### O que foi entregue
+- `UserProfile` (nome, telefone, endereço), um por usuário, `onDelete: Cascade`.
+- Checkout preenchido a partir dele para quem está logado; sem perfil salvo, o
+  nome cai para o da sessão e o e-mail sempre vem dela.
+- Caixa "guardar meus dados" no checkout, marcada por padrão e separada da
+  caixa de marketing, que continua desmarcada.
+- `/minha-conta`: os dados pessoais, os agendamentos em todas as empresas e a
+  lista das empresas que a pessoa administra — o alternador de papel.
+- Botão de apagar o perfil. Não afeta as fichas já criadas nas empresas.
+- Cinco testes de banco no padrão de `authorization.db.test.ts`.
+
+### Duas decisões que valem registro
+A gravação do perfil fica **fora da transação** do agendamento e engole o
+próprio erro. Falhar em guardar uma conveniência não pode impedir alguém de
+agendar.
+
+Campo vazio grava `NULL`, não string vazia. "Não informei" e "informei nada"
+precisam ser distinguíveis, senão o próximo checkout não sabe se deve deixar o
+campo em branco.
 
 ### O modelo de dados já está certo
 `User` é global (autenticação). `Customer` é isolado por empresa
@@ -534,6 +559,11 @@ Falta a visão cross-company — "meus agendamentos em todas as empresas".
 **Cuidado**: é exatamente o formato de IDOR que foi fechado em 2026-08-18. A
 consulta tem de partir de `getActiveSession()` e nunca aceitar e-mail ou id de
 cliente por parâmetro. Ver `test/authorization.db.test.ts` para o padrão.
+
+Foi respeitado, e com uma trava a mais: o casamento por e-mail só vale com o
+endereço **verificado**. Sem isso bastaria cadastrar uma conta com o e-mail de
+outra pessoa para ver a agenda dela na plataforma inteira, e não só em uma
+empresa.
 
 ---
 
@@ -787,6 +817,23 @@ age sobre a conversão do trial, que é onde o funil vaza mais.
 
 ## Histórico
 
+- **2026-08-19 (noite)** — Bloco 2 executado e Bloco 3 aberto. **Item 06**
+  (`9e13414`): o consentimento de marketing só existia para quem tinha conta, e
+  a maioria agenda sem criar uma — "nunca escolheu" e "escolheu não receber"
+  eram o mesmo estado no banco. Corrigido antes do resgate em si (`0fd4b60`).
+  **Item 08** (`5dfcd18`): o pedido de avaliação sai 20 minutos após a
+  conclusão, sem *review gating* — filtrar nota baixa viola a política do Google
+  Business Profile e a regra da FTC de 2024, e a punição possível é a remoção do
+  perfil da empresa do Maps. O alerta ao gerente sai em paralelo ao convite, não
+  no lugar dele. **Item 04** (`e7fa3ab`): só o desconto em horário ocioso; o
+  acréscimo no pico não foi construído e está fora do roadmap. **Item 13**
+  (`f273dfb`): reposição pelo giro real de `sale_item`, sem ficha técnica — o
+  teste de banco pegou um erro de SQL que o `tsc` jamais veria, com venda
+  estornada contando como giro. **Item 02** (`4404d96`): o preenchimento
+  automático não copia dado entre empresas; o perfil pertence ao usuário, o que
+  elimina o problema jurídico e o modal de consentimento junto. A visão
+  cross-company exigiu uma trava a mais que a versão por empresa — e-mail só
+  casa se estiver verificado.
 - **2026-08-19 (tarde)** — Bloco 1 executado. **Item 05** concluído (`cc53ed2`):
   quatro faixas explicáveis no lugar do score de IA, janela de 180 dias, chave
   desligada por padrão, e nenhuma consulta pública de faixa por e-mail. **Item
