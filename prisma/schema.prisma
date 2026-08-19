@@ -449,6 +449,11 @@ model Company {
   // rosto de pessoa identificada sem prazo não se defende em auditoria — e o
   // custo de armazenamento de dado sensível cresce para sempre.
   photoRetentionMonths       Int                     @default(24)
+  // Ranking de faturamento visível para a equipe inteira. DESLIGADO por padrão,
+  // e a razão está na tela: expor o ranking é decisão de gestão, não de
+  // software. Desmotiva a metade de baixo e pressiona upsell — que degrada a
+  // experiência do cliente justamente onde a recorrência é o ativo.
+  showTeamRanking            Boolean                 @default(false)
   // Notificações e Canais
   notifyEmailEnabled         Boolean                 @default(true)
   notifyTextEnabled          Boolean                 @default(true)
@@ -597,6 +602,9 @@ model Professional {
   phone                 String?
   bio                   String?
   avatarUrl             String?
+  // Meta de faturamento do dia. Nula = sem meta, e a tela mostra o resultado
+  // sem barra de progresso: barra contra meta zero seria 100% todo dia.
+  dailyGoal             Decimal? @db.Decimal(10, 2)
   commissionPercentage  Float    @default(0)
   commissionRate        Decimal? @default(0) @db.Decimal(5, 2)
   productCommissionRate Decimal? @default(0) @db.Decimal(5, 2)
