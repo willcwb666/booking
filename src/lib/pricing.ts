@@ -102,9 +102,14 @@ export type BookingChargeBreakdown = {
 /**
  * Cobrança final de um agendamento, combinando (nesta ordem):
  * 1. Cobertura total por plano/pacote (`membershipCovered`) → agendamento gratuito;
- * 2. Desconto percentual de membro (`membershipDiscount`, já em valor);
- * 3. Abatimento por gift card (`giftCardDebit`, valor já debitado);
- * 4. Sinal (deposit), se a empresa exigir, sobre o valor devido.
+ * 2. Desconto de horário ocioso (`offPeakDiscount`, já em valor);
+ * 3. Desconto percentual de membro (`membershipDiscount`, já em valor);
+ * 4. Abatimento por gift card (`giftCardDebit`, valor já debitado);
+ * 5. Sinal (deposit), se a empresa exigir, sobre o valor devido.
+ *
+ * O desconto de horário vem ANTES do gift card de propósito: o vale abate o
+ * que o cliente realmente deve, e aplicá-lo antes do desconto consumiria saldo
+ * do vale para pagar uma parte que a empresa ia perdoar de qualquer jeito.
  *
  * Os valores de cobertura/desconto/gift já vêm resolvidos (e debitados
  * atomicamente no banco); esta função apenas deriva o que o cliente paga.
@@ -116,12 +121,15 @@ export function computeBookingCharge(params: {
   giftCardDebit: number;
   requireDeposit: boolean;
   depositPercentage: number;
+  /** Desconto de janela de horário ocioso, já em valor. */
+  offPeakDiscount?: number;
 }): BookingChargeBreakdown {
   if (params.membershipCovered) {
     return { amountDue: 0, onlineCharge: 0 };
   }
 
-  const afterDiscount = roundMoney(Math.max(0, params.total - params.membershipDiscount));
+  const afterOffPeak = roundMoney(Math.max(0, params.total - (params.offPeakDiscount ?? 0)));
+  const afterDiscount = roundMoney(Math.max(0, afterOffPeak - params.membershipDiscount));
   const amountDue = roundMoney(Math.max(0, afterDiscount - params.giftCardDebit));
 
   const onlineCharge =

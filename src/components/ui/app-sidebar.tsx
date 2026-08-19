@@ -19,6 +19,7 @@ import {
   LayoutDashboard,
   LogOut,
   Package,
+  Percent,
   Plus,
   PlusCircle,
   Scale,
@@ -220,6 +221,14 @@ export function AppSidebar({
                 label: "Promoções",
                 icon: <Tag className={ICON} />,
                 keywords: "campanha desconto oferta",
+              },
+              {
+                href: `${base}/horarios-ociosos`,
+                label: "Horários ociosos",
+                // Percent, não Clock: Clock já é Lista de espera E Grades de
+                // horário. Ícone repetido não ajuda ninguém a achar nada.
+                icon: <Percent className={ICON} />,
+                keywords: "happy hour desconto vazio ocupacao ocupação",
               },
               {
                 href: `${base}/resgate`,

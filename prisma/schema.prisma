@@ -446,6 +446,7 @@ model Company {
   giftCards           GiftCard[]
   products            Product[]
   posSales            PosSale[]
+  offPeakWindows      OffPeakWindow[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
@@ -1040,6 +1041,36 @@ model CompanyPaymentSettings {
   updatedAt       DateTime @updatedAt
 
   @@map("company_payment_settings")
+}
+
+/**
+ * Janela de horário ocioso com desconto ("Happy Hour").
+ *
+ * A metade do yield management que vale a pena. O acréscimo no pico NÃO existe
+ * e não deve ser adicionado — ver a nota em `src/lib/off-peak.ts`: desconto é
+ * enquadrado como presente, acréscimo como punição, e em relação recorrente e
+ * nominal a segunda leitura custa o cliente.
+ *
+ * Diferente do ghost slot buster, que cobre a vaga que abriu agora: aqui é o
+ * horário estruturalmente vazio, que se repete toda semana.
+ */
+model OffPeakWindow {
+  id                 String   @id @default(cuid())
+  companyId          String
+  company            Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  label              String
+  /// 0 = domingo … 6 = sábado
+  weekday            Int
+  startTime          String   // "HH:MM" inclusivo
+  endTime            String   // "HH:MM" exclusivo
+  discountPercentage Float
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([companyId, isActive])
+  @@index([companyId, weekday])
+  @@map("off_peak_window")
 }
 
 // ─── Agenda Exceptions ────────────────────────────────────────────────────────

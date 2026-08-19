@@ -120,6 +120,22 @@ export default async function CheckoutPage({
     trust,
   });
 
+  // Janelas de desconto em horário ocioso. O cálculo real acontece no
+  // servidor ao criar o agendamento; isto é só para o cliente ver o preço
+  // certo ANTES de confirmar, e não ser surpreendido no total.
+  const offPeakWindows = await db.offPeakWindow.findMany({
+    where: { companyId: estimate.companyId, isActive: true },
+    select: {
+      id: true,
+      label: true,
+      weekday: true,
+      startTime: true,
+      endTime: true,
+      discountPercentage: true,
+      isActive: true,
+    },
+  });
+
   const professionals = await db.professional.findMany({
     where: {
       companyId: estimate.companyId,
@@ -152,6 +168,7 @@ export default async function CheckoutPage({
       currency={config.company.currency}
       locale={config.company.locale}
       businessType={config.company.businessType}
+      offPeakWindows={offPeakWindows}
       requireDeposit={depositPolicy.percentage > 0}
       depositPercentage={depositPolicy.percentage}
       agendaConfig={{

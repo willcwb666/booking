@@ -14,6 +14,7 @@ import { getAvailableSlotsAction } from "@/server/actions/booking-slots";
 import { createBookingAction, checkPixPaymentAction } from "@/server/actions/booking";
 import type { TimeSlot } from "@/lib/agenda";
 import { formatMoney } from "@/lib/format";
+import { findOffPeakDiscount, type OffPeakWindow } from "@/lib/off-peak";
 import { calculateDeposit } from "@/lib/pricing";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import Link from "next/link";
@@ -63,6 +64,7 @@ type Props = {
   currency: string;
   locale: string;
   businessType?: string;
+  offPeakWindows?: OffPeakWindow[];
   requireDeposit?: boolean;
   depositPercentage?: number;
 };
@@ -281,6 +283,7 @@ export function CheckoutClient({
   currency,
   locale,
   businessType,
+  offPeakWindows = [],
   requireDeposit,
   depositPercentage,
 }: Props) {
@@ -307,6 +310,19 @@ export function CheckoutClient({
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
+
+  /**
+   * Desconto de horário ocioso do slot escolhido.
+   *
+   * Mesma função que o servidor usa ao criar o agendamento — se a tela
+   * calculasse por conta própria, os dois números divergiriam no dia em que a
+   * regra mudasse, e o cliente veria um preço e pagaria outro.
+   */
+  const offPeak =
+    selectedDate && selectedSlot
+      ? findOffPeakDiscount(offPeakWindows, selectedDate, selectedSlot.startTime, estimateTotal)
+      : null;
+
   const [loadingSlots, startSlotTransition] = useTransition();
 
   // Booking state
@@ -337,6 +353,19 @@ export function CheckoutClient({
   } | null>(null);
   const [validatingGiftCard, setValidatingGiftCard] = useState(false);
   const [giftCardError, setGiftCardError] = useState<string | null>(null);
+  /**
+   * Total exibido, na MESMA ordem de `computeBookingCharge` no servidor:
+   * horário ocioso → desconto de membro → vale-presente.
+   *
+   * Mostrar a linha do desconto sem descontar do total seria pior que não
+   * mostrar nada: o cliente veria o abatimento anunciado e o mesmo valor a
+   * pagar.
+   */
+  const afterOffPeak = Math.max(0, estimateTotal - (offPeak?.discountAmount ?? 0));
+  const afterMembership = membershipCoverage?.discountPercent
+    ? afterOffPeak * (1 - membershipCoverage.discountPercent / 100)
+    : afterOffPeak;
+  const finalTotal = Math.max(0, afterMembership - (appliedGiftCard?.discountAmount || 0));
 
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -1219,6 +1248,13 @@ export function CheckoutClient({
                       </div>
                     )}
 
+                    {offPeak && (
+                      <div className="flex justify-between text-xs text-[var(--color-success)] font-semibold bg-[var(--color-success-light)] p-2 rounded-[var(--radius-control)]">
+                        <span>{offPeak.window.label} ({offPeak.discountPercentage}% OFF):</span>
+                        <span>- {formatMoney(offPeak.discountAmount, currency, locale)}</span>
+                      </div>
+                    )}
+
                     {appliedGiftCard && (
                       <div className="flex justify-between text-xs text-[var(--color-success)] font-semibold bg-[var(--color-success-light)] p-2 rounded-[var(--radius-control)]">
                         <span>Vale-Presente ({appliedGiftCard.code}):</span>
@@ -1229,16 +1265,7 @@ export function CheckoutClient({
                     <div className="flex justify-between pt-1">
                       <span className="text-sm font-semibold text-[var(--color-text)]">{t("total")}</span>
                       <span className="text-base font-bold text-[var(--color-text-heading)]">
-                        {formatMoney(
-                          Math.max(
-                            0,
-                            (membershipCoverage?.discountPercent
-                              ? estimateTotal * (1 - membershipCoverage.discountPercent / 100)
-                              : estimateTotal) - (appliedGiftCard?.discountAmount || 0)
-                          ),
-                          currency,
-                          locale
-                        )}
+                        {formatMoney(finalTotal, currency, locale)}
                       </span>
                     </div>
                   </>
@@ -1248,11 +1275,11 @@ export function CheckoutClient({
                   <div className="pt-2 mt-2 border-t border-dashed border-[var(--color-border)] space-y-1">
                     <div className="flex justify-between text-xs font-bold text-[var(--color-primary)] bg-[var(--color-primary-light)] p-2 rounded-[var(--radius-control)]">
                       <span>Sinal para Reserva ({depositPercentage}%):</span>
-                      <span>{formatMoney(calculateDeposit(estimateTotal, depositPercentage ?? 30).deposit, currency, locale)}</span>
+                      <span>{formatMoney(calculateDeposit(finalTotal, depositPercentage ?? 30).deposit, currency, locale)}</span>
                     </div>
                     <div className="flex justify-between text-[var(--text-2xs)] text-[var(--color-text-muted)] px-1">
                       <span>Restante no local:</span>
-                      <span>{formatMoney(calculateDeposit(estimateTotal, depositPercentage ?? 30).remaining, currency, locale)}</span>
+                      <span>{formatMoney(calculateDeposit(finalTotal, depositPercentage ?? 30).remaining, currency, locale)}</span>
                     </div>
                   </div>
                 )}

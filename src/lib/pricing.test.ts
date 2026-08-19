@@ -178,3 +178,72 @@ describe("calculateCancellationRefund", () => {
     ).toEqual({ refundAmount: 0, feeApplied: 50, isFullRefund: false });
   });
 });
+
+describe("computeBookingCharge — desconto de horário ocioso", () => {
+  const base = {
+    membershipCovered: false,
+    membershipDiscount: 0,
+    giftCardDebit: 0,
+    requireDeposit: false,
+    depositPercentage: 30,
+  };
+
+  it("abate o desconto do valor devido", () => {
+    const r = computeBookingCharge({ ...base, total: 100, offPeakDiscount: 15 });
+    expect(r.amountDue).toBe(85);
+    expect(r.onlineCharge).toBe(85);
+  });
+
+  it("ausente equivale a zero — chamadas antigas não mudam de resultado", () => {
+    expect(computeBookingCharge({ ...base, total: 100 }).amountDue).toBe(100);
+    expect(computeBookingCharge({ ...base, total: 100, offPeakDiscount: 0 }).amountDue).toBe(100);
+  });
+
+  it("vem ANTES do gift card, para não queimar saldo do vale", () => {
+    // 100 com 20 de desconto = 80 devidos; o vale de 50 abate esses 80.
+    // Na ordem inversa o vale pagaria 50 de 100 e o desconto incidiria sobre o
+    // resto — o cliente gastaria 50 de vale para uma conta de 80.
+    const r = computeBookingCharge({
+      ...base,
+      total: 100,
+      offPeakDiscount: 20,
+      giftCardDebit: 50,
+    });
+    expect(r.amountDue).toBe(30);
+  });
+
+  it("combina com desconto de membro sem ficar negativo", () => {
+    const r = computeBookingCharge({
+      ...base,
+      total: 100,
+      offPeakDiscount: 60,
+      membershipDiscount: 60,
+    });
+    expect(r.amountDue).toBe(0);
+    expect(r.onlineCharge).toBe(0);
+  });
+
+  it("o sinal incide sobre o valor JÁ com desconto", () => {
+    // Cobrar 30% de 100 quando o cliente deve 80 seria sinal de 37,5% —
+    // e o cliente conferiria a conta.
+    const r = computeBookingCharge({
+      ...base,
+      total: 100,
+      offPeakDiscount: 20,
+      requireDeposit: true,
+      depositPercentage: 30,
+    });
+    expect(r.amountDue).toBe(80);
+    expect(r.onlineCharge).toBe(24);
+  });
+
+  it("cobertura por plano ignora o desconto — não há o que descontar", () => {
+    const r = computeBookingCharge({
+      ...base,
+      total: 100,
+      offPeakDiscount: 20,
+      membershipCovered: true,
+    });
+    expect(r.amountDue).toBe(0);
+  });
+});

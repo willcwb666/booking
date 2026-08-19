@@ -16,6 +16,7 @@ import { isSlotAvailable, resolveProfessionalForSlot, slotProfessionalKey } from
 import { calculateCancellationRefund, computeBookingCharge, roundMoney, toStripeCents } from "@/lib/pricing";
 import { notifyWaitlistForDate } from "@/lib/waitlist-notify";
 import { resolveDeposit } from "@/lib/trust-tier";
+import { findOffPeakDiscount } from "@/lib/off-peak";
 import { getCustomerTrust } from "@/server/queries/customer-trust";
 import { randomUUID } from "crypto";
 import { enqueueNotification } from "@/lib/notification-outbox";
@@ -184,6 +185,18 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
     companyId: estimate.companyId,
     customerEmail: email,
   });
+  // Desconto de horário ocioso. Resolvido no SERVIDOR a partir do slot
+  // escolhido — o cliente manda a data e a hora, nunca o valor do desconto.
+  const offPeakWindows = await db.offPeakWindow.findMany({
+    where: { companyId: estimate.companyId, isActive: true },
+  });
+  const offPeak = findOffPeakDiscount(
+    offPeakWindows,
+    scheduledDate,
+    scheduledStartTime,
+    Number(estimate.total)
+  );
+
   const depositPolicy = resolveDeposit({
     dynamicDeposit: paymentSettings?.dynamicDeposit ?? false,
     requireDeposit: paymentSettings?.requireDeposit ?? false,
@@ -536,6 +549,7 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
       membershipCovered,
       membershipDiscount,
       giftCardDebit,
+      offPeakDiscount: offPeak?.discountAmount ?? 0,
       // `resolveDeposit` já reconciliou a chave global com a faixa do cliente:
       // percentual zero significa "sem sinal", independente de qual das duas
       // regras levou a isso.
