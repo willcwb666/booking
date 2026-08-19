@@ -79,31 +79,72 @@ function rowsToMap(
 // Plataforma (super admin)
 // ═══════════════════════════════════════════════════════════════════════════
 
+/**
+ * Receita de um mercado. Nunca somada com a de outro.
+ *
+ * O painel antes exibia um total único rotulado em BRL sobre empresas que
+ * operam em moedas diferentes — 100 BRL + 100 USD viravam "R$ 200". Não existe
+ * conversão certa a fazer aqui: a taxa muda todo dia e o valor exibido passaria
+ * a depender de quando a página foi aberta. Cada moeda é uma série própria.
+ */
+export type CurrencyRevenue = {
+  currency: string;
+  delta: Delta;
+  series: { bucket: string; revenue: number }[];
+};
+
 export type PlatformOverview = {
+  /** Séries independentes de moeda. Receita vive em `revenueByCurrency`. */
   series: SeriesPoint[];
   bookings: Delta;
-  revenue: Delta;
   newCompanies: Delta;
   newUsers: Delta;
+  /** Moedas presentes na base — alimenta o filtro, sempre completa. */
+  currencies: string[];
+  /** Respeita o filtro; sem filtro, traz todas. */
+  revenueByCurrency: CurrencyRevenue[];
   /** MRR atual — é um retrato de agora, não do recorte. */
   mrr: number;
   arr: number;
   arpu: number;
+  /**
+   * Moeda em que os planos são cobrados. `Plan.priceMonthly` é um número só,
+   * sem moeda: o MRR não é segmentável enquanto o preço do plano não for por
+   * mercado. Rotular é o mínimo honesto até essa decisão de produto existir.
+   */
+  billingCurrency: string;
   activeSubscriptions: number;
   overdueSubscriptions: number;
   planBreakdown: Breakdown[];
   statusBreakdown: Breakdown[];
-  topCompanies: { id: string; name: string; slug: string; bookings: number; revenue: number }[];
+  topCompanies: {
+    id: string;
+    name: string;
+    slug: string;
+    bookings: number;
+    revenue: number;
+    currency: string;
+  }[];
 };
 
+/**
+ * Moeda efetiva de uma transação: a carimbada no registro, ou — para linhas
+ * anteriores à coluna — a da empresa. Ver a nota em `Estimate.currency`.
+ */
+const TX_CURRENCY = `COALESCE(e."currency", c."currency")`;
+
 export async function getPlatformOverview(
-  range: AnalyticsRange
+  range: AnalyticsRange,
+  currencyFilter?: string
 ): Promise<PlatformOverview> {
   const g = range.granularity;
   const { from, to, prevFrom, prevTo } = range;
 
   const [
     bookingRows,
+    revenueRows,
+    prevRevenueRows,
+    currencyRows,
     companyRows,
     userRows,
     currentTotals,
@@ -115,14 +156,22 @@ export async function getPlatformOverview(
   ] = await Promise.all([
     db.$queryRawUnsafe<Array<Record<string, unknown>>>(
       `SELECT ${dateStrBucket('b."scheduledDate"', g)} AS bucket,
-              COUNT(*)::int AS bookings,
-              COALESCE(SUM(CASE WHEN b."paymentStatus" = 'PAID' THEN e."total" ELSE 0 END), 0)::float8 AS revenue
+              COUNT(*)::int AS bookings
          FROM "booking" b
-         LEFT JOIN "estimate" e ON e.id = b."estimateId"
         WHERE b."scheduledDate" >= $1 AND b."scheduledDate" <= $2
         GROUP BY 1`,
       from,
       to
+    ),
+    // Receita quebrada por bucket E por moeda. A contagem de agendamentos fica
+    // na consulta acima de propósito: somar contagem por moeda e depois
+    // reagrupar convidaria a dupla contagem sem ganho nenhum.
+    platformRevenueByCurrency(from, to, g),
+    platformRevenueByCurrency(prevFrom, prevTo, g),
+    db.$queryRawUnsafe<Array<Record<string, unknown>>>(
+      `SELECT DISTINCT "currency" FROM "company"
+        WHERE "isActive" = true AND "currency" IS NOT NULL
+        ORDER BY 1`
     ),
     db.$queryRawUnsafe<Array<Record<string, unknown>>>(
       `SELECT ${tsBucket('c."createdAt"', g)} AS bucket, COUNT(*)::int AS companies
@@ -171,19 +220,24 @@ export async function getPlatformOverview(
       from,
       to
     ),
+    // O ranking carrega a moeda de cada empresa. Ordenar receita entre moedas
+    // diferentes não significa nada, então a ordenação é por agendamentos —
+    // que são comparáveis — e a receita aparece formatada na moeda certa.
     db.$queryRawUnsafe<Array<Record<string, unknown>>>(
-      `SELECT c.id, c.name, c.slug,
+      `SELECT c.id, c.name, c.slug, c."currency" AS currency,
               COUNT(b.id)::int AS bookings,
               COALESCE(SUM(CASE WHEN b."paymentStatus" = 'PAID' THEN e."total" ELSE 0 END), 0)::float8 AS revenue
          FROM "company" c
          JOIN "booking" b ON b."companyId" = c.id
           AND b."scheduledDate" >= $1 AND b."scheduledDate" <= $2
          LEFT JOIN "estimate" e ON e.id = b."estimateId"
-        GROUP BY c.id, c.name, c.slug
-        ORDER BY revenue DESC, bookings DESC
+        WHERE ($3::text IS NULL OR c."currency" = $3)
+        GROUP BY c.id, c.name, c.slug, c."currency"
+        ORDER BY bookings DESC, revenue DESC
         LIMIT 8`,
       from,
-      to
+      to,
+      currencyFilter ?? null
     ),
   ]);
 
@@ -210,20 +264,50 @@ export async function getPlatformOverview(
     percent: percentDelta(current, previous),
   });
 
+  // Moedas presentes na base. A lista vem do banco, não de uma constante, para
+  // que abrir um mercado novo não exija tocar em código.
+  const currencies = currencyRows
+    .map((r) => String(r.currency))
+    .filter((c) => c.length > 0);
+
+  const buckets = enumerateBuckets(range);
+  const shown = currencyFilter ? [currencyFilter] : currencies;
+
+  const revenueByCurrency: CurrencyRevenue[] = shown.map((cur) => {
+    const curRows = revenueRows.filter((r) => String(r.currency) === cur);
+    const byBucket = rowsToMap(curRows, "revenue");
+    const current = curRows.reduce((s, r) => s + toNum(r.revenue), 0);
+    const previous = prevRevenueRows
+      .filter((r) => String(r.currency) === cur)
+      .reduce((s, r) => s + toNum(r.revenue), 0);
+
+    return {
+      currency: cur,
+      delta: mk(current, previous),
+      series: buckets.map((bucket) => ({
+        bucket,
+        revenue: byBucket.get(bucket) ?? 0,
+      })),
+    };
+  });
+
   return {
+    // `revenue` fica zerado na série compartilhada: somar moedas diferentes num
+    // eixo só é exatamente o defeito que esta função existe para não cometer.
     series: mergeSeries(range, {
       bookings: rowsToMap(bookingRows, "bookings"),
-      revenue: rowsToMap(bookingRows, "revenue"),
       companies: rowsToMap(companyRows, "companies"),
       users: rowsToMap(userRows, "users"),
     }),
     bookings: mk(currentTotals.bookings, previousTotals.bookings),
-    revenue: mk(currentTotals.revenue, previousTotals.revenue),
     newCompanies: mk(currentTotals.companies, previousTotals.companies),
     newUsers: mk(currentTotals.users, previousTotals.users),
+    currencies,
+    revenueByCurrency,
     mrr,
     arr: mrr * 12,
     arpu: activeSubscriptions > 0 ? mrr / activeSubscriptions : 0,
+    billingCurrency: process.env.PLATFORM_BILLING_CURRENCY ?? "BRL",
     activeSubscriptions,
     overdueSubscriptions,
     planBreakdown: planRows.map((r) => ({
@@ -240,17 +324,45 @@ export async function getPlatformOverview(
       slug: String(r.slug),
       bookings: toNum(r.bookings),
       revenue: toNum(r.revenue),
+      currency: String(r.currency ?? "BRL"),
     })),
   };
+}
+
+/**
+ * Receita paga da plataforma por bucket e por moeda, no recorte dado.
+ *
+ * O `JOIN company` existe só para resolver a moeda das linhas anteriores à
+ * coluna `estimate.currency`; assim que o backfill e os caminhos de escrita
+ * cobrirem tudo, o COALESCE vira redundante — mas sai barato mantê-lo.
+ */
+async function platformRevenueByCurrency(
+  from: string,
+  to: string,
+  g: Granularity
+): Promise<Array<Record<string, unknown>>> {
+  return db.$queryRawUnsafe<Array<Record<string, unknown>>>(
+    `SELECT ${dateStrBucket('b."scheduledDate"', g)} AS bucket,
+            ${TX_CURRENCY} AS currency,
+            COALESCE(SUM(e."total"), 0)::float8 AS revenue
+       FROM "booking" b
+       JOIN "company" c ON c.id = b."companyId"
+       LEFT JOIN "estimate" e ON e.id = b."estimateId"
+      WHERE b."scheduledDate" >= $1 AND b."scheduledDate" <= $2
+        AND b."paymentStatus" = 'PAID'
+      GROUP BY 1, 2`,
+    from,
+    to
+  );
 }
 
 async function platformTotals(from: string, to: string) {
   const [bookingAgg, companyAgg, userAgg] = await Promise.all([
     db.$queryRawUnsafe<Array<Record<string, unknown>>>(
-      `SELECT COUNT(*)::int AS bookings,
-              COALESCE(SUM(CASE WHEN b."paymentStatus" = 'PAID' THEN e."total" ELSE 0 END), 0)::float8 AS revenue
+      // Sem receita aqui de propósito: um total de dinheiro da plataforma
+      // inteira só existiria somando moedas. Ver `platformRevenueByCurrency`.
+      `SELECT COUNT(*)::int AS bookings
          FROM "booking" b
-         LEFT JOIN "estimate" e ON e.id = b."estimateId"
         WHERE b."scheduledDate" >= $1 AND b."scheduledDate" <= $2`,
       from,
       to
@@ -271,7 +383,6 @@ async function platformTotals(from: string, to: string) {
 
   return {
     bookings: toNum(bookingAgg[0]?.bookings),
-    revenue: toNum(bookingAgg[0]?.revenue),
     companies: toNum(companyAgg[0]?.companies),
     users: toNum(userAgg[0]?.users),
   };

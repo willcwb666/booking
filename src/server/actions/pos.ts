@@ -141,6 +141,7 @@ export async function createPosSaleAction(companySlug: string, data: CreatePosSa
           subtotal,
           discountAmount: discount,
           total,
+          currency: company.currency,
           paymentMethod: data.paymentMethod,
           status: "COMPLETED",
           commissionAmount,

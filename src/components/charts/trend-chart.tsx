@@ -32,7 +32,8 @@ type Props = {
   data: Row[];
   metrics: MetricDef[];
   granularity: Granularity;
-  currency: string;
+  /** Só exigida quando alguma métrica é `kind: "currency"`. */
+  currency?: string;
   locale: string;
   height?: number;
   /** Rótulo do período anterior, usado no texto de comparação do tooltip. */
@@ -87,7 +88,8 @@ export function TrendChart({
   const format = useMemo(() => {
     return (value: number) => {
       if (!metric) return String(value);
-      if (metric.kind === "currency") return formatMoney(value, currency, locale);
+      if (metric.kind === "currency")
+        return formatMoney(value, currency ?? "BRL", locale);
       if (metric.kind === "percent") return `${value.toFixed(1)}%`;
       return new Intl.NumberFormat(locale).format(value);
     };

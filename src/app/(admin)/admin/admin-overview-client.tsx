@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { RangeFilter } from "@/components/ui/range-filter";
 import { DeltaStat } from "@/components/ui/delta-stat";
@@ -31,7 +32,24 @@ type Props = {
   overview: PlatformOverview;
   activity: PlatformActivityItem[];
   companies?: CompanySelectorItem[];
+  /** Moeda em foco. `undefined` = todas, lado a lado. */
+  currency?: string;
 };
+
+/** Locale de formatação de cada moeda — só afeta separador e posição do símbolo. */
+const CURRENCY_LOCALE: Record<string, string> = {
+  BRL: "pt-BR",
+  USD: "en-US",
+  EUR: "pt-PT",
+};
+
+function formatMoney(value: number, currency: string): string {
+  return value.toLocaleString(CURRENCY_LOCALE[currency] ?? "pt-BR", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  });
+}
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Pendente",
@@ -84,18 +102,9 @@ export function AdminOverviewClient({
   overview,
   activity,
   companies = [],
+  currency,
 }: Props) {
-  // A plataforma consolida empresas que podem operar em moedas diferentes;
-  // o painel usa BRL como moeda de referência.
-  const currency = "BRL";
   const locale = "pt-BR";
-
-  const money = (v: number) =>
-    v.toLocaleString(locale, {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 0,
-    });
   const count = (v: number) => new Intl.NumberFormat(locale).format(v);
 
   const compareLabel =
@@ -117,14 +126,7 @@ export function AdminOverviewClient({
 
       <RangeFilter range={range} />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <DeltaStat
-          label="Receita processada"
-          delta={overview.revenue}
-          format={money}
-          compareLabel={compareLabel}
-          icon={<DollarSign className="w-3 h-3" />}
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <DeltaStat
           label="Agendamentos"
           delta={overview.bookings}
@@ -148,6 +150,49 @@ export function AdminOverviewClient({
         />
       </div>
 
+      {/* Receita: um bloco por moeda, nunca um total consolidado.
+          Empresas operam em mercados diferentes e não existe conversão certa
+          a fazer — a taxa muda todo dia, e o número exibido passaria a depender
+          de quando a página foi aberta. */}
+      <div className="card">
+        <div className="card-header">
+          <div className="min-w-0">
+            <h2 className="card-title">Receita processada</h2>
+            <p
+              className="text-[var(--color-text-muted)]"
+              style={{ fontSize: "var(--text-xs)" }}
+            >
+              Separada por mercado — valores de moedas diferentes não são somados
+            </p>
+          </div>
+          {overview.currencies.length > 1 && (
+            <CurrencyFilter selected={currency} options={overview.currencies} />
+          )}
+        </div>
+        <div className="card-body">
+          {overview.revenueByCurrency.length === 0 ? (
+            <EmptyState
+              icon={<DollarSign className="w-5 h-5" />}
+              title="Sem receita no período"
+              description="Nenhum agendamento pago no recorte selecionado."
+            />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {overview.revenueByCurrency.map((r) => (
+                <DeltaStat
+                  key={r.currency}
+                  label={`Receita · ${r.currency}`}
+                  delta={r.delta}
+                  format={(v) => formatMoney(v, r.currency)}
+                  compareLabel={compareLabel}
+                  icon={<DollarSign className="w-3 h-3" />}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       <SuperAdminAICopilot />
 
       <div className="card">
@@ -168,14 +213,14 @@ export function AdminOverviewClient({
           </div>
         </div>
         <div className="card-body">
+          {/* Sem métrica de receita: um eixo de dinheiro só faria sentido com
+              uma moeda, e a série aqui atravessa todos os mercados. */}
           <TrendChart
             data={overview.series}
             granularity={range.granularity}
-            currency={currency}
             locale={locale}
             height={300}
             metrics={[
-              { key: "revenue", label: "Receita", kind: "currency", tone: "accent" },
               { key: "bookings", label: "Agendamentos", kind: "number", tone: "navy" },
               { key: "companies", label: "Novas empresas", kind: "number", tone: "success" },
               { key: "users", label: "Novos usuários", kind: "number", tone: "warning" },
@@ -194,7 +239,8 @@ export function AdminOverviewClient({
               className="text-[var(--color-text-muted)]"
               style={{ fontSize: "var(--text-xs)" }}
             >
-              Posição atual da base — não acompanha o filtro de período
+              Posição atual da base — não acompanha o filtro de período · cobrança
+              em {overview.billingCurrency}
             </p>
           </div>
           <Link href="/admin/financeiro" className="btn btn-ghost btn-sm">
@@ -204,9 +250,12 @@ export function AdminOverviewClient({
         <div className="card-body grid grid-cols-2 lg:grid-cols-5 gap-4">
           {(
             [
-              ["MRR", money(overview.mrr)],
-              ["ARR", money(overview.arr)],
-              ["ARPU", money(overview.arpu)],
+              // O preço do plano é um número único, sem moeda — o MRR não é
+              // segmentável por mercado enquanto isso não mudar. Rotular com a
+              // moeda de cobrança é o mínimo honesto até lá.
+              ["MRR", formatMoney(overview.mrr, overview.billingCurrency)],
+              ["ARR", formatMoney(overview.arr, overview.billingCurrency)],
+              ["ARPU", formatMoney(overview.arpu, overview.billingCurrency)],
               ["Ativas", count(overview.activeSubscriptions)],
               ["Inadimplentes", count(overview.overdueSubscriptions)],
             ] as const
@@ -296,7 +345,7 @@ export function AdminOverviewClient({
                       {c.name}
                     </td>
                     <td data-type="number">{count(c.bookings)}</td>
-                    <td data-type="number">{money(c.revenue)}</td>
+                    <td data-type="number">{formatMoney(c.revenue, c.currency)}</td>
                     <td>
                       <div className="flex justify-end">
                         <Link href={`/${c.slug}/dashboard`} className="btn btn-ghost btn-sm">
@@ -403,6 +452,61 @@ export function AdminOverviewClient({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Foco em um mercado. O padrão é "Todas" — a primeira pergunta do super admin é
+ * como a plataforma está, e a resposta não pode exigir escolher uma moeda antes.
+ *
+ * As opções vêm do banco (`SELECT DISTINCT currency FROM company`), então abrir
+ * um mercado novo aparece aqui sem tocar em código.
+ */
+function CurrencyFilter({
+  selected,
+  options,
+}: {
+  selected?: string;
+  options: string[];
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [pending, startTransition] = React.useTransition();
+
+  const go = (value?: string) => {
+    const next = new URLSearchParams(searchParams.toString());
+    if (value) next.set("currency", value);
+    else next.delete("currency");
+    startTransition(() => {
+      router.push(`${pathname}?${next.toString()}`, { scroll: false });
+    });
+  };
+
+  return (
+    <div className="segmented" data-pending={pending || undefined}>
+      <button
+        type="button"
+        className="segmented-item"
+        aria-pressed={!selected}
+        data-active={!selected || undefined}
+        onClick={() => go(undefined)}
+      >
+        Todas
+      </button>
+      {options.map((c) => (
+        <button
+          key={c}
+          type="button"
+          className="segmented-item"
+          aria-pressed={selected === c}
+          data-active={selected === c || undefined}
+          onClick={() => go(c)}
+        >
+          {c}
+        </button>
+      ))}
     </div>
   );
 }

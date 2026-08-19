@@ -29,7 +29,10 @@ async function loadConfig(bookingConfigId: string) {
   return db.bookingConfig.findFirst({
     where: { id: bookingConfigId, status: "PUBLISHED" },
     include: {
-      company: { select: { timezone: true } },
+      // `currency` carimba a moeda no orçamento criado — ver a nota em
+      // `Estimate.currency`. Sem ela o valor herdaria a moeda que a empresa
+      // tiver no dia da consulta, não a que foi cobrada.
+      company: { select: { timezone: true, currency: true } },
       serviceTypes: {
         include: { serviceType: { select: { id: true, price: true, allowQuantity: true } } },
       },
@@ -223,6 +226,7 @@ export async function upsertEstimateAction(formData: FormData): Promise<UpsertRe
       frequency: safeFreq as "ONCE" | "WEEKLY" | "BIWEEKLY" | "MONTHLY",
       subtotal,
       total,
+      currency: config.company.currency,
       serviceTypes: { create: svcRows },
       extraServices: { create: extRows },
     },
@@ -341,6 +345,7 @@ async function createPendingEstimate(p: {
       frequency: p.safeFreq as "ONCE" | "WEEKLY" | "BIWEEKLY" | "MONTHLY",
       subtotal: p.subtotal,
       total: p.total,
+      currency: p.config.company.currency,
       customerName: p.customerName,
       customerEmail: p.customerEmail,
       customerId: p.customerId ?? null,

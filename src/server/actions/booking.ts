@@ -1223,6 +1223,7 @@ export async function createWalkInBookingAction(
         status: "CONVERTED",
         subtotal: serviceType.price,
         total: serviceType.price,
+        currency: company.currency,
         serviceTypes: {
           create: {
             serviceTypeId: serviceType.id,

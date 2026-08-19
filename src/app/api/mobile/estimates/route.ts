@@ -39,6 +39,8 @@ export async function POST(req: NextRequest) {
       company: { isActive: true },
     },
     include: {
+      // Moeda cobrada no ato — ver a nota em `Estimate.currency`.
+      company: { select: { currency: true } },
       serviceTypes: {
         include: { serviceType: { select: { id: true, price: true } } },
       },
@@ -113,6 +115,7 @@ export async function POST(req: NextRequest) {
       frequency: safeFreq as "ONCE" | "WEEKLY" | "BIWEEKLY" | "MONTHLY",
       subtotal: total,
       total,
+      currency: config.company.currency,
       serviceTypes: { create: svcRows },
       extraServices: { create: extRows },
     },
