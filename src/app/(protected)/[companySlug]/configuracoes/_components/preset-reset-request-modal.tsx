@@ -158,7 +158,7 @@ export function PresetResetRequestModal({ companySlug, isOpen, onClose }: Props)
                 type="button"
                 onClick={checkOpenBookings}
                 disabled={isPending}
-                className="px-5 py-2.5 bg-[#635bff] hover:bg-[#544dc9] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer disabled:opacity-50"
               >
                 {isPending ? "Verificando agendamentos..." : "Verificar e Continuar ➔"}
               </button>
@@ -258,7 +258,7 @@ export function PresetResetRequestModal({ companySlug, isOpen, onClose }: Props)
                 type="button"
                 onClick={handleSubmitRequest}
                 disabled={isPending}
-                className="px-6 py-2.5 bg-[#635bff] hover:bg-[#544dc9] text-white font-bold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
               >
                 <span>{isPending ? "Processando..." : presetResetFee > 0 ? `💳 Efetuar Pagamento R$ ${presetResetFee.toFixed(2)} & Solicitar ➔` : "Enviar Solicitação ao Super Admin ➔"}</span>
               </button>

@@ -168,7 +168,7 @@ export function NotificationBell() {
                           type="button"
                           onClick={() => handleExecuteReset(notif.id)}
                           disabled={isPending}
-                          className="px-3.5 py-1.5 bg-[#635bff] hover:bg-[#544dc9] text-white font-bold text-[var(--text-2xs)] rounded-[var(--radius-control)] shadow-2xs transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                          className="px-3.5 py-1.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-[var(--text-2xs)] rounded-[var(--radius-control)] shadow-2xs transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                         >
                           <RotateCcw className="w-3.5 h-3.5" />
                           <span>{isPending ? "Executando..." : "⚡ Executar Reset Agora"}</span>

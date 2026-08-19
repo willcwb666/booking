@@ -120,7 +120,7 @@ export default async function EmpresasPage({
   const tipos = Object.entries(BUSINESS_LABELS);
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-[var(--color-text-heading)] selection:bg-[var(--color-navy)] selection:text-white font-sans antialiased">
+    <div className="min-h-screen bg-[var(--color-bg-page)] text-[var(--color-text-heading)] selection:bg-[var(--color-navy)] selection:text-white font-sans antialiased">
       {/* ── Top Bar ── */}
       <header className="sticky top-0 z-40 bg-[var(--color-bg)] backdrop-blur-xl border-b border-[var(--color-border)]">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">

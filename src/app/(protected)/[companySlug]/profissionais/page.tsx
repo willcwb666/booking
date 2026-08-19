@@ -18,7 +18,9 @@ export default async function ProfissionaisPage({
   if (!company) notFound();
 
   const [professionals, feature] = await Promise.all([
-    getProfessionals(company.id),
+    // Inclui os desativados: é a tela de gestão, e é onde o botão de reativar
+    // precisa estar alcançável.
+    getProfessionals(company.id, { includeInactive: true }),
     checkFeature(company.id, "max_professionals"),
   ]);
 

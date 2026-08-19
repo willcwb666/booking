@@ -119,7 +119,7 @@ export function CompanyModulosClient({ companySlug, modules, activeModuleCodes }
                     className={`w-full py-2.5 rounded-[var(--radius-control)] font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-2 ${
                       inCart
                         ? "bg-[var(--color-bg-muted)] text-[var(--color-text)] hover:bg-[var(--color-bg-muted)]"
-                        : "bg-[#635bff] hover:bg-[#544dc9] text-white shadow-xs"
+                        : "bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-xs"
                     }`}
                   >
                     <ShoppingCart className="w-4 h-4" />
@@ -157,7 +157,7 @@ export function CompanyModulosClient({ companySlug, modules, activeModuleCodes }
               type="button"
               onClick={handleCheckoutStripe}
               disabled={isPending}
-              className="px-6 py-3 bg-[#635bff] hover:bg-[#544dc9] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-lg transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
+              className="px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-lg transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
             >
               <CreditCard className="w-4 h-4" />
               <span>{isPending ? "Processando..." : "Pagar e Ativar no Stripe ➔"}</span>

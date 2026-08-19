@@ -1,10 +1,26 @@
 import "server-only";
 import { db } from "@/lib/db";
 
-export async function getProfessionals(companyId: string) {
+/**
+ * Profissionais da empresa.
+ *
+ * O padrão continua sendo só os ativos, que é o que as telas de agenda e de
+ * agendamento precisam. A tela de gestão passa `includeInactive` porque, sem
+ * isso, desativar um profissional o fazia sumir da lista e o botão de
+ * reativar nunca era alcançável — desativar virava porta de mão única.
+ */
+export async function getProfessionals(
+  companyId: string,
+  opts: { includeInactive?: boolean } = {}
+) {
   const rows = await db.professional.findMany({
-    where: { companyId, isActive: true },
-    orderBy: { createdAt: "asc" },
+    where: {
+      companyId,
+      ...(opts.includeInactive ? {} : { isActive: true }),
+    },
+    orderBy: opts.includeInactive
+      ? [{ isActive: "desc" }, { createdAt: "asc" }]
+      : { createdAt: "asc" },
   });
 
   return rows.map((p) => ({

@@ -1,31 +1,22 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { deleteProfessionalAction } from "@/server/actions/professionals";
+import { setProfessionalActiveAction } from "@/server/actions/professionals";
 import { toast } from "@/lib/toast-service";
-import { ActionTooltip } from "@/components/ui/action-tooltip";
-import { User, Plus, CheckCircle2, DollarSign, Edit2, Trash2 } from "@/components/ui/icons";
+import { PageHeader } from "@/components/ui/page-header";
+import { SearchInput } from "@/components/ui/search-input";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { IconAction, RowActions } from "@/components/ui/icon-action";
 import { Pagination } from "@/components/ui/pagination";
+import { Users, Plus, AlertTriangle } from "@/components/ui/icons";
 
-function IconPencil() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 20h9" />
-      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-    </svg>
-  );
-}
-
-function IconTrash() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2" />
-    </svg>
-  );
-}
+// Removidos daqui `IconPencil` e `IconTrash`: SVGs escritos à mão, nunca
+// usados, com o traçado da lixeira malformado. O conjunto de ícones da
+// aplicação já tem os dois.
 
 type Professional = {
   id: string;
@@ -37,6 +28,7 @@ type Professional = {
   roleTitle?: string | null;
   commissionRate?: number | null;
   commissionPercentage?: number | null;
+  isActive?: boolean;
 };
 
 type Props = {
@@ -45,168 +37,336 @@ type Props = {
   limit: number | null;
 };
 
+type StatusFilter = "ALL" | "ACTIVE" | "INACTIVE";
+
+const STATUS_TABS: { id: StatusFilter; label: string }[] = [
+  { id: "ALL", label: "Todos" },
+  { id: "ACTIVE", label: "Ativos" },
+  { id: "INACTIVE", label: "Desativados" },
+];
+
 export function ProfissionaisClient({ companySlug, professionals, limit }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [status, setStatus] = useState<StatusFilter>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [confirmTarget, setConfirmTarget] = useState<Professional | null>(null);
 
-  const paginatedProfessionals = professionals.slice(
+  const activeCount = professionals.filter((p) => p.isActive !== false).length;
+  const inactiveCount = professionals.length - activeCount;
+
+  // O limite do plano conta só quem está ativo — desativado não ocupa vaga.
+  const atLimit = limit !== null && activeCount >= limit;
+
+  const filtered = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return professionals.filter((p) => {
+      const isActive = p.isActive !== false;
+      if (status === "ACTIVE" && !isActive) return false;
+      if (status === "INACTIVE" && isActive) return false;
+      if (!term) return true;
+      return (
+        p.name.toLowerCase().includes(term) ||
+        (p.email?.toLowerCase().includes(term) ?? false) ||
+        (p.roleTitle?.toLowerCase().includes(term) ?? false)
+      );
+    });
+  }, [professionals, searchTerm, status]);
+
+  const paginated = filtered.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
-  const atLimit = limit !== null && professionals.length >= limit;
+  const hasActiveFilter = status !== "ALL" || searchTerm.trim().length > 0;
 
-  function handleDelete(id: string, name: string) {
-    if (!confirm(`Tem certeza que deseja desativar o profissional ${name}?`)) return;
+  function handleToggleActive() {
+    if (!confirmTarget) return;
+    const target = confirmTarget;
+    const nextActive = target.isActive === false;
+
     const fd = new FormData();
     fd.set("companySlug", companySlug);
-    fd.set("id", id);
+    fd.set("id", target.id);
+    fd.set("isActive", String(nextActive));
 
     startTransition(async () => {
-      await deleteProfessionalAction(fd);
-      toast.success("Desativado", `Profissional ${name} desativado com sucesso.`);
+      const res = await setProfessionalActiveAction(fd);
+      // A versão anterior ignorava o retorno e sempre mostrava sucesso.
+      if (!res.success) {
+        toast.error(
+          "Não foi possível alterar",
+          res.errors?._?.[0] ?? "Tente novamente."
+        );
+        return;
+      }
+      toast.success(
+        nextActive ? "Profissional reativado" : "Profissional desativado",
+        target.name
+      );
+      setConfirmTarget(null);
       router.refresh();
     });
   }
 
+  /** `null`/`undefined` viram "padrão" — antes renderizavam "null%". */
+  function commissionLabel(p: Professional): string {
+    const rate = p.commissionRate ?? p.commissionPercentage;
+    return rate === null || rate === undefined ? "Padrão" : `${rate}%`;
+  }
+
   return (
-    <div className="w-full max-w-7xl px-6 sm:px-10 py-8 text-left space-y-8 pb-32">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs">
-            <User className="w-4 h-4" />
-            <span>Equipe & Profissionais</span>
+    <div className="page-container pb-20">
+      <div className="page-content space-y-6">
+        <PageHeader
+          category="Equipe"
+          categoryIcon={<Users className="w-3.5 h-3.5" />}
+          title="Profissionais"
+          description="Quem atende, com qual cargo e qual comissão. Só os ativos aparecem para o cliente agendar."
+          action={
+            <Link
+              href={`/${companySlug}/profissionais/novo`}
+              aria-disabled={atLimit}
+              className={`btn btn-primary btn-sm inline-flex items-center gap-1.5 ${
+                atLimit ? "opacity-50 pointer-events-none" : ""
+              }`}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Novo profissional</span>
+            </Link>
+          }
+        />
+
+        {atLimit && (
+          <div className="alert alert-warning">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>
+              Você atingiu o limite de {limit} profissional(is) ativo(s) do seu
+              plano. Desative alguém ou faça upgrade para adicionar mais.
+            </span>
           </div>
-          <h1 className="text-2xl font-semibold text-[var(--color-text-heading)] tracking-tight mt-1">
-            Profissionais Atendentes
-          </h1>
-          <p className="text-xs text-[var(--color-text-muted)] mt-1">
+        )}
+
+        <div className="scroller -mx-1 px-1">
+          <div
+            className="segmented w-max"
+            role="tablist"
+            aria-label="Filtrar profissionais por status"
+          >
+            {STATUS_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={status === tab.id}
+                data-active={status === tab.id}
+                onClick={() => {
+                  setStatus(tab.id);
+                  setCurrentPage(1);
+                }}
+                className="segmented-item whitespace-nowrap inline-flex items-center gap-1.5"
+              >
+                <span>{tab.label}</span>
+                {tab.id === "INACTIVE" && inactiveCount > 0 && (
+                  <span className="badge badge-count badge-neutral">
+                    {inactiveCount}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="toolbar">
+          <SearchInput
+            value={searchTerm}
+            onChange={(val) => {
+              setSearchTerm(val);
+              setCurrentPage(1);
+            }}
+            placeholder="Buscar por nome, e-mail ou cargo"
+          />
+          <span className="toolbar-spacer" />
+          <span
+            className="text-[var(--color-text-muted)] tabular-nums"
+            style={{ fontSize: "var(--text-xs)" }}
+          >
             {limit !== null
-              ? `${professionals.length} de ${limit} profissionais ativos no plano atual.`
-              : `${professionals.length} profissional(is) ativo(s) cadastrado(s).`}
-          </p>
-        </div>
-
-        <Link
-          href={`/${companySlug}/profissionais/novo`}
-          className={`px-6 py-3 bg-[#635bff] hover:bg-[#544dc9] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer inline-flex items-center gap-2 shrink-0 uppercase ${
-            atLimit ? "opacity-50 pointer-events-none" : ""
-          }`}
-        >
-          <Plus className="w-4 h-4" />
-          <span>PROFISSIONAL</span>
-        </Link>
-      </div>
-
-      {atLimit && (
-        <div className="bg-[var(--color-warning-light)] border border-[var(--color-warning-border)] rounded-[var(--radius-card)] p-4 text-xs font-bold text-[var(--color-warning)]">
-          ⚠️ Limite de {limit} profissional(is) atingido no seu plano. Faça upgrade para adicionar mais profissionais.
-        </div>
-      )}
-
-      {/* Tabela de Profissionais */}
-      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-6 sm:p-8 space-y-4 shadow-xs">
-        <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
-          <h2 className="text-base font-semibold text-[var(--color-text-heading)]">Lista de Profissionais Cadastrados</h2>
-          <span className="text-xs text-[var(--color-text-muted)] font-medium">
-            Total: {professionals.length}
+              ? `${activeCount} de ${limit} ativos`
+              : `${activeCount} ativo${activeCount === 1 ? "" : "s"}`}
           </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead>
-              <tr className="bg-[var(--color-bg-subtle)] text-[var(--color-text-muted)] font-bold border-b border-[var(--color-border)]">
-                <th className="px-4 py-3">Profissional / Cargo</th>
-                <th className="px-4 py-3">Contato (E-mail / WhatsApp)</th>
-                <th className="px-4 py-3 text-center">Comissão</th>
-                <th className="px-4 py-3 text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--color-border)] font-medium">
-              {professionals.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="text-center py-10 text-[var(--color-text-subtle)]">
-                    Nenhum profissional cadastrado. Clique no botão acima para adicionar!
-                  </td>
-                </tr>
-              ) : (
-                paginatedProfessionals.map((pro) => (
-                  <tr key={pro.id} className="hover:bg-[var(--color-bg-subtle)] transition-colors">
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-[var(--radius-card)] bg-[var(--color-primary-light)] border border-[var(--color-primary)] text-[var(--color-primary)] font-semibold flex items-center justify-center text-xs shrink-0">
-                          {pro.avatarUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={pro.avatarUrl} alt={pro.name} className="w-full h-full object-cover rounded-[var(--radius-card)]" />
-                          ) : (
-                            pro.name[0].toUpperCase()
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-[var(--color-text-heading)] text-sm">{pro.name}</p>
-                          <span className="text-[var(--text-2xs)] font-semibold text-[var(--color-primary)] block">
-                            {pro.roleTitle || "Profissional Atendente"}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="px-4 py-3.5 space-y-0.5">
-                      <p className="text-[var(--color-text)] font-medium">{pro.email || "Sem e-mail"}</p>
-                      <p className="text-[var(--color-text-subtle)] font-mono text-[var(--text-2xs)]">{pro.phone || "Sem telefone"}</p>
-                    </td>
-
-                    <td className="px-4 py-3.5 text-center">
-                      <span className="bg-[var(--color-success-light)] text-[var(--color-success)] border border-[var(--color-success-border)] px-3 py-1 rounded-full font-semibold text-[var(--text-2xs)] inline-flex items-center gap-1">
-                        <DollarSign className="w-3.5 h-3.5 text-[var(--color-success)]" />
-                        {pro.commissionRate !== undefined ? `${pro.commissionRate}%` : "Padrão"}
-                      </span>
-                    </td>
-
-                    <td className="px-4 py-3.5 text-right space-x-2">
-                      <ActionTooltip label="Editar Profissional">
-                        <Link
-                          href={`/${companySlug}/profissionais/${pro.id}/editar`}
-                          className="p-2 bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)] font-bold text-xs rounded-[var(--radius-control)] transition-all inline-flex items-center justify-center shadow-2xs"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </Link>
-                      </ActionTooltip>
-
-                      <ActionTooltip label="Remover Profissional">
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(pro.id, pro.name)}
-                          disabled={isPending}
-                          className="p-2 bg-[var(--color-danger-light)] hover:bg-[var(--color-danger-light)] text-[var(--color-danger)] font-bold text-xs rounded-[var(--radius-control)] transition-all inline-flex items-center justify-center cursor-pointer shadow-2xs"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </ActionTooltip>
-                    </td>
+        {filtered.length === 0 ? (
+          <div className="card">
+            <EmptyState
+              icon={<Users className="w-5 h-5" />}
+              title={
+                hasActiveFilter
+                  ? "Nenhum profissional com esses filtros"
+                  : "Nenhum profissional cadastrado"
+              }
+              description={
+                hasActiveFilter
+                  ? "Nenhum profissional corresponde à busca ou ao status selecionado."
+                  : "Cadastre quem atende para que os clientes possam escolher o profissional ao agendar."
+              }
+              action={
+                hasActiveFilter ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchTerm("");
+                      setStatus("ALL");
+                      setCurrentPage(1);
+                    }}
+                    className="btn btn-outline btn-sm"
+                  >
+                    Limpar filtros
+                  </button>
+                ) : (
+                  <Link
+                    href={`/${companySlug}/profissionais/novo`}
+                    className="btn btn-primary btn-sm"
+                  >
+                    Cadastrar profissional
+                  </Link>
+                )
+              }
+            />
+          </div>
+        ) : (
+          <div className="card overflow-hidden">
+            <div
+              className="table-container"
+              style={{ border: 0, borderRadius: 0, boxShadow: "none" }}
+            >
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Profissional</th>
+                    <th scope="col">Contato</th>
+                    <th scope="col" className="text-right">
+                      Comissão
+                    </th>
+                    <th scope="col">Status</th>
+                    <th scope="col" className="text-right">
+                      Ações
+                    </th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody>
+                  {paginated.map((pro) => {
+                    const isActive = pro.isActive !== false;
+                    return (
+                      <tr key={pro.id} className={isActive ? "" : "opacity-65"}>
+                        <td>
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="w-9 h-9 rounded-[var(--radius-control)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)] text-[var(--color-text-muted)] grid place-items-center font-medium shrink-0 overflow-hidden">
+                              {pro.avatarUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={pro.avatarUrl}
+                                  alt=""
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                pro.name[0]?.toUpperCase()
+                              )}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="font-medium text-[var(--color-text-heading)] truncate">
+                                {pro.name}
+                              </p>
+                              <span
+                                className="block text-[var(--color-text-muted)] truncate"
+                                style={{ fontSize: "var(--text-xs)" }}
+                              >
+                                {pro.roleTitle || "Sem cargo definido"}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
 
-        {professionals.length > 0 && (
-          <Pagination
-            currentPage={currentPage}
-            totalItems={professionals.length}
-            pageSize={pageSize}
-            pageSizeOptions={[10, 20, 30, 50, 100]}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={setPageSize}
-            itemLabel="profissionais"
-          />
+                        <td>
+                          <p className="text-[var(--color-text)] truncate">
+                            {pro.email || "—"}
+                          </p>
+                          <span
+                            className="block text-[var(--color-text-subtle)] font-mono"
+                            style={{ fontSize: "var(--text-xs)" }}
+                          >
+                            {pro.phone || "—"}
+                          </span>
+                        </td>
+
+                        <td data-type="number">{commissionLabel(pro)}</td>
+
+                        <td>
+                          <StatusBadge variant={isActive ? "success" : "neutral"}>
+                            {isActive ? "Ativo" : "Inativo"}
+                          </StatusBadge>
+                        </td>
+
+                        <td>
+                          <RowActions>
+                            <IconAction
+                              intent="edit"
+                              label={`Editar ${pro.name}`}
+                              href={`/${companySlug}/profissionais/${pro.id}/editar`}
+                            />
+                            {/* Ícone e rótulo agora batem com o que a ação faz:
+                                ela marca `isActive`, não apaga o registro. */}
+                            <IconAction
+                              intent={isActive ? "deactivate" : "activate"}
+                              label={`${isActive ? "Desativar" : "Reativar"} ${pro.name}`}
+                              onClick={() => setConfirmTarget(pro)}
+                              pending={isPending}
+                            />
+                          </RowActions>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filtered.length}
+              pageSize={pageSize}
+              pageSizeOptions={[10, 20, 30, 50, 100]}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              itemLabel="profissionais"
+            />
+          </div>
         )}
       </div>
+
+      {confirmTarget && (
+        <ConfirmDialog
+          isOpen={Boolean(confirmTarget)}
+          onClose={() => setConfirmTarget(null)}
+          onConfirm={handleToggleActive}
+          title={
+            confirmTarget.isActive === false
+              ? "Reativar profissional"
+              : "Desativar profissional"
+          }
+          description={
+            confirmTarget.isActive === false
+              ? `${confirmTarget.name} volta a aparecer para os clientes escolherem ao agendar.`
+              : `${confirmTarget.name} deixa de aparecer para os clientes agendarem e libera uma vaga do plano. Os agendamentos já marcados continuam valendo, e você pode reativar quando quiser.`
+          }
+          variant={confirmTarget.isActive === false ? "success" : "warning"}
+          confirmText={confirmTarget.isActive === false ? "Reativar" : "Desativar"}
+          isLoading={isPending}
+        />
+      )}
     </div>
   );
 }

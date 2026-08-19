@@ -15,6 +15,7 @@ import { Calendar, Plus, Edit2, CheckCircle2, XCircle } from "@/components/ui/ic
 import { toast } from "@/lib/toast-service";
 import { Pagination } from "@/components/ui/pagination";
 
+import { IconAction, RowActions } from "@/components/ui/icon-action";
 const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 const STATUS_VARIANTS: Record<AgendaStatus, { label: string; variant: "neutral" | "success" | "danger" }> = {
@@ -119,7 +120,7 @@ export function AgendasClient({ companySlug, agendas, professionals, role, activ
           role !== "EMPLOYEE" && (
             <Link
               href={`/${companySlug}/agendas/nova`}
-              className="px-6 py-3 bg-[#635bff] hover:bg-[#544dc9] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer inline-flex items-center gap-2 shrink-0 uppercase"
+              className="px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer inline-flex items-center gap-2 shrink-0 uppercase"
             >
               <Plus className="w-4 h-4" />
               <span>+ NOVA AGENDA</span>
@@ -245,43 +246,34 @@ export function AgendasClient({ companySlug, agendas, professionals, role, activ
                         </div>
                       </td>
 
-                      <td className="px-4 py-3.5 text-right space-x-2">
-                        {canPublish && (
-                          <ActionTooltip label="Publicar Agenda">
-                            <button
-                              type="button"
+                      <td className="px-4 py-3.5">
+                        <RowActions>
+                          {canPublish && (
+                            <IconAction
+                              intent="activate"
+                              label={`Publicar agenda ${agenda.name}`}
                               onClick={() => handlePublish(agenda.id, agenda.name)}
-                              disabled={isPending}
-                              className="p-2 bg-[var(--color-success-light)] hover:bg-[var(--color-success-light)] text-[var(--color-success)] rounded-[var(--radius-control)] transition-all inline-flex items-center justify-center cursor-pointer shadow-2xs"
-                            >
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                            </button>
-                          </ActionTooltip>
-                        )}
-
-                        {canEdit && (
-                          <ActionTooltip label="Editar Agenda">
-                            <Link
+                              pending={isPending}
+                            />
+                          )}
+                          {canEdit && (
+                            <IconAction
+                              intent="edit"
+                              label={`Editar agenda ${agenda.name}`}
                               href={`/${companySlug}/agendas/${agenda.id}/editar`}
-                              className="p-2 bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)] rounded-[var(--radius-control)] transition-all inline-flex items-center justify-center shadow-2xs"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </Link>
-                          </ActionTooltip>
-                        )}
-
-                        {canCancel && (
-                          <ActionTooltip label="Cancelar Agenda">
-                            <button
-                              type="button"
-                              onClick={() => setCancelTarget({ id: agenda.id, name: agenda.name })}
-                              disabled={isPending}
-                              className="p-2 bg-[var(--color-danger-light)] hover:bg-[var(--color-danger-light)] text-[var(--color-danger)] rounded-[var(--radius-control)] transition-all inline-flex items-center justify-center cursor-pointer shadow-2xs"
-                            >
-                              <XCircle className="w-3.5 h-3.5" />
-                            </button>
-                          </ActionTooltip>
-                        )}
+                            />
+                          )}
+                          {canCancel && (
+                            <IconAction
+                              intent="block"
+                              label={`Cancelar agenda ${agenda.name}`}
+                              onClick={() =>
+                                setCancelTarget({ id: agenda.id, name: agenda.name })
+                              }
+                              pending={isPending}
+                            />
+                          )}
+                        </RowActions>
                       </td>
                     </tr>
                   );

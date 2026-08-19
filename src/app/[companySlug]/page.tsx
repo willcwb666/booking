@@ -94,7 +94,7 @@ export default async function TenantLandingPage({
       : null;
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-[var(--color-text-heading)] font-sans text-left selection:bg-[var(--color-navy)] selection:text-white antialiased">
+    <div className="min-h-screen bg-[var(--color-bg-page)] text-[var(--color-text-heading)] font-sans text-left selection:bg-[var(--color-navy)] selection:text-white antialiased">
       {/* Schema.org LocalBusiness */}
       <LocalBusinessJsonLd
         name={company.name}

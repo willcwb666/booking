@@ -110,7 +110,7 @@ export function CompanyCargosClient({ companySlug, roles: initialRoles }: Props)
           <button
             type="submit"
             disabled={isPending}
-            className="px-6 py-3 bg-[#635bff] hover:bg-[#544dc9] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer inline-flex items-center justify-center gap-2"
+            className="px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer inline-flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
             <span>{isPending ? "SALVANDO..." : "+ CARGO"}</span>

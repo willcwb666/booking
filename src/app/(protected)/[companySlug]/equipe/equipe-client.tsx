@@ -13,6 +13,7 @@ import { TextInput } from "@/components/forms/form-elements";
 import { Users, UserPlus, Trash2 } from "@/components/ui/icons";
 import { toast } from "@/lib/toast-service";
 
+import { IconAction, RowActions } from "@/components/ui/icon-action";
 type SerializedMember = Omit<TeamMember, "joinedAt"> & { joinedAt: string };
 
 type Props = {
@@ -233,15 +234,11 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
                       )}
 
                       {canRemove && (
-                        <ActionTooltip label={`Remover ${member.name}`}>
-                          <button
-                            type="button"
-                            onClick={() => setMemberToRemove(member)}
-                            className="p-2 text-[var(--color-text-subtle)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-light)] rounded-[var(--radius-control)] transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </ActionTooltip>
+                        <IconAction
+                          intent="delete"
+                          label={`Remover ${member.name} da equipe`}
+                          onClick={() => setMemberToRemove(member)}
+                        />
                       )}
                     </div>
                   </li>

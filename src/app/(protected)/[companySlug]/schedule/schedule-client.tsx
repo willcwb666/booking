@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { CalendarView } from "@/lib/calendar";
 import {
   MONTH_NAMES,
+  EVENT_TYPE_CONFIG,
   navigateDate,
   getWeekDays,
   parseLocalDate,
@@ -138,10 +139,16 @@ export function ScheduleClient({
   const periodLabel = getPeriodLabel(view, selectedDate);
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* ── Left panel ── */}
+    /*
+      `h-screen` aqui estourava a viewport: esta tela vive dentro do shell, que
+      já gasta 3,5rem com o cabeçalho — e mais, quando há banner de cobrança.
+      O resultado era rolagem dupla, com o fim da agenda sempre abaixo da
+      dobra. `flex-1 min-h-0` ocupa o que sobrou, seja quanto for.
+    */
+    <div className="flex flex-1 min-h-0 overflow-hidden">
+      {/* ── Painel lateral (some no mobile: 224px fixos comiam metade da tela) ── */}
       <aside
-        className="w-56 shrink-0 border-r border-[var(--color-border)] bg-[var(--color-bg)] flex flex-col overflow-y-auto py-4 gap-5"
+        className="hidden lg:flex w-56 shrink-0 border-r border-[var(--color-border)] bg-[var(--color-bg)] flex-col overflow-y-auto py-4 gap-5"
         aria-label="Painel de navegação do calendário"
       >
         {/* Mini calendar */}
@@ -196,20 +203,20 @@ export function ScheduleClient({
           <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
             Legenda
           </p>
+          {/* Lê de EVENT_TYPE_CONFIG, a mesma fonte que pinta os eventos no
+              grid. Antes as bolinhas usavam cores escritas aqui à mão e não
+              batiam com as dos eventos — que é a única coisa que uma legenda
+              precisa fazer. */}
           <ul className="space-y-1.5" role="list">
-            {(
-              [
-                { dot: "bg-[var(--color-info)]", label: "Agendamento" },
-                { dot: "bg-[var(--color-primary)]", label: "Evento" },
-                { dot: "bg-[var(--color-warning)]", label: "Estimate" },
-              ] as const
-            ).map(({ dot, label }) => (
-              <li key={label} className="flex items-center gap-2">
+            {Object.values(EVENT_TYPE_CONFIG).map((cfg) => (
+              <li key={cfg.label} className="flex items-center gap-2">
                 <span
-                  className={`w-2.5 h-2.5 rounded-full shrink-0 ${dot}`}
+                  className={`w-2.5 h-2.5 rounded-full shrink-0 ${cfg.dot}`}
                   aria-hidden="true"
                 />
-                <span className="text-xs text-[var(--color-text-muted)]">{label}</span>
+                <span className="text-xs text-[var(--color-text-muted)]">
+                  {cfg.label}
+                </span>
               </li>
             ))}
           </ul>
@@ -258,23 +265,35 @@ export function ScheduleClient({
             {periodLabel}
           </h1>
 
-          {/* View switcher */}
-          <div
-            role="group"
-            aria-label="Tipo de visualização"
-            className="flex border border-[var(--color-border)] rounded-[var(--radius-control)] overflow-hidden"
-          >
+          {/* No mobile o painel lateral some, então o seletor de profissional
+              precisa estar aqui — senão o filtro fica inalcançável no celular. */}
+          <label className="lg:hidden">
+            <span className="sr-only">Profissional</span>
+            <select
+              value={selectedProfessional}
+              onChange={(e) => navigate({ professional: e.target.value })}
+              className="input"
+              style={{ paddingBlock: "0.35rem", fontSize: "var(--text-xs)", width: "auto" }}
+            >
+              <option value="all">Todos</option>
+              {professionals.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="segmented" role="tablist" aria-label="Tipo de visualização">
             {(["day", "week", "month"] as CalendarView[]).map((v) => (
               <button
                 key={v}
                 type="button"
+                role="tab"
+                aria-selected={view === v}
+                data-active={view === v}
                 onClick={() => navigate({ view: v })}
-                aria-pressed={view === v}
-                className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                  view === v
-                    ? "bg-[var(--color-primary)] text-white"
-                    : "text-[var(--color-text-muted)] hover:bg-[var(--color-bg-subtle)]"
-                }`}
+                className="segmented-item"
               >
                 {VIEW_LABELS[v]}
               </button>

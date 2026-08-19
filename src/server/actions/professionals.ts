@@ -312,29 +312,43 @@ export async function updateProfessionalAction(
   return { success: true };
 }
 
-export async function deleteProfessionalAction(
+/**
+ * Liga/desliga um profissional.
+ *
+ * Não apaga: marca `isActive`. O nome antigo (`delete...`) e o ícone de
+ * lixeira na tela diziam outra coisa, e a versão anterior devolvia
+ * `{ success: true }` mesmo quando nenhuma linha era afetada — a tela
+ * comemorava sucesso sobre um id inexistente ou de outra empresa.
+ */
+export async function setProfessionalActiveAction(
   formData: FormData
 ): Promise<ActionResult> {
   const slug = formData.get("companySlug") as string;
   const id = formData.get("id") as string;
+  const isActive = formData.get("isActive") === "true";
+
   const company = await resolveCompanyForManage(slug);
   if (!company) return { success: false, errors: { _: ["Não autorizado"] } };
 
-  try {
-    await db.$executeRawUnsafe(
-      `UPDATE "professional" SET "isActive" = false WHERE id = $1 AND "companyId" = $2`,
-      id,
-      company.id
-    );
-  } catch {
-    // Escopado por companyId — sem isso o fallback desativaria profissional de
-    // outra empresa a partir de um id adivinhado.
-    await db.professional.updateMany({
-      where: { id, companyId: company.id },
-      data: { isActive: false },
-    });
+  // Escopado por companyId — sem isso um id adivinhado alcançaria o
+  // profissional de outra empresa.
+  const result = await db.professional.updateMany({
+    where: { id, companyId: company.id },
+    data: { isActive },
+  });
+
+  if (result.count === 0) {
+    return { success: false, errors: { _: ["Profissional não encontrado"] } };
   }
 
   revalidatePath(`/${slug}/profissionais`);
   return { success: true };
+}
+
+/** @deprecated Use `setProfessionalActiveAction`. Mantido para chamadas antigas. */
+export async function deleteProfessionalAction(
+  formData: FormData
+): Promise<ActionResult> {
+  formData.set("isActive", "false");
+  return setProfessionalActiveAction(formData);
 }

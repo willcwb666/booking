@@ -113,7 +113,7 @@ export default async function BookingCompanyPage({
 
   return (
     <div
-      className="min-h-screen bg-[#FAFAFA] text-[var(--color-text-heading)] pb-24 selection:bg-[var(--color-navy)] selection:text-white font-sans antialiased"
+      className="min-h-screen bg-[var(--color-bg-page)] text-[var(--color-text-heading)] pb-24 selection:bg-[var(--color-navy)] selection:text-white font-sans antialiased"
       style={{ "--tenant-brand": brandColor } as React.CSSProperties}
     >
       <LocalBusinessJsonLd

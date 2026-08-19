@@ -4,78 +4,13 @@ import { db } from "@/lib/db";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 
-export async function getCompanyReportsAction(companySlug: string) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return { success: false, error: "Não autenticado" };
+// `getCompanyReportsAction` foi REMOVIDA daqui. A tela de relatórios da
+// empresa agora usa `getCompanyOverview`, que agrega no banco e respeita o
+// filtro de período. A action antiga verificava apenas se havia sessão, sem
+// checar vínculo com a empresa: qualquer usuário logado lia o faturamento de
+// qualquer empresa trocando o slug. Manter exportada só por estar sem uso
+// não resolveria — server action continua sendo um endpoint alcançável.
 
-  const company = await db.company.findFirst({
-    where: { slug: companySlug },
-    select: { id: true, name: true, currency: true, locale: true },
-  });
-
-  if (!company) return { success: false, error: "Empresa não encontrada" };
-
-  try {
-    // 1. Agendamentos consolidados
-    const bookings = await db.booking.findMany({
-      where: { companyId: company.id },
-      include: {
-        estimate: {
-          select: {
-            total: true,
-            serviceTypes: { select: { serviceType: { select: { name: true } } } },
-          },
-        },
-        customerDetail: { select: { firstName: true, lastName: true } },
-      },
-      orderBy: { scheduledDate: "desc" },
-    });
-
-    let totalRevenue = 0;
-    let completedCount = 0;
-    let cancelledCount = 0;
-    let pendingCount = 0;
-
-    const serviceRevenueMap: Record<string, { count: number; revenue: number }> = {};
-
-    for (const b of bookings) {
-      if (b.status === "COMPLETED") {
-        completedCount++;
-        const price = Number(b.estimate?.total || 0);
-        totalRevenue += price;
-
-        const sName = b.estimate?.serviceTypes[0]?.serviceType.name ?? "Serviço";
-        if (!serviceRevenueMap[sName]) serviceRevenueMap[sName] = { count: 0, revenue: 0 };
-        serviceRevenueMap[sName].count += 1;
-        serviceRevenueMap[sName].revenue += price;
-      } else if (b.status === "CANCELLED") {
-        cancelledCount++;
-      } else {
-        pendingCount++;
-      }
-    }
-
-    const topServices = Object.entries(serviceRevenueMap)
-      .map(([name, data]) => ({ name, count: data.count, revenue: data.revenue }))
-      .sort((a, b) => b.revenue - a.revenue);
-
-    return {
-      success: true,
-      reports: {
-        totalRevenue,
-        totalBookings: bookings.length,
-        completedCount,
-        cancelledCount,
-        pendingCount,
-        conversionRate: bookings.length > 0 ? (completedCount / bookings.length) * 100 : 0,
-        topServices,
-      },
-    };
-  } catch (err) {
-    console.error("Erro ao gerar relatórios da empresa:", err);
-    return { success: false, error: "Falha ao gerar relatórios." };
-  }
-}
 
 export async function getSuperAdminReportsAction() {
   const session = await auth.api.getSession({ headers: await headers() });

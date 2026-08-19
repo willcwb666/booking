@@ -366,7 +366,7 @@ export function ProfessionalFormClient({
           <button
             type="submit"
             disabled={isPending}
-            className="px-8 py-3 bg-[#635bff] hover:bg-[#544dc9] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-md transition-all cursor-pointer inline-flex items-center gap-2 uppercase"
+            className="px-8 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-md transition-all cursor-pointer inline-flex items-center gap-2 uppercase"
           >
             <CheckCircle2 className="w-4 h-4" />
             <span>{isPending ? "SALVANDO..." : isEditing ? "SALVAR ALTERAÇÕES" : "CONCLUIR CADASTRO"}</span>

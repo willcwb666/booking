@@ -64,7 +64,7 @@ export function ServiceIconPicker({ selectedIcon, onSelectIcon }: Props) {
 
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-3 p-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-card)] flex-1">
-          <div className="w-8 h-8 rounded-[var(--radius-control)] bg-[#635bff] text-white flex items-center justify-center shrink-0 shadow-xs">
+          <div className="w-8 h-8 rounded-[var(--radius-control)] bg-[var(--color-primary)] text-white flex items-center justify-center shrink-0 shadow-xs">
             <RenderServiceIcon iconName={selectedIcon} className="w-4 h-4" />
           </div>
           <div>

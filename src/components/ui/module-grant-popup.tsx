@@ -65,7 +65,7 @@ export function ModuleGrantPopup() {
           <button
             type="button"
             onClick={handleDismiss}
-            className="w-full py-3 bg-[#635bff] hover:bg-[#544dc9] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+            className="w-full py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
           >
             <CheckCircle2 className="w-4 h-4" />
             <span>Aproveitar Agora 🚀</span>
