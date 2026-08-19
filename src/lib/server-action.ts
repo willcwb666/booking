@@ -1,6 +1,6 @@
 import "server-only";
-import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { getActiveSession } from "@/lib/session";
 import { getCompanyBySlugForUser } from "@/server/queries/companies";
 import type { ActionResult } from "@/types";
 import type { CompanyUserRole } from "@/generated/prisma/client";
@@ -24,9 +24,12 @@ export async function withCompanyAuth<T = unknown>(
   handler: (ctx: CompanyAuthContext) => Promise<ActionResult<T>>
 ): Promise<ActionResult<T>> {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    // getActiveSession, não auth.api.getSession: aplica o timeout de
+    // inatividade também nas server actions (o proxy cobre a navegação, mas
+    // não podemos depender só dele).
+    const session = await getActiveSession();
     if (!session) {
-      return { success: false, errors: { _: ["Usuário não autenticado."] } };
+      return { success: false, errors: { _: ["Sessão expirada. Entre novamente."] } };
     }
 
     const company = await getCompanyBySlugForUser(slug, session.user.id);

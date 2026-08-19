@@ -21,15 +21,15 @@ export function FormField({
 }: FormFieldProps) {
   return (
     <div className={`space-y-1.5 ${className}`}>
-      <label className="block text-xs font-bold text-slate-800">
+      <label className="block text-xs font-bold text-[var(--color-text)]">
         {label}
-        {required && <span className="text-red-500 ml-0.5">*</span>}
+        {required && <span className="text-[var(--color-danger)] ml-0.5">*</span>}
       </label>
       {description && (
-        <p className="text-[11px] text-slate-500 leading-normal">{description}</p>
+        <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)] leading-normal">{description}</p>
       )}
       <div>{children}</div>
-      {error && <p className="text-xs text-red-600 font-medium mt-1">{error}</p>}
+      {error && <p className="text-xs text-[var(--color-danger)] font-medium mt-1">{error}</p>}
     </div>
   );
 }
@@ -45,8 +45,8 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(
       <input
         ref={ref}
         className={`w-full border ${
-          error ? "border-red-300 focus:ring-red-500" : "border-slate-200 focus:ring-indigo-500"
-        } rounded-xl px-3.5 py-2.5 text-xs font-medium text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-opacity-20 transition-all disabled:bg-slate-50 disabled:opacity-60 ${className}`}
+          error ? "border-[var(--color-danger-border)] focus:ring-[var(--color-danger)]" : "border-[var(--color-border)] focus:ring-[var(--color-primary)]"
+        } rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs font-medium text-[var(--color-text-heading)] bg-[var(--color-bg)] placeholder:text-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-opacity-20 transition-all disabled:bg-[var(--color-bg-subtle)] disabled:opacity-60 ${className}`}
         {...props}
       />
     );
@@ -65,8 +65,8 @@ export const SelectInput = React.forwardRef<HTMLSelectElement, SelectInputProps>
       <select
         ref={ref}
         className={`w-full border ${
-          error ? "border-red-300 focus:ring-red-500" : "border-slate-200 focus:ring-indigo-500"
-        } rounded-xl px-3.5 py-2.5 text-xs font-medium text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-opacity-20 transition-all disabled:bg-slate-50 disabled:opacity-60 ${className}`}
+          error ? "border-[var(--color-danger-border)] focus:ring-[var(--color-danger)]" : "border-[var(--color-border)] focus:ring-[var(--color-primary)]"
+        } rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs font-medium text-[var(--color-text-heading)] bg-[var(--color-bg)] focus:outline-none focus:ring-2 focus:ring-opacity-20 transition-all disabled:bg-[var(--color-bg-subtle)] disabled:opacity-60 ${className}`}
         {...props}
       >
         {children}
@@ -87,8 +87,8 @@ export const TextareaInput = React.forwardRef<HTMLTextAreaElement, TextareaInput
       <textarea
         ref={ref}
         className={`w-full border ${
-          error ? "border-red-300 focus:ring-red-500" : "border-slate-200 focus:ring-indigo-500"
-        } rounded-xl px-3.5 py-2.5 text-xs font-medium text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-opacity-20 transition-all disabled:bg-slate-50 disabled:opacity-60 ${className}`}
+          error ? "border-[var(--color-danger-border)] focus:ring-[var(--color-danger)]" : "border-[var(--color-border)] focus:ring-[var(--color-primary)]"
+        } rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs font-medium text-[var(--color-text-heading)] bg-[var(--color-bg)] placeholder:text-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-opacity-20 transition-all disabled:bg-[var(--color-bg-subtle)] disabled:opacity-60 ${className}`}
         {...props}
       />
     );
@@ -118,12 +118,12 @@ export function SwitchInput({
       {(label || description) && (
         <div className="space-y-0.5">
           {label && (
-            <label htmlFor={id} className="text-xs font-bold text-slate-800 cursor-pointer">
+            <label htmlFor={id} className="text-xs font-bold text-[var(--color-text)] cursor-pointer">
               {label}
             </label>
           )}
           {description && (
-            <p className="text-[11px] text-slate-500">{description}</p>
+            <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)]">{description}</p>
           )}
         </div>
       )}
@@ -135,12 +135,12 @@ export function SwitchInput({
         aria-checked={checked}
         disabled={disabled}
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 ${
-          checked ? "bg-indigo-600" : "bg-slate-200"
+        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50 ${
+          checked ? "bg-[var(--color-primary)]" : "bg-[var(--color-bg-muted)]"
         }`}
       >
         <span
-          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
+          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[var(--color-bg)] shadow-xs ring-0 transition duration-200 ease-in-out ${
             checked ? "translate-x-5" : "translate-x-0"
           }`}
         />

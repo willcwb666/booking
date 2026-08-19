@@ -362,12 +362,12 @@ export function OnboardingWizardClient({
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center p-4 sm:p-8">
-      <div className="max-w-2xl w-full bg-white rounded-3xl border border-stone-200 shadow-xl p-6 sm:p-10 space-y-8">
+    <div className="min-h-screen bg-[var(--color-bg-subtle)] flex flex-col items-center justify-center p-4 sm:p-8">
+      <div className="max-w-2xl w-full bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xl p-6 sm:p-10 space-y-8">
         
         {/* Wizard Header & Progress Bar */}
         <div className="space-y-4 text-center">
-          <div className="flex items-center justify-between text-xs font-bold text-stone-400 uppercase tracking-wider px-2">
+          <div className="flex items-center justify-between text-xs font-bold text-[var(--color-text-subtle)] uppercase tracking-wider px-2">
             <span>Passo {step} de 3</span>
             <span>
               {step === 1 && "1. Dados da Empresa"}
@@ -376,16 +376,16 @@ export function OnboardingWizardClient({
             </span>
           </div>
 
-          <div className="w-full bg-stone-100 h-2 rounded-full overflow-hidden">
+          <div className="w-full bg-[var(--color-bg-muted)] h-2 rounded-full overflow-hidden">
             <div
-              className="bg-stone-900 h-full transition-all duration-300 ease-out"
+              className="bg-[var(--color-navy)] h-full transition-all duration-300 ease-out"
               style={{ width: `${(step / 3) * 100}%` }}
             ></div>
           </div>
         </div>
 
         {errorMsg && (
-          <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs font-bold text-red-700">
+          <div className="p-4 rounded-[var(--radius-card)] bg-[var(--color-danger-light)] border border-[var(--color-danger-border)] text-xs font-bold text-[var(--color-danger)]">
             {errorMsg}
           </div>
         )}
@@ -394,17 +394,17 @@ export function OnboardingWizardClient({
         {step === 1 && (
           <form onSubmit={handleGoToStep2} className="space-y-6">
             <div>
-              <h2 className="text-2xl font-black text-stone-900">
+              <h2 className="text-2xl font-semibold text-[var(--color-text-heading)]">
                 {isAdditionalCompany ? "Cadastrar Nova Empresa" : `Bem-vindo, ${userName}!`}
               </h2>
-              <p className="text-sm text-stone-500 font-medium mt-1">
+              <p className="text-sm text-[var(--color-text-muted)] font-medium mt-1">
                 Informe os dados básicos para gerar a página pública da sua marca.
               </p>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-stone-700 uppercase mb-1">
+                <label className="block text-xs font-bold text-[var(--color-text)] uppercase mb-1">
                   Nome da Empresa / Estabelecimento *
                 </label>
                 <input
@@ -413,18 +413,18 @@ export function OnboardingWizardClient({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ex: AutoFix Oficina Mecânica ou Barbearia Don Corleone"
-                  className="w-full px-4 py-3 rounded-xl border border-stone-300 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-stone-900"
+                  className="w-full px-4 py-3 rounded-[var(--radius-control)] border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-stone-700 uppercase mb-1">
+                <label className="block text-xs font-bold text-[var(--color-text)] uppercase mb-1">
                   Segmento de Atuação (Nicho) *
                 </label>
                 <select
                   value={businessType}
                   onChange={(e) => setBusinessType(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-stone-300 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-stone-900"
+                  className="w-full px-4 py-3 rounded-[var(--radius-control)] border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]"
                 >
                   {segmentsList.map((bt) => (
                     <option key={bt.value} value={bt.value}>
@@ -436,11 +436,11 @@ export function OnboardingWizardClient({
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-stone-700 uppercase mb-1">
+                  <label className="block text-xs font-bold text-[var(--color-text)] uppercase mb-1">
                     Telefone / Celular
                   </label>
                   <div className="flex items-center">
-                    <span className="px-3.5 py-3 rounded-l-xl bg-stone-100 border border-r-0 border-stone-300 text-xs font-bold text-stone-700 select-none">
+                    <span className="px-3.5 py-3 rounded-l-xl bg-[var(--color-bg-muted)] border border-r-0 border-[var(--color-border-strong)] text-xs font-bold text-[var(--color-text)] select-none">
                       {selectedMarket.dialCode}
                     </span>
                     <input
@@ -448,7 +448,7 @@ export function OnboardingWizardClient({
                       value={phone}
                       onChange={(e) => setPhone(formatPhoneNumber(e.target.value, country))}
                       placeholder={selectedMarket.phonePlaceholder}
-                      className="w-full px-4 py-3 rounded-r-xl border border-stone-300 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-stone-900"
+                      className="w-full px-4 py-3 rounded-r-xl border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]"
                     />
                   </div>
                   <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
@@ -456,13 +456,13 @@ export function OnboardingWizardClient({
                       type="checkbox"
                       checked={isWhatsapp}
                       onChange={(e) => setIsWhatsapp(e.target.checked)}
-                      className="w-4 h-4 rounded border-stone-300 text-emerald-600 focus:ring-emerald-500"
+                      className="w-4 h-4 rounded border-[var(--color-border-strong)] text-[var(--color-success)] focus:ring-[var(--color-success)]"
                     />
-                    <span className="text-xs font-medium text-stone-600">Este número tem WhatsApp</span>
+                    <span className="text-xs font-medium text-[var(--color-text-muted)]">Este número tem WhatsApp</span>
                   </label>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-stone-700 uppercase mb-1">
+                  <label className="block text-xs font-bold text-[var(--color-text)] uppercase mb-1">
                     Endereço / Cidade
                   </label>
                   <input
@@ -470,7 +470,7 @@ export function OnboardingWizardClient({
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder="Ex: Av. Paulista, 1000 - São Paulo"
-                    className="w-full px-4 py-3 rounded-xl border border-stone-300 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-stone-900"
+                    className="w-full px-4 py-3 rounded-[var(--radius-control)] border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]"
                   />
                 </div>
               </div>
@@ -486,7 +486,7 @@ export function OnboardingWizardClient({
 
               <div className="pt-2 grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-stone-700 uppercase mb-1">País</label>
+                  <label className="block text-xs font-bold text-[var(--color-text)] uppercase mb-1">País</label>
                   <select
                     value={country}
                     onChange={(e) => {
@@ -494,7 +494,7 @@ export function OnboardingWizardClient({
                       const m = MARKETS.find((mk) => mk.code === e.target.value);
                       if (m) setTimezone(m.timezones[0].id);
                     }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-semibold"
+                    className="w-full px-3.5 py-2.5 rounded-[var(--radius-control)] border border-[var(--color-border-strong)] text-xs font-semibold"
                   >
                     {MARKETS.map((m) => (
                       <option key={m.code} value={m.code}>{m.name}</option>
@@ -502,11 +502,11 @@ export function OnboardingWizardClient({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-stone-700 uppercase mb-1">Fuso Horário</label>
+                  <label className="block text-xs font-bold text-[var(--color-text)] uppercase mb-1">Fuso Horário</label>
                   <select
                     value={timezone}
                     onChange={(e) => setTimezone(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-semibold"
+                    className="w-full px-3.5 py-2.5 rounded-[var(--radius-control)] border border-[var(--color-border-strong)] text-xs font-semibold"
                   >
                     {selectedMarket.timezones.map((tz) => (
                       <option key={tz.id} value={tz.id}>{tz.label}</option>
@@ -516,29 +516,29 @@ export function OnboardingWizardClient({
               </div>
 
               {/* ── SELETOR DE MODO DE CONFIGURAÇÃO ── */}
-              <div className="pt-3 space-y-2 border-t border-stone-200">
-                <label className="block text-xs font-bold text-stone-700 uppercase">
+              <div className="pt-3 space-y-2 border-t border-[var(--color-border)]">
+                <label className="block text-xs font-bold text-[var(--color-text)] uppercase">
                   Como deseja começar?
                 </label>
                 <div className="grid sm:grid-cols-2 gap-3">
                   {/* Card Padrão Recomendado */}
                   <div
                     onClick={() => setSetupMode("STANDARD")}
-                    className={`p-4 rounded-2xl border-2 transition-all cursor-pointer text-left relative ${
+                    className={`p-4 rounded-[var(--radius-card)] border-2 transition-all cursor-pointer text-left relative ${
                       setupMode === "STANDARD"
-                        ? "border-emerald-600 bg-emerald-50/60 shadow-xs"
-                        : "border-stone-200 bg-white hover:border-stone-300"
+                        ? "border-[var(--color-success-border)] bg-[var(--color-success-light)] shadow-xs"
+                        : "border-[var(--color-border)] bg-[var(--color-bg)] hover:border-[var(--color-border-strong)]"
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-extrabold text-stone-900 flex items-center gap-1.5">
+                      <span className="text-sm font-semibold text-[var(--color-text-heading)] flex items-center gap-1.5">
                         ⚡ Configuração Padrão
                       </span>
-                      <span className="px-2 py-0.5 bg-emerald-600 text-white rounded-full text-[10px] font-black uppercase tracking-wider">
+                      <span className="px-2 py-0.5 bg-[var(--color-success)] text-white rounded-full text-[var(--text-2xs)] font-semibold uppercase tracking-wider">
                         Recomendado
                       </span>
                     </div>
-                    <p className="text-xs text-stone-600 font-medium mt-2 leading-relaxed">
+                    <p className="text-xs text-[var(--color-text-muted)] font-medium mt-2 leading-relaxed">
                       Criamos automaticamente seu catálogo de serviços de {segmentsList.find((s) => s.value === businessType)?.label || "seu segmento"}, grade comercial (Seg a Sáb) e link de agendamento online pronto para uso em segundos. Você pode mudar tudo depois.
                     </p>
                   </div>
@@ -546,21 +546,21 @@ export function OnboardingWizardClient({
                   {/* Card Personalizado */}
                   <div
                     onClick={() => setSetupMode("CUSTOM")}
-                    className={`p-4 rounded-2xl border-2 transition-all cursor-pointer text-left relative ${
+                    className={`p-4 rounded-[var(--radius-card)] border-2 transition-all cursor-pointer text-left relative ${
                       setupMode === "CUSTOM"
-                        ? "border-stone-900 bg-stone-50 shadow-xs"
-                        : "border-stone-200 bg-white hover:border-stone-300"
+                        ? "border-[var(--color-navy)] bg-[var(--color-bg-subtle)] shadow-xs"
+                        : "border-[var(--color-border)] bg-[var(--color-bg)] hover:border-[var(--color-border-strong)]"
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-extrabold text-stone-900 flex items-center gap-1.5">
+                      <span className="text-sm font-semibold text-[var(--color-text-heading)] flex items-center gap-1.5">
                         🛠️ Personalizada
                       </span>
-                      <span className="px-2 py-0.5 bg-stone-200 text-stone-700 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                      <span className="px-2 py-0.5 bg-[var(--color-bg-muted)] text-[var(--color-text)] rounded-full text-[var(--text-2xs)] font-bold uppercase tracking-wider">
                         Passo a Passo
                       </span>
                     </div>
-                    <p className="text-xs text-stone-600 font-medium mt-2 leading-relaxed">
+                    <p className="text-xs text-[var(--color-text-muted)] font-medium mt-2 leading-relaxed">
                       Permite ajustar manualmente os dias de atendimento, horários de abertura/fechamento, selecionar quais serviços incluir e definir preços antes de entrar no painel.
                     </p>
                   </div>
@@ -572,10 +572,10 @@ export function OnboardingWizardClient({
               <button
                 type="submit"
                 disabled={isSubmitting || isPending}
-                className={`w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm transition-all shadow-md ${
+                className={`w-full sm:w-auto px-8 py-3.5 rounded-[var(--radius-control)] font-bold text-sm transition-all shadow-md ${
                   setupMode === "STANDARD"
-                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                    : "bg-stone-900 hover:bg-stone-800 text-white"
+                    ? "bg-[var(--color-success)] hover:bg-[var(--color-success)] text-white"
+                    : "bg-[var(--color-navy)] hover:bg-[var(--color-navy)] text-white"
                 }`}
               >
                 {isSubmitting || isPending
@@ -592,15 +592,15 @@ export function OnboardingWizardClient({
         {step === 2 && (
           <form onSubmit={handleGoToStep3} className="space-y-6">
             <div>
-              <h2 className="text-2xl font-black text-stone-900">Agenda & Horários de Atendimento</h2>
-              <p className="text-sm text-stone-500 font-medium mt-1">
+              <h2 className="text-2xl font-semibold text-[var(--color-text-heading)]">Agenda & Horários de Atendimento</h2>
+              <p className="text-sm text-[var(--color-text-muted)] font-medium mt-1">
                 Defina em quais dias e horários sua empresa estará aberta para agendamentos.
               </p>
             </div>
 
             <div className="space-y-5">
               <div>
-                <label className="block text-xs font-bold text-stone-700 uppercase mb-2">
+                <label className="block text-xs font-bold text-[var(--color-text)] uppercase mb-2">
                   Dias de Funcionamento
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -611,10 +611,10 @@ export function OnboardingWizardClient({
                         key={d.day}
                         type="button"
                         onClick={() => handleToggleDay(d.day)}
-                        className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
+                        className={`px-4 py-2.5 rounded-[var(--radius-control)] text-xs font-bold transition-all border ${
                           isSelected
-                            ? "bg-stone-900 text-white border-stone-900 shadow-sm"
-                            : "bg-white text-stone-600 border-stone-200 hover:bg-stone-100"
+                            ? "bg-[var(--color-navy)] text-white border-[var(--color-navy)] shadow-sm"
+                            : "bg-[var(--color-bg)] text-[var(--color-text-muted)] border-[var(--color-border)] hover:bg-[var(--color-bg-muted)]"
                         }`}
                       >
                         {d.label}
@@ -626,37 +626,37 @@ export function OnboardingWizardClient({
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-stone-700 uppercase mb-1">
+                  <label className="block text-xs font-bold text-[var(--color-text)] uppercase mb-1">
                     Horário de Abertura
                   </label>
                   <input
                     type="time"
                     value={startTime}
                     onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-stone-300 text-sm font-semibold"
+                    className="w-full px-4 py-3 rounded-[var(--radius-control)] border border-[var(--color-border-strong)] text-sm font-semibold"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-stone-700 uppercase mb-1">
+                  <label className="block text-xs font-bold text-[var(--color-text)] uppercase mb-1">
                     Horário de Fechamento
                   </label>
                   <input
                     type="time"
                     value={endTime}
                     onChange={(e) => setEndTime(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-stone-300 text-sm font-semibold"
+                    className="w-full px-4 py-3 rounded-[var(--radius-control)] border border-[var(--color-border-strong)] text-sm font-semibold"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-stone-700 uppercase mb-1">
+                <label className="block text-xs font-bold text-[var(--color-text)] uppercase mb-1">
                   Duração Média por Atendimento / Slot
                 </label>
                 <select
                   value={intervalMinutes}
                   onChange={(e) => setIntervalMinutes(Number(e.target.value))}
-                  className="w-full px-4 py-3 rounded-xl border border-stone-300 text-sm font-semibold"
+                  className="w-full px-4 py-3 rounded-[var(--radius-control)] border border-[var(--color-border-strong)] text-sm font-semibold"
                 >
                   <option value={15}>15 Minutos</option>
                   <option value={30}>30 Minutos (Padrão)</option>
@@ -672,13 +672,13 @@ export function OnboardingWizardClient({
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="px-6 py-3.5 text-xs font-bold text-stone-600 hover:bg-stone-100 rounded-xl"
+                className="px-6 py-3.5 text-xs font-bold text-[var(--color-text-muted)] hover:bg-[var(--color-bg-muted)] rounded-[var(--radius-control)]"
               >
                 ← Voltar
               </button>
               <button
                 type="submit"
-                className="px-8 py-3.5 rounded-xl bg-stone-900 text-white font-bold text-sm hover:bg-stone-800 transition-all shadow-md"
+                className="px-8 py-3.5 rounded-[var(--radius-control)] bg-[var(--color-navy)] text-white font-bold text-sm hover:bg-[var(--color-navy)] transition-all shadow-md"
               >
                 Próximo: Escolher Serviços →
               </button>
@@ -690,14 +690,14 @@ export function OnboardingWizardClient({
         {step === 3 && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-black text-stone-900">Serviços do Seu Segmento</h2>
-              <p className="text-sm text-stone-500 font-medium mt-1">
+              <h2 className="text-2xl font-semibold text-[var(--color-text-heading)]">Serviços do Seu Segmento</h2>
+              <p className="text-sm text-[var(--color-text-muted)] font-medium mt-1">
                 Encontramos esses serviços sugeridos para o seu nicho. Ajuste os preços se desejar e clique em criar!
               </p>
             </div>
 
             {loadingPresets ? (
-              <div className="py-12 text-center text-sm font-bold text-stone-400">
+              <div className="py-12 text-center text-sm font-bold text-[var(--color-text-subtle)]">
                 Carregando modelo de serviços...
               </div>
             ) : (
@@ -705,10 +705,10 @@ export function OnboardingWizardClient({
                 {presets.map((preset) => (
                   <div
                     key={preset.id}
-                    className={`p-4 rounded-2xl border transition-all ${
+                    className={`p-4 rounded-[var(--radius-card)] border transition-all ${
                       preset.selected
-                        ? "bg-white border-stone-900 shadow-sm"
-                        : "bg-stone-50 border-stone-200 opacity-60"
+                        ? "bg-[var(--color-bg)] border-[var(--color-navy)] shadow-sm"
+                        : "bg-[var(--color-bg-subtle)] border-[var(--color-border)] opacity-60"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -717,19 +717,19 @@ export function OnboardingWizardClient({
                           type="checkbox"
                           checked={preset.selected}
                           onChange={() => handleTogglePresetSelected(preset.id)}
-                          className="mt-1 w-5 h-5 rounded text-stone-900 focus:ring-stone-900 cursor-pointer"
+                          className="mt-1 w-5 h-5 rounded text-[var(--color-text-heading)] focus:ring-[var(--color-navy)] cursor-pointer"
                         />
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-stone-900 text-sm">{preset.title}</span>
+                            <span className="font-bold text-[var(--color-text-heading)] text-sm">{preset.title}</span>
                             {preset.isExtra && (
-                              <span className="text-[10px] bg-indigo-100 text-indigo-700 font-bold px-2 py-0.5 rounded">
+                              <span className="text-[var(--text-2xs)] bg-[var(--color-primary-light)] text-[var(--color-primary)] font-bold px-2 py-0.5 rounded">
                                 EXTRA
                               </span>
                             )}
                           </div>
                           {preset.description && (
-                            <p className="text-xs text-stone-500 mt-0.5">{preset.description}</p>
+                            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{preset.description}</p>
                           )}
                         </div>
                       </div>
@@ -738,22 +738,22 @@ export function OnboardingWizardClient({
                       {preset.selected && (
                         <div className="flex items-center gap-2 shrink-0">
                           <div className="w-24">
-                            <span className="text-[10px] text-stone-400 block font-bold">PREÇO (R$)</span>
+                            <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] block font-bold">PREÇO (R$)</span>
                             <input
                               type="number"
                               step="0.01"
                               value={preset.customPrice}
                               onChange={(e) => handleUpdatePresetPrice(preset.id, parseFloat(e.target.value) || 0)}
-                              className="w-full px-2 py-1 text-xs font-bold border border-stone-300 rounded-lg"
+                              className="w-full px-2 py-1 text-xs font-bold border border-[var(--color-border-strong)] rounded-[var(--radius-control)]"
                             />
                           </div>
                           <div className="w-20">
-                            <span className="text-[10px] text-stone-400 block font-bold">MINUTOS</span>
+                            <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] block font-bold">MINUTOS</span>
                             <input
                               type="number"
                               value={preset.customDuration}
                               onChange={(e) => handleUpdatePresetDuration(preset.id, parseInt(e.target.value) || 15)}
-                              className="w-full px-2 py-1 text-xs font-bold border border-stone-300 rounded-lg"
+                              className="w-full px-2 py-1 text-xs font-bold border border-[var(--color-border-strong)] rounded-[var(--radius-control)]"
                             />
                           </div>
                         </div>
@@ -764,11 +764,11 @@ export function OnboardingWizardClient({
               </div>
             )}
 
-            <div className="pt-4 flex items-center justify-between gap-4 border-t border-stone-100">
+            <div className="pt-4 flex items-center justify-between gap-4 border-t border-[var(--color-border)]">
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="px-6 py-3.5 text-xs font-bold text-stone-600 hover:bg-stone-100 rounded-xl"
+                className="px-6 py-3.5 text-xs font-bold text-[var(--color-text-muted)] hover:bg-[var(--color-bg-muted)] rounded-[var(--radius-control)]"
               >
                 ← Voltar
               </button>
@@ -776,7 +776,7 @@ export function OnboardingWizardClient({
                 type="button"
                 onClick={handleFinalizeWizard}
                 disabled={isPending}
-                className="px-8 py-4 rounded-xl bg-emerald-600 text-white font-extrabold text-sm hover:bg-emerald-700 transition-all shadow-lg hover:scale-105 disabled:opacity-50"
+                className="px-8 py-4 rounded-[var(--radius-control)] bg-[var(--color-success)] text-white font-semibold text-sm hover:bg-[var(--color-success)] transition-all shadow-lg hover:scale-105 disabled:opacity-50"
               >
                 {isPending ? "Criando Sua Empresa..." : "✨ Criar Minha Empresa com 1 Clique"}
               </button>

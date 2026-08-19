@@ -222,18 +222,18 @@ export function BookingClient({
     t(FREQ_KEYS.find((o) => o.value === f)!.key);
 
   return (
-    <div className="min-h-screen bg-gray-50 print:bg-white">
+    <div className="min-h-screen bg-[var(--color-bg-subtle)] print:bg-[var(--color-bg)]">
       {/* ── Versão de impressão (só aparece no print) ── */}
-      <div className="hidden print:block p-8 text-gray-900">
-        <div className="flex items-center gap-4 border-b border-gray-300 pb-4 mb-6">
+      <div className="hidden print:block p-8 text-[var(--color-text-heading)]">
+        <div className="flex items-center gap-4 border-b border-[var(--color-border-strong)] pb-4 mb-6">
           {companyLogo && (
-            <img src={companyLogo} alt="" className="w-16 h-16 rounded-lg object-cover" />
+            <img src={companyLogo} alt="" className="w-16 h-16 rounded-[var(--radius-control)] object-cover" />
           )}
           <div>
             <p className="text-xl font-bold">{companyName}</p>
-            <p className="text-sm text-gray-600">{configName}</p>
+            <p className="text-sm text-[var(--color-text-muted)]">{configName}</p>
           </div>
-          <div className="ml-auto text-right text-sm text-gray-600">
+          <div className="ml-auto text-right text-sm text-[var(--color-text-muted)]">
             <p className="font-semibold">{t("printTitle")}</p>
             <p>{new Date().toLocaleDateString(locale)}</p>
           </div>
@@ -245,7 +245,7 @@ export function BookingClient({
 
         <table className="w-full text-sm mb-6">
           <thead>
-            <tr className="border-b border-gray-300 text-left">
+            <tr className="border-b border-[var(--color-border-strong)] text-left">
               <th className="py-2 font-semibold">{t("printService")}</th>
               <th className="py-2 font-semibold text-center w-16">{t("printQty")}</th>
               <th className="py-2 font-semibold text-right w-28">{t("printUnit")}</th>
@@ -254,7 +254,7 @@ export function BookingClient({
           </thead>
           <tbody>
             {lineItems.map((item, i) => (
-              <tr key={i} className="border-b border-gray-100">
+              <tr key={i} className="border-b border-[var(--color-border)]">
                 <td className="py-2">{item.label}</td>
                 <td className="py-2 text-center">{item.qty}</td>
                 <td className="py-2 text-right">{fmt(item.unitPrice, currency, locale)}</td>
@@ -270,24 +270,24 @@ export function BookingClient({
           </tfoot>
         </table>
 
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-[var(--color-text-muted)]">
           {t("printDisclaimer", { date: new Date().toLocaleString(locale) })}
         </p>
       </div>
 
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 print:hidden">
+      <header className="bg-[var(--color-bg)] border-b border-[var(--color-border)] print:hidden">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center shrink-0" aria-hidden="true">
+          <div className="w-10 h-10 rounded-[var(--radius-control)] bg-[var(--color-info)] flex items-center justify-center shrink-0" aria-hidden="true">
             {companyLogo ? (
-              <img src={companyLogo} alt="" className="w-full h-full rounded-lg object-cover" />
+              <img src={companyLogo} alt="" className="w-full h-full rounded-[var(--radius-control)] object-cover" />
             ) : (
               <span className="text-white font-bold">{companyName[0].toUpperCase()}</span>
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-semibold text-gray-900">{companyName}</h1>
-            <p className="text-xs text-gray-500">{configName}</p>
+            <h1 className="text-sm font-semibold text-[var(--color-text-heading)]">{companyName}</h1>
+            <p className="text-xs text-[var(--color-text-muted)]">{configName}</p>
           </div>
           <LanguageSwitcher />
         </div>
@@ -301,8 +301,8 @@ export function BookingClient({
           <AIBookingCopilot companySlug={companySlug} />
 
           {/* Frequency */}
-          <section className="bg-white rounded-xl border border-gray-200 p-5">
-            <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("frequency")}</h2>
+          <section className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
+            <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-4">{t("frequency")}</h2>
             <div role="group" aria-label={t("frequency")} className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {FREQ_KEYS.map(({ value, key }) => (
                 <button
@@ -310,10 +310,10 @@ export function BookingClient({
                   type="button"
                   aria-pressed={state.frequency === value}
                   onClick={() => dispatch({ type: "SET_FREQUENCY", freq: value })}
-                  className={`py-2.5 px-3 text-sm font-medium rounded-lg border-2 transition-colors ${
+                  className={`py-2.5 px-3 text-sm font-medium rounded-[var(--radius-control)] border-2 transition-colors ${
                     state.frequency === value
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-white text-gray-700 border-gray-200 hover:border-blue-300"
+                      ? "bg-[var(--color-info)] text-white border-[var(--color-info-border)]"
+                      : "bg-[var(--color-bg)] text-[var(--color-text)] border-[var(--color-border)] hover:border-[var(--color-info-border)]"
                   }`}
                 >
                   {t(key)}
@@ -323,19 +323,19 @@ export function BookingClient({
           </section>
 
           {/* Services */}
-          <section className="bg-white rounded-xl border border-gray-200 p-5">
-            <h2 className="text-sm font-semibold text-gray-900 mb-1">{t("services")}</h2>
+          <section className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
+            <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-1">{t("services")}</h2>
             {!allowPartialService && (
-              <p className="text-xs text-gray-500 mb-4">{t("allIncluded")}</p>
+              <p className="text-xs text-[var(--color-text-muted)] mb-4">{t("allIncluded")}</p>
             )}
             {allowPartialService && (
-              <p className="text-xs text-gray-500 mb-4">{t("selectServices")}</p>
+              <p className="text-xs text-[var(--color-text-muted)] mb-4">{t("selectServices")}</p>
             )}
 
             <div className="space-y-5">
               {Object.entries(grouped).map(([serviceName, types]) => (
                 <div key={serviceName}>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{serviceName}</p>
+                  <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-2">{serviceName}</p>
                   <div className="space-y-2">
                     {types.map((st) => {
                       const qty = state.serviceItems[st.id] ?? 0;
@@ -344,8 +344,8 @@ export function BookingClient({
                       return (
                         <div
                           key={st.id}
-                          className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                            selected ? "border-blue-300 bg-blue-50/50" : "border-gray-200"
+                          className={`flex items-center gap-3 p-3 rounded-[var(--radius-control)] border transition-colors ${
+                            selected ? "border-[var(--color-info-border)] bg-[var(--color-info-light)]" : "border-[var(--color-border)]"
                           }`}
                         >
                           {allowPartialService && (
@@ -354,24 +354,24 @@ export function BookingClient({
                               id={`st-${st.id}`}
                               checked={selected}
                               onChange={() => dispatch({ type: "SET_QTY", id: st.id, qty: selected ? 0 : 1 })}
-                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 shrink-0"
+                              className="w-4 h-4 rounded border-[var(--color-border-strong)] text-[var(--color-info)] focus:ring-[var(--color-info)] shrink-0"
                               aria-label={st.name}
                             />
                           )}
                           <label htmlFor={allowPartialService ? `st-${st.id}` : undefined} className="flex-1 min-w-0 cursor-pointer">
-                            <span className="text-sm font-medium text-gray-900 block">
+                            <span className="text-sm font-medium text-[var(--color-text-heading)] block">
                               {st.name}
                               {hasPromo && (
-                                <span className="ml-2 inline-block text-[10px] font-bold uppercase tracking-wide bg-emerald-100 text-emerald-700 rounded-full px-2 py-0.5 align-middle">
+                                <span className="ml-2 inline-block text-[var(--text-2xs)] font-bold uppercase tracking-wide bg-[var(--color-success-light)] text-[var(--color-success)] rounded-full px-2 py-0.5 align-middle">
                                   {t("promoBadge")}
                                 </span>
                               )}
                             </span>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-[var(--color-text-muted)]">
                               {hasPromo ? (
                                 <>
-                                  <s className="text-gray-400">{fmt(st.price, currency, locale)}</s>{" "}
-                                  <span className="text-emerald-700 font-semibold">{fmt(st.promoPrice!, currency, locale)}</span>
+                                  <s className="text-[var(--color-text-subtle)]">{fmt(st.price, currency, locale)}</s>{" "}
+                                  <span className="text-[var(--color-success)] font-semibold">{fmt(st.promoPrice!, currency, locale)}</span>
                                 </>
                               ) : (
                                 fmt(st.price, currency, locale)
@@ -387,14 +387,14 @@ export function BookingClient({
                                 onClick={() => dispatch({ type: "SET_QTY", id: st.id, qty: qty - 1 })}
                                 aria-label={t("decrease", { name: st.name })}
                                 disabled={qty <= 1}
-                                className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-40"
+                                className="w-7 h-7 rounded-full border border-[var(--color-border-strong)] flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-bg-muted)] disabled:opacity-40"
                               >−</button>
                               <span className="w-6 text-center text-sm font-medium" aria-live="polite" aria-atomic="true">{qty}</span>
                               <button
                                 type="button"
                                 onClick={() => dispatch({ type: "SET_QTY", id: st.id, qty: qty + 1 })}
                                 aria-label={t("increase", { name: st.name })}
-                                className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100"
+                                className="w-7 h-7 rounded-full border border-[var(--color-border-strong)] flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-bg-muted)]"
                               >+</button>
                             </div>
                           )}
@@ -409,27 +409,27 @@ export function BookingClient({
 
           {/* Extras */}
           {extraServices.length > 0 && (
-            <section className="bg-white rounded-xl border border-gray-200 p-5">
-              <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("extras")}</h2>
+            <section className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
+              <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-4">{t("extras")}</h2>
               <div className="space-y-2" role="group" aria-label={t("extras")}>
                 {extraServices.map((es) => {
                   const qty = state.extraItems[es.id] ?? 0;
                   const on = qty > 0;
                   return (
-                    <div key={es.id} className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${on ? "border-blue-300 bg-blue-50/50" : "border-gray-200"}`}>
+                    <div key={es.id} className={`flex items-center gap-3 p-3 rounded-[var(--radius-control)] border transition-colors ${on ? "border-[var(--color-info-border)] bg-[var(--color-info-light)]" : "border-[var(--color-border)]"}`}>
                       <button
                         type="button"
                         role="switch"
                         aria-checked={on}
                         onClick={() => dispatch({ type: "SET_EXTRA_QTY", id: es.id, qty: on ? 0 : 1 })}
                         aria-label={on ? t("remove", { name: es.name }) : t("add", { name: es.name })}
-                        className={`relative w-10 h-6 rounded-full transition-colors shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${on ? "bg-blue-600" : "bg-gray-300"}`}
+                        className={`relative w-10 h-6 rounded-full transition-colors shrink-0 focus:outline-none focus:ring-2 focus:ring-[var(--color-info)] focus:ring-offset-1 ${on ? "bg-[var(--color-info)]" : "bg-[var(--color-border-strong)]"}`}
                       >
-                        <span className={`block w-4 h-4 rounded-full bg-white shadow transition-transform absolute top-1 ${on ? "translate-x-5" : "translate-x-1"}`} aria-hidden="true" />
+                        <span className={`block w-4 h-4 rounded-full bg-[var(--color-bg)] shadow transition-transform absolute top-1 ${on ? "translate-x-5" : "translate-x-1"}`} aria-hidden="true" />
                       </button>
                       <div className="flex-1 min-w-0">
-                        <span className="text-sm font-medium text-gray-900 block">{es.name}</span>
-                        <span className="text-xs text-gray-500">{fmt(es.price, currency, locale)} · {fmtMin(es.estimatedMinutes)}</span>
+                        <span className="text-sm font-medium text-[var(--color-text-heading)] block">{es.name}</span>
+                        <span className="text-xs text-[var(--color-text-muted)]">{fmt(es.price, currency, locale)} · {fmtMin(es.estimatedMinutes)}</span>
                       </div>
                       {/* Qty counter — só quando o extra permite quantidade */}
                       {on && es.allowQuantity && (
@@ -439,14 +439,14 @@ export function BookingClient({
                             onClick={() => dispatch({ type: "SET_EXTRA_QTY", id: es.id, qty: qty - 1 })}
                             aria-label={t("decrease", { name: es.name })}
                             disabled={qty <= 1}
-                            className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-40"
+                            className="w-7 h-7 rounded-full border border-[var(--color-border-strong)] flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-bg-muted)] disabled:opacity-40"
                           >−</button>
                           <span className="w-6 text-center text-sm font-medium" aria-live="polite" aria-atomic="true">{qty}</span>
                           <button
                             type="button"
                             onClick={() => dispatch({ type: "SET_EXTRA_QTY", id: es.id, qty: qty + 1 })}
                             aria-label={t("increase", { name: es.name })}
-                            className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100"
+                            className="w-7 h-7 rounded-full border border-[var(--color-border-strong)] flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-bg-muted)]"
                           >+</button>
                         </div>
                       )}
@@ -476,12 +476,12 @@ export function BookingClient({
       </div>
 
       {/* Mobile: fixed bottom bar */}
-      <div className="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 px-4 py-3 print:hidden">
+      <div className="lg:hidden fixed bottom-0 inset-x-0 bg-[var(--color-bg)] border-t border-[var(--color-border)] px-4 py-3 print:hidden">
         <div className="flex items-center gap-3">
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-gray-500">{t("totalEstimated")}</p>
+            <p className="text-xs text-[var(--color-text-muted)]">{t("totalEstimated")}</p>
             <p
-              className="text-base font-bold text-gray-900"
+              className="text-base font-bold text-[var(--color-text-heading)]"
               aria-live="polite"
               aria-atomic="true"
               aria-label={t("totalLabel", { value: fmt(total, currency, locale) })}
@@ -493,7 +493,7 @@ export function BookingClient({
             type="button"
             onClick={handleSaveQuote}
             disabled={!hasSelection || isSaving}
-            className="px-3 py-2.5 text-sm font-semibold text-blue-700 border border-blue-200 rounded-xl hover:bg-blue-50 disabled:opacity-50 shrink-0"
+            className="px-3 py-2.5 text-sm font-semibold text-[var(--color-info)] border border-[var(--color-info-border)] rounded-[var(--radius-control)] hover:bg-[var(--color-info-light)] disabled:opacity-50 shrink-0"
           >
             {isSaving ? t("saving") : t("saveShort")}
           </button>
@@ -501,7 +501,7 @@ export function BookingClient({
             type="button"
             onClick={handleSubmit}
             disabled={!hasSelection || isPending}
-            className="px-5 py-2.5 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 shrink-0"
+            className="px-5 py-2.5 text-sm font-semibold bg-[var(--color-info)] text-white rounded-[var(--radius-control)] hover:bg-[var(--color-info)] disabled:opacity-50 shrink-0"
           >
             {isPending ? t("saving") : t("continueShort")}
           </button>
@@ -536,10 +536,10 @@ function Summary({
 }) {
   const t = useTranslations("booking");
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("summaryTitle")}</h2>
+    <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
+      <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-4">{t("summaryTitle")}</h2>
       {lineItems.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-4">{t("noneSelected")}</p>
+        <p className="text-sm text-[var(--color-text-subtle)] text-center py-4">{t("noneSelected")}</p>
       ) : (
         <ul
           className="space-y-2 mb-4"
@@ -549,21 +549,21 @@ function Summary({
         >
           {lineItems.map((item, i) => (
             <li key={i} className="flex items-start justify-between gap-2 text-sm">
-              <span className="text-gray-700 flex-1 min-w-0">
+              <span className="text-[var(--color-text)] flex-1 min-w-0">
                 {item.label}
-                {item.qty > 1 && <span className="text-gray-400 ml-1">×{item.qty}</span>}
+                {item.qty > 1 && <span className="text-[var(--color-text-subtle)] ml-1">×{item.qty}</span>}
               </span>
-              <span className="text-gray-900 font-medium shrink-0">{formatMoney(item.subtotal, currency, locale)}</span>
+              <span className="text-[var(--color-text-heading)] font-medium shrink-0">{formatMoney(item.subtotal, currency, locale)}</span>
             </li>
           ))}
         </ul>
       )}
 
-      <div className="border-t border-gray-100 pt-3 mb-4">
+      <div className="border-t border-[var(--color-border)] pt-3 mb-4">
         <div className="flex justify-between items-center">
-          <span className="text-sm font-semibold text-gray-700">{t("totalEstimated")}</span>
+          <span className="text-sm font-semibold text-[var(--color-text)]">{t("totalEstimated")}</span>
           <span
-            className="text-lg font-bold text-gray-900"
+            className="text-lg font-bold text-[var(--color-text-heading)]"
             aria-live="polite"
             aria-atomic="true"
             aria-label={t("totalLabel", { value: formatMoney(total, currency, locale) })}
@@ -574,7 +574,7 @@ function Summary({
       </div>
 
       {submitError && (
-        <p className="text-xs text-red-600 mb-3" role="alert">{submitError}</p>
+        <p className="text-xs text-[var(--color-danger)] mb-3" role="alert">{submitError}</p>
       )}
 
       <button
@@ -582,7 +582,7 @@ function Summary({
         onClick={onSubmit}
         disabled={!hasSelection || isPending}
         aria-disabled={!hasSelection || isPending}
-        className="w-full py-3 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
+        className="w-full py-3 text-sm font-semibold bg-[var(--color-info)] text-white rounded-[var(--radius-control)] hover:bg-[var(--color-info)] disabled:opacity-50 transition-colors"
       >
         {isPending ? t("saving") : t("continueBooking")}
       </button>
@@ -592,7 +592,7 @@ function Summary({
         onClick={onSaveQuote}
         disabled={!hasSelection || isSaving}
         aria-disabled={!hasSelection || isSaving}
-        className="w-full mt-2 py-3 text-sm font-semibold text-blue-700 border border-blue-200 rounded-xl hover:bg-blue-50 disabled:opacity-50 transition-colors"
+        className="w-full mt-2 py-3 text-sm font-semibold text-[var(--color-info)] border border-[var(--color-info-border)] rounded-[var(--radius-control)] hover:bg-[var(--color-info-light)] disabled:opacity-50 transition-colors"
       >
         {isSaving ? t("saving") : t("saveQuote")}
       </button>
@@ -600,11 +600,11 @@ function Summary({
         type="button"
         onClick={() => window.print()}
         disabled={!hasSelection}
-        className="w-full mt-2 py-2.5 text-sm font-medium text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-colors"
+        className="w-full mt-2 py-2.5 text-sm font-medium text-[var(--color-text-muted)] border border-[var(--color-border)] rounded-[var(--radius-control)] hover:bg-[var(--color-bg-subtle)] disabled:opacity-50 transition-colors"
       >
         🖨 {t("printQuote")}
       </button>
-      <p className="text-[11px] text-gray-400 mt-2 text-center">
+      <p className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] mt-2 text-center">
         {t("saveHint")}
       </p>
     </div>

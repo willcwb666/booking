@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getActiveSession, getSessionTimeoutConfig } from "@/lib/session";
 import { AdminSidebar } from "@/components/ui/admin-sidebar";
 import { AdminHeader } from "@/components/ui/admin-header";
+import { SessionTimeoutGuard } from "@/components/ui/session-timeout-guard";
 import { getCompaniesForSelector } from "@/server/queries/admin";
 
 export default async function AdminLayout({
@@ -10,7 +10,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getActiveSession();
 
   if (!session) {
     redirect("/login");
@@ -20,10 +20,14 @@ export default async function AdminLayout({
     redirect("/dashboard");
   }
 
-  const companies = await getCompaniesForSelector();
+  const [companies, { idleSeconds }] = await Promise.all([
+    getCompaniesForSelector(),
+    getSessionTimeoutConfig(session),
+  ]);
 
   return (
     <div className="app-shell">
+      <SessionTimeoutGuard idleSeconds={idleSeconds} />
       <AdminSidebar userName={session.user.name} companies={companies} />
       <div className="app-main">
         <AdminHeader companies={companies} />

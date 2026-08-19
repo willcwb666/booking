@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useTransition } from "react";
-import { updatePlatformSettingsAction, type PlatformSettingsData } from "@/server/actions/admin-settings";
+import { updatePlatformSettingsAction } from "@/server/actions/admin-settings";
+import type { PlatformSettingsData } from "@/lib/platform-settings";
 import { broadcastPlatformUpdatesAction } from "@/server/actions/broadcast-updates";
 import { getPlatformAuditLogsAction, type AuditLogItem } from "@/server/actions/audit";
 import { toast } from "@/lib/toast-service";
@@ -76,7 +77,7 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
       });
 
       if (res.success) {
-        toast.success("🚀 Disparado!", res.message || "Melhorias enviadas aos administradores.");
+        toast.success("Disparado!", res.message || "Melhorias enviadas aos administradores.");
         setBroadcastTitle("");
         setBroadcastDescription("");
       } else {
@@ -93,7 +94,7 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
           <Settings className="w-4 h-4" />
           <span>Plataforma Super Admin</span>
         </div>
-        <h1 className="text-2xl font-extrabold text-[var(--color-text-heading)] tracking-tight mt-1">
+        <h1 className="text-2xl font-semibold text-[var(--color-text-heading)] tracking-tight mt-1">
           Configurações Globais do Sistema
         </h1>
         <p className="text-xs text-[var(--color-text-muted)] mt-1">
@@ -102,13 +103,13 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
       </div>
 
       {/* Navegação por Abas no Padrão Stripe Tab Bar */}
-      <div className="bg-[var(--color-bg-muted)]/80 p-1.5 rounded-xl border border-[var(--color-border)]/60 inline-flex flex-wrap gap-1">
+      <div className="bg-[var(--color-bg-muted)]/80 p-1.5 rounded-[var(--radius-control)] border border-[var(--color-border)]/60 inline-flex flex-wrap gap-1">
         <button
           type="button"
           onClick={() => setTab("global")}
-          className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-2 ${
+          className={`px-4 py-2 text-xs font-semibold rounded-[var(--radius-control)] transition-all cursor-pointer flex items-center gap-2 ${
             tab === "global"
-              ? "bg-white text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80 font-bold"
+              ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80 font-bold"
               : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] hover:bg-[var(--color-bg-muted)]/50"
           }`}
         >
@@ -118,9 +119,9 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
         <button
           type="button"
           onClick={() => setTab("maintenance")}
-          className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-2 ${
+          className={`px-4 py-2 text-xs font-semibold rounded-[var(--radius-control)] transition-all cursor-pointer flex items-center gap-2 ${
             tab === "maintenance"
-              ? "bg-white text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80 font-bold"
+              ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80 font-bold"
               : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] hover:bg-[var(--color-bg-muted)]/50"
           }`}
         >
@@ -130,39 +131,39 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
         <button
           type="button"
           onClick={() => setTab("broadcast")}
-          className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-2 ${
+          className={`px-4 py-2 text-xs font-semibold rounded-[var(--radius-control)] transition-all cursor-pointer flex items-center gap-2 ${
             tab === "broadcast"
-              ? "bg-white text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80 font-bold"
+              ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80 font-bold"
               : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] hover:bg-[var(--color-bg-muted)]/50"
           }`}
         >
-          <Bell className="w-4 h-4 text-amber-500" />
-          <span>🚀 Disparo de Melhorias</span>
+          <Bell className="w-4 h-4 text-[var(--color-warning)]" />
+          <span>Disparo de Melhorias</span>
         </button>
         <button
           type="button"
           onClick={() => setTab("audit")}
-          className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-2 ${
+          className={`px-4 py-2 text-xs font-semibold rounded-[var(--radius-control)] transition-all cursor-pointer flex items-center gap-2 ${
             tab === "audit"
-              ? "bg-white text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80 font-bold"
+              ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80 font-bold"
               : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] hover:bg-[var(--color-bg-muted)]/50"
           }`}
         >
           <FileText className="w-4 h-4" />
-          <span>📜 Audit Logs do Sistema</span>
+          <span>Audit Logs do Sistema</span>
         </button>
       </div>
 
       {/* ABA 1: CONFIGURAÇÕES GLOBAIS & TAXAS */}
       {tab === "global" && (
         <div className="space-y-6">
-          <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-6 shadow-xs">
+          <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-6 shadow-xs">
             <div className="flex items-center gap-3 border-b border-[var(--color-border)] pb-5">
-              <div className="w-10 h-10 rounded-2xl bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-[var(--color-primary)]/20">
+              <div className="w-10 h-10 rounded-[var(--radius-card)] bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-[var(--color-primary)]/20">
                 <RotateCcw className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-base font-extrabold text-[var(--color-text-heading)]">Parâmetros Operacionais da Plataforma</h2>
+                <h2 className="text-base font-semibold text-[var(--color-text-heading)]">Parâmetros Operacionais da Plataforma</h2>
                 <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                   Configure dias de degustação, prazos de carência e taxas administrativas.
                 </p>
@@ -185,10 +186,10 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                     min="0"
                     value={settings.presetResetFee}
                     onChange={(e) => setSettings({ ...settings, presetResetFee: parseFloat(e.target.value) || 0 })}
-                    className="w-full pl-10 pr-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                    className="w-full pl-10 pr-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                   />
                 </div>
-                <span className="text-[11px] text-[var(--color-text-subtle)] mt-1 block">
+                <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] mt-1 block">
                   Cobrado via Stripe ao solicitar a reconfiguração do catálogo.
                 </span>
               </div>
@@ -203,9 +204,9 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                   min="0"
                   value={settings.trialDays}
                   onChange={(e) => setSettings({ ...settings, trialDays: parseInt(e.target.value, 10) || 0 })}
-                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
-                <span className="text-[11px] text-[var(--color-text-subtle)] mt-1 block">
+                <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] mt-1 block">
                   Período de degustação sem cobrança para novas empresas.
                 </span>
               </div>
@@ -220,9 +221,9 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                   min="0"
                   value={settings.gracePeriodDays}
                   onChange={(e) => setSettings({ ...settings, gracePeriodDays: parseInt(e.target.value, 10) || 0 })}
-                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
-                <span className="text-[11px] text-[var(--color-text-subtle)] mt-1 block">
+                <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] mt-1 block">
                   Dias adicionais antes da conta ser suspensa após o vencimento do Stripe.
                 </span>
               </div>
@@ -235,7 +236,7 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                 <select
                   value={settings.selfRegistrationEnabled ? "true" : "false"}
                   onChange={(e) => setSettings({ ...settings, selfRegistrationEnabled: e.target.value === "true" })}
-                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 >
                   <option value="true">Habilitado (Novas empresas podem se cadastrar livremente)</option>
                   <option value="false">Deshabilitado (Apenas criação manual/onboarding)</option>
@@ -251,7 +252,7 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                   type="text"
                   value={settings.platformName}
                   onChange={(e) => setSettings({ ...settings, platformName: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
@@ -264,7 +265,7 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                   type="email"
                   value={settings.supportEmail}
                   onChange={(e) => setSettings({ ...settings, supportEmail: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
             </div>
@@ -274,10 +275,124 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                 type="button"
                 onClick={handleSaveSettings}
                 disabled={isPending}
-                className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
+                className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>{isPending ? "Salvando..." : "Salvar Configurações Globais"}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Política de Sessão */}
+          <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-6 shadow-xs">
+            <div className="flex items-center gap-3 border-b border-[var(--color-border)] pb-5">
+              <div className="w-10 h-10 rounded-[var(--radius-card)] bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-[var(--color-primary)]/20">
+                <Clock className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-[var(--color-text-heading)]">
+                  Política de Sessão &amp; Acesso
+                </h2>
+                <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                  Desconexão automática por inatividade e limite de logins simultâneos. Use 0 para
+                  desligar um timeout.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-xs font-bold text-[var(--color-text)] mb-1">
+                  Inatividade — Painel (minutos)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="1440"
+                  value={settings.sessionIdleStaffMinutes}
+                  onChange={(e) =>
+                    setSettings({ ...settings, sessionIdleStaffMinutes: parseInt(e.target.value, 10) || 0 })
+                  }
+                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                />
+                <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] mt-1 block">
+                  Vale para donos, gerentes, funcionários e super admins. Padrão: 5 minutos.
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[var(--color-text)] mb-1">
+                  Inatividade — Cliente final (minutos)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="1440"
+                  value={settings.sessionIdleCustomerMinutes}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      sessionIdleCustomerMinutes: parseInt(e.target.value, 10) || 0,
+                    })
+                  }
+                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                />
+                <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] mt-1 block">
+                  Quem só consulta os próprios agendamentos. Padrão: 60 minutos.
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[var(--color-text)] mb-1">
+                  Inatividade — App mobile (minutos)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="10080"
+                  value={settings.sessionIdleMobileMinutes}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      sessionIdleMobileMinutes: parseInt(e.target.value, 10) || 0,
+                    })
+                  }
+                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                />
+                <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] mt-1 block">
+                  0 = desligado. O app tem ciclo de vida próprio e não é afetado pelo painel.
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[var(--color-text)] mb-1">
+                  Login simultâneo no navegador
+                </label>
+                <select
+                  value={settings.singleWebSessionEnabled ? "true" : "false"}
+                  onChange={(e) =>
+                    setSettings({ ...settings, singleWebSessionEnabled: e.target.value === "true" })
+                  }
+                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                >
+                  <option value="true">Bloqueado (o novo login derruba a máquina anterior)</option>
+                  <option value="false">Permitido (várias máquinas ao mesmo tempo)</option>
+                </select>
+                <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] mt-1 block">
+                  Sessões do app mobile nunca são derrubadas por esta regra.
+                </span>
+              </div>
+            </div>
+
+            <div className="pt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={handleSaveSettings}
+                disabled={isPending}
+                className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>{isPending ? "Salvando..." : "Salvar Política de Sessão"}</span>
               </button>
             </div>
           </div>
@@ -287,14 +402,14 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
       {/* ABA 2: MANUTENÇÃO PROGRAMADA */}
       {tab === "maintenance" && (
         <div className="space-y-6">
-          <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-6 shadow-xs">
+          <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-6 shadow-xs">
             <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-5">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
+                <div className="w-10 h-10 rounded-[var(--radius-card)] bg-[var(--color-warning-light)] text-[var(--color-warning)] flex items-center justify-center shrink-0 border border-[var(--color-warning-border)]">
                   <AlertTriangle className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-extrabold text-[var(--color-text-heading)]">Aviso & Janela de Manutenção Programada</h2>
+                  <h2 className="text-base font-semibold text-[var(--color-text-heading)]">Aviso & Janela de Manutenção Programada</h2>
                   <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                     Programe alertas para todas as empresas e clientes durante atualizações críticas de banco de dados.
                   </p>
@@ -308,7 +423,7 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                   onChange={(e) => setSettings({ ...settings, maintenanceEnabled: e.target.checked })}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-[var(--color-bg-muted)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[var(--color-border-strong)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500" />
+                <div className="w-11 h-6 bg-[var(--color-bg-muted)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[var(--color-bg)] after:border-[var(--color-border-strong)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-warning)]" />
               </label>
             </div>
 
@@ -320,7 +435,7 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                 <select
                   value={settings.maintenanceImpact}
                   onChange={(e) => setSettings({ ...settings, maintenanceImpact: e.target.value as any })}
-                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 >
                   <option value="SLOW">Lento (Degradação de Desempenho)</option>
                   <option value="UNAVAILABLE">Indisponível (Fora do Ar)</option>
@@ -335,7 +450,7 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                   type="datetime-local"
                   value={settings.maintenanceStart}
                   onChange={(e) => setSettings({ ...settings, maintenanceStart: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
@@ -347,7 +462,7 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                   type="datetime-local"
                   value={settings.maintenanceEnd}
                   onChange={(e) => setSettings({ ...settings, maintenanceEnd: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
             </div>
@@ -360,7 +475,7 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                 rows={3}
                 value={settings.maintenanceMessage}
                 onChange={(e) => setSettings({ ...settings, maintenanceMessage: e.target.value })}
-                className="w-full p-3.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl text-xs font-medium text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full p-3.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-xs font-medium text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 placeholder="Ex: Estamos realizando uma manutenção programada nos servidores de banco de dados para melhorar a velocidade das reservas."
               />
             </div>
@@ -370,17 +485,17 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
               <div className="space-y-2 pt-2">
                 <span className="text-xs font-bold text-[var(--color-text)] block">Pré-visualização ao Vivo do Banner:</span>
                 <div
-                  className={`p-4 rounded-2xl text-xs font-bold flex items-center justify-between gap-4 ${
+                  className={`p-4 rounded-[var(--radius-card)] text-xs font-bold flex items-center justify-between gap-4 ${
                     settings.maintenanceImpact === "UNAVAILABLE"
-                      ? "bg-red-600 text-white"
-                      : "bg-amber-500 text-[var(--color-text-heading)]"
+                      ? "bg-[var(--color-danger)] text-white"
+                      : "bg-[var(--color-warning)] text-[var(--color-text-heading)]"
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
                     <span>{settings.maintenanceMessage}</span>
                   </div>
-                  <span className="text-[11px] opacity-80 shrink-0">
+                  <span className="text-[var(--text-2xs)] opacity-80 shrink-0">
                     {settings.maintenanceStart && `Início: ${settings.maintenanceStart}`}
                   </span>
                 </div>
@@ -392,7 +507,7 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                 type="button"
                 onClick={handleSaveSettings}
                 disabled={isPending}
-                className="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
+                className="px-6 py-2.5 bg-[var(--color-warning)] hover:bg-[var(--color-warning)] text-white font-bold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
               >
                 <AlertTriangle className="w-4 h-4" />
                 <span>{isPending ? "Salvando..." : "Salvar Janela de Manutenção"}</span>
@@ -405,13 +520,13 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
       {/* ABA 3: DISPARO DE MELHORIAS (RELEASE NOTES BROADCAST) */}
       {tab === "broadcast" && (
         <div className="space-y-6">
-          <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-6 shadow-xs">
+          <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-6 shadow-xs">
             <div className="flex items-center gap-3 border-b border-[var(--color-border)] pb-5">
-              <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
+              <div className="w-10 h-10 rounded-[var(--radius-card)] bg-[var(--color-warning-light)] text-[var(--color-warning)] flex items-center justify-center shrink-0 border border-[var(--color-warning-border)]">
                 <Bell className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-base font-extrabold text-[var(--color-text-heading)]">Disparo de Novidades & Melhorias (Release Broadcast)</h2>
+                <h2 className="text-base font-semibold text-[var(--color-text-heading)]">Disparo de Novidades & Melhorias (Release Broadcast)</h2>
                 <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                   Anuncie novas funcionalidades implementadas diretamente para todos os administradores das empresas cadastradas.
                 </p>
@@ -428,7 +543,7 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                   value={broadcastTitle}
                   onChange={(e) => setBroadcastTitle(e.target.value)}
                   placeholder="Ex: Nova Dashboard com Design Stripe, Notificações por WhatsApp e Modais de Reset"
-                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
@@ -441,15 +556,15 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                   value={broadcastDescription}
                   onChange={(e) => setBroadcastDescription(e.target.value)}
                   placeholder="Descreva aqui todas as novas funções lançadas na plataforma para engajar os clientes..."
-                  className="w-full p-3.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl text-xs font-medium text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full p-3.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-xs font-medium text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
               {/* Canais de Disparo */}
-              <div className="p-4 bg-[var(--color-bg-subtle)] border border-[var(--color-border)]/80 rounded-2xl space-y-3">
+              <div className="p-4 bg-[var(--color-bg-subtle)] border border-[var(--color-border)]/80 rounded-[var(--radius-card)] space-y-3">
                 <span className="text-xs font-bold text-[var(--color-text-heading)] block">Canais de Envio Selecionados:</span>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <label className="flex items-center gap-3 p-3 bg-white rounded-xl border border-[var(--color-border)] cursor-pointer shadow-2xs">
+                  <label className="flex items-center gap-3 p-3 bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] cursor-pointer shadow-2xs">
                     <input
                       type="checkbox"
                       checked={broadcastChannels.systemNotification}
@@ -462,7 +577,7 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                     </div>
                   </label>
 
-                  <label className="flex items-center gap-3 p-3 bg-white rounded-xl border border-[var(--color-border)] cursor-pointer shadow-2xs">
+                  <label className="flex items-center gap-3 p-3 bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] cursor-pointer shadow-2xs">
                     <input
                       type="checkbox"
                       checked={broadcastChannels.email}
@@ -470,20 +585,20 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                       className="w-4 h-4 text-[var(--color-primary)] rounded"
                     />
                     <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-blue-600 shrink-0" />
+                      <Mail className="w-4 h-4 text-[var(--color-info)] shrink-0" />
                       <span className="text-xs font-bold text-[var(--color-text-heading)]">E-mail para Admins</span>
                     </div>
                   </label>
 
-                  <label className="flex items-center gap-3 p-3 bg-white rounded-xl border border-[var(--color-border)] cursor-pointer shadow-2xs">
+                  <label className="flex items-center gap-3 p-3 bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] cursor-pointer shadow-2xs">
                     <input
                       type="checkbox"
                       checked={broadcastChannels.whatsapp}
                       onChange={(e) => setBroadcastChannels({ ...broadcastChannels, whatsapp: e.target.checked })}
-                      className="w-4 h-4 text-emerald-600 rounded"
+                      className="w-4 h-4 text-[var(--color-success)] rounded"
                     />
                     <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <Phone className="w-4 h-4 text-[var(--color-success)] shrink-0" />
                       <span className="text-xs font-bold text-[var(--color-text-heading)]">WhatsApp / Texto</span>
                     </div>
                   </label>
@@ -496,9 +611,9 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                 type="button"
                 onClick={handleBroadcastSubmit}
                 disabled={isPending}
-                className="px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
+                className="px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
               >
-                <span>🚀 Disparar Novidades para Todos os Admins de Empresas</span>
+                <span>Disparar Novidades para Todos os Admins de Empresas</span>
               </button>
             </div>
           </div>
@@ -508,13 +623,13 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
       {/* ABA 4: AUDIT LOGS DO SISTEMA */}
       {tab === "audit" && (
         <div className="space-y-6">
-          <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-6 shadow-xs">
+          <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-6 shadow-xs">
             <div className="flex items-center gap-3 border-b border-[var(--color-border)] pb-5">
-              <div className="w-10 h-10 rounded-2xl bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-[var(--color-primary)]/20">
+              <div className="w-10 h-10 rounded-[var(--radius-card)] bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-[var(--color-primary)]/20">
                 <FileText className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-base font-extrabold text-[var(--color-text-heading)]">Rastreabilidade & Logs de Auditoria</h2>
+                <h2 className="text-base font-semibold text-[var(--color-text-heading)]">Rastreabilidade & Logs de Auditoria</h2>
                 <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                   Registro cronológico de todas as ações administrativas e operacionais da plataforma.
                 </p>

@@ -27,17 +27,17 @@ export default async function WaitlistPage({
   if (configs.length === 0) notFound();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200">
+    <div className="min-h-screen bg-[var(--color-bg-subtle)]">
+      <header className="bg-[var(--color-bg)] border-b border-[var(--color-border)]">
         <div className="max-w-lg mx-auto px-4 py-4">
-          <h1 className="text-sm font-semibold text-gray-900">{company.name}</h1>
-          <p className="text-xs text-gray-500">Lista de espera</p>
+          <h1 className="text-sm font-semibold text-[var(--color-text-heading)]">{company.name}</h1>
+          <p className="text-xs text-[var(--color-text-muted)]">Lista de espera</p>
         </div>
       </header>
       <div className="max-w-lg mx-auto px-4 py-8">
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="text-base font-semibold text-gray-900 mb-1">Entrar na lista de espera</h2>
-          <p className="text-sm text-gray-500 mb-5">
+        <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-6">
+          <h2 className="text-base font-semibold text-[var(--color-text-heading)] mb-1">Entrar na lista de espera</h2>
+          <p className="text-sm text-[var(--color-text-muted)] mb-5">
             Quando uma vaga abrir na data escolhida, você será notificado por e-mail.
           </p>
           <WaitlistForm configs={configs} defaultConfigId={configId} />

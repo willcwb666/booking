@@ -78,7 +78,7 @@ export function TimeGrid({ view, days, events, onSlotClick, onEventClick }: Prop
     >
       {/* Day headers */}
       <div
-        className="flex border-b border-[var(--color-border)] bg-white sticky top-0 z-10"
+        className="flex border-b border-[var(--color-border)] bg-[var(--color-bg)] sticky top-0 z-10"
         role="row"
       >
         {/* Time gutter header */}
@@ -123,7 +123,7 @@ export function TimeGrid({ view, days, events, onSlotClick, onEventClick }: Prop
               <div
                 key={t}
                 style={{ height: SLOT_HEIGHT, top: i * SLOT_HEIGHT }}
-                className="absolute right-2 text-[10px] text-[var(--color-text-subtle)] leading-none -translate-y-1/2 select-none"
+                className="absolute right-2 text-[var(--text-2xs)] text-[var(--color-text-subtle)] leading-none -translate-y-1/2 select-none"
               >
                 {i > 0 ? t : ""}
               </div>
@@ -173,12 +173,12 @@ export function TimeGrid({ view, days, events, onSlotClick, onEventClick }: Prop
                       }}
                       aria-label={`${cfg.label}: ${ev.title}, ${ev.startTime} às ${ev.endTime}`}
                       style={{ top, height, left: 4, right: 4 }}
-                      className={`absolute rounded-md border-l-2 px-2 py-1 text-left overflow-hidden z-10 shadow-sm hover:shadow transition-shadow ${cfg.bg} ${cfg.text} ${cfg.border}`}
+                      className={`absolute rounded-[var(--radius-sm)] border-l-2 px-2 py-1 text-left overflow-hidden z-10 shadow-sm hover:shadow transition-shadow ${cfg.bg} ${cfg.text} ${cfg.border}`}
                     >
                       <p className="text-xs font-semibold truncate leading-tight">
                         {ev.title}
                       </p>
-                      <p className="text-[10px] opacity-75 truncate">
+                      <p className="text-[var(--text-2xs)] opacity-75 truncate">
                         {ev.startTime}–{ev.endTime}
                         {ev.professional && ` · ${ev.professional.name}`}
                       </p>

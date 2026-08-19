@@ -160,17 +160,17 @@ export function GiftCardsClient({
   return (
     <div className="page-content space-y-8">
       {/* HEADER EXECUTIVO */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 sm:p-8 rounded-3xl border border-[var(--color-border)] shadow-xs relative overflow-hidden">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[var(--color-bg)] p-6 sm:p-8 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xs relative overflow-hidden">
         <div className="space-y-1 z-10">
-          <div className="flex items-center gap-2 text-[var(--color-primary)] font-extrabold text-xs uppercase tracking-wider">
-            <Gift className="w-4 h-4 text-pink-500 animate-pulse" />
+          <div className="flex items-center gap-2 text-[var(--color-primary)] font-semibold text-xs uppercase tracking-wider">
+            <Gift className="w-4 h-4 text-[var(--color-danger)] animate-pulse" />
             <span>Vendas Antecipadas & Fidelidade</span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-pink-50 text-pink-700 border border-pink-200 text-[10px] font-extrabold ml-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--color-danger-light)] text-[var(--color-danger)] border border-[var(--color-danger-border)] text-[var(--text-2xs)] font-semibold ml-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-danger)] animate-pulse" />
               GIFT CARDS
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-text-heading)] tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--color-text-heading)] tracking-tight">
             Vales-Presente & Gift Cards
           </h1>
           <p className="text-xs text-[var(--color-text-muted)] max-w-xl">
@@ -182,7 +182,7 @@ export function GiftCardsClient({
           <button
             type="button"
             onClick={handleOpenCreateModal}
-            className="px-4 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] active:scale-[0.98] text-white rounded-xl transition-all font-extrabold text-xs inline-flex items-center justify-center gap-2 cursor-pointer shadow-[var(--shadow-primary)]"
+            className="px-4 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] active:scale-[0.98] text-white rounded-[var(--radius-control)] transition-all font-semibold text-xs inline-flex items-center justify-center gap-2 cursor-pointer shadow-[var(--shadow-primary)]"
           >
             <Plus className="w-4 h-4" />
             <span>Emitir Gift Card</span>
@@ -192,77 +192,77 @@ export function GiftCardsClient({
 
       {/* KPI METRICS CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white p-6 rounded-3xl border border-[var(--color-border)] shadow-xs">
+        <div className="bg-[var(--color-bg)] p-6 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-extrabold text-[var(--color-text-subtle)] uppercase tracking-wider">
+            <span className="text-[var(--text-2xs)] font-semibold text-[var(--color-text-subtle)] uppercase tracking-wider">
               Total Emitido
             </span>
-            <div className="p-2.5 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-2xs">
+            <div className="p-2.5 rounded-[var(--radius-card)] bg-[var(--color-success-light)] text-[var(--color-success)] border border-[var(--color-success-border)] shadow-2xs">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-[var(--color-text-heading)] tracking-tight">
+          <p className="text-2xl sm:text-3xl font-semibold text-[var(--color-text-heading)] tracking-tight">
             {fmtCurrency(stats.totalIssuedAmount)}
           </p>
-          <p className="text-[11px] text-[var(--color-text-muted)] font-medium mt-1">
+          <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)] font-medium mt-1">
             Valor total em vales emitidos
           </p>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-[var(--color-border)] shadow-xs">
+        <div className="bg-[var(--color-bg)] p-6 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-extrabold text-[var(--color-text-subtle)] uppercase tracking-wider">
+            <span className="text-[var(--text-2xs)] font-semibold text-[var(--color-text-subtle)] uppercase tracking-wider">
               Saldo Pendente
             </span>
-            <div className="p-2.5 rounded-2xl bg-pink-50 text-pink-600 border border-pink-100 shadow-2xs">
+            <div className="p-2.5 rounded-[var(--radius-card)] bg-[var(--color-danger-light)] text-[var(--color-danger)] border border-[var(--color-danger-border)] shadow-2xs">
               <Gift className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-[var(--color-text-heading)] tracking-tight">
+          <p className="text-2xl sm:text-3xl font-semibold text-[var(--color-text-heading)] tracking-tight">
             {fmtCurrency(stats.totalOutstandingBalance)}
           </p>
-          <p className="text-[11px] text-[var(--color-text-muted)] font-medium mt-1">
+          <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)] font-medium mt-1">
             Saldo disponível para resgates
           </p>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-[var(--color-border)] shadow-xs">
+        <div className="bg-[var(--color-bg)] p-6 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-extrabold text-[var(--color-text-subtle)] uppercase tracking-wider">
+            <span className="text-[var(--text-2xs)] font-semibold text-[var(--color-text-subtle)] uppercase tracking-wider">
               Vales Ativos
             </span>
-            <div className="p-2.5 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-2xs">
+            <div className="p-2.5 rounded-[var(--radius-card)] bg-[var(--color-primary-light)] text-[var(--color-primary)] border border-[var(--color-primary)] shadow-2xs">
               <Sparkles className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-[var(--color-text-heading)] tracking-tight">
+          <p className="text-2xl sm:text-3xl font-semibold text-[var(--color-text-heading)] tracking-tight">
             {stats.activeCardsCount}
           </p>
-          <p className="text-[11px] text-[var(--color-text-muted)] font-medium mt-1">
+          <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)] font-medium mt-1">
             Cartões com saldo disponível
           </p>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-[var(--color-border)] shadow-xs">
+        <div className="bg-[var(--color-bg)] p-6 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-extrabold text-[var(--color-text-subtle)] uppercase tracking-wider">
+            <span className="text-[var(--text-2xs)] font-semibold text-[var(--color-text-subtle)] uppercase tracking-wider">
               Total de Resgates
             </span>
-            <div className="p-2.5 rounded-2xl bg-sky-50 text-sky-600 border border-sky-100 shadow-2xs">
+            <div className="p-2.5 rounded-[var(--radius-card)] bg-[var(--color-info-light)] text-[var(--color-info)] border border-[var(--color-info-border)] shadow-2xs">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-[var(--color-text-heading)] tracking-tight">
+          <p className="text-2xl sm:text-3xl font-semibold text-[var(--color-text-heading)] tracking-tight">
             {stats.totalRedemptionsCount}
           </p>
-          <p className="text-[11px] text-[var(--color-text-muted)] font-medium mt-1">
+          <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)] font-medium mt-1">
             Utilizações em agendamentos
           </p>
         </div>
       </div>
 
       {/* BARRA DE FILTROS & AÇÕES */}
-      <div className="bg-white rounded-3xl border border-[var(--color-border)] p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
         <div className="flex items-center gap-3 w-full sm:w-auto flex-1">
           <div className="relative flex-1 max-w-sm">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-subtle)]" />
@@ -275,14 +275,14 @@ export function GiftCardsClient({
                 }
               }}
               placeholder="Buscar por código, comprador ou presenteado..."
-              className="w-full pl-10 pr-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full pl-10 pr-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             />
           </div>
 
           <select
             value={currentStatus}
             onChange={(e) => updateQuery({ status: e.target.value, page: 1 })}
-            className="bg-[var(--color-bg-subtle)] border border-[var(--color-border)] text-xs font-bold rounded-xl px-3 py-2.5 text-[var(--color-text-heading)] focus:outline-none cursor-pointer"
+            className="bg-[var(--color-bg-subtle)] border border-[var(--color-border)] text-xs font-bold rounded-[var(--radius-control)] px-3 py-2.5 text-[var(--color-text-heading)] focus:outline-none cursor-pointer"
           >
             <option value="ALL">Todos os Status</option>
             <option value="ACTIVE">Ativos</option>
@@ -295,7 +295,7 @@ export function GiftCardsClient({
         <button
           type="button"
           onClick={handleOpenCreateModal}
-          className="w-full sm:w-auto px-4 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-extrabold rounded-xl transition-all cursor-pointer shadow-xs inline-flex items-center justify-center gap-2"
+          className="w-full sm:w-auto px-4 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-semibold rounded-[var(--radius-control)] transition-all cursor-pointer shadow-xs inline-flex items-center justify-center gap-2"
         >
           <Plus className="w-4 h-4" />
           <span>Novo Vale-Presente</span>
@@ -303,11 +303,11 @@ export function GiftCardsClient({
       </div>
 
       {/* TABELA DE VALES */}
-      <div className="bg-white rounded-3xl border border-[var(--color-border)] shadow-xs overflow-hidden">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg-subtle)]/50 text-[var(--color-text-subtle)] font-bold uppercase tracking-wider text-[10px]">
+              <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg-subtle)]/50 text-[var(--color-text-subtle)] font-bold uppercase tracking-wider text-[var(--text-2xs)]">
                 <th className="py-3.5 px-4">Código do Vale</th>
                 <th className="py-3.5 px-4">Saldo / Valor Original</th>
                 <th className="py-3.5 px-4">Beneficiário / Comprador</th>
@@ -332,28 +332,28 @@ export function GiftCardsClient({
                       <tr className="hover:bg-[var(--color-bg-subtle)]/40 transition-colors">
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-2">
-                            <span className="font-mono font-black text-sm text-[var(--color-primary)] tracking-wide bg-[var(--color-bg-subtle)] px-2.5 py-1 rounded-lg border border-[var(--color-border)]">
+                            <span className="font-mono font-semibold text-sm text-[var(--color-primary)] tracking-wide bg-[var(--color-bg-subtle)] px-2.5 py-1 rounded-[var(--radius-control)] border border-[var(--color-border)]">
                               {card.code}
                             </span>
                             <button
                               type="button"
                               onClick={() => handleCopyCode(card.code)}
-                              className="p-1 text-[var(--color-text-subtle)] hover:text-[var(--color-text-heading)] rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                              className="p-1 text-[var(--color-text-subtle)] hover:text-[var(--color-text-heading)] rounded-[var(--radius-control)] hover:bg-[var(--color-bg-muted)] transition-colors cursor-pointer"
                               title="Copiar código"
                             >
                               <Copy className="w-3.5 h-3.5" />
                             </button>
                           </div>
-                          <span className="text-[10px] text-[var(--color-text-muted)] mt-1 block">
+                          <span className="text-[var(--text-2xs)] text-[var(--color-text-muted)] mt-1 block">
                             Emitido em {new Date(card.createdAt).toLocaleDateString("pt-BR")}
                           </span>
                         </td>
 
                         <td className="py-3.5 px-4">
-                          <p className="font-black text-sm text-[var(--color-text-heading)]">
+                          <p className="font-semibold text-sm text-[var(--color-text-heading)]">
                             {fmtCurrency(card.currentBalance)}
                           </p>
-                          <p className="text-[10px] text-[var(--color-text-subtle)]">
+                          <p className="text-[var(--text-2xs)] text-[var(--color-text-subtle)]">
                             Original: {fmtCurrency(card.initialBalance)}
                           </p>
                         </td>
@@ -367,7 +367,7 @@ export function GiftCardsClient({
                             <p className="text-[var(--color-text-muted)] italic">Ao Portador</p>
                           )}
                           {card.buyerName && (
-                            <p className="text-[11px] text-[var(--color-text-muted)]">
+                            <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)]">
                               De: {card.buyerName}
                             </p>
                           )}
@@ -375,12 +375,12 @@ export function GiftCardsClient({
 
                         <td className="py-3.5 px-4">
                           <span
-                            className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
+                            className={`text-[var(--text-2xs)] font-semibold px-2.5 py-0.5 rounded-full border ${
                               card.status === "ACTIVE"
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                ? "bg-[var(--color-success-light)] text-[var(--color-success)] border-[var(--color-success-border)]"
                                 : card.status === "EXHAUSTED"
-                                ? "bg-slate-100 text-slate-600 border-slate-200"
-                                : "bg-red-50 text-red-700 border-red-200"
+                                ? "bg-[var(--color-bg-muted)] text-[var(--color-text-muted)] border-[var(--color-border)]"
+                                : "bg-[var(--color-danger-light)] text-[var(--color-danger)] border-[var(--color-danger-border)]"
                             }`}
                           >
                             {card.status === "ACTIVE"
@@ -404,7 +404,7 @@ export function GiftCardsClient({
                             <button
                               type="button"
                               onClick={() => setExpandedCardId(isExpanded ? null : card.id)}
-                              className="text-[11px] font-bold text-[var(--color-primary)] hover:underline cursor-pointer inline-flex items-center gap-1"
+                              className="text-[var(--text-2xs)] font-bold text-[var(--color-primary)] hover:underline cursor-pointer inline-flex items-center gap-1"
                             >
                               <span>{card.totalRedemptions} resgate(s)</span>
                               <ChevronDown
@@ -419,7 +419,7 @@ export function GiftCardsClient({
                             <button
                               type="button"
                               onClick={() => handleCancelGiftCard(card.id)}
-                              className="text-[11px] font-bold text-red-600 hover:text-red-700 hover:underline cursor-pointer"
+                              className="text-[var(--text-2xs)] font-bold text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:underline cursor-pointer"
                             >
                               Cancelar
                             </button>
@@ -432,16 +432,16 @@ export function GiftCardsClient({
                         <tr className="bg-[var(--color-bg-subtle)]/60">
                           <td colSpan={6} className="p-4">
                             <div className="space-y-2">
-                              <p className="text-[11px] font-bold text-[var(--color-text-heading)]">
+                              <p className="text-[var(--text-2xs)] font-bold text-[var(--color-text-heading)]">
                                 Histórico de Utilização do Vale:
                               </p>
                               <div className="space-y-1">
                                 {card.redemptions.map((red) => (
                                   <div
                                     key={red.id}
-                                    className="flex items-center justify-between text-[11px] bg-white p-2.5 rounded-xl border border-[var(--color-border)]"
+                                    className="flex items-center justify-between text-[var(--text-2xs)] bg-[var(--color-bg)] p-2.5 rounded-[var(--radius-control)] border border-[var(--color-border)]"
                                   >
-                                    <span className="font-semibold text-emerald-700">
+                                    <span className="font-semibold text-[var(--color-success)]">
                                       - {fmtCurrency(red.amount)}
                                     </span>
                                     <span className="text-[var(--color-text-muted)]">
@@ -489,7 +489,7 @@ export function GiftCardsClient({
           <form onSubmit={handleSaveGiftCard} className="space-y-4 text-xs">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-[var(--color-text-heading)] mb-1">
+                <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-heading)] mb-1">
                   Valor ({currency}) *
                 </label>
                 <input
@@ -498,18 +498,18 @@ export function GiftCardsClient({
                   value={cardAmount}
                   onChange={(e) => setCardAmount(e.target.value)}
                   placeholder="150,00"
-                  className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
+                  className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-[var(--color-text-heading)] mb-1">
+                <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-heading)] mb-1">
                   Validade (dias)
                 </label>
                 <select
                   value={expiresInDays}
                   onChange={(e) => setExpiresInDays(e.target.value)}
-                  className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:outline-none cursor-pointer"
+                  className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:outline-none cursor-pointer"
                 >
                   <option value="90">90 dias (3 meses)</option>
                   <option value="180">180 dias (6 meses)</option>
@@ -521,7 +521,7 @@ export function GiftCardsClient({
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-[var(--color-text-heading)] mb-1">
+              <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-heading)] mb-1">
                 Código Personalizado (opcional — deixe vazio para gerar automático)
               </label>
               <input
@@ -529,17 +529,17 @@ export function GiftCardsClient({
                 value={customCode}
                 onChange={(e) => setCustomCode(e.target.value.toUpperCase())}
                 placeholder="Ex: NATAL-2026-VIP ou ANIVERSARIO-MARIA"
-                className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono uppercase"
+                className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono uppercase"
               />
             </div>
 
             {/* Dados do Presenteado */}
-            <div className="p-3.5 rounded-2xl bg-[var(--color-bg-subtle)] border border-[var(--color-border)] space-y-3">
-              <p className="font-extrabold text-[var(--color-text-heading)]">Beneficiário (Quem vai receber)</p>
+            <div className="p-3.5 rounded-[var(--radius-card)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)] space-y-3">
+              <p className="font-semibold text-[var(--color-text-heading)]">Beneficiário (Quem vai receber)</p>
               
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="block text-[10px] font-bold text-[var(--color-text-subtle)] mb-1">
+                  <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-subtle)] mb-1">
                     Nome do Presenteado
                   </label>
                   <input
@@ -547,11 +547,11 @@ export function GiftCardsClient({
                     value={recipientName}
                     onChange={(e) => setRecipientName(e.target.value)}
                     placeholder="Ex: Beatriz Lima"
-                    className="w-full bg-white border border-[var(--color-border)] rounded-xl px-3 py-2 text-xs text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-xs text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-[var(--color-text-subtle)] mb-1">
+                  <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-subtle)] mb-1">
                     E-mail do Presenteado
                   </label>
                   <input
@@ -559,13 +559,13 @@ export function GiftCardsClient({
                     value={recipientEmail}
                     onChange={(e) => setRecipientEmail(e.target.value)}
                     placeholder="beatriz@email.com"
-                    className="w-full bg-white border border-[var(--color-border)] rounded-xl px-3 py-2 text-xs text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-xs text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-[var(--color-text-subtle)] mb-1">
+                <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-subtle)] mb-1">
                   Mensagem de Presente
                 </label>
                 <textarea
@@ -573,7 +573,7 @@ export function GiftCardsClient({
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Ex: Feliz aniversário! Aproveite um dia incrível de cuidados."
-                  className="w-full bg-white border border-[var(--color-border)] rounded-xl px-3 py-2 text-xs text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-xs text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
             </div>
@@ -581,7 +581,7 @@ export function GiftCardsClient({
             {/* Dados do Comprador */}
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-[11px] font-bold text-[var(--color-text-heading)] mb-1">
+                <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-heading)] mb-1">
                   Nome do Comprador
                 </label>
                 <input
@@ -589,11 +589,11 @@ export function GiftCardsClient({
                   value={buyerName}
                   onChange={(e) => setBuyerName(e.target.value)}
                   placeholder="Ex: Carlos Eduardo"
-                  className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-[var(--color-text-heading)] mb-1">
+                <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-heading)] mb-1">
                   E-mail do Comprador
                 </label>
                 <input
@@ -601,7 +601,7 @@ export function GiftCardsClient({
                   value={buyerEmail}
                   onChange={(e) => setBuyerEmail(e.target.value)}
                   placeholder="carlos@email.com"
-                  className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
             </div>
@@ -610,14 +610,14 @@ export function GiftCardsClient({
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(false)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors cursor-pointer"
+                className="px-4 py-2 bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)] font-bold rounded-[var(--radius-control)] transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={isPending}
-                className="px-5 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-extrabold rounded-xl transition-all cursor-pointer disabled:opacity-50 shadow-xs"
+                className="px-5 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold rounded-[var(--radius-control)] transition-all cursor-pointer disabled:opacity-50 shadow-xs"
               >
                 {isPending ? "Emitindo..." : "Emitir Vale-Presente"}
               </button>

@@ -26,7 +26,7 @@ export function KreatorIcon({ size = 32, className = "" }: { size?: number; clas
 
 export function KreatorLogo({
   size = 32,
-  textClassName = "text-xl font-bold text-gray-900",
+  textClassName = "text-xl font-bold text-[var(--color-text-heading)]",
   className = "",
 }: {
   size?: number;
@@ -37,7 +37,7 @@ export function KreatorLogo({
     <div className={`flex items-center gap-2.5 ${className}`}>
       <KreatorIcon size={size} />
       <span className={`tracking-tight font-sans ${textClassName}`}>
-        kreator<span className="text-violet-600">.</span>
+        kreator<span className="text-[var(--color-primary)]">.</span>
       </span>
     </div>
   );

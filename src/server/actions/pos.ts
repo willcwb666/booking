@@ -1,12 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getActiveSession } from "@/lib/session";
+import { RATE_LIMITS, enforceRateLimit } from "@/lib/rate-limit";
 
 async function verifyCompanyAccess(companySlug: string) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getActiveSession();
   if (!session) throw new Error("Não autenticado");
 
   const company = await db.company.findUnique({
@@ -57,22 +57,50 @@ export async function createPosSaleAction(companySlug: string, data: CreatePosSa
   try {
     const { company, user } = await verifyCompanyAccess(companySlug);
 
+    // Venda mexe em dinheiro e estoque: limita rajada por operador (erro de
+    // duplo clique, script apontado para a action, caixa comprometido).
+    const rl = await enforceRateLimit(RATE_LIMITS.POS_SALE, user.id);
+    if (!rl.allowed) return { success: false, error: rl.message };
+
     if (!data.items || data.items.length === 0) {
       throw new Error("Adicione pelo menos um item à comanda");
     }
 
+    // Produtos: preço vem do servidor (não confia no cliente) e o lookup é
+    // escopado à empresa — fecha o IDOR de productId e a manipulação de preço.
+    const productIds = data.items
+      .filter((it) => it.type === "PRODUCT" && it.productId)
+      .map((it) => it.productId as string);
+    const products = productIds.length
+      ? await db.product.findMany({
+          where: { id: { in: productIds }, companyId: company.id },
+          select: { id: true, salePrice: true, name: true },
+        })
+      : [];
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
     let subtotal = 0;
     const itemsData = data.items.map((it) => {
       const qty = Math.max(1, it.quantity);
-      const total = qty * it.unitPrice;
+      let unitPrice = Math.max(0, it.unitPrice);
+      let name = it.name.trim();
+
+      if (it.type === "PRODUCT" && it.productId) {
+        const p = productMap.get(it.productId);
+        if (!p) throw new Error("Produto inválido ou de outra empresa");
+        unitPrice = Number(p.salePrice); // preço autoritativo do servidor
+        name = name || p.name;
+      }
+
+      const total = qty * unitPrice;
       subtotal += total;
       return {
         type: it.type,
         productId: it.productId || null,
         serviceId: it.serviceId || null,
-        name: it.name.trim(),
+        name,
         quantity: qty,
-        unitPrice: it.unitPrice,
+        unitPrice,
         totalPrice: total,
       };
     });
@@ -127,42 +155,42 @@ export async function createPosSaleAction(companySlug: string, data: CreatePosSa
         },
       });
 
-      // Baixa automática de estoque para produtos
+      // Baixa automática de estoque para produtos — decremento ATÔMICO e
+      // escopado à empresa (evita corrida/lost-update e IDOR). Permite estoque
+      // negativo como indicador honesto de oversell (não bloqueia a venda).
       for (const it of itemsData) {
         if (it.type === "PRODUCT" && it.productId) {
-          const product = await tx.product.findUnique({
+          const dec = await tx.product.updateMany({
+            where: { id: it.productId, companyId: company.id },
+            data: { stockQuantity: { decrement: it.quantity } },
+          });
+          if (dec.count !== 1) continue; // produto não é desta empresa — ignora
+
+          const updated = await tx.product.findUnique({
             where: { id: it.productId },
             select: { stockQuantity: true },
           });
+          const newStock = updated?.stockQuantity ?? 0;
 
-          if (product) {
-            const prevStock = product.stockQuantity;
-            const newStock = Math.max(0, prevStock - it.quantity);
-
-            await tx.product.update({
-              where: { id: it.productId },
-              data: { stockQuantity: newStock },
-            });
-
-            await tx.stockMovement.create({
-              data: {
-                productId: it.productId,
-                type: "SALE",
-                quantity: -it.quantity,
-                previousStock: prevStock,
-                newStock,
-                reason: `Venda POS #${newSale.id.slice(-6)}`,
-                userId: user.id,
-              },
-            });
-          }
+          await tx.stockMovement.create({
+            data: {
+              productId: it.productId,
+              type: "SALE",
+              quantity: -it.quantity,
+              previousStock: newStock + it.quantity,
+              newStock,
+              reason: `Venda POS #${newSale.id.slice(-6)}`,
+              userId: user.id,
+            },
+          });
         }
       }
 
-      // Se houver agendamento vinculado, marca como concluído e pago
+      // Se houver agendamento vinculado, marca como concluído e pago —
+      // escopado por companyId para não afetar bookings de outra empresa (IDOR).
       if (data.bookingId) {
-        await tx.booking.update({
-          where: { id: data.bookingId },
+        await tx.booking.updateMany({
+          where: { id: data.bookingId, companyId: company.id },
           data: {
             status: "COMPLETED",
             paymentStatus: "PAID",
@@ -179,8 +207,8 @@ export async function createPosSaleAction(companySlug: string, data: CreatePosSa
     revalidatePath(`/${companySlug}/relatorios`);
 
     return { success: true, data: sale };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[createPosSaleAction] Erro:", err);
-    return { success: false, error: err.message || "Erro ao registrar venda no POS" };
+    return { success: false, error: err instanceof Error ? err.message : "Erro ao registrar venda no POS" };
   }
 }

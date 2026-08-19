@@ -267,17 +267,17 @@ export function AssinaturasClient({
   return (
     <div className="page-content space-y-8">
       {/* HEADER DO CLUBE DE ASSINATURAS */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 sm:p-8 rounded-3xl border border-[var(--color-border)] shadow-xs relative overflow-hidden">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[var(--color-bg)] p-6 sm:p-8 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xs relative overflow-hidden">
         <div className="space-y-1 z-10">
-          <div className="flex items-center gap-2 text-[var(--color-primary)] font-extrabold text-xs uppercase tracking-wider">
-            <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
+          <div className="flex items-center gap-2 text-[var(--color-primary)] font-semibold text-xs uppercase tracking-wider">
+            <Sparkles className="w-4 h-4 text-[var(--color-warning)] animate-pulse" />
             <span>Receita Recorrente & Fidelização</span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold ml-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--color-success-light)] text-[var(--color-success)] border border-[var(--color-success-border)] text-[var(--text-2xs)] font-semibold ml-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)] animate-pulse" />
               CLUBE ATIVO
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-text-heading)] tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--color-text-heading)] tracking-tight">
             Clube de Assinaturas & Pacotes
           </h1>
           <p className="text-xs text-[var(--color-text-muted)] max-w-xl">
@@ -289,7 +289,7 @@ export function AssinaturasClient({
           <button
             type="button"
             onClick={handleOpenCreatePlan}
-            className="px-4 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] active:scale-[0.98] text-white rounded-xl transition-all font-extrabold text-xs inline-flex items-center justify-center gap-2 cursor-pointer shadow-[var(--shadow-primary)]"
+            className="px-4 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] active:scale-[0.98] text-white rounded-[var(--radius-control)] transition-all font-semibold text-xs inline-flex items-center justify-center gap-2 cursor-pointer shadow-[var(--shadow-primary)]"
           >
             <Plus className="w-4 h-4" />
             <span>Novo Plano / Pacote</span>
@@ -299,70 +299,70 @@ export function AssinaturasClient({
 
       {/* KPI METRICS CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white p-6 rounded-3xl border border-[var(--color-border)] shadow-xs">
+        <div className="bg-[var(--color-bg)] p-6 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-extrabold text-[var(--color-text-subtle)] uppercase tracking-wider">
+            <span className="text-[var(--text-2xs)] font-semibold text-[var(--color-text-subtle)] uppercase tracking-wider">
               MRR de Assinaturas
             </span>
-            <div className="p-2.5 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-2xs">
+            <div className="p-2.5 rounded-[var(--radius-card)] bg-[var(--color-success-light)] text-[var(--color-success)] border border-[var(--color-success-border)] shadow-2xs">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-[var(--color-text-heading)] tracking-tight">
+          <p className="text-2xl sm:text-3xl font-semibold text-[var(--color-text-heading)] tracking-tight">
             {fmtCurrency(stats.monthlyRecurringRevenue)}
           </p>
-          <p className="text-[11px] text-[var(--color-text-muted)] font-medium mt-1">
+          <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)] font-medium mt-1">
             Receita mensal recorrente estimada
           </p>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-[var(--color-border)] shadow-xs">
+        <div className="bg-[var(--color-bg)] p-6 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-extrabold text-[var(--color-text-subtle)] uppercase tracking-wider">
+            <span className="text-[var(--text-2xs)] font-semibold text-[var(--color-text-subtle)] uppercase tracking-wider">
               Membros Ativos
             </span>
-            <div className="p-2.5 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-2xs">
+            <div className="p-2.5 rounded-[var(--radius-card)] bg-[var(--color-primary-light)] text-[var(--color-primary)] border border-[var(--color-primary)] shadow-2xs">
               <Users className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-[var(--color-text-heading)] tracking-tight">
+          <p className="text-2xl sm:text-3xl font-semibold text-[var(--color-text-heading)] tracking-tight">
             {stats.activeMembers}
           </p>
-          <p className="text-[11px] text-[var(--color-text-muted)] font-medium mt-1">
+          <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)] font-medium mt-1">
             Clientes com cobertura ativa
           </p>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-[var(--color-border)] shadow-xs">
+        <div className="bg-[var(--color-bg)] p-6 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-extrabold text-[var(--color-text-subtle)] uppercase tracking-wider">
+            <span className="text-[var(--text-2xs)] font-semibold text-[var(--color-text-subtle)] uppercase tracking-wider">
               Sessões Utilizadas
             </span>
-            <div className="p-2.5 rounded-2xl bg-sky-50 text-sky-600 border border-sky-100 shadow-2xs">
+            <div className="p-2.5 rounded-[var(--radius-card)] bg-[var(--color-info-light)] text-[var(--color-info)] border border-[var(--color-info-border)] shadow-2xs">
               <Scissors className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-[var(--color-text-heading)] tracking-tight">
+          <p className="text-2xl sm:text-3xl font-semibold text-[var(--color-text-heading)] tracking-tight">
             {stats.sessionsUsedThisMonth}
           </p>
-          <p className="text-[11px] text-[var(--color-text-muted)] font-medium mt-1">
+          <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)] font-medium mt-1">
             Atendimentos cobertos este mês
           </p>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-[var(--color-border)] shadow-xs">
+        <div className="bg-[var(--color-bg)] p-6 rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xs">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-extrabold text-[var(--color-text-subtle)] uppercase tracking-wider">
+            <span className="text-[var(--text-2xs)] font-semibold text-[var(--color-text-subtle)] uppercase tracking-wider">
               Planos Cadastrados
             </span>
-            <div className="p-2.5 rounded-2xl bg-amber-50 text-amber-600 border border-amber-100 shadow-2xs">
+            <div className="p-2.5 rounded-[var(--radius-card)] bg-[var(--color-warning-light)] text-[var(--color-warning)] border border-[var(--color-warning-border)] shadow-2xs">
               <Tag className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-[var(--color-text-heading)] tracking-tight">
+          <p className="text-2xl sm:text-3xl font-semibold text-[var(--color-text-heading)] tracking-tight">
             {stats.totalPlans}
           </p>
-          <p className="text-[11px] text-[var(--color-text-muted)] font-medium mt-1">
+          <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)] font-medium mt-1">
             Opções ativas no catálogo
           </p>
         </div>
@@ -373,7 +373,7 @@ export function AssinaturasClient({
         <button
           type="button"
           onClick={() => setActiveTab("plans")}
-          className={`px-4 py-2 text-xs font-extrabold rounded-xl transition-all cursor-pointer ${
+          className={`px-4 py-2 text-xs font-semibold rounded-[var(--radius-control)] transition-all cursor-pointer ${
             activeTab === "plans"
               ? "bg-[var(--color-primary)] text-white shadow-xs"
               : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
@@ -384,7 +384,7 @@ export function AssinaturasClient({
         <button
           type="button"
           onClick={() => setActiveTab("members")}
-          className={`px-4 py-2 text-xs font-extrabold rounded-xl transition-all cursor-pointer ${
+          className={`px-4 py-2 text-xs font-semibold rounded-[var(--radius-control)] transition-all cursor-pointer ${
             activeTab === "members"
               ? "bg-[var(--color-primary)] text-white shadow-xs"
               : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
@@ -398,11 +398,11 @@ export function AssinaturasClient({
       {activeTab === "plans" && (
         <div className="space-y-6">
           {plans.length === 0 ? (
-            <div className="bg-white rounded-3xl border border-[var(--color-border)] p-12 text-center space-y-3 shadow-xs">
-              <div className="w-12 h-12 rounded-2xl bg-[var(--color-bg-subtle)] text-[var(--color-primary)] flex items-center justify-center mx-auto">
+            <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-12 text-center space-y-3 shadow-xs">
+              <div className="w-12 h-12 rounded-[var(--radius-card)] bg-[var(--color-bg-subtle)] text-[var(--color-primary)] flex items-center justify-center mx-auto">
                 <CreditCard className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-extrabold text-[var(--color-text-heading)]">
+              <h3 className="text-base font-semibold text-[var(--color-text-heading)]">
                 Nenhum plano de assinatura cadastrado
               </h3>
               <p className="text-xs text-[var(--color-text-muted)] max-w-md mx-auto">
@@ -411,7 +411,7 @@ export function AssinaturasClient({
               <button
                 type="button"
                 onClick={handleOpenCreatePlan}
-                className="mt-2 px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-extrabold rounded-xl transition-all cursor-pointer shadow-xs inline-flex items-center gap-2"
+                className="mt-2 px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-semibold rounded-[var(--radius-control)] transition-all cursor-pointer shadow-xs inline-flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 <span>Criar Primeiro Plano</span>
@@ -422,13 +422,13 @@ export function AssinaturasClient({
               {plans.map((p) => (
                 <div
                   key={p.id}
-                  className={`bg-white rounded-3xl border p-6 space-y-4 shadow-xs transition-all ${
-                    p.isActive ? "border-[var(--color-border)]" : "border-slate-200 opacity-60 bg-slate-50/50"
+                  className={`bg-[var(--color-bg)] rounded-[var(--radius-panel)] border p-6 space-y-4 shadow-xs transition-all ${
+                    p.isActive ? "border-[var(--color-border)]" : "border-[var(--color-border)] opacity-60 bg-[var(--color-bg-subtle)]"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <span className="text-[10px] uppercase font-black px-2.5 py-0.5 rounded-full bg-[var(--color-bg-subtle)] text-[var(--color-primary)] border border-[var(--color-border)]">
+                      <span className="text-[var(--text-2xs)] uppercase font-semibold px-2.5 py-0.5 rounded-full bg-[var(--color-bg-subtle)] text-[var(--color-primary)] border border-[var(--color-border)]">
                         {p.interval === "month"
                           ? "Mensal"
                           : p.interval === "quarter"
@@ -437,14 +437,14 @@ export function AssinaturasClient({
                           ? "Anual"
                           : "Pacote Avulso"}
                       </span>
-                      <h3 className="text-base font-black text-[var(--color-text-heading)] mt-2">{p.name}</h3>
+                      <h3 className="text-base font-semibold text-[var(--color-text-heading)] mt-2">{p.name}</h3>
                     </div>
 
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
                         onClick={() => handleOpenEditPlan(p)}
-                        className="p-2 text-[var(--color-text-subtle)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-subtle)] rounded-xl transition-colors cursor-pointer"
+                        className="p-2 text-[var(--color-text-subtle)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-subtle)] rounded-[var(--radius-control)] transition-colors cursor-pointer"
                         title="Editar plano"
                       >
                         <Edit2 className="w-4 h-4" />
@@ -457,7 +457,7 @@ export function AssinaturasClient({
                   )}
 
                   <div className="pt-2 border-t border-[var(--color-border)]">
-                    <p className="text-2xl font-black text-[var(--color-text-heading)]">
+                    <p className="text-2xl font-semibold text-[var(--color-text-heading)]">
                       {fmtCurrency(p.price)}
                       <span className="text-xs font-semibold text-[var(--color-text-muted)] font-mono ml-1">
                         /{p.interval === "month" ? "mês" : p.interval === "quarter" ? "trimestre" : p.interval === "year" ? "ano" : "pacote"}
@@ -468,7 +468,7 @@ export function AssinaturasClient({
                   {/* Benefícios inclusos */}
                   <div className="space-y-1.5 text-xs text-[var(--color-text)]">
                     <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-[var(--color-success)] shrink-0" />
                       <span>
                         {p.includedSessionsCount === null
                           ? "Sessões ilimitadas no período"
@@ -478,7 +478,7 @@ export function AssinaturasClient({
 
                     {p.discountPercent > 0 && (
                       <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <CheckCircle2 className="w-4 h-4 text-[var(--color-success)] shrink-0" />
                         <span>{p.discountPercent}% OFF em outros serviços</span>
                       </div>
                     )}
@@ -493,10 +493,10 @@ export function AssinaturasClient({
                     <button
                       type="button"
                       onClick={() => handleTogglePlan(p.id)}
-                      className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-colors cursor-pointer ${
+                      className={`text-xs font-bold px-3 py-1.5 rounded-[var(--radius-control)] border transition-colors cursor-pointer ${
                         p.isActive
-                          ? "bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200"
-                          : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200"
+                          ? "bg-[var(--color-bg-muted)] text-[var(--color-text)] hover:bg-[var(--color-bg-muted)] border-[var(--color-border)]"
+                          : "bg-[var(--color-success-light)] text-[var(--color-success)] hover:bg-[var(--color-success-light)] border-[var(--color-success-border)]"
                       }`}
                     >
                       {p.isActive ? "Desativar Plano" : "Ativar Plano"}
@@ -524,7 +524,7 @@ export function AssinaturasClient({
       {activeTab === "members" && (
         <div className="space-y-6">
           {/* BARRA DE FILTROS & AÇÕES */}
-          <div className="bg-white rounded-3xl border border-[var(--color-border)] p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+          <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
             <div className="flex items-center gap-3 w-full sm:w-auto flex-1">
               <div className="relative flex-1 max-w-sm">
                 <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-subtle)]" />
@@ -537,14 +537,14 @@ export function AssinaturasClient({
                     }
                   }}
                   placeholder="Buscar por nome, e-mail ou plano..."
-                  className="w-full pl-10 pr-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
               <select
                 value={currentStatus}
                 onChange={(e) => updateQuery({ status: e.target.value, page: 1 })}
-                className="bg-[var(--color-bg-subtle)] border border-[var(--color-border)] text-xs font-bold rounded-xl px-3 py-2.5 text-[var(--color-text-heading)] focus:outline-none cursor-pointer"
+                className="bg-[var(--color-bg-subtle)] border border-[var(--color-border)] text-xs font-bold rounded-[var(--radius-control)] px-3 py-2.5 text-[var(--color-text-heading)] focus:outline-none cursor-pointer"
               >
                 <option value="ALL">Todos os Status</option>
                 <option value="ACTIVE">Ativos</option>
@@ -559,7 +559,7 @@ export function AssinaturasClient({
                 if (plans.length > 0) setMemberPlanId(plans[0].id);
                 setIsMemberModalOpen(true);
               }}
-              className="w-full sm:w-auto px-4 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-extrabold rounded-xl transition-all cursor-pointer shadow-xs inline-flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-4 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-semibold rounded-[var(--radius-control)] transition-all cursor-pointer shadow-xs inline-flex items-center justify-center gap-2"
             >
               <Plus className="w-4 h-4" />
               <span>Vincular Cliente a Plano</span>
@@ -567,11 +567,11 @@ export function AssinaturasClient({
           </div>
 
           {/* TABELA DE MEMBROS */}
-          <div className="bg-white rounded-3xl border border-[var(--color-border)] shadow-xs overflow-hidden">
+          <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg-subtle)]/50 text-[var(--color-text-subtle)] font-bold uppercase tracking-wider text-[10px]">
+                  <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg-subtle)]/50 text-[var(--color-text-subtle)] font-bold uppercase tracking-wider text-[var(--text-2xs)]">
                     <th className="py-3.5 px-4">Cliente / E-mail</th>
                     <th className="py-3.5 px-4">Plano Contratado</th>
                     <th className="py-3.5 px-4">Status</th>
@@ -591,26 +591,26 @@ export function AssinaturasClient({
                     membershipsResult.items.map((m) => (
                       <tr key={m.id} className="hover:bg-[var(--color-bg-subtle)]/40 transition-colors">
                         <td className="py-3.5 px-4">
-                          <p className="font-extrabold text-[var(--color-text-heading)]">{m.customerName}</p>
-                          <p className="text-[11px] text-[var(--color-text-muted)]">{m.customerEmail}</p>
+                          <p className="font-semibold text-[var(--color-text-heading)]">{m.customerName}</p>
+                          <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)]">{m.customerEmail}</p>
                           {m.customerPhone && (
-                            <p className="text-[10px] text-[var(--color-text-subtle)]">{m.customerPhone}</p>
+                            <p className="text-[var(--text-2xs)] text-[var(--color-text-subtle)]">{m.customerPhone}</p>
                           )}
                         </td>
 
                         <td className="py-3.5 px-4">
                           <p className="font-bold text-[var(--color-text-heading)]">{m.planName}</p>
-                          <p className="text-[10px] text-[var(--color-primary)] font-semibold">
+                          <p className="text-[var(--text-2xs)] text-[var(--color-primary)] font-semibold">
                             {fmtCurrency(m.planPrice)} / {m.planInterval === "month" ? "mês" : m.planInterval}
                           </p>
                         </td>
 
                         <td className="py-3.5 px-4">
                           <span
-                            className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
+                            className={`text-[var(--text-2xs)] font-semibold px-2.5 py-0.5 rounded-full border ${
                               m.status === "ACTIVE"
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                : "bg-slate-100 text-slate-600 border-slate-200"
+                                ? "bg-[var(--color-success-light)] text-[var(--color-success)] border-[var(--color-success-border)]"
+                                : "bg-[var(--color-bg-muted)] text-[var(--color-text-muted)] border-[var(--color-border)]"
                             }`}
                           >
                             {m.status === "ACTIVE" ? "ATIVO" : "CANCELADO"}
@@ -619,28 +619,28 @@ export function AssinaturasClient({
 
                         <td className="py-3.5 px-4">
                           {m.isUnlimited ? (
-                            <span className="text-emerald-600 font-bold flex items-center gap-1">
-                              <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Ilimitado
+                            <span className="text-[var(--color-success)] font-bold flex items-center gap-1">
+                              <Sparkles className="w-3.5 h-3.5 text-[var(--color-warning)]" /> Ilimitado
                             </span>
                           ) : (
                             <div className="flex items-center gap-2">
-                              <strong className="text-[var(--color-text-heading)] font-black text-sm">
+                              <strong className="text-[var(--color-text-heading)] font-semibold text-sm">
                                 {m.remainingSessions ?? 0}
                               </strong>
-                              <span className="text-[var(--color-text-subtle)] text-[11px]">restantes</span>
+                              <span className="text-[var(--color-text-subtle)] text-[var(--text-2xs)]">restantes</span>
                               <button
                                 type="button"
                                 onClick={() => {
                                   setAdjustingMember(m);
                                   setNewSessionsCount(m.remainingSessions ?? 0);
                                 }}
-                                className="text-[10px] text-[var(--color-primary)] hover:underline ml-1 cursor-pointer font-bold"
+                                className="text-[var(--text-2xs)] text-[var(--color-primary)] hover:underline ml-1 cursor-pointer font-bold"
                               >
                                 [Ajustar]
                               </button>
                             </div>
                           )}
-                          <span className="text-[10px] text-[var(--color-text-subtle)] block">
+                          <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] block">
                             {m.totalUsages} atendimento(s) realizado(s)
                           </span>
                         </td>
@@ -654,7 +654,7 @@ export function AssinaturasClient({
                             <button
                               type="button"
                               onClick={() => handleCancelMembership(m.id)}
-                              className="text-[11px] font-bold text-red-600 hover:text-red-700 hover:underline cursor-pointer"
+                              className="text-[var(--text-2xs)] font-bold text-[var(--color-danger)] hover:text-[var(--color-danger)] hover:underline cursor-pointer"
                             >
                               Cancelar
                             </button>
@@ -692,7 +692,7 @@ export function AssinaturasClient({
         >
           <form onSubmit={handleSavePlan} className="space-y-4 text-xs">
             <div>
-              <label className="block text-[11px] font-bold text-[var(--color-text-heading)] mb-1">
+              <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-heading)] mb-1">
                 Nome do Plano *
               </label>
               <input
@@ -701,12 +701,12 @@ export function AssinaturasClient({
                 value={planName}
                 onChange={(e) => setPlanName(e.target.value)}
                 placeholder="Ex: Clube VIP Cabelo & Barba ou Pacote 4 Faxinas"
-                className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-[var(--color-text-heading)] mb-1">
+              <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-heading)] mb-1">
                 Descrição (opcional)
               </label>
               <textarea
@@ -714,13 +714,13 @@ export function AssinaturasClient({
                 value={planDesc}
                 onChange={(e) => setPlanDesc(e.target.value)}
                 placeholder="Ex: Cortes e barbas ilimitados com direito a cerveja cortesia e 10% OFF em produtos."
-                className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-[var(--color-text-heading)] mb-1">
+                <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-heading)] mb-1">
                   Preço ({currency}) *
                 </label>
                 <input
@@ -729,18 +729,18 @@ export function AssinaturasClient({
                   value={planPrice}
                   onChange={(e) => setPlanPrice(e.target.value)}
                   placeholder="89,90"
-                  className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
+                  className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-[var(--color-text-heading)] mb-1">
+                <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-heading)] mb-1">
                   Periodicidade
                 </label>
                 <select
                   value={planInterval}
                   onChange={(e) => setPlanInterval(e.target.value)}
-                  className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:outline-none cursor-pointer"
+                  className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:outline-none cursor-pointer"
                 >
                   <option value="month">Mensal</option>
                   <option value="quarter">Trimestral</option>
@@ -751,7 +751,7 @@ export function AssinaturasClient({
             </div>
 
             {/* Regras de Sessões */}
-            <div className="p-3.5 rounded-2xl bg-[var(--color-bg-subtle)] border border-[var(--color-border)] space-y-3">
+            <div className="p-3.5 rounded-[var(--radius-card)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)] space-y-3">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -764,7 +764,7 @@ export function AssinaturasClient({
 
               {!isUnlimitedSessions && (
                 <div>
-                  <label className="block text-[11px] font-bold text-[var(--color-text-heading)] mb-1">
+                  <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-heading)] mb-1">
                     Quantidade de sessões incluídas por ciclo
                   </label>
                   <input
@@ -772,13 +772,13 @@ export function AssinaturasClient({
                     min={1}
                     value={planSessions}
                     onChange={(e) => setPlanSessions(e.target.value)}
-                    className="w-32 bg-white border border-[var(--color-border)] rounded-xl px-3 py-2 text-xs text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
+                    className="w-32 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-xs text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block text-[11px] font-bold text-[var(--color-text-heading)] mb-1">
+                <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-heading)] mb-1">
                   Desconto extra em outros serviços avulsos (% off)
                 </label>
                 <input
@@ -787,19 +787,19 @@ export function AssinaturasClient({
                   max={100}
                   value={planDiscount}
                   onChange={(e) => setPlanDiscount(e.target.value)}
-                  className="w-32 bg-white border border-[var(--color-border)] rounded-xl px-3 py-2 text-xs text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
+                  className="w-32 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-xs text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
                 />
               </div>
             </div>
 
             {/* Seleção de Serviços Cobertos */}
             <div>
-              <label className="block text-[11px] font-bold text-[var(--color-text-heading)] mb-1.5">
+              <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-heading)] mb-1.5">
                 Serviços Cobertos (deixe vazio para cobrir todos)
               </label>
-              <div className="max-h-40 overflow-y-auto p-2 bg-[var(--color-bg-subtle)] rounded-xl border border-[var(--color-border)] space-y-1.5">
+              <div className="max-h-40 overflow-y-auto p-2 bg-[var(--color-bg-subtle)] rounded-[var(--radius-control)] border border-[var(--color-border)] space-y-1.5">
                 {services.map((s) => (
-                  <label key={s.id} className="flex items-center gap-2 p-1.5 hover:bg-white rounded-lg transition-colors cursor-pointer">
+                  <label key={s.id} className="flex items-center gap-2 p-1.5 hover:bg-[var(--color-bg)] rounded-[var(--radius-control)] transition-colors cursor-pointer">
                     <input
                       type="checkbox"
                       checked={selectedServiceIds.includes(s.id)}
@@ -822,14 +822,14 @@ export function AssinaturasClient({
               <button
                 type="button"
                 onClick={() => setIsPlanModalOpen(false)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors cursor-pointer"
+                className="px-4 py-2 bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)] font-bold rounded-[var(--radius-control)] transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={isPending}
-                className="px-5 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-extrabold rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                className="px-5 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold rounded-[var(--radius-control)] transition-all cursor-pointer disabled:opacity-50"
               >
                 {isPending ? "Salvando..." : "Salvar Plano"}
               </button>
@@ -847,14 +847,14 @@ export function AssinaturasClient({
         >
           <form onSubmit={handleSaveMember} className="space-y-4 text-xs">
             <div>
-              <label className="block text-[11px] font-bold text-[var(--color-text-heading)] mb-1">
+              <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-heading)] mb-1">
                 Selecione o Plano *
               </label>
               <select
                 required
                 value={memberPlanId}
                 onChange={(e) => setMemberPlanId(e.target.value)}
-                className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:outline-none cursor-pointer"
+                className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:outline-none cursor-pointer"
               >
                 {plans.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -865,7 +865,7 @@ export function AssinaturasClient({
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-[var(--color-text-heading)] mb-1">
+              <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-heading)] mb-1">
                 Nome do Cliente *
               </label>
               <input
@@ -874,12 +874,12 @@ export function AssinaturasClient({
                 value={memberName}
                 onChange={(e) => setMemberName(e.target.value)}
                 placeholder="Ex: João da Silva"
-                className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-[var(--color-text-heading)] mb-1">
+              <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-heading)] mb-1">
                 E-mail do Cliente * (usado para reconhecimento no checkout)
               </label>
               <input
@@ -888,12 +888,12 @@ export function AssinaturasClient({
                 value={memberEmail}
                 onChange={(e) => setMemberEmail(e.target.value)}
                 placeholder="cliente@email.com"
-                className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-[var(--color-text-heading)] mb-1">
+              <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-heading)] mb-1">
                 Telefone / WhatsApp (opcional)
               </label>
               <input
@@ -901,12 +901,12 @@ export function AssinaturasClient({
                 value={memberPhone}
                 onChange={(e) => setMemberPhone(e.target.value)}
                 placeholder="(11) 98888-7777 ou +1 720 555-0199"
-                className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-[var(--color-text-heading)] mb-1">
+              <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-heading)] mb-1">
                 Observações internas
               </label>
               <textarea
@@ -914,7 +914,7 @@ export function AssinaturasClient({
                 value={memberNotes}
                 onChange={(e) => setMemberNotes(e.target.value)}
                 placeholder="Ex: Pagou via PIX no balcão / Contrato anual presencial"
-                className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
               />
             </div>
 
@@ -922,14 +922,14 @@ export function AssinaturasClient({
               <button
                 type="button"
                 onClick={() => setIsMemberModalOpen(false)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors cursor-pointer"
+                className="px-4 py-2 bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)] font-bold rounded-[var(--radius-control)] transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={isPending}
-                className="px-5 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-extrabold rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                className="px-5 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold rounded-[var(--radius-control)] transition-all cursor-pointer disabled:opacity-50"
               >
                 {isPending ? "Associando..." : "Confirmar Associação"}
               </button>
@@ -951,7 +951,7 @@ export function AssinaturasClient({
             </p>
 
             <div>
-              <label className="block text-[11px] font-bold text-[var(--color-text-heading)] mb-1">
+              <label className="block text-[var(--text-2xs)] font-bold text-[var(--color-text-heading)] mb-1">
                 Novo Saldo de Sessões
               </label>
               <input
@@ -959,7 +959,7 @@ export function AssinaturasClient({
                 min={0}
                 value={newSessionsCount}
                 onChange={(e) => setNewSessionsCount(parseInt(e.target.value, 10) || 0)}
-                className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-base font-black text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
+                className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-base font-semibold text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
               />
             </div>
 
@@ -967,7 +967,7 @@ export function AssinaturasClient({
               <button
                 type="button"
                 onClick={() => setAdjustingMember(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors cursor-pointer"
+                className="px-4 py-2 bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)] font-bold rounded-[var(--radius-control)] transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
@@ -975,7 +975,7 @@ export function AssinaturasClient({
                 type="button"
                 onClick={handleSaveAdjustSessions}
                 disabled={isPending}
-                className="px-5 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-extrabold rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                className="px-5 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold rounded-[var(--radius-control)] transition-all cursor-pointer disabled:opacity-50"
               >
                 {isPending ? "Salvando..." : "Salvar Saldo"}
               </button>

@@ -1,5 +1,4 @@
 import "server-only";
-import { redis } from "@/lib/redis";
 import { db } from "@/lib/db";
 
 export type TimeSlot = {
@@ -70,30 +69,6 @@ export function generateSlots(
       endTime: minutesToTime(m + config.intervalMinutes),
     });
   }
-  return slots;
-}
-
-export async function getCachedSlots(
-  agendaId: string,
-  targetDate: string,
-  config: AgendaConfig
-): Promise<TimeSlot[]> {
-  const key = `slots:${agendaId}:${targetDate}`;
-  try {
-    const cached = await redis.get(key);
-    if (cached) return JSON.parse(cached) as TimeSlot[];
-  } catch {
-    // Redis unavailable — fall through to compute
-  }
-
-  const slots = generateSlots(config, targetDate);
-
-  try {
-    await redis.setex(key, 3600, JSON.stringify(slots));
-  } catch {
-    // Redis unavailable — return computed result without caching
-  }
-
   return slots;
 }
 
@@ -241,6 +216,64 @@ export async function getAvailableSlots(
 }
 
 /**
+ * Decide qual profissional atende o horário.
+ *
+ * Com `preferredId`, apenas confirma a escolha. Sem ele (opção "qualquer
+ * profissional"), pega o primeiro membro ativo da agenda que ainda não tenha
+ * agendamento naquele horário. Devolve `null` quando a agenda não tem equipe —
+ * aí o recurso é a própria agenda.
+ *
+ * A escolha aqui é um palpite otimista: a garantia real contra corrida é o
+ * índice único de `booking_slot` (agenda + data + hora + profissional).
+ */
+export async function resolveProfessionalForSlot(
+  agendaId: string,
+  date: string,
+  startTime: string,
+  preferredId?: string | null
+): Promise<string | null> {
+  if (preferredId) return preferredId;
+
+  const agenda = await db.agenda.findUnique({
+    where: { id: agendaId },
+    include: {
+      professionals: {
+        where: { professional: { isActive: true } },
+        select: { professionalId: true },
+      },
+    },
+  });
+
+  const staffIds = agenda?.professionals.map((p) => p.professionalId) ?? [];
+  if (staffIds.length === 0) return null;
+
+  const busy = await db.booking.findMany({
+    where: {
+      agendaId,
+      scheduledDate: date,
+      scheduledStartTime: startTime,
+      status: { notIn: ["CANCELLED"] },
+      professionalId: { in: staffIds },
+    },
+    select: { professionalId: true },
+  });
+  const busyIds = new Set(busy.map((b) => b.professionalId));
+
+  return staffIds.find((id) => !busyIds.has(id)) ?? staffIds[0];
+}
+
+/**
+ * Chave de profissional usada no índice único de `booking_slot`.
+ *
+ * NUNCA pode ser NULL: no Postgres dois NULLs são considerados distintos num
+ * índice único, o que anularia a trava contra duplo agendamento justamente nas
+ * agendas sem equipe. String vazia = "recurso único da agenda".
+ */
+export function slotProfessionalKey(professionalId: string | null | undefined): string {
+  return professionalId ?? "";
+}
+
+/**
  * Valida no servidor um horário enviado pelo cliente: precisa coincidir
  * exatamente com um slot disponível da grade (impede horários arbitrários,
  * overlaps, dias bloqueados e datas fora da agenda).
@@ -256,11 +289,20 @@ export async function isSlotAvailable(
   return available.some((s) => s.startTime === startTime && s.endTime === endTime);
 }
 
-export async function invalidateSlotCache(agendaId: string): Promise<void> {
-  try {
-    const keys = await redis.keys(`slots:${agendaId}:*`);
-    if (keys.length > 0) await redis.del(...keys);
-  } catch {
-    // Redis unavailable — cache will expire naturally
-  }
+/**
+ * Mantida por compatibilidade com os call sites de `agendas.ts`, agora sem
+ * efeito colateral.
+ *
+ * O cache que ela limpava (`slots:<agenda>:<data>`) era escrito por
+ * `getCachedSlots`, uma função que nenhum lugar do código chamava:
+ * `getAvailableSlots` sempre calculou a grade direto. Ou seja, a invalidação
+ * rodava um `KEYS` — comando O(N) que percorre o keyspace INTEIRO e bloqueia
+ * o Redis, que é single-threaded — para apagar chaves que ninguém lia.
+ *
+ * Como o Redis também serve os rate limits, essa varredura travava a
+ * proteção de login junto. Cache de grade, se voltar, deve guardar um
+ * índice próprio de chaves ou usar SCAN com cursor — nunca KEYS.
+ */
+export async function invalidateSlotCache(_agendaId: string): Promise<void> {
+  // Sem operação: não há mais cache de grade para invalidar.
 }

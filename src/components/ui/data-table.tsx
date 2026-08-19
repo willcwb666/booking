@@ -2,7 +2,7 @@
 
 import React from "react";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Inbox } from "lucide-react";
+import { Search } from "@/components/ui/icons";
 import { Pagination } from "@/components/ui/pagination";
 
 export interface Column<T> {
@@ -11,6 +11,8 @@ export interface Column<T> {
   render?: (item: T) => React.ReactNode;
   className?: string;
   headerClassName?: string;
+  /** Coluna numérica: alinha à direita e usa dígitos tabulares. */
+  numeric?: boolean;
 }
 
 export interface DataTableProps<T> {
@@ -21,6 +23,9 @@ export interface DataTableProps<T> {
   emptyTitle?: string;
   emptyDescription?: string;
   emptyAction?: React.ReactNode;
+  emptyIcon?: React.ReactNode;
+  /** Rótulo acessível da tabela (lido por leitores de tela). */
+  caption?: string;
   pagination?: {
     page: number;
     pageCount: number;
@@ -32,47 +37,66 @@ export interface DataTableProps<T> {
   className?: string;
 }
 
+/**
+ * Tabela de dados.
+ *
+ * O carregamento usa esqueleto no formato de LINHA DE TABELA — antes o
+ * esqueleto era um cartão com avatar, que não parecia com o resultado e fazia
+ * a tela pular quando os dados chegavam.
+ *
+ * A rolagem horizontal fica dentro do container (`.table-container`), então
+ * uma tabela larga nunca faz o corpo da página rolar de lado no celular.
+ */
 export function DataTable<T>({
   columns,
   data,
   keyExtractor,
   loading = false,
-  emptyTitle = "Nenhum registro encontrado",
-  emptyDescription = "Não há dados para exibir no momento.",
+  emptyTitle = "Nada por aqui ainda",
+  emptyDescription = "Quando houver registros, eles aparecem nesta lista.",
   emptyAction,
+  emptyIcon,
+  caption,
   pagination,
   className = "",
 }: DataTableProps<T>) {
   if (loading) {
     return (
-      <div className={`w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs ${className}`}>
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-          <div className="h-4 w-32 bg-slate-200 rounded-md animate-pulse" />
-          <div className="h-4 w-20 bg-slate-100 rounded-md animate-pulse" />
-        </div>
-        <div className="divide-y divide-slate-100">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="p-4 flex items-center justify-between animate-pulse">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-slate-100" />
-                <div className="space-y-1.5">
-                  <div className="h-3.5 w-28 bg-slate-200 rounded-md" />
-                  <div className="h-2.5 w-40 bg-slate-100 rounded-md" />
-                </div>
-              </div>
-              <div className="h-6 w-16 bg-slate-100 rounded-full" />
-            </div>
-          ))}
-        </div>
+      <div className={`table-container ${className}`} aria-busy="true">
+        <table className="table">
+          <thead>
+            <tr>
+              {columns.map((col) => (
+                <th key={col.key} className={col.headerClassName}>
+                  {col.header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: 5 }, (_, i) => (
+              <tr key={i}>
+                {columns.map((col) => (
+                  <td key={col.key}>
+                    <span
+                      className="skeleton skeleton-text block"
+                      style={{ width: `${55 + ((i * 7 + col.key.length * 5) % 40)}%` }}
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     );
   }
 
   if (data.length === 0) {
     return (
-      <div className={`w-full rounded-2xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden ${className}`}>
+      <div className={`card ${className}`}>
         <EmptyState
-          icon={<Inbox className="w-6 h-6" />}
+          icon={emptyIcon ?? <Search className="w-5 h-5" />}
           title={emptyTitle}
           description={emptyDescription}
           action={emptyAction}
@@ -82,30 +106,35 @@ export function DataTable<T>({
   }
 
   return (
-    <div className={`w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs ${className}`}>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+    <div className={className}>
+      <div className="table-container">
+        <table className="table">
+          {caption && <caption className="sr-only">{caption}</caption>}
           <thead>
-            <tr className="border-b border-slate-100 bg-slate-50/75">
+            <tr>
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500 select-none ${col.headerClassName ?? ""}`}
+                  scope="col"
+                  className={`${col.numeric ? "num" : ""} ${col.headerClassName ?? ""}`}
+                  style={col.numeric ? { textAlign: "right" } : undefined}
                 >
                   {col.header}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 text-xs">
+          <tbody>
             {data.map((item) => (
-              <tr
-                key={keyExtractor(item)}
-                className="hover:bg-slate-50/50 transition-colors group"
-              >
+              <tr key={keyExtractor(item)}>
                 {columns.map((col) => (
-                  <td key={col.key} className={`px-4 py-3.5 text-slate-700 ${col.className ?? ""}`}>
-                    {col.render ? col.render(item) : (item as Record<string, unknown>)[col.key] as React.ReactNode}
+                  <td
+                    key={col.key}
+                    className={`${col.numeric ? "num" : ""} ${col.className ?? ""}`}
+                  >
+                    {col.render
+                      ? col.render(item)
+                      : ((item as Record<string, unknown>)[col.key] as React.ReactNode)}
                   </td>
                 ))}
               </tr>

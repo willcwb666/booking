@@ -67,16 +67,68 @@ export function StatCard({
 }) {
   return (
     <div className={cn("stat-card", className)}>
-      <div className="flex items-center justify-between mb-3">
-        <span className="stat-card-label">{label}</span>
+      <div className="flex items-center justify-between gap-3">
+        <span className="stat-card-label truncate">{label}</span>
         {icon && (
-          <div className="p-2 rounded-xl bg-[var(--color-bg-muted)] border border-[var(--color-border)]">
+          <span
+            className="w-8 h-8 rounded-[var(--radius-control)] grid place-items-center shrink-0 bg-[var(--color-bg-subtle)] text-[var(--color-text-muted)]"
+            aria-hidden="true"
+          >
             {icon}
-          </div>
+          </span>
         )}
       </div>
       <p className="stat-card-value">{value}</p>
-      {sub && <p className="text-xs text-[var(--color-text-muted)] mt-1">{sub}</p>}
+      {sub && (
+        <p
+          className="text-[var(--color-text-muted)]"
+          style={{ fontSize: "var(--text-xs)" }}
+        >
+          {sub}
+        </p>
+      )}
     </div>
   );
+}
+
+/** Agrupa conteúdo com divisória em vez de empilhar caixa dentro de caixa. */
+export function Section({
+  title,
+  description,
+  actions,
+  children,
+  className,
+}: {
+  title?: string;
+  description?: string;
+  actions?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={cn("section", className)}>
+      {(title || actions) && (
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="min-w-0">
+            {title && <h2 className="card-title">{title}</h2>}
+            {description && (
+              <p
+                className="text-[var(--color-text-muted)] mt-1 measure"
+                style={{ fontSize: "var(--text-sm)" }}
+              >
+                {description}
+              </p>
+            )}
+          </div>
+          {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
+        </div>
+      )}
+      {children}
+    </section>
+  );
+}
+
+/** Barra de busca/filtros acima de uma lista. */
+export function Toolbar({ children, className }: PageLayoutProps) {
+  return <div className={cn("toolbar", className)}>{children}</div>;
 }

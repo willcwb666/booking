@@ -150,7 +150,7 @@ export function MiniCalendar({ selectedDate, onSelectDate }: Props) {
               <th
                 key={abbr}
                 scope="col"
-                className="text-center text-[10px] font-medium text-[var(--color-text-subtle)] pb-1"
+                className="text-center text-[var(--text-2xs)] font-medium text-[var(--color-text-subtle)] pb-1"
                 aria-label={abbr}
               >
                 {abbr}

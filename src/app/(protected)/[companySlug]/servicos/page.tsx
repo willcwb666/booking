@@ -16,10 +16,14 @@ export default async function ServicosPage({
   const company = await getCompanyBySlugForUser(companySlug, session!.user.id);
   if (!company) notFound();
 
+  // Traz também os desabilitados. Filtrando por `isActive: true` aqui, o
+  // serviço sumia da lista no instante em que era desabilitado — ou seja, o
+  // botão "Reativar" da tabela nunca era alcançável e desabilitar virava uma
+  // porta de mão única. Quem filtra agora é o controle segmentado da tela.
   const [services, extraServices] = await Promise.all([
     db.service.findMany({
-      where: { companyId: company.id, isActive: true },
-      orderBy: { order: "asc" },
+      where: { companyId: company.id },
+      orderBy: [{ isActive: "desc" }, { order: "asc" }],
       include: {
         serviceTypes: {
           where: { isActive: true },
@@ -28,8 +32,8 @@ export default async function ServicosPage({
       },
     }),
     db.extraService.findMany({
-      where: { companyId: company.id, isActive: true },
-      orderBy: { order: "asc" },
+      where: { companyId: company.id },
+      orderBy: [{ isActive: "desc" }, { order: "asc" }],
     }),
   ]);
 

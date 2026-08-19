@@ -50,19 +50,19 @@ export function ExcecoesClient({ companySlug, agendaId, exceptions: initial, can
   return (
     <div className="space-y-5">
       {canEdit && (
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-900 mb-4">Adicionar exceção</h2>
+        <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
+          <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-4">Adicionar exceção</h2>
           <form onSubmit={handleAdd} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-600 mb-1">Data</label>
+                <label className="block text-xs text-[var(--color-text-muted)] mb-1">Data</label>
                 <input name="date" type="date" required
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]" />
               </div>
               <div>
-                <label className="block text-xs text-gray-600 mb-1">Tipo</label>
+                <label className="block text-xs text-[var(--color-text-muted)] mb-1">Tipo</label>
                 <select name="type" value={type} onChange={(e) => setType(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm bg-[var(--color-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]">
                   <option value="BLOCKED_DAY">Dia bloqueado</option>
                   <option value="CUSTOM_HOURS">Horário especial</option>
                 </select>
@@ -71,55 +71,55 @@ export function ExcecoesClient({ companySlug, agendaId, exceptions: initial, can
             {type === "CUSTOM_HOURS" && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-gray-600 mb-1">Início</label>
+                  <label className="block text-xs text-[var(--color-text-muted)] mb-1">Início</label>
                   <input name="startTime" type="time" required
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]" />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-600 mb-1">Fim</label>
+                  <label className="block text-xs text-[var(--color-text-muted)] mb-1">Fim</label>
                   <input name="endTime" type="time" required
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]" />
                 </div>
               </div>
             )}
             <div>
-              <label className="block text-xs text-gray-600 mb-1">Motivo (opcional)</label>
+              <label className="block text-xs text-[var(--color-text-muted)] mb-1">Motivo (opcional)</label>
               <input name="reason" type="text" maxLength={100} placeholder="Ex: Feriado, reunião..."
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]" />
             </div>
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
             <button type="submit" disabled={pending}
-              className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors">
+              className="px-4 py-2 bg-[var(--color-info)] text-white text-sm font-semibold rounded-[var(--radius-control)] hover:bg-[var(--color-info)] disabled:opacity-50 transition-colors">
               {pending ? "Salvando…" : "Adicionar exceção"}
             </button>
           </form>
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h2 className="text-sm font-semibold text-gray-900 mb-4">
-          Exceções cadastradas {exceptions.length > 0 && <span className="text-gray-400 font-normal">({exceptions.length})</span>}
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
+        <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-4">
+          Exceções cadastradas {exceptions.length > 0 && <span className="text-[var(--color-text-subtle)] font-normal">({exceptions.length})</span>}
         </h2>
         {exceptions.length === 0 ? (
-          <p className="text-sm text-gray-400">Nenhuma exceção cadastrada.</p>
+          <p className="text-sm text-[var(--color-text-subtle)]">Nenhuma exceção cadastrada.</p>
         ) : (
           <ul className="space-y-2">
             {exceptions.map((ex) => (
-              <li key={ex.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100">
+              <li key={ex.id} className="flex items-center justify-between p-3 rounded-[var(--radius-control)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)]">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-[var(--color-text-heading)]">
                     {ex.date.split("-").reverse().join("/")}
                     <span className={`ml-2 text-xs px-2 py-0.5 rounded-full font-medium ${
-                      ex.type === "BLOCKED_DAY" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"
+                      ex.type === "BLOCKED_DAY" ? "bg-[var(--color-danger-light)] text-[var(--color-danger)]" : "bg-[var(--color-info-light)] text-[var(--color-info)]"
                     }`}>
                       {ex.type === "BLOCKED_DAY" ? "Bloqueado" : `${ex.startTime}–${ex.endTime}`}
                     </span>
                   </p>
-                  {ex.reason && <p className="text-xs text-gray-500 mt-0.5">{ex.reason}</p>}
+                  {ex.reason && <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{ex.reason}</p>}
                 </div>
                 {canEdit && (
                   <button type="button" onClick={() => handleRemove(ex.id)} disabled={pending}
-                    className="text-xs text-red-500 hover:text-red-700 disabled:opacity-40 transition-colors ml-3 shrink-0">
+                    className="text-xs text-[var(--color-danger)] hover:text-[var(--color-danger)] disabled:opacity-40 transition-colors ml-3 shrink-0">
                     Remover
                   </button>
                 )}

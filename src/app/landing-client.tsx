@@ -3,58 +3,67 @@
 import Link from "next/link";
 import React, { useState, useEffect, useRef } from "react";
 import { KreatorLogo } from "@/components/ui/kreator-logo";
+import {
+  OrganizationJsonLd,
+  SoftwareAppJsonLd,
+  FaqJsonLd,
+} from "@/components/seo/json-ld";
 
 // ─── Minimalist Modern Icons ────────────────────────────────────────────────
 const ArrowRight = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
 );
 
 const Check = () => (
-  <svg className="w-4 h-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+  <svg className="w-4 h-4 text-[var(--color-success)] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
 );
 
 const Shield = () => (
-  <svg className="w-5 h-5 text-stone-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.8 17 5 19 5a1 1 0 0 1 1 1z"></path></svg>
+  <svg className="w-5 h-5 text-[var(--color-text-muted)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.8 17 5 19 5a1 1 0 0 1 1 1z"></path></svg>
 );
 
 const Sparkles = () => (
-  <svg className="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"></path></svg>
+  <svg className="w-4 h-4 text-[var(--color-warning)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"></path></svg>
 );
 
 const Calendar = () => (
-  <svg className="w-5 h-5 text-stone-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>
+  <svg className="w-5 h-5 text-[var(--color-text-muted)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>
 );
 
 const FileText = () => (
-  <svg className="w-5 h-5 text-stone-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>
+  <svg className="w-5 h-5 text-[var(--color-text-muted)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>
 );
 
 const Tag = () => (
-  <svg className="w-5 h-5 text-stone-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2H2v10l11.29 11.29a1 1 0 0 0 1.41 0l7.59-7.59a1 1 0 0 0 0-1.41L12 2z"></path><circle cx="7" cy="7" r="1.5"></circle></svg>
+  <svg className="w-5 h-5 text-[var(--color-text-muted)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2H2v10l11.29 11.29a1 1 0 0 0 1.41 0l7.59-7.59a1 1 0 0 0 0-1.41L12 2z"></path><circle cx="7" cy="7" r="1.5"></circle></svg>
 );
 
 const Plus = () => (
-  <svg className="w-5 h-5 text-stone-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+  <svg className="w-5 h-5 text-[var(--color-text-muted)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
 );
 
 const Store = () => (
-  <svg className="w-5 h-5 text-stone-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"></path><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"></path><path d="M2 7h20"></path></svg>
+  <svg className="w-5 h-5 text-[var(--color-text-muted)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"></path><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"></path><path d="M2 7h20"></path></svg>
 );
 
 const Globe = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" x2="22" y1="12" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="2" x2="22" y1="12" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
 );
 
 const ChevronDown = () => (
-  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
 );
 
 const Menu = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="6" y2="6"></line><line x1="4" x2="20" y1="18" y2="18"></line></svg>
+  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="6" y2="6"></line><line x1="4" x2="20" y1="18" y2="18"></line></svg>
 );
 
 const X = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" x2="6" y1="6" y2="18"></line><line x1="6" x2="18" y1="6" y2="18"></line></svg>
+  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="18" x2="6" y1="6" y2="18"></line><line x1="6" x2="18" y1="6" y2="18"></line></svg>
+);
+
+const Zap = () => (
+  <svg className="w-5 h-5 text-[var(--color-warning)] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
 );
 
 // ─── Supported Languages Config ─────────────────────────────────────────────
@@ -66,19 +75,37 @@ const LANGUAGES: Array<{ code: LangCode; label: string; flag: string; countryNam
   { code: "es", label: "ES", flag: "🇪🇸", countryName: "Español" },
   { code: "it", label: "IT", flag: "🇮🇹", countryName: "Italiano" },
   { code: "fr", label: "FR", flag: "🇫🇷", countryName: "Français" },
-  { code: "de", label: "DE", flag: "🇩🇪", countryName: "Deutsch" }
+  { code: "de", label: "DE", flag: "🇩🇪", countryName: "Deutsch" },
 ];
 
 // ─── Multi-Language Dictionary ─────────────────────────────────────────────
 const DICTIONARY: Record<LangCode, any> = {
   pt: {
     nav: { howItWorks: "Como Funciona", features: "Recursos", industries: "Segmentos", pricing: "Preços", faq: "FAQ", signIn: "Entrar", createBusiness: "Criar Empresa" },
+    highlights: [
+      { value: "0%", label: "de comissão por agendamento" },
+      { value: "PIX, cartão e dinheiro", label: "no mesmo checkout" },
+      { value: "Cancele sozinho", label: "sem falar com vendedor" },
+      { value: "Seus dados saem com você", label: "exportação em CSV" },
+    ],
     hero: {
       badge: "Plataforma SaaS para Serviços, Orçamentos e Agendamentos",
       titleMain: "Agendamentos simples.", titleSub: "Orçamentos em segundos.",
       description: "A plataforma completa para prestadores de serviços. Cadastre sua empresa, insira sua marca, adicione serviços extras e lance promoções com tempo limite.",
       primaryCta: "Criar Minha Empresa Grátis", secondaryCta: "Ver Demonstração",
-      trustFees: "✓ Sem taxa por agendamento", trustSetup: "✓ Configuração em 5 min", trustCloud: "✓ 100% Online"
+      trustFees: "✓ Sem taxa por agendamento", trustSetup: "✓ Configuração em 5 min", trustCloud: "✓ 100% Online",
+      frictionFree: "Sem necessidade de cartão de crédito · Cancele a qualquer momento"
+    },
+    sla: {
+      pill: "Garantia de Tempo de Resposta",
+      title: "Compromisso com o seu tempo e o do seu cliente.",
+      sub: "Tecnologia desenvolvida para eliminar filas, esperas no WhatsApp e no-shows.",
+      items: [
+        { icon: "⚡", title: "Confirmação Imediata 24/7", desc: "Seu cliente agenda em 30 segundos a qualquer hora, mesmo enquanto você dorme." },
+        { icon: "📱", title: "Lembretes Pontuais WhatsApp", desc: "Avisos automáticos enviados no momento certo que reduzem 95% das faltas." },
+        { icon: "💬", title: "Suporte em até 15 Minutos", desc: "Nossa equipe técnica atende suas dúvidas rapidamente no horário comercial." },
+        { icon: "🔒", title: "Hospedagem gerenciada", desc: "Sua página de agendamentos está sempre online e rápida em qualquer celular." }
+      ]
     },
     showcase: {
       windowUrl: "agendei.com/dashboard", statusBadge: "Empresa Ativa no Ar", publicPageTitle: "Página pública personalizada",
@@ -105,6 +132,7 @@ const DICTIONARY: Record<LangCode, any> = {
         { id: "petshop", title: "Pet Shop & Estética", description: "Agendamento por porte de pet com opcionais de hidratação e corte de unhas.", company: "PetCare Banho & Tosa", mainService: "Banho + Tosa Higiênica (Porte Média)", mainPrice: "R$ 95,00", extraService: "Corte de Unhas + Hidratação", extraPrice: "+ R$ 35,00", promo: "Quarta Maluca do Pet: R$ 20 OFF" }
       ]
     },
+
     features: {
       pill: "Recursos Completos", title: "Recursos focados em resultados práticos.", sub: "Tudo o que você precisa para gerenciar sua agenda e faturamento sem complicação.",
       items: [
@@ -126,7 +154,7 @@ const DICTIONARY: Record<LangCode, any> = {
     faq: {
       title: "Perguntas Frequentes", sub: "Respostas rápidas para as dúvidas mais comuns.",
       items: [
-        { q: "Como funciona a criação da conta e perfil da empresa?", a: "Após se cadastrar, você insere o nome do negócio, telefone, logotipo e endereço. O sistema cria automaticamente a sua página pública (ex: agendei.com/sua-empresa)." },
+        { q: "Como funciona a criação da conta e perfil da empresa?", a: "Após se cadastrar, você insere o nome do negócio, telefone, logotipo e endereço. O sistema cria automaticamente a sua página pública (ex: kreator.com.br/sua-empresa)." },
         { q: "Como funcionam os Serviços Extras (Upsell)?", a: "Você pode adicionar opcionais em cada serviço (ex: Alinhamento 3D na oficina, Passadoria na limpeza, Hidratação na barbearia). O cliente seleciona o extra durante o agendamento." },
         { q: "Como criar Promoções com tempo estipulado?", a: "Você define a data inicial e final do desconto no painel. A página pública exibe o aviso de promoção temporária com marcador de término." },
         { q: "Qual a diferença entre Orçamento e Agendamento Direto?", a: "Orçamentos permitem criar propostas sob medida (ideal para oficinas mecânicas) enviadas via link. Agendamentos permitem que o cliente escolha o horário diretamente." },
@@ -134,16 +162,39 @@ const DICTIONARY: Record<LangCode, any> = {
       ]
     },
     cta: { title: "Pronto para colocar a gestão da sua empresa no automático?", sub: "Crie sua conta em 2 minutos, insira sua logo, cadastre seus serviços extras e crie suas promoções ainda hoje.", primaryBtn: "Criar Minha Empresa Grátis", loginBtn: "Acessar Minha Conta" },
-    footer: { rights: "© 2026 Agendei SaaS. Todos os direitos reservados." }
+    footer: {
+      rights: "© 2026 Kreator SaaS. Todos os direitos reservados.",
+      privacy: "Política de Privacidade",
+      terms: "Termos de Uso",
+      directory: "Diretório de Empresas",
+    }
   },
   en: {
     nav: { howItWorks: "How It Works", features: "Features", industries: "Industries", pricing: "Pricing", faq: "FAQ", signIn: "Sign In", createBusiness: "Create Business" },
+    highlights: [
+      { value: "0%", label: "commission per booking" },
+      { value: "Card, PIX and cash", label: "in one checkout" },
+      { value: "Cancel it yourself", label: "no sales call required" },
+      { value: "Your data leaves with you", label: "CSV export" },
+    ],
     hero: {
       badge: "SaaS Platform for Services, Estimates & Booking",
       titleMain: "Simple bookings.", titleSub: "Estimates in seconds.",
       description: "The complete platform for service providers. Set up your business, add your branding, attach extra add-ons, and launch time-limited promotions.",
       primaryCta: "Create Free Business Account", secondaryCta: "View Live Demo",
-      trustFees: "✓ No booking commission fees", trustSetup: "✓ 5-min setup", trustCloud: "✓ 100% Cloud-based"
+      trustFees: "✓ No booking commission fees", trustSetup: "✓ 5-min setup", trustCloud: "✓ 100% Cloud-based",
+      frictionFree: "No credit card required · Cancel anytime"
+    },
+    sla: {
+      pill: "Response Time Guarantee",
+      title: "Commitment to your time and your customers' time.",
+      sub: "Technology designed to eliminate waiting lines, WhatsApp delays, and client no-shows.",
+      items: [
+        { icon: "⚡", title: "Instant 24/7 Booking", desc: "Clients book appointments in 30 seconds anytime, even while you sleep." },
+        { icon: "📱", title: "Timely WhatsApp Reminders", desc: "Automated reminders sent at the right time that reduce 95% of missed appointments." },
+        { icon: "💬", title: "15-Minute Support SLA", desc: "Our support specialists resolve your inquiries rapidly during business hours." },
+        { icon: "🔒", title: "Hospedagem gerenciada", desc: "Your booking page remains fast, secure, and always accessible." }
+      ]
     },
     showcase: {
       windowUrl: "agendei.com/dashboard", statusBadge: "Live Business Account", publicPageTitle: "Custom Public Booking Page",
@@ -170,6 +221,7 @@ const DICTIONARY: Record<LangCode, any> = {
         { id: "petshop", title: "Pet Grooming & Care", description: "Pet size booking schedules with fur hydration and nail trimming add-ons.", company: "PetCare Grooming", mainService: "Full Bath & Grooming (Medium Dog)", mainPrice: "$95.00", extraService: "Nail Trimming + Coat Hydration", extraPrice: "+ $35.00", promo: "Wacky Wednesday: $20 OFF" }
       ]
     },
+
     features: {
       pill: "Complete Features", title: "Features built for real business growth.", sub: "Everything you need to manage your schedule and revenue effortlessly.",
       items: [
@@ -191,7 +243,7 @@ const DICTIONARY: Record<LangCode, any> = {
     faq: {
       title: "Frequently Asked Questions", sub: "Quick answers to common questions about Agendei.",
       items: [
-        { q: "How does business profile setup work?", a: "After signing up, enter your business name, phone, logo, and address. The system automatically generates your public booking page (e.g. agendei.com/your-business)." },
+        { q: "How does business profile setup work?", a: "After signing up, enter your business name, phone, logo, and address. The system automatically generates your public booking page (e.g. kreator.com.br/your-business)." },
         { q: "How do Service Add-ons (Upsells) work?", a: "You can attach optional extras to any service (e.g., 3D Alignment in repair shop, Ironing in cleaning, Scalp treatment in barbershop). Clients select add-ons during booking." },
         { q: "How do time-limited promotions work?", a: "Set start and end dates for your discounts in the dashboard. Your booking page shows a promo banner with countdown urgency." },
         { q: "What is the difference between Estimates and Direct Booking?", a: "Estimates let you build custom proposals (ideal for auto repair & custom jobs) sent via link. Direct Booking lets clients pick an open time slot immediately." },
@@ -199,16 +251,39 @@ const DICTIONARY: Record<LangCode, any> = {
       ]
     },
     cta: { title: "Ready to automate your service business bookings?", sub: "Create your account in 2 minutes, upload your logo, add service extras, and launch deals today.", primaryBtn: "Create Free Business Account", loginBtn: "Sign In To Your Account" },
-    footer: { rights: "© 2026 Agendei SaaS. All rights reserved." }
+    footer: {
+      rights: "© 2026 Kreator SaaS. All rights reserved.",
+      privacy: "Privacy Policy",
+      terms: "Terms of Service",
+      directory: "Business Directory",
+    }
   },
   es: {
     nav: { howItWorks: "Cómo Funciona", features: "Funcionalidades", industries: "Sectores", pricing: "Precios", faq: "Preguntas", signIn: "Iniciar Sesión", createBusiness: "Crear Empresa" },
+    highlights: [
+      { value: "0%", label: "de comisión por reserva" },
+      { value: "PIX, tarjeta y efectivo", label: "en el mismo checkout" },
+      { value: "Cancela tú mismo", label: "sin hablar con ventas" },
+      { value: "Tus datos se van contigo", label: "exportación en CSV" },
+    ],
     hero: {
       badge: "Plataforma SaaS para Servicios, Presupuestos y Reservas",
       titleMain: "Reservas simples.", titleSub: "Presupuestos en segundos.",
       description: "La plataforma completa para proveedores de servicios. Registra tu empresa, añade tu logo, incluye servicios extra y lanza promociones con límite de tiempo.",
       primaryCta: "Crear Cuenta de Empresa Gratis", secondaryCta: "Ver Demostración",
-      trustFees: "✓ Sin comisiones por reserva", trustSetup: "✓ Configuración en 5 min", trustCloud: "✓ 100% en la Nube"
+      trustFees: "✓ Sin comisiones por reserva", trustSetup: "✓ Configuración en 5 min", trustCloud: "✓ 100% en la Nube",
+      frictionFree: "Sin tarjeta de crédito · Cancela cuando quieras"
+    },
+    sla: {
+      pill: "Garantía de Tiempo de Respuesta",
+      title: "Compromiso con tu tiempo y el de tus clientes.",
+      sub: "Tecnología para eliminar esperas y ausencias no avisadas.",
+      items: [
+        { icon: "⚡", title: "Reserva Instantánea 24/7", desc: "Tus clientes reservan en 30 segundos a cualquier hora." },
+        { icon: "📱", title: "Recordatorios por WhatsApp", desc: "Notificaciones automáticas que reducen un 95% las ausencias." },
+        { icon: "💬", title: "Soporte en 15 Minutos", desc: "Atención técnica ágil para resolver tus dudas." },
+        { icon: "🔒", title: "Hospedagem gerenciada", desc: "Tu página siempre disponible y rápida desde el móvil." }
+      ]
     },
     showcase: {
       windowUrl: "agendei.com/dashboard", statusBadge: "Empresa Activa", publicPageTitle: "Página pública personalizada",
@@ -235,6 +310,7 @@ const DICTIONARY: Record<LangCode, any> = {
         { id: "petshop", title: "Peluquería Canina y Pets", description: "Reservas por tamaño de mascota con hidratación y corte de uñas.", company: "PetCare Peluquería Canina", mainService: "Baño + Corte (Perro Mediano)", mainPrice: "€ 95,00", extraService: "Corte de Uñas + Hidratación", extraPrice: "+ € 35,00", promo: "Miércoles Loco: € 20 OFF" }
       ]
     },
+
     features: {
       pill: "Funcionalidades Completas", title: "Funcionalidades enfocadas en el crecimiento.", sub: "Todo lo que necesitas para gestionar tu agenda y facturación sin complicaciones.",
       items: [
@@ -256,7 +332,7 @@ const DICTIONARY: Record<LangCode, any> = {
     faq: {
       title: "Preguntas Frequentes", sub: "Respuestas rápidas a las dudas más habituales.",
       items: [
-        { q: "¿Cómo se crea el perfil de la empresa?", a: "Al registrarte, introduces nombre, teléfono, logo y dirección. El sistema genera tu página pública automáticamente (ej: agendei.com/tu-empresa)." },
+        { q: "¿Cómo se crea el perfil de la empresa?", a: "Al registrarte, introduces nombre, teléfono, logo y dirección. El sistema genera tu página pública automáticamente (ej: kreator.com.br/tu-empresa)." },
         { q: "¿Cómo funcionan los Servicios Extras (Upsell)?", a: "Añades opciones a cualquier servicio (ej: Alineación en taller, Planchado en limpieza). El cliente los selecciona al reservar." },
         { q: "¿Cómo crear promociones temporales?", a: "Defines la fecha inicial y final del descuento en el panel. Tu página pública muestra el cartel de oferta con límite de tiempo." },
         { q: "Diferencia entre Presupuesto y Reserva Directa?", a: "Los presupuestos te permiten enviar propuestas a medida (para talleres). Las reservas directas permiten elegir fecha y hora en el acto." },
@@ -264,16 +340,39 @@ const DICTIONARY: Record<LangCode, any> = {
       ]
     },
     cta: { title: "¿Listo para automatizar la gestión de tu empresa?", sub: "Crea tu cuenta en 2 minutos, sube tu logo, añade servicios extra y lanza ofertas hoy.", primaryBtn: "Crear Cuenta de Empresa Gratis", loginBtn: "Acceder a Mi Cuenta" },
-    footer: { rights: "© 2026 Agendei SaaS. Todos los derechos reservados." }
+    footer: {
+      rights: "© 2026 Kreator SaaS. Todos los derechos reservados.",
+      privacy: "Política de Privacidad",
+      terms: "Términos de Uso",
+      directory: "Directorio de Empresas",
+    }
   },
   it: {
     nav: { howItWorks: "Come Funziona", features: "Funzionalità", industries: "Settori", pricing: "Prezzi", faq: "FAQ", signIn: "Accedi", createBusiness: "Crea Azienda" },
+    highlights: [
+      { value: "0%", label: "di commissione per prenotazione" },
+      { value: "Carta, PIX e contanti", label: "in un solo checkout" },
+      { value: "Disdici da solo", label: "senza parlare con un venditore" },
+      { value: "I tuoi dati restano tuoi", label: "esportazione CSV" },
+    ],
     hero: {
       badge: "Piattaforma SaaS per Servizi, Preventivi e Prenotazioni",
       titleMain: "Prenotazioni semplici.", titleSub: "Preventivi in pochi secondi.",
       description: "La piattaforma completa per professionisti. Registra la tua azienda, inserisci il tuo logo, aggiungi servizi extra e lancia promozioni a tempo.",
       primaryCta: "Crea Account Aziendale Gratis", secondaryCta: "Vedi Demo",
-      trustFees: "✓ Nessuna commissione sulle prenotazioni", trustSetup: "✓ Configurazione in 5 min", trustCloud: "✓ 100% sul Cloud"
+      trustFees: "✓ Nessuna commissione sulle prenotazioni", trustSetup: "✓ Configurazione in 5 min", trustCloud: "✓ 100% sul Cloud",
+      frictionFree: "Nessuna carta di credito richiesta · Cancella quando vuoi"
+    },
+    sla: {
+      pill: "Garanzia di Tempo di Risposta",
+      title: "Impegno per il tuo tempo e quello dei tuoi clienti.",
+      sub: "Tecnologia sviluppata per azzerare attese e no-show.",
+      items: [
+        { icon: "⚡", title: "Prenotazione Immediata 24/7", desc: "I clienti prenotano in 30 secondi in ogni momento." },
+        { icon: "📱", title: "Promemoria via WhatsApp", desc: "Notifiche automatiche che riducono del 95% i mancati appuntamenti." },
+        { icon: "💬", title: "Supporto in 15 Minuti", desc: "Assistenza rapida per ogni tua necessità aziendale." },
+        { icon: "🔒", title: "Hospedagem gerenciada", desc: "La tua pagina è sempre online e ultraveloce." }
+      ]
     },
     showcase: {
       windowUrl: "agendei.com/dashboard", statusBadge: "Azienda Attiva", publicPageTitle: "Pagina pubblica personalizzata",
@@ -300,6 +399,7 @@ const DICTIONARY: Record<LangCode, any> = {
         { id: "petshop", title: "Toilette Cani & Pet Care", description: "Prenotazioni per taglia dell'animale con idratazione e taglio unghie.", company: "PetCare Tolettatura", mainService: "Bagno + Taglio (Cane Medio)", mainPrice: "€ 95,00", extraService: "Taglio Unghie + Idratazione Pelo", extraPrice: "+ € 35,00", promo: "Mercoledì Pet: € 20 OFF" }
       ]
     },
+
     features: {
       pill: "Funzionalità Complete", title: "Funzionalità pensate per la crescita reale.", sub: "Tutto ciò di cui hai bisogno per gestire agenda e fatturato senza complicazioni.",
       items: [
@@ -321,7 +421,7 @@ const DICTIONARY: Record<LangCode, any> = {
     faq: {
       title: "Domande Frequenti", sub: "Risposte rapide ai dubbi più comuni.",
       items: [
-        { q: "Come funziona la configurazione dell'azienda?", a: "Dopo la registrazione, inserisci nome, telefono, logo e indirizzo. Il sistema crea automaticamente la tua pagina pubblica (es: agendei.com/tua-azienda)." },
+        { q: "Come funziona la configurazione dell'azienda?", a: "Dopo la registrazione, inserisci nome, telefono, logo e indirizzo. Il sistema crea automaticamente la tua pagina pubblica (es: kreator.com.br/tua-azienda)." },
         { q: "Come funzionano i Servizi Extra (Upsell)?", a: "Puoi aggiungere opzioni a qualsiasi servizio (es: Assetto in officina, Stiratura nella pulizia). Il cliente li seleziona al momento della prenotazione." },
         { q: "Come si creano le promozioni a tempo?", a: "Imposti data iniziale e finale dello sconto dal pannello. La tua pagina pubblica mostrerà il banner con il conteggio di scadenza." },
         { q: "Differenza tra Preventivo e Prenotazione Diretta?", a: "I preventivi permettono di inviare proposte su misura (per officine). Le prenotazioni dirette consentono al cliente di scegliere subito data e ora." },
@@ -329,16 +429,39 @@ const DICTIONARY: Record<LangCode, any> = {
       ]
     },
     cta: { title: "Pronto ad automatizzare la gestione delle prenotazioni?", sub: "Crea il tuo account in 2 minuti, carica il tuo logo, aggiungi servizi extra e lancia promozioni oggi stesso.", primaryBtn: "Crea Account Aziendale Gratis", loginBtn: "Accedi al Mio Account" },
-    footer: { rights: "© 2026 Agendei SaaS. Tutti i diritti riservati." }
+    footer: {
+      rights: "© 2026 Kreator SaaS. Tutti i diritti riservati.",
+      privacy: "Informativa Privacy",
+      terms: "Termini di Servizio",
+      directory: "Elenco Aziende",
+    }
   },
   fr: {
     nav: { howItWorks: "Comment Ça Marche", features: "Fonctionnalités", industries: "Secteurs", pricing: "Tarifs", faq: "FAQ", signIn: "Connexion", createBusiness: "Créer une Entreprise" },
+    highlights: [
+      { value: "0%", label: "de commission par réservation" },
+      { value: "Carte, PIX et espèces", label: "dans un seul paiement" },
+      { value: "Résiliez vous-même", label: "sans passer par un commercial" },
+      { value: "Vos données vous suivent", label: "export CSV" },
+    ],
     hero: {
       badge: "Plateforme SaaS de Réservation, Devis et Services",
       titleMain: "Réservations simples.", titleSub: "Devis en quelques secondes.",
       description: "La plateforme complète pour les prestataires de services. Créez votre profil d'entreprise, ajoutez votre logo, vos options extra et vos promotions à durée limitée.",
       primaryCta: "Créer un Compte Entreprise Gratuit", secondaryCta: "Voir la Démo",
-      trustFees: "✓ Aucune commission sur les réservations", trustSetup: "✓ Configuration en 5 min", trustCloud: "✓ 100% dans le Cloud"
+      trustFees: "✓ Aucune commission sur les réservations", trustSetup: "✓ Configuration en 5 min", trustCloud: "✓ 100% dans le Cloud",
+      frictionFree: "Sans carte bancaire · Annulation libre à tout moment"
+    },
+    sla: {
+      pill: "Garantie de Réactivité",
+      title: "Engagement sur votre temps et celui de vos clients.",
+      sub: "Une technologie pensée pour éliminer l'attente et les rendez-vous manqués.",
+      items: [
+        { icon: "⚡", title: "Réservation Immédiate 24/7", desc: "Vos clients réservent en 30 secondes à tout moment." },
+        { icon: "📱", title: "Rappels par WhatsApp", desc: "Des notifications automatiques qui réduisent 95% des oublis." },
+        { icon: "💬", title: "Support en 15 Minutes", desc: "Une assistance réactive pour répondre à vos questions." },
+        { icon: "🔒", title: "Hospedagem gerenciada", desc: "Votre page est toujours fluide et accessible sur mobile." }
+      ]
     },
     showcase: {
       windowUrl: "agendei.com/dashboard", statusBadge: "Entreprise En Ligne", publicPageTitle: "Page publique personnalisée",
@@ -365,6 +488,7 @@ const DICTIONARY: Record<LangCode, any> = {
         { id: "petshop", title: "Toilettage Canin & Animaux", description: "Réservation selon la taille de l'animal avec soin du pelage et coupe des griffes.", company: "PetCare Toilettage", mainService: "Bain + Coupe (Chien Moyen)", mainPrice: "95,00 €", extraService: "Coupe des Griffes + Hydratation Pelage", extraPrice: "+ 35,00 €", promo: "Mercredi Animaux: -20 €" }
       ]
     },
+
     features: {
       pill: "Fonctionnalités Complètes", title: "Des fonctionnalités axées sur votre croissance.", sub: "Tout le nécessaire pour gérer votre planning et vos revenus en toute simplicité.",
       items: [
@@ -386,7 +510,7 @@ const DICTIONARY: Record<LangCode, any> = {
     faq: {
       title: "Foire Aux Questions", sub: "Réponses rapides aux questions fréquentes.",
       items: [
-        { q: "Comment configurer le profil de l'entreprise ?", a: "Après votre inscription, entrez nom, téléphone, logo et adresse. Votre page publique est créée automatiquement (ex: agendei.com/votre-entreprise)." },
+        { q: "Comment configurer le profil de l'entreprise ?", a: "Après votre inscription, entrez nom, téléphone, logo et adresse. Votre page publique est créée automatiquement (ex: kreator.com.br/votre-entreprise)." },
         { q: "Comment fonctionnent les Services Extra (Upsell) ?", a: "Vous pouvez ajouter des options à chaque service (ex: Parallélisme en garage, Repassage en ménage). Le client les coche lors de sa réservation." },
         { q: "Comment créer une offre à durée limitée ?", a: "Vous fixez la date de début et de fin de la réduction. Votre page publique affichera le badge promo avec décompte d'urgence." },
         { q: "Différence entre Devis et Réservation Directe ?", a: "Les devis vous permettent d'envoyer des propositions sur-mesure (pour garages). La réservation directe permet de choisir date et heure en direct." },
@@ -394,16 +518,39 @@ const DICTIONARY: Record<LangCode, any> = {
       ]
     },
     cta: { title: "Prêt à automatiser la gestion de vos réservations ?", sub: "Créez votre compte en 2 minutes, ajoutez votre logo, vos services extra et lancez vos promotions dès aujourd'hui.", primaryBtn: "Créer un Compte Entreprise Gratuit", loginBtn: "Accéder à Mon Compte" },
-    footer: { rights: "© 2026 Agendei SaaS. Tous droits réservés." }
+    footer: {
+      rights: "© 2026 Kreator SaaS. Tous droits réservés.",
+      privacy: "Politique de Confidentialité",
+      terms: "Conditions Générales",
+      directory: "Annuaire des Entreprises",
+    }
   },
   de: {
     nav: { howItWorks: "Wie Es Funktioniert", features: "Funktionen", industries: "Branchen", pricing: "Preise", faq: "FAQ", signIn: "Anmelden", createBusiness: "Firma Erstellen" },
+    highlights: [
+      { value: "0%", label: "Provision pro Buchung" },
+      { value: "Karte, PIX und Bar", label: "in einem Checkout" },
+      { value: "Selbst kündigen", label: "ohne Vertriebsgespräch" },
+      { value: "Ihre Daten gehören Ihnen", label: "CSV-Export" },
+    ],
     hero: {
       badge: "SaaS-Plattform für Buchungen, Angebote & Termine",
       titleMain: "Einfache Buchungen.", titleSub: "Angebote in Sekunden.",
       description: "Die komplette Plattform für Dienstleister. Erstellen Sie Ihr Unternehmensprofil, fügen Sie Ihr Logo, Zusatzleistungen und zeitlich begrenzte Angebote hinzu.",
       primaryCta: "Kostenloses Firmenkonto Erstellen", secondaryCta: "Live-Demo Ansehen",
-      trustFees: "✓ Keine Buchungsgebühren", trustSetup: "✓ 5-Minuten-Einrichtung", trustCloud: "✓ 100% Cloudbasiert"
+      trustFees: "✓ Keine Buchungsgebühren", trustSetup: "✓ 5-Minuten-Einrichtung", trustCloud: "✓ 100% Cloudbasiert",
+      frictionFree: "Keine Kreditkarte erforderlich · Jederzeit kündbar"
+    },
+    sla: {
+      pill: "Reaktionszeit-Garantie",
+      title: "Verlässlichkeit für Ihre und die Zeit Ihrer Kunden.",
+      sub: "Moderne Technologie zur Vermeidung von Wartezeiten und Terminausfällen.",
+      items: [
+        { icon: "⚡", title: "Sofortbuchung 24/7", desc: "Kunden buchen in 30 Sekunden zu jeder Tages- und Nachtzeit." },
+        { icon: "📱", title: "WhatsApp-Erinnerungen", desc: "Automatische Erinnerungen, die 95% der Ausfälle verhindern." },
+        { icon: "💬", title: "15-Minuten Support SLA", desc: "Schnelle technische Hilfe während der Geschäftszeiten." },
+        { icon: "🔒", title: "Hospedagem gerenciada", desc: "Ihre Buchungsseite ist immer online und extrem schnell." }
+      ]
     },
     showcase: {
       windowUrl: "agendei.com/dashboard", statusBadge: "Aktives Firmenkonto", publicPageTitle: "Personalisierte öffentliche Buchungsseite",
@@ -430,6 +577,7 @@ const DICTIONARY: Record<LangCode, any> = {
         { id: "petshop", title: "Hundefriseur & Kleintierpflege", description: "Terminbuchung nach Rassegröße mit Fellpflege & Krallenschneiden.", company: "PetCare Hunde-Salon", mainService: "Wäsche + Schur (Mittlerer Hund)", mainPrice: "95,00 €", extraService: "Krallen Schneiden + Fell-Pflege", extraPrice: "+ 35,00 €", promo: "Hunde-Mittwoch: 20 € Rabatt" }
       ]
     },
+
     features: {
       pill: "Vollständige Funktionen", title: "Funktionen für echtes Geschäftswachstum.", sub: "Alles, was Sie zur mühelosen Verwaltung von Kalender und Umsatz benötigen.",
       items: [
@@ -451,7 +599,7 @@ const DICTIONARY: Record<LangCode, any> = {
     faq: {
       title: "Häufig Gestellte Fragen", sub: "Schnelle Antworten auf die wichtigsten Fragen.",
       items: [
-        { q: "Wie funktioniert die Erstellung des Firmenprofils?", a: "Nach der Registrierung geben Sie Name, Telefon, Logo und Adresse ein. Das System erstellt automatisch Ihre Buchungsseite (z.B. agendei.com/ihre-firma)." },
+        { q: "Wie funktioniert die Erstellung des Firmenprofils?", a: "Nach der Registrierung geben Sie Name, Telefon, Logo und Adresse ein. Das System erstellt automatisch Ihre Buchungsseite (z.B. kreator.com.br/ihre-firma)." },
         { q: "Wie funktionieren Zusatzleistungen (Upsell)?", a: "Sie können zu jeder Leistung Extras hinzufügen (z.B. Achsvermessung in der Werkstatt). Der Kunde wählt diese bei der Buchung aus." },
         { q: "Wie erstelle ich zeitlich begrenzte Angebote?", a: "Sie legen Start- und Enddatum im Dashboard fest. Ihre Buchungsseite zeigt das Angebot mit Countdown an." },
         { q: "Unterschied zwischen Angebot und Direktbuchung?", a: "Angebote ermöglichen individuelle Kostenvoranschläge (für Werkstätten). Direktbuchungen erlauben die sofortige Terminauswahl." },
@@ -459,7 +607,12 @@ const DICTIONARY: Record<LangCode, any> = {
       ]
     },
     cta: { title: "Bereit, Ihre Terminvergabe zu automatisieren?", sub: "Erstellen Sie Ihr Konto in 2 Minuten, laden Sie Ihr Logo hoch und starten Sie noch heute.", primaryBtn: "Kostenloses Firmenkonto Erstellen", loginBtn: "Anmelden" },
-    footer: { rights: "© 2026 Agendei SaaS. Alle Rechte vorbehalten." }
+    footer: {
+      rights: "© 2026 Kreator SaaS. Alle Rechte vorbehalten.",
+      privacy: "Datenschutz",
+      terms: "Nutzungsbedingungen",
+      directory: "Unternehmensverzeichnis",
+    }
   }
 };
 
@@ -477,7 +630,6 @@ const LANG_LOCALE: Record<string, string> = {
   pt: "pt-BR", en: "en-US", es: "es-ES", it: "it-IT", fr: "fr-FR", de: "de-DE",
 };
 
-// Notas do modo anual por idioma
 const BILLED_ANNUALLY: Record<string, string> = {
   pt: "cobrado anualmente", en: "billed annually", es: "facturado anualmente",
   it: "fatturato annualmente", fr: "facturé annuellement", de: "jährlich abgerechnet",
@@ -508,20 +660,36 @@ export default function LandingClient({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
   const [selectedTab, setSelectedTab] = useState<"mechanic" | "barber" | "cleaning" | "petshop">("mechanic");
+  const [showStickyCta, setShowStickyCta] = useState(false);
 
-  const langMenuRef = useRef<HTMLDivElement>(null);
+  // Interactive Live Demo Simulator State (Emil Kowalski Physics & Taste)
+  const [demoSlot, setDemoSlot] = useState("10:30");
+  const [demoExtraSelected, setDemoExtraSelected] = useState(true);
+  const [demoConfirmed, setDemoConfirmed] = useState(false);
 
-  // ── Automatic Geolocation / Browser Language Detection ──
+const langMenuRef = useRef<HTMLDivElement>(null);
+
+  // Detect language and scroll for sticky mobile CTA
   useEffect(() => {
     if (typeof window !== "undefined") {
       const userBrowserLang = (navigator.language || (navigator as any).userLanguage || "").toLowerCase();
-      
       if (userBrowserLang.startsWith("pt")) setLang("pt");
       else if (userBrowserLang.startsWith("es")) setLang("es");
       else if (userBrowserLang.startsWith("it")) setLang("it");
       else if (userBrowserLang.startsWith("fr")) setLang("fr");
       else if (userBrowserLang.startsWith("de")) setLang("de");
-      else setLang("en"); // Default fallback for USA & Global
+      else setLang("en");
+
+      const handleScroll = () => {
+        if (window.scrollY > 450) {
+          setShowStickyCta(true);
+        } else {
+          setShowStickyCta(false);
+        }
+      };
+
+      window.addEventListener("scroll", handleScroll);
+      return () => window.removeEventListener("scroll", handleScroll);
     }
   }, []);
 
@@ -536,326 +704,419 @@ export default function LandingClient({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const t = DICTIONARY[lang] || DICTIONARY.en;
+  const t = DICTIONARY[lang] || DICTIONARY.pt;
   const currentLangObj = LANGUAGES.find((l) => l.code === lang) || LANGUAGES[0];
   const currentPreset = t.industries.presets.find((b: any) => b.id === selectedTab) || t.industries.presets[0];
 
+  // FAQ Items formatted for JSON-LD schema
+  const faqSchemaItems = t.faq.items.map((item: any) => ({
+    question: item.q,
+    answer: item.a,
+  }));
+
   return (
-    <div className="min-h-screen bg-stone-50/50 text-stone-900 font-sans selection:bg-stone-900 selection:text-white antialiased">
-      
-      {/* ── 1. Navbar Ampliada com Suporte Ultrawide (max-w-[1760px]) ── */}
-      <header className="fixed top-0 inset-x-0 z-50 bg-white/80 backdrop-blur-md border-b border-stone-200/80">
-        <div className="max-w-[1760px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 h-20 flex items-center justify-between">
+    <div className="min-h-screen bg-[var(--color-bg-page)] text-[var(--color-text-heading)] font-sans selection:bg-[var(--color-navy)] selection:text-white antialiased relative overflow-x-hidden">
+      {/* Schema.org Structured Data */}
+      <OrganizationJsonLd />
+      <SoftwareAppJsonLd />
+      <FaqJsonLd items={faqSchemaItems} />
+
+      {/* ── 1. Floating Island Navbar (Apple Style) ── */}
+      <div className="fixed top-4 inset-x-0 z-50 px-4 pointer-events-none">
+        <header className="max-w-7xl mx-auto bg-[var(--color-bg)] backdrop-blur-xl border border-[var(--color-border)] rounded-full px-5 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.06)] flex items-center justify-between pointer-events-auto">
           
           {/* Logo */}
-          <Link href="/">
-            <KreatorLogo size={32} textClassName="font-bold tracking-tight text-stone-900 text-lg" />
+          <Link href="/" aria-label="Kreator Início" className="flex items-center gap-2">
+            <KreatorLogo size={28} textClassName="font-semibold tracking-tight text-[var(--color-text-heading)] text-base" />
           </Link>
 
           {/* Nav Links */}
-          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-stone-600">
-            <a href="#como-funciona" className="hover:text-stone-900 transition-colors">{t.nav.howItWorks}</a>
-            <a href="#recursos" className="hover:text-stone-900 transition-colors">{t.nav.features}</a>
-            <a href="#segmentos" className="hover:text-stone-900 transition-colors">{t.nav.industries}</a>
-            <a href="#precos" className="hover:text-stone-900 transition-colors">{t.nav.pricing}</a>
-            <a href="#faq" className="hover:text-stone-900 transition-colors">{t.nav.faq}</a>
+          <nav aria-label="Navegação Principal" className="hidden lg:flex items-center gap-6 text-xs font-bold text-[var(--color-text-muted)]">
+            <a href="#como-funciona" className="hover:text-[var(--color-text-heading)] transition-colors">{t.nav.howItWorks}</a>
+            <a href="#recursos" className="hover:text-[var(--color-text-heading)] transition-colors">{t.nav.features}</a>
+            <a href="#segmentos" className="hover:text-[var(--color-text-heading)] transition-colors">{t.nav.industries}</a>
+            <a href="#precos" className="hover:text-[var(--color-text-heading)] transition-colors">{t.nav.pricing}</a>
+            <a href="#faq" className="hover:text-[var(--color-text-heading)] transition-colors">{t.nav.faq}</a>
+            <Link href="/empresas" className="text-[var(--color-success)] hover:text-[var(--color-success)] font-semibold transition-colors">
+              Explorar Serviços
+            </Link>
           </nav>
 
           {/* Globe Language Dropdown + Auth Actions */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="flex items-center gap-2.5">
             
-            {/* Globe Language Selector Dropdown (Hover / Click) */}
+            {/* Globe Language Selector */}
             <div className="relative" ref={langMenuRef}>
               <button
                 onClick={() => setLangMenuOpen(!langMenuOpen)}
-                onMouseEnter={() => setLangMenuOpen(true)}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-stone-100 border border-stone-200 text-xs font-bold text-stone-700 hover:bg-stone-200/80 transition-all shadow-sm"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--color-bg-muted)] border border-[var(--color-border)] text-xs font-bold text-[var(--color-text)] hover:bg-[var(--color-bg-muted)] transition-all"
+                aria-label="Selecionar Idioma"
               >
-                <Globe />
-                <span className="flex items-center gap-1.5">
-                  <span>{currentLangObj.flag}</span>
-                  <span>{currentLangObj.label}</span>
-                </span>
+                <span>{currentLangObj.flag}</span>
+                <span className="hidden sm:inline">{currentLangObj.label}</span>
                 <ChevronDown />
               </button>
 
-              {/* Dropdown Menu */}
               {langMenuOpen && (
-                <div
-                  onMouseLeave={() => setLangMenuOpen(false)}
-                  className="absolute right-0 mt-2 w-52 bg-white border border-stone-200 rounded-2xl shadow-xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
-                >
-                  <div className="px-3 py-1.5 text-[10px] font-bold text-stone-400 uppercase tracking-wider border-b border-stone-100 mb-1">
-                    Select Language / Idioma
+                <div className="absolute right-0 mt-2 w-48 rounded-[var(--radius-card)] bg-[var(--color-bg)] border border-[var(--color-border)] shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-3 py-1.5 text-[var(--text-2xs)] font-mono font-semibold uppercase tracking-wider text-[var(--color-text-subtle)] border-b border-[var(--color-border)] mb-1">
+                    Idioma / Language
                   </div>
-                  {LANGUAGES.map((item) => (
+                  {LANGUAGES.map((l) => (
                     <button
-                      key={item.code}
+                      key={l.code}
                       onClick={() => {
-                        setLang(item.code);
+                        setLang(l.code);
                         setLangMenuOpen(false);
                       }}
-                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                        lang === item.code
-                          ? "bg-stone-900 text-white font-bold"
-                          : "text-stone-700 hover:bg-stone-100"
+                      className={`w-full text-left px-3.5 py-2 text-xs font-bold flex items-center justify-between hover:bg-[var(--color-bg-subtle)] transition-colors ${
+                        lang === l.code ? "text-[var(--color-text-heading)] bg-[var(--color-bg-muted)] font-semibold" : "text-[var(--color-text-muted)]"
                       }`}
                     >
                       <span className="flex items-center gap-2">
-                        <span className="text-base">{item.flag}</span>
-                        <span>{item.countryName}</span>
+                        <span>{l.flag}</span>
+                        <span>{l.countryName}</span>
                       </span>
-                      <span className="text-[10px] opacity-70 font-mono">{item.label}</span>
+                      {lang === l.code && <span className="text-[var(--color-success)] text-xs">✓</span>}
                     </button>
                   ))}
                 </div>
               )}
             </div>
 
+            {/* Auth Actions */}
             <Link
               href="/login"
-              className="text-sm font-semibold text-stone-700 hover:text-stone-900 px-3 py-2 transition-colors"
+              className="text-xs font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] px-3 py-1.5 rounded-full transition-colors hidden sm:inline-block"
             >
               {t.nav.signIn}
             </Link>
+
             <Link
               href="/register"
-              className="text-sm font-semibold bg-stone-900 text-white hover:bg-stone-800 px-6 py-2.5 rounded-full transition-all shadow-sm"
+              className="btn-tactile px-4 py-2 rounded-full bg-[var(--color-navy)] hover:bg-[var(--color-navy)] text-white text-xs font-bold shadow-xs flex items-center gap-1.5"
             >
-              {t.nav.createBusiness}
+              <span>{t.nav.createBusiness}</span>
+              <ArrowRight />
             </Link>
           </div>
+        </header>
+      </div>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center gap-2">
-            <button
-              onClick={() => setLangMenuOpen(!langMenuOpen)}
-              className="p-2 rounded-lg border border-stone-200 bg-stone-100 text-xs font-bold text-stone-700 flex items-center gap-1.5"
-            >
-              <Globe />
-              <span>{currentLangObj.flag} {currentLangObj.label}</span>
-            </button>
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-stone-600 hover:text-stone-900"
-              aria-label="Menu"
-            >
-              {mobileMenuOpen ? <X /> : <Menu />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Navigation Drawer */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-b border-stone-200 px-6 py-6 space-y-4">
-            <div className="pb-3 border-b border-stone-100 space-y-2">
-              <span className="text-xs font-bold text-stone-500 uppercase block">Idioma / Select Language:</span>
-              <div className="grid grid-cols-3 gap-2">
-                {LANGUAGES.map((item) => (
-                  <button
-                    key={item.code}
-                    onClick={() => {
-                      setLang(item.code);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`px-2 py-1.5 rounded-lg text-xs font-bold border flex items-center justify-center gap-1 ${
-                      lang === item.code ? "bg-stone-900 text-white border-stone-900" : "bg-stone-50 text-stone-700 border-stone-200"
-                    }`}
-                  >
-                    <span>{item.flag}</span>
-                    <span>{item.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <nav className="flex flex-col gap-3 font-semibold text-sm text-stone-700">
-              <a href="#como-funciona" onClick={() => setMobileMenuOpen(false)}>{t.nav.howItWorks}</a>
-              <a href="#recursos" onClick={() => setMobileMenuOpen(false)}>{t.nav.features}</a>
-              <a href="#segmentos" onClick={() => setMobileMenuOpen(false)}>{t.nav.industries}</a>
-              <a href="#precos" onClick={() => setMobileMenuOpen(false)}>{t.nav.pricing}</a>
-              <a href="#faq" onClick={() => setMobileMenuOpen(false)}>{t.nav.faq}</a>
-            </nav>
-            <div className="pt-4 flex flex-col gap-2 border-t border-stone-200">
-              <Link
-                href="/login"
-                className="w-full text-center py-2.5 rounded-lg border border-stone-300 text-sm font-semibold text-stone-800"
-              >
-                {t.nav.signIn}
-              </Link>
-              <Link
-                href="/register"
-                className="w-full text-center py-2.5 rounded-lg bg-stone-900 text-white text-sm font-semibold"
-              >
-                {t.nav.createBusiness}
-              </Link>
-            </div>
-          </div>
-        )}
-      </header>
-
-      <main className="pt-20">
-        {/* ── 2. Hero Section Ultrawide (max-w-[1760px]) ── */}
-        <section className="relative pt-16 pb-20 lg:pt-24 lg:pb-32 border-b border-stone-200/80 bg-gradient-to-b from-white via-stone-50/50 to-stone-100/50">
-          
-          <div className="max-w-[1760px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 text-center relative z-10">
+      <main className="pt-24 sm:pt-32 relative z-10">
+        
+        {/* ── 2. Modern 2-Column Split Hero (Left: Pitch / Right: Live Interactive Simulator) ── */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-8 py-8 lg:py-16">
+          <div className="grid lg:grid-cols-12 gap-10 xl:gap-14 items-center">
             
-            {/* Announcement Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-stone-200 text-xs font-semibold text-stone-700 shadow-sm mb-8">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>{t.hero.badge}</span>
-              <ArrowRight />
-            </div>
-
-            {/* Main Headline */}
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl xl:text-8xl font-extrabold tracking-tight text-stone-900 leading-[1.08] mb-6 max-w-6xl mx-auto">
-              {t.hero.titleMain}<br />
-              <span className="text-stone-500 font-medium">{t.hero.titleSub}</span>
-            </h1>
-
-            {/* Subtitle */}
-            <p className="text-lg sm:text-xl xl:text-2xl text-stone-600 font-medium max-w-4xl mx-auto leading-relaxed mb-10">
-              {t.hero.description}
-            </p>
-
-            {/* Hero Actions */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14">
-              <Link
-                href="/register"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-10 py-4.5 rounded-full text-base font-semibold bg-stone-900 text-white hover:bg-stone-800 transition-all shadow-md hover:scale-105"
-              >
-                <span>{t.hero.primaryCta}</span>
-                <ArrowRight />
-              </Link>
-              <a
-                href="#demo"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-10 py-4.5 rounded-full text-base font-semibold bg-white text-stone-800 border border-stone-300 hover:bg-stone-100 transition-all shadow-sm"
-              >
-                <span>{t.hero.secondaryCta}</span>
-              </a>
-            </div>
-
-            {/* Sub-hero Trust Bar */}
-            <div className="flex flex-wrap items-center justify-center gap-8 text-sm sm:text-base font-semibold text-stone-500 border-t border-stone-200/80 pt-8 max-w-3xl mx-auto">
-              <span>{t.hero.trustFees}</span>
-              <span>•</span>
-              <span>{t.hero.trustSetup}</span>
-              <span>•</span>
-              <span>{t.hero.trustCloud}</span>
-            </div>
-
-            {/* ── 3. High-Resolution App Preview Card (Ultrawide Span max-w-[1560px]) ── */}
-            <div className="mt-16 rounded-3xl bg-white border border-stone-200 shadow-2xl p-6 sm:p-10 text-left max-w-[1560px] mx-auto">
+            {/* Left Column: Value Proposition & CTAs */}
+            <div className="lg:col-span-6 space-y-6 text-left">
               
-              {/* Window Bar */}
-              <div className="flex items-center justify-between pb-5 border-b border-stone-100 mb-8">
-                <div className="flex items-center gap-2">
-                  <div className="w-3.5 h-3.5 rounded-full bg-stone-200"></div>
-                  <div className="w-3.5 h-3.5 rounded-full bg-stone-200"></div>
-                  <div className="w-3.5 h-3.5 rounded-full bg-stone-200"></div>
-                  <span className="text-xs font-mono text-stone-400 ml-3">{t.showcase.windowUrl}</span>
-                </div>
-                <span className="text-xs bg-emerald-100 text-emerald-800 border border-emerald-200 px-3.5 py-1 rounded-full font-bold">
-                  {t.showcase.statusBadge}
-                </span>
+              {/* Announcement Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--color-bg)] border border-[var(--color-border)] text-xs font-semibold text-[var(--color-text)] shadow-2xs hover:border-[var(--color-border-strong)] transition-colors">
+                <span className="w-2 h-2 rounded-full bg-[var(--color-success)] animate-pulse"></span>
+                <span>{t.hero.badge}</span>
+                <ArrowRight />
               </div>
 
-              {/* Mock Dashboard Grid */}
-              <div className="grid lg:grid-cols-12 gap-8 xl:gap-12 items-start">
+              {/* Main Headline */}
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-semibold tracking-tight text-[var(--color-text-heading)] leading-[1.08]">
+                {t.hero.titleMain}<br />
+                <span className="font-serif italic font-normal text-[var(--color-success)]">
+                  {t.hero.titleSub}
+                </span>
+              </h1>
+
+              {/* Subtitle */}
+              <p className="text-base sm:text-lg text-[var(--color-text-muted)] font-medium leading-relaxed max-w-xl">
+                {t.hero.description}
+              </p>
+
+              {/* CTAs */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+                <Link
+                  href="/register"
+                  className="btn-tactile inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full text-sm font-semibold bg-[var(--color-navy)] text-white hover:bg-[var(--color-navy)] shadow-md"
+                >
+                  <span>{t.hero.primaryCta}</span>
+                  <ArrowRight />
+                </Link>
+                <Link
+                  href="/empresas"
+                  className="btn-tactile inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full text-sm font-bold bg-[var(--color-bg)] text-[var(--color-text)] border border-[var(--color-border)] hover:bg-[var(--color-bg-subtle)] hover:border-[var(--color-border-strong)] shadow-2xs"
+                >
+                  <span>{t.hero.secondaryCta}</span>
+                </Link>
+              </div>
+
+              {/* Friction-free note */}
+              <p className="text-xs text-[var(--color-text-muted)] font-medium">
+                {t.hero.frictionFree}
+              </p>
+
+              {/* Trust badges */}
+              <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-[var(--color-text-muted)] pt-2 border-t border-[var(--color-border)]">
+                <span className="inline-flex items-center gap-1.5 text-[var(--color-text)]">⚡ {t.hero.trustFees}</span>
+                <span>•</span>
+                <span className="inline-flex items-center gap-1.5 text-[var(--color-text)]">⏱️ {t.hero.trustSetup}</span>
+                <span>•</span>
+                <span className="inline-flex items-center gap-1.5 text-[var(--color-text)]">☁️ {t.hero.trustCloud}</span>
+              </div>
+            </div>
+
+            {/* Right Column: Live Interactive Simulator Showcase */}
+            <div className="lg:col-span-6">
+              <div className="rounded-[var(--radius-panel)] bg-[var(--color-bg)] border border-[var(--color-border)] shadow-[0_20px_50px_-10px_rgba(0,0,0,0.08)] p-6 sm:p-7 text-left relative card-tactile">
                 
-                {/* Left Column: Business Profile Info */}
-                <div className="lg:col-span-5 bg-stone-50 p-6 sm:p-8 rounded-2xl border border-stone-200 space-y-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-white border border-stone-200 flex items-center justify-center text-3xl shadow-sm">
-                      🛠️
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-stone-900 text-lg">{currentPreset.company}</h4>
-                      <p className="text-xs sm:text-sm text-stone-500 font-medium">{t.showcase.publicPageTitle}</p>
-                    </div>
+                {/* Window Topbar */}
+                <div className="flex items-center justify-between pb-4 border-b border-[var(--color-border)] mb-5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-[var(--color-danger)]"></div>
+                    <div className="w-3 h-3 rounded-full bg-[var(--color-warning)]"></div>
+                    <div className="w-3 h-3 rounded-full bg-[var(--color-success)]"></div>
+                    <span className="text-[var(--text-2xs)] font-mono text-[var(--color-text-subtle)] ml-2">kreator.com.br/{selectedTab}-prime</span>
                   </div>
-
-                  <div className="pt-4 border-t border-stone-200/80 space-y-3 text-xs sm:text-sm font-medium">
-                    <div className="flex justify-between text-stone-600">
-                      <span>{t.showcase.agendaStatusLabel}</span>
-                      <span className="text-emerald-700 font-bold">{t.showcase.agendaStatusVal}</span>
-                    </div>
-                    <div className="flex justify-between text-stone-600">
-                      <span>{t.showcase.whatsappLabel}</span>
-                      <span className="text-stone-900 font-bold">{t.showcase.whatsappVal}</span>
-                    </div>
-                  </div>
-
-                  {/* Active Promo Box */}
-                  <div className="bg-amber-500/10 border border-amber-300 rounded-2xl p-5 text-xs sm:text-sm">
-                    <div className="flex items-center justify-between text-amber-900 font-bold mb-2">
-                      <span className="flex items-center gap-1.5"><Sparkles /> {t.showcase.promoTitle}</span>
-                      <span className="bg-amber-200 px-2.5 py-0.5 rounded text-xs">{t.showcase.promoBadge}</span>
-                    </div>
-                    <p className="text-stone-900 font-bold text-sm mt-1">{currentPreset.promo}</p>
-                  </div>
+                  <span className="text-[var(--text-2xs)] bg-[var(--color-success-light)] text-[var(--color-success)] border border-[var(--color-success-border)] px-3 py-0.5 rounded-full font-bold inline-flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[var(--color-success)] animate-ping"></span>
+                    <span>{t.showcase.statusBadge}</span>
+                  </span>
                 </div>
 
-                {/* Right Column: Catalog & Order Breakdown */}
-                <div className="lg:col-span-7 space-y-6">
-                  <div className="bg-stone-50 p-6 sm:p-8 rounded-2xl border border-stone-200 space-y-5">
-                    <p className="text-xs font-bold text-stone-500 uppercase tracking-wider">
-                      {t.showcase.previewHeader}
-                    </p>
+                {/* Segment Selector Chips */}
+                <div className="flex flex-wrap items-center gap-1.5 mb-5 pb-3 border-b border-[var(--color-border)]">
+                  {t.industries.presets.map((b: any) => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedTab(b.id as any);
+                        setDemoConfirmed(false);
+                      }}
+                      className={`px-3 py-1 rounded-[var(--radius-control)] text-xs font-bold transition-all ${
+                        selectedTab === b.id
+                          ? "bg-[var(--color-navy)] text-white shadow-xs"
+                          : "bg-[var(--color-bg-muted)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-muted)] border border-[var(--color-border)]"
+                      }`}
+                    >
+                      {b.title.split(" ")[0]} {b.title.split(" ")[1] || ""}
+                    </button>
+                  ))}
+                </div>
 
-                    <div className="p-5 rounded-2xl bg-white border border-stone-200 flex justify-between items-center text-sm sm:text-base shadow-sm">
-                      <div>
-                        <p className="font-bold text-stone-900">{currentPreset.mainService}</p>
-                        <p className="text-xs sm:text-sm text-stone-500">{t.showcase.mainServiceLabel}</p>
-                      </div>
-                      <span className="font-extrabold text-stone-900">{currentPreset.mainPrice}</span>
+                {/* Simulator Content */}
+                {demoConfirmed ? (
+                  <div className="p-6 rounded-[var(--radius-card)] bg-[var(--color-success-light)] border border-[var(--color-success-border)] text-center space-y-4 animate-in fade-in duration-300">
+                    <div className="w-14 h-14 rounded-full bg-[var(--color-success)] text-white text-2xl font-semibold mx-auto flex items-center justify-center shadow-md">
+                      ✓
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-xl font-semibold text-[var(--color-success)]">Agendamento Confirmado!</h4>
+                      <p className="text-xs font-bold text-[var(--color-success)]">
+                        Horário reservado com sucesso para hoje às <span className="underline">{demoSlot}</span>.
+                      </p>
                     </div>
 
-                    <div className="p-5 rounded-2xl bg-indigo-50/60 border border-indigo-200 flex justify-between items-center text-sm sm:text-base">
-                      <div>
-                        <span className="text-[10px] sm:text-xs bg-indigo-600 text-white px-2.5 py-0.5 rounded font-bold mr-2">{t.showcase.extraLabel}</span>
-                        <span className="font-bold text-indigo-950">{currentPreset.extraService}</span>
+                    <div className="grid sm:grid-cols-2 gap-2 text-[var(--text-2xs)] font-bold text-[var(--color-success)] text-left">
+                      <div className="p-2.5 rounded-[var(--radius-control)] bg-[var(--color-bg)] border border-[var(--color-success-border)] shadow-2xs flex items-center gap-2">
+                        <span>📱</span> Lembrete no WhatsApp
                       </div>
-                      <span className="font-extrabold text-indigo-900">{currentPreset.extraPrice}</span>
+                      <div className="p-2.5 rounded-[var(--radius-control)] bg-[var(--color-bg)] border border-[var(--color-success-border)] shadow-2xs flex items-center gap-2">
+                        <span>📅</span> Salvo no Google Agenda
+                      </div>
                     </div>
 
-                    <div className="pt-4 border-t border-stone-200 flex justify-between items-center text-sm sm:text-base font-bold">
-                      <span className="text-stone-600">{t.showcase.totalLabel}</span>
-                      <span className="text-emerald-700 text-lg sm:text-xl font-black">
-                        {lang === "pt" ? "R$ 296,00" : lang === "en" ? "$296.00" : "€ 296,00"}
+                    <button
+                      onClick={() => setDemoConfirmed(false)}
+                      className="btn-tactile px-5 py-2 bg-[var(--color-navy)] text-white rounded-[var(--radius-control)] text-xs font-bold hover:bg-[var(--color-navy)] shadow-sm"
+                    >
+                      Simular Outro Horário
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3.5">
+                    {/* Business mini card */}
+                    <div className="flex items-center justify-between p-3.5 rounded-[var(--radius-card)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-[var(--radius-control)] bg-[var(--color-navy)] text-white flex items-center justify-center font-serif font-semibold text-base">
+                          {currentPreset.company.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-[var(--color-text-heading)] text-sm">{currentPreset.company}</p>
+                          <span className="text-[var(--text-2xs)] text-[var(--color-success)] font-bold flex items-center gap-1">
+                            ● Atendimento Imediato
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[var(--text-2xs)] font-bold bg-[var(--color-warning-light)] text-[var(--color-warning)] border border-[var(--color-warning-border)] px-2 py-0.5 rounded-[var(--radius-control)]">
+                        ★ 5.0 (148)
                       </span>
                     </div>
-                  </div>
-                </div>
 
+                    {/* Main Service Row */}
+                    <div className="p-3.5 rounded-[var(--radius-card)] bg-[var(--color-bg)] border border-[var(--color-border)] flex justify-between items-center text-xs shadow-2xs">
+                      <div>
+                        <p className="font-bold text-[var(--color-text-heading)]">{currentPreset.mainService}</p>
+                        <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)]">{t.showcase.mainServiceLabel}</p>
+                      </div>
+                      <span className="font-semibold text-[var(--color-text-heading)] text-sm">{currentPreset.mainPrice}</span>
+                    </div>
+
+                    {/* Upsell Checkbox */}
+                    <div
+                      onClick={() => setDemoExtraSelected(!demoExtraSelected)}
+                      className={`p-3 rounded-[var(--radius-card)] border transition-all cursor-pointer select-none flex justify-between items-center text-xs ${
+                        demoExtraSelected
+                          ? "bg-[var(--color-primary-light)] border-[var(--color-primary)] shadow-2xs"
+                          : "bg-[var(--color-bg)] border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <input
+                          type="checkbox"
+                          checked={demoExtraSelected}
+                          onChange={() => {}}
+                          className="w-3.5 h-3.5 rounded text-[var(--color-primary)] accent-indigo-600 cursor-pointer"
+                        />
+                        <div>
+                          <span className="text-[var(--text-2xs)] bg-[var(--color-primary-light)] text-[var(--color-primary)] px-1.5 py-0.5 rounded font-bold mr-1.5">
+                            + Extra
+                          </span>
+                          <span className="font-bold text-[var(--color-text)]">{currentPreset.extraService}</span>
+                        </div>
+                      </div>
+                      <span className="font-semibold text-[var(--color-primary)]">{currentPreset.extraPrice}</span>
+                    </div>
+
+                    {/* Slot selector */}
+                    <div className="space-y-1.5 pt-1">
+                      <span className="text-[var(--text-2xs)] font-bold text-[var(--color-text-muted)] block">Horário Disponível:</span>
+                      <div className="grid grid-cols-4 gap-2">
+                        {["09:00", "10:30", "14:00", "16:30"].map((slot) => (
+                          <button
+                            key={slot}
+                            type="button"
+                            onClick={() => setDemoSlot(slot)}
+                            className={`py-1.5 rounded-[var(--radius-control)] text-xs font-bold transition-all text-center ${
+                              demoSlot === slot
+                                ? "bg-[var(--color-navy)] text-white font-semibold shadow-xs"
+                                : "bg-[var(--color-bg-subtle)] text-[var(--color-text)] hover:bg-[var(--color-bg-muted)] border border-[var(--color-border)]"
+                            }`}
+                          >
+                            {slot}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Total and confirm button */}
+                    <div className="pt-3 border-t border-[var(--color-border)] flex items-center justify-between gap-3">
+                      <div>
+                        <span className="text-[var(--text-2xs)] text-[var(--color-text-muted)] font-medium block">Total Estimado</span>
+                        <span className="text-[var(--color-text-heading)] text-lg font-semibold">
+                          {demoExtraSelected
+                            ? (lang === "pt" ? "R$ 296,00" : lang === "en" ? "$296.00" : "€ 296,00")
+                            : currentPreset.mainPrice}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => setDemoConfirmed(true)}
+                        className="btn-tactile px-5 py-2.5 bg-[var(--color-success)] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-xs hover:bg-[var(--color-success)] flex items-center gap-1.5"
+                      >
+                        <span>Confirmar ({demoSlot})</span>
+                        <ArrowRight />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
           </div>
         </section>
 
-        {/* ── 4. Como Funciona Ultrawide (max-w-[1760px]) ── */}
-        <section id="como-funciona" className="py-24 border-b border-stone-200/80 bg-white">
-          <div className="max-w-[1760px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
+        {/*
+          Faixa de destaques. Estes quatro pontos são verificáveis no próprio
+          produto — não são resultado de cliente nem métrica de tração
+          inventada, que foi o que estava aqui antes.
+        */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-8 py-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 sm:p-8 rounded-[var(--radius-panel)] bg-[var(--color-bg)] border border-[var(--color-border)] shadow-xs">
+            {t.highlights.map((h: { value: string; label: string }, i: number) => (
+              <div
+                key={i}
+                className="space-y-1 text-center sm:text-left border-r border-[var(--color-border)] last:border-none pr-4"
+              >
+                <span className="block text-2xl sm:text-3xl font-semibold text-[var(--color-text-heading)] tracking-tight">
+                  {h.value}
+                </span>
+                <p className="text-xs font-medium text-[var(--color-text-muted)]">
+                  {h.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── 4. Promessa de Tempo de Resposta & SLA ── */}
+        <section className="py-20 border-t border-b border-[var(--color-border)] bg-[var(--color-bg)] relative">
+          <div className="max-w-7xl mx-auto px-4 sm:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-14">
+              <span className="text-xs font-mono font-bold uppercase tracking-widest text-[var(--color-success)] bg-[var(--color-success-light)] px-3.5 py-1 rounded-full border border-[var(--color-success-border)]">
+                {t.sla.pill}
+              </span>
+              <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight text-[var(--color-text-heading)] mt-3 mb-3">
+                {t.sla.title}
+              </h2>
+              <p className="text-[var(--color-text-muted)] text-base sm:text-lg font-medium">
+                {t.sla.sub}
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {t.sla.items.map((item: any, idx: number) => (
+                <div
+                  key={idx}
+                  className="card-tactile p-7 rounded-[var(--radius-panel)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)] space-y-3 flex flex-col justify-between hover:bg-[var(--color-bg)] hover:border-[var(--color-border-strong)] transition-all shadow-2xs"
+                >
+                  <div className="space-y-3">
+                    <span className="text-3xl block">{item.icon}</span>
+                    <h3 className="font-semibold text-[var(--color-text-heading)] text-base">{item.title}</h3>
+                    <p className="text-[var(--color-text-muted)] text-xs sm:text-sm leading-relaxed font-medium">
+                      {item.desc}
+                    </p>
+                  </div>
+                  <span className="text-[var(--text-2xs)] font-mono text-[var(--color-success)] font-bold mt-3">
+                    ✓ Garantido pela Plataforma
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── 5. Como Funciona (Timeline em 4 Passos) ── */}
+        <section id="como-funciona" className="py-20 bg-[var(--color-bg-page)] relative">
+          <div className="max-w-7xl mx-auto px-4 sm:px-8">
             
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <span className="text-xs font-bold uppercase tracking-widest text-stone-500 bg-stone-100 px-3 py-1 rounded-full border border-stone-200">
+            <div className="text-center max-w-3xl mx-auto mb-14">
+              <span className="text-xs font-mono font-bold uppercase tracking-widest text-[var(--color-text-muted)] bg-[var(--color-bg)] px-3 py-1 rounded-full border border-[var(--color-border)] shadow-2xs">
                 {t.workflow.pill}
               </span>
-              <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-stone-900 mt-3 mb-3">
+              <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight text-[var(--color-text-heading)] mt-3 mb-3">
                 {t.workflow.title}
               </h2>
-              <p className="text-stone-600 text-base sm:text-lg font-medium">
+              <p className="text-[var(--color-text-muted)] text-base sm:text-lg font-medium">
                 {t.workflow.sub}
               </p>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 xl:gap-10">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {t.workflow.steps.map((item: any, idx: number) => (
-                <div key={idx} className="p-8 rounded-3xl bg-stone-50 border border-stone-200 space-y-4 shadow-sm hover:shadow-md transition-shadow">
-                  <span className="text-xs font-mono text-stone-400 font-bold">{item.num}</span>
-                  <h3 className="font-bold text-stone-900 text-xl">{item.title}</h3>
-                  <p className="text-stone-600 text-sm sm:text-base leading-relaxed font-medium">{item.desc}</p>
+                <div key={idx} className="card-tactile p-8 rounded-[var(--radius-panel)] bg-[var(--color-bg)] border border-[var(--color-border)] space-y-4 hover:border-[var(--color-border-strong)] transition-all shadow-xs relative">
+                  <span className="text-2xl font-mono text-[var(--color-text-heading)] font-semibold">{item.num}</span>
+                  <h3 className="font-semibold text-[var(--color-text-heading)] text-lg">{item.title}</h3>
+                  <p className="text-[var(--color-text-muted)] text-xs sm:text-sm leading-relaxed font-medium">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -863,79 +1124,23 @@ export default function LandingClient({
           </div>
         </section>
 
-        {/* ── 5. Segmentos Atendidos Ultrawide ── */}
-        <section id="segmentos" className="py-24 border-b border-stone-200/80 bg-stone-50/60">
-          <div className="max-w-[1760px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
+        {/* ── 6. Bento Grid de Recursos SaaS ── */}
+        <section id="recursos" className="py-20 border-t border-b border-[var(--color-border)] bg-[var(--color-bg)] relative">
+          <div className="max-w-7xl mx-auto px-4 sm:px-8">
             
             <div className="text-center max-w-3xl mx-auto mb-14">
-              <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-stone-900 mb-3">
-                {t.industries.title}
-              </h2>
-              <p className="text-stone-600 text-base sm:text-lg font-medium">
-                {t.industries.sub}
-              </p>
-
-              {/* Segment Tabs */}
-              <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
-                {t.industries.presets.map((b: any) => (
-                  <button
-                    key={b.id}
-                    onClick={() => setSelectedTab(b.id as any)}
-                    className={`px-6 py-3 rounded-full text-sm font-bold transition-all ${
-                      selectedTab === b.id
-                        ? "bg-stone-900 text-white shadow-md scale-105"
-                        : "bg-white text-stone-600 hover:text-stone-900 border border-stone-200"
-                    }`}
-                  >
-                    {b.title}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Segment Detail Box (Ampliado max-w-[1400px]) */}
-            <div className="p-8 sm:p-12 rounded-3xl bg-white border border-stone-200 max-w-[1400px] mx-auto shadow-md">
-              <div className="space-y-5">
-                <span className="text-xs font-mono uppercase text-stone-400 font-bold tracking-wider">
-                  {t.industries.exampleLabel}
-                </span>
-                <h3 className="text-3xl font-bold text-stone-900">{currentPreset.title}</h3>
-                <p className="text-stone-600 text-lg leading-relaxed font-medium">{currentPreset.description}</p>
-                
-                <div className="pt-6 border-t border-stone-100 grid sm:grid-cols-2 gap-8 text-base">
-                  <div className="p-5 rounded-2xl bg-stone-50 border border-stone-200">
-                    <span className="text-stone-500 block mb-1 text-xs font-semibold">{t.industries.mainServiceLabel}</span>
-                    <span className="font-bold text-stone-900">{currentPreset.mainService}</span>
-                  </div>
-                  <div className="p-5 rounded-2xl bg-indigo-50/60 border border-indigo-200">
-                    <span className="text-indigo-700 block mb-1 text-xs font-bold">{t.industries.extraServiceLabel}</span>
-                    <span className="font-bold text-indigo-950">{currentPreset.extraService}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </section>
-
-        {/* ── 6. Bento Grid de Recursos SaaS (6 Colunas em Screens Ultrawide!) ── */}
-        <section id="recursos" className="py-24 border-b border-stone-200/80 bg-white">
-          <div className="max-w-[1760px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
-            
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <span className="text-xs font-bold uppercase tracking-widest text-stone-500 bg-stone-100 px-3 py-1 rounded-full border border-stone-200">
+              <span className="text-xs font-mono font-bold uppercase tracking-widest text-[var(--color-text-muted)] bg-[var(--color-bg-muted)] px-3 py-1 rounded-full border border-[var(--color-border)]">
                 {t.features.pill}
               </span>
-              <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-stone-900 mt-3 mb-3">
+              <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight text-[var(--color-text-heading)] mt-3 mb-3">
                 {t.features.title}
               </h2>
-              <p className="text-stone-600 text-base sm:text-lg font-medium">
+              <p className="text-[var(--color-text-muted)] text-base sm:text-lg font-medium">
                 {t.features.sub}
               </p>
             </div>
 
-            {/* Grid 3 colunas em Desktop, 6 colunas em telas 2XL/Ultrawide */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-6 xl:gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
                 { icon: <Store />, title: t.features.items[0].title, desc: t.features.items[0].desc },
                 { icon: <Plus />, title: t.features.items[1].title, desc: t.features.items[1].desc },
@@ -944,13 +1149,13 @@ export default function LandingClient({
                 { icon: <Calendar />, title: t.features.items[4].title, desc: t.features.items[4].desc },
                 { icon: <Shield />, title: t.features.items[5].title, desc: t.features.items[5].desc }
               ].map((item, idx) => (
-                <div key={idx} className="p-8 rounded-3xl bg-stone-50 border border-stone-200 space-y-4 hover:shadow-md transition-shadow flex flex-col justify-between">
+                <div key={idx} className="card-tactile p-8 rounded-[var(--radius-panel)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)] space-y-4 flex flex-col justify-between hover:bg-[var(--color-bg)] hover:border-[var(--color-border-strong)] transition-all shadow-2xs">
                   <div>
-                    <div className="w-12 h-12 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center justify-center mb-6">
+                    <div className="w-12 h-12 rounded-[var(--radius-card)] bg-[var(--color-bg)] border border-[var(--color-border)] shadow-2xs flex items-center justify-center mb-5 text-[var(--color-text)]">
                       {item.icon}
                     </div>
-                    <h3 className="font-bold text-stone-900 text-lg mb-2">{item.title}</h3>
-                    <p className="text-stone-600 text-sm leading-relaxed font-medium">{item.desc}</p>
+                    <h3 className="font-semibold text-[var(--color-text-heading)] text-lg mb-2">{item.title}</h3>
+                    <p className="text-[var(--color-text-muted)] text-xs sm:text-sm leading-relaxed font-medium">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -959,56 +1164,113 @@ export default function LandingClient({
           </div>
         </section>
 
-        {/* ── 7. Tabela de Preços Ultrawide ── */}
-        <section id="precos" className="py-24 border-b border-stone-200/80 bg-stone-50/50">
-          <div className="max-w-[1760px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
+        {/* ── 7. Segmentos Atendidos ── */}
+        <section id="segmentos" className="py-20 bg-[var(--color-bg-page)] relative">
+          <div className="max-w-7xl mx-auto px-4 sm:px-8">
             
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <span className="text-xs font-bold uppercase tracking-widest text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-200">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight text-[var(--color-text-heading)] mb-3">
+                {t.industries.title}
+              </h2>
+              <p className="text-[var(--color-text-muted)] text-base sm:text-lg font-medium">
+                {t.industries.sub}
+              </p>
+
+              {/* Segment Tabs with Tactile Interactive Chips */}
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
+                {t.industries.presets.map((b: any) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => setSelectedTab(b.id as any)}
+                    className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all ${
+                      selectedTab === b.id
+                        ? "bg-[var(--color-navy)] text-white font-semibold shadow-xs scale-105"
+                        : "bg-[var(--color-bg)] text-[var(--color-text)] hover:bg-[var(--color-bg-muted)] border border-[var(--color-border)]"
+                    }`}
+                  >
+                    {b.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Segment Detail Box */}
+            <div className="p-8 sm:p-10 rounded-[var(--radius-panel)] bg-[var(--color-bg)] border border-[var(--color-border)] max-w-4xl mx-auto shadow-xs card-tactile">
+              <div className="space-y-4">
+                <span className="text-xs font-mono uppercase text-[var(--color-success)] font-bold tracking-wider">
+                  {t.industries.exampleLabel}
+                </span>
+                <h3 className="text-2xl sm:text-3xl font-semibold text-[var(--color-text-heading)]">{currentPreset.title}</h3>
+                <p className="text-[var(--color-text-muted)] text-base leading-relaxed font-medium">{currentPreset.description}</p>
+                
+                <div className="pt-6 border-t border-[var(--color-border)] grid sm:grid-cols-2 gap-4 text-base">
+                  <div className="p-4 rounded-[var(--radius-card)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)]">
+                    <span className="text-[var(--color-text-muted)] block mb-1 text-xs font-semibold">{t.industries.mainServiceLabel}</span>
+                    <span className="font-semibold text-[var(--color-text-heading)]">{currentPreset.mainService}</span>
+                  </div>
+                  <div className="p-4 rounded-[var(--radius-card)] bg-[var(--color-primary-light)] border border-[var(--color-primary)]">
+                    <span className="text-[var(--color-primary)] block mb-1 text-xs font-bold">{t.industries.extraServiceLabel}</span>
+                    <span className="font-semibold text-[var(--color-text-heading)]">{currentPreset.extraService}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* ── 10. Tabela de Preços ── */}
+        <section id="precos" className="py-20 border-t border-b border-[var(--color-border)] bg-[var(--color-bg)] relative">
+          <div className="max-w-7xl mx-auto px-4 sm:px-8">
+            
+            <div className="text-center max-w-3xl mx-auto mb-14">
+              <span className="text-xs font-mono font-bold uppercase tracking-widest text-[var(--color-text-muted)] bg-[var(--color-bg-muted)] px-3.5 py-1 rounded-full border border-[var(--color-border)]">
                 {t.pricing.pill}
               </span>
-              <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-stone-900 mt-3 mb-3">
+              <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight text-[var(--color-text-heading)] mt-3 mb-3">
                 {t.pricing.title}
               </h2>
-              <p className="text-stone-600 text-base sm:text-lg font-medium">
+              <p className="text-[var(--color-text-muted)] text-base sm:text-lg font-medium">
                 {t.pricing.sub}
               </p>
 
               {/* Billing Toggle */}
-              <div className="inline-flex items-center bg-white p-1.5 rounded-full border border-stone-200 mt-8 shadow-sm">
+              <div className="inline-flex items-center bg-[var(--color-bg-muted)] p-1.5 rounded-full border border-[var(--color-border)] mt-8 shadow-inner">
                 <button
+                  type="button"
                   onClick={() => setBillingCycle("monthly")}
-                  className={`px-6 py-2.5 rounded-full text-xs sm:text-sm font-bold transition-all ${
-                    billingCycle === "monthly" ? "bg-stone-900 text-white shadow-sm" : "text-stone-600"
+                  className={`btn-tactile px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all ${
+                    billingCycle === "monthly" ? "bg-[var(--color-bg)] text-[var(--color-text-heading)] shadow-xs font-semibold" : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
                   }`}
                 >
                   {t.pricing.monthly}
                 </button>
                 <button
+                  type="button"
                   onClick={() => setBillingCycle("annual")}
-                  className={`px-6 py-2.5 rounded-full text-xs sm:text-sm font-bold transition-all ${
-                    billingCycle === "annual" ? "bg-stone-900 text-white shadow-sm" : "text-stone-600"
+                  className={`btn-tactile px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 ${
+                    billingCycle === "annual" ? "bg-[var(--color-navy)] text-white shadow-xs font-semibold" : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
                   }`}
                 >
-                  {t.pricing.annual}
+                  <span>{t.pricing.annual}</span>
+                  <span className="text-[var(--text-2xs)] bg-[var(--color-success-light)] text-[var(--color-success)] px-2 py-0.5 rounded-full font-semibold">
+                    -20%
+                  </span>
                 </button>
               </div>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-8 xl:gap-10 max-w-[1400px] mx-auto items-stretch">
+            <div className="grid lg:grid-cols-3 gap-6 items-stretch">
               {plans.map((plan, idx) => {
                 const featured = plans.length >= 3 ? idx === 1 : idx === 0;
                 const isFree = plan.priceMonthly <= 0 && plan.priceYearly <= 0;
                 const isAnnual = billingCycle === "annual";
-                // No anual, mostra o mensal-equivalente (priceYearly ÷ 12) com
-                // período "/ mês" e a nota "cobrado anualmente". No mensal,
-                // mostra priceMonthly.
                 const shownPrice = isAnnual ? plan.priceYearly / 12 : plan.priceMonthly;
                 const priceLabel = isFree
                   ? t.pricing.starter.price
                   : formatPlanPrice(shownPrice, billingCurrency, lang);
                 const periodLabel = isFree ? t.pricing.starter.period : t.pricing.pro.period;
-                // Desconto anual vs. 12x o mensal (só quando há economia real)
                 const annualDiscount =
                   !isFree && plan.priceMonthly > 0 && plan.priceYearly < plan.priceMonthly * 12
                     ? Math.round((1 - plan.priceYearly / (plan.priceMonthly * 12)) * 100)
@@ -1019,37 +1281,37 @@ export default function LandingClient({
                     key={plan.id}
                     className={
                       featured
-                        ? "p-8 sm:p-10 rounded-3xl bg-stone-900 text-white border-2 border-stone-900 shadow-2xl flex flex-col justify-between relative scale-105"
-                        : "p-8 sm:p-10 rounded-3xl bg-white border border-stone-200 flex flex-col justify-between shadow-sm"
+                        ? "card-tactile p-8 rounded-[var(--radius-panel)] bg-[var(--color-navy)] text-white shadow-2xl flex flex-col justify-between relative lg:scale-105 border-2 border-[var(--color-navy)]"
+                        : "card-tactile p-8 rounded-[var(--radius-panel)] bg-[var(--color-bg)] border border-[var(--color-border)] flex flex-col justify-between shadow-xs hover:border-[var(--color-border-strong)]"
                     }
                   >
                     {featured && (
-                      <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-wider shadow-sm">
+                      <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[var(--color-success)] text-[var(--color-text-heading)] text-[var(--text-2xs)] font-semibold px-4 py-1 rounded-full uppercase tracking-wider shadow-md">
                         {t.pricing.badgePopular}
                       </span>
                     )}
                     <div className="space-y-4">
-                      <h3 className={`font-bold text-2xl ${featured ? "text-white" : "text-stone-900"}`}>
+                      <h3 className={`font-semibold text-2xl ${featured ? "text-white" : "text-[var(--color-text-heading)]"}`}>
                         {plan.displayName}
                       </h3>
-                      <p className={`text-sm font-medium ${featured ? "text-stone-400" : "text-stone-500"}`}>
+                      <p className={`text-xs sm:text-sm font-medium ${featured ? "text-[var(--color-text-subtle)]" : "text-[var(--color-text-muted)]"}`}>
                         {plan.description}
                       </p>
                       <div className="my-6">
-                        <span className={`font-extrabold ${featured ? "text-6xl font-black text-white" : "text-5xl text-stone-900"}`}>
+                        <span className={`font-semibold ${featured ? "text-5xl text-white" : "text-4xl text-[var(--color-text-heading)]"}`}>
                           {priceLabel}
                         </span>
-                        <span className={`text-sm font-bold ${featured ? "text-stone-400" : "text-stone-500"}`}>
+                        <span className={`text-xs font-bold ${featured ? "text-[var(--color-text-subtle)]" : "text-[var(--color-text-muted)]"}`}>
                           {periodLabel}
                         </span>
                         {isAnnual && !isFree && (
-                          <span className={`block mt-1 text-xs font-medium ${featured ? "text-emerald-400" : "text-emerald-600"}`}>
+                          <span className={`block mt-1 text-xs font-bold ${featured ? "text-[var(--color-success)]" : "text-[var(--color-success)]"}`}>
                             {BILLED_ANNUALLY[lang] ?? "cobrado anualmente"}
                             {annualDiscount > 0 && ` · ${(ECONOMY_LABEL[lang] ?? "economize {n}%").replace("{n}", String(annualDiscount))}`}
                           </span>
                         )}
                       </div>
-                      <ul className={`space-y-3.5 text-sm sm:text-base font-medium ${featured ? "text-stone-200" : "text-stone-700"}`}>
+                      <ul className={`space-y-3 text-xs sm:text-sm font-medium ${featured ? "text-[var(--color-text-subtle)]" : "text-[var(--color-text)]"}`}>
                         {plan.features.map((it, i) => (
                           <li key={i} className="flex items-center gap-2.5"><Check /> {it}</li>
                         ))}
@@ -1059,8 +1321,8 @@ export default function LandingClient({
                       href="/register"
                       className={
                         featured
-                          ? "w-full text-center py-4.5 rounded-xl bg-white text-stone-900 text-sm font-extrabold hover:bg-stone-200 transition-all mt-10 shadow-md"
-                          : "w-full text-center py-4 rounded-xl border border-stone-300 text-sm font-bold text-stone-800 hover:bg-stone-100 transition-colors mt-10"
+                          ? "btn-tactile w-full text-center py-4 rounded-[var(--radius-card)] bg-[var(--color-bg)] text-[var(--color-text-heading)] text-sm font-semibold hover:bg-[var(--color-bg-muted)] mt-10 shadow-md"
+                          : "btn-tactile w-full text-center py-3.5 rounded-[var(--radius-card)] bg-[var(--color-navy)] text-white text-sm font-bold hover:bg-[var(--color-navy)] mt-10 shadow-2xs"
                       }
                     >
                       {isFree ? t.pricing.starter.btn : t.pricing.pro.btn}
@@ -1073,31 +1335,31 @@ export default function LandingClient({
           </div>
         </section>
 
-        {/* ── 8. FAQ Accordion Ultrawide ── */}
-        <section id="faq" className="py-24 border-b border-stone-200/80 bg-white">
-          <div className="max-w-[1760px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
+        {/* ── 11. FAQ Accordion ── */}
+        <section id="faq" className="py-20 bg-[var(--color-bg-page)]">
+          <div className="max-w-4xl mx-auto px-4 sm:px-8">
             
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-stone-900 mb-3">
+            <div className="text-center max-w-2xl mx-auto mb-14">
+              <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight text-[var(--color-text-heading)] mb-3">
                 {t.faq.title}
               </h2>
-              <p className="text-stone-600 text-base sm:text-lg font-medium">
+              <p className="text-[var(--color-text-muted)] text-base sm:text-lg font-medium">
                 {t.faq.sub}
               </p>
             </div>
 
-            <div className="space-y-4 max-w-5xl mx-auto">
+            <div className="space-y-3.5">
               {t.faq.items.map((faq: any, idx: number) => (
-                <div key={idx} className="border border-stone-200 rounded-2xl overflow-hidden bg-stone-50/50">
+                <div key={idx} className="border border-[var(--color-border)] rounded-[var(--radius-card)] overflow-hidden bg-[var(--color-bg)] shadow-2xs card-tactile">
                   <button
                     onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
-                    className="w-full text-left p-6 sm:p-7 text-lg font-bold text-stone-900 flex justify-between items-center gap-4 hover:bg-stone-100/60 transition-colors"
+                    className="w-full text-left p-6 text-base sm:text-lg font-semibold text-[var(--color-text-heading)] flex justify-between items-center gap-4 hover:bg-[var(--color-bg-subtle)] transition-colors"
                   >
                     <span>{faq.q}</span>
-                    <span className="text-stone-400 text-2xl font-normal">{activeFaq === idx ? "−" : "+"}</span>
+                    <span className="text-[var(--color-text-subtle)] text-xl font-mono">{activeFaq === idx ? "−" : "+"}</span>
                   </button>
                   {activeFaq === idx && (
-                    <div className="p-7 pt-2 text-base text-stone-600 leading-relaxed font-medium border-t border-stone-200/60 bg-white">
+                    <div className="p-6 pt-1 text-xs sm:text-sm text-[var(--color-text-muted)] leading-relaxed font-medium border-t border-[var(--color-border)] bg-[var(--color-bg-subtle)] animate-in fade-in duration-200">
                       {faq.a}
                     </div>
                   )}
@@ -1108,49 +1370,78 @@ export default function LandingClient({
           </div>
         </section>
 
-        {/* ── 9. CTA Final Ultrawide ── */}
-        <section className="py-28 text-center relative bg-stone-900 text-white overflow-hidden">
-          <div className="max-w-[1760px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 relative z-10 space-y-6">
-            <h2 className="text-3xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight max-w-5xl mx-auto">
+        {/* ── 12. CTA Final (Contrast Box) ── */}
+        <section className="py-12 px-4 sm:px-8">
+          <div className="max-w-5xl mx-auto rounded-[var(--radius-panel)] bg-[var(--color-navy)] text-white p-10 sm:p-16 text-center space-y-6 shadow-2xl relative overflow-hidden">
+            <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight text-white leading-tight">
               {t.cta.title}
             </h2>
-            <p className="text-stone-300 text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed font-medium">
+            <p className="text-[var(--color-text-subtle)] text-base sm:text-lg max-w-2xl mx-auto leading-relaxed font-medium">
               {t.cta.sub}
             </p>
-            <div className="pt-6 flex flex-col sm:flex-row justify-center items-center gap-4">
+            <div className="pt-4 flex flex-col sm:flex-row justify-center items-center gap-4">
               <Link
                 href="/register"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-12 py-5 rounded-full text-base font-bold bg-white text-stone-900 hover:bg-stone-200 transition-all hover:scale-105 shadow-xl"
+                className="btn-tactile w-full sm:w-auto inline-flex items-center justify-center gap-2 px-10 py-4.5 rounded-full text-base font-semibold bg-[var(--color-bg)] text-[var(--color-text-heading)] hover:bg-[var(--color-bg-muted)] shadow-md"
               >
                 <span>{t.cta.primaryBtn}</span>
                 <ArrowRight />
               </Link>
               <Link
                 href="/login"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-10 py-5 rounded-full text-base font-bold bg-stone-800 text-white border border-stone-700 hover:bg-stone-700 transition-all"
+                className="btn-tactile w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4.5 rounded-full text-base font-bold bg-[var(--color-bg)] text-white border border-white/20 hover:bg-[var(--color-bg)]"
               >
                 <span>{t.cta.loginBtn}</span>
               </Link>
             </div>
+            <p className="text-xs text-[var(--color-text-subtle)] font-medium pt-2">
+              {t.hero.frictionFree}
+            </p>
           </div>
         </section>
       </main>
 
-      {/* ── 10. Footer Minimalista Ultrawide ── */}
-      <footer className="border-t border-stone-200/80 py-12 bg-white text-xs sm:text-sm font-medium text-stone-500">
-        <div className="max-w-[1760px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <Link href="/">
-            <KreatorLogo size={28} textClassName="font-bold text-stone-900 text-base" />
+      {/* ── 13. Floating Sticky Mobile CTA Dock ── */}
+      {showStickyCta && (
+        <div className="dock-mobile bg-[var(--color-bg)] backdrop-blur-xl border border-[var(--color-border)] p-3.5 sm:hidden z-50 animate-in slide-in-from-bottom duration-300 flex items-center justify-between gap-3 shadow-xl">
+          <div className="min-w-0 flex-1 pl-1">
+            <p className="text-xs font-semibold text-[var(--color-text-heading)] truncate">Kreator Agendamentos</p>
+            <p className="text-[var(--text-2xs)] text-[var(--color-success)] font-bold">100% Grátis para Começar</p>
+          </div>
+          <Link
+            href="/register"
+            className="btn-tactile px-5 py-2.5 rounded-full bg-[var(--color-navy)] text-white font-semibold text-xs shadow-xs shrink-0 flex items-center gap-1.5"
+          >
+            <span>{t.nav.createBusiness}</span>
+            <ArrowRight />
+          </Link>
+        </div>
+      )}
+
+      {/* ── 14. Footer ── */}
+      <footer className="border-t border-[var(--color-border)] py-12 bg-[var(--color-bg-muted)] text-xs sm:text-sm font-medium text-[var(--color-text-muted)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <Link href="/" aria-label="Kreator Início">
+            <KreatorLogo size={28} textClassName="font-semibold text-[var(--color-text-heading)] text-base" />
           </Link>
 
-          <div className="flex flex-wrap items-center justify-center gap-8 text-sm font-semibold text-stone-600">
-            <a href="#como-funciona" className="hover:text-stone-900 transition-colors">{t.nav.howItWorks}</a>
-            <a href="#recursos" className="hover:text-stone-900 transition-colors">{t.nav.features}</a>
-            <a href="#precos" className="hover:text-stone-900 transition-colors">{t.nav.pricing}</a>
-            <a href="#faq" className="hover:text-stone-900 transition-colors">{t.nav.faq}</a>
+          <div className="flex flex-wrap items-center justify-center gap-6 text-xs sm:text-sm font-semibold text-[var(--color-text-muted)]">
+            <a href="#como-funciona" className="hover:text-[var(--color-text-heading)] transition-colors">{t.nav.howItWorks}</a>
+            <a href="#recursos" className="hover:text-[var(--color-text-heading)] transition-colors">{t.nav.features}</a>
+            <a href="#precos" className="hover:text-[var(--color-text-heading)] transition-colors">{t.nav.pricing}</a>
+            <a href="#faq" className="hover:text-[var(--color-text-heading)] transition-colors">{t.nav.faq}</a>
+            <Link href="/empresas" className="hover:text-[var(--color-text-heading)] transition-colors">
+              {t.footer.directory}
+            </Link>
+            <Link href="/privacidade" className="hover:text-[var(--color-text-heading)] transition-colors">
+              {t.footer.privacy}
+            </Link>
+            <Link href="/termos" className="hover:text-[var(--color-text-heading)] transition-colors">
+              {t.footer.terms}
+            </Link>
           </div>
 
-          <p className="text-stone-500 font-semibold">{t.footer.rights}</p>
+          <p className="text-[var(--color-text-muted)] font-semibold">{t.footer.rights}</p>
         </div>
       </footer>
 

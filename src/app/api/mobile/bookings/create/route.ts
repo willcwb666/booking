@@ -4,7 +4,7 @@ import { encrypt } from "@/lib/encrypt";
 import { notifyBookingConfirmed, notifyCompanyNewBooking } from "@/lib/notifications";
 import { getMobileSession } from "../../_auth";
 import { rateLimit } from "@/lib/rate-limit";
-import { isSlotAvailable } from "@/lib/agenda";
+import { isSlotAvailable, resolveProfessionalForSlot, slotProfessionalKey } from "@/lib/agenda";
 
 export async function POST(req: NextRequest) {
   const session = await getMobileSession(req);
@@ -113,6 +113,14 @@ export async function POST(req: NextRequest) {
   const paymentMethod = "CASH_CHECK";
   const accessNote = accessNotePlain ? encrypt(accessNotePlain) : null;
 
+  // Sem profissional atribuído, todos os agendamentos do app disputariam a
+  // mesma chave de slot e só um por horário passaria na agenda inteira.
+  const professionalId = await resolveProfessionalForSlot(
+    agendaId,
+    scheduledDate,
+    scheduledStartTime
+  );
+
   try {
     const booking = await db.$transaction(async (tx) => {
       const newBooking = await tx.booking.create({
@@ -121,6 +129,7 @@ export async function POST(req: NextRequest) {
           estimateId,
           bookingConfigId: estimate.bookingConfigId,
           agendaId,
+          professionalId,
           scheduledDate,
           scheduledStartTime,
           scheduledEndTime,
@@ -138,6 +147,7 @@ export async function POST(req: NextRequest) {
           date: scheduledDate,
           startTime: scheduledStartTime,
           endTime: scheduledEndTime,
+          professionalId: slotProfessionalKey(professionalId),
         },
       });
 

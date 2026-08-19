@@ -4,7 +4,81 @@ Todas as alterações notáveis, novas funcionalidades, melhorias de UX/UI e cor
 
 ---
 
-## 🟢 [v3.3.0] - 2026-07-26 (Release Atual - Política de Faltas No-Show & Remarcações)
+## 🟢 [v3.5.0] - 2026-08-18 (Release Atual - Inovações Operacionais, Ghost Slot Buster, VIP Experience, Dynamic Return Anchor & Check-in Inteligente)
+### 🚀 Suíte de Otimização Operacional, Retenção Avançada e Check-in Geofenciado
+
+- **📍 Sistema de Check-in Inteligente com Geofencing & Janela Temporal (`src/server/actions/checkin.ts` & `src/app/checkin/[bookingId]`)**:
+  - **Validação Dupla**: Janela de horário (-15 min até +30 min) e proximidade geográfica por GPS (até 250 metros).
+  - **Motor Geodésico de Haversine (`src/lib/geo/haversine.ts`)**: Cálculo preciso no servidor com descarte de coordenadas brutas (100% LGPD compliant).
+  - **Assinatura Criptográfica HMAC-SHA256 (`src/lib/security/signed-token.ts`)**: Links protegidos contra fraude e spoofing com expiração temporal automática.
+  - **Interface Mobile Intuitiva**: Tela de 1-toque com botão de confirmação e modo de teste/simulação integrado.
+
+- **⚡ Ghost Slot Buster - Preenchimento de Desistências de Última Hora (`src/lib/agenda/ghost-slot-buster.ts` & `GhostSlotBanner`)**:
+  - Detecção automática de cancelamentos ocorridos com menos de 3 horas de antecedência.
+  - Aplicação de desconto relâmpago dinâmico (15% a 25% OFF) para preenchimento imediato da cadeira ociosa.
+  - Banner pulsante de destaque no topo da vitrine pública de agendamentos (`/book/[companySlug]`).
+
+- **🤫 Silent Mode & Preferências de Atendimento VIP (`src/lib/experience/vip-preferences.ts` & `VIPExperienceSelector`)**:
+  - Escolha personalizada de experiência: **Modo Silencioso/Foco**, **Bebida de Boas-Vindas na Recepção** (Café, Água, Cerveja) e **Cuidados Especiais/Sensibilidade de Pele**.
+  - Exibição da ficha VIP para o profissional antes do início do atendimento.
+
+- **🔁 Dynamic Return Anchor - Garantia de Reagendamento Pós-Atendimento (`src/lib/agenda/return-anchor.ts` & `ReturnAnchorCard`)**:
+  - Cálculo automático da cadência ideal de retorno por tipo de serviço (ex: 14 dias para barba/manicure, 21 dias para corte, 30 dias para estética).
+  - Card integrado na confirmação pós-atendimento (`/obrigado`) com botão de reserva do próximo mês com 10% OFF garantido.
+
+- **🔀 Parallel Resource Buffer - Otimização de Recursos em Etapas (`src/lib/agenda/parallel-buffer.ts`)**:
+  - Fatiamento de serviços complexos em etapas (Cadeira Principal vs Lavatório/Área Técnica).
+  - Detecção de janelas de liberação da cadeira para encaixe de atendimentos expressos durante pausas químicas.
+
+- **📋 Catálogo Oficial de Add-ons & Exportação para PDF (`/admin/modulos/catalogo`)**:
+  - **Apresentação Comercial Executiva**: Tela completa com visualização de todos os 14 add-ons disponíveis, descrição de benefícios, ticket médio e tabela comparativa de investimento (mensal vs vitalício).
+  - **Exportação em PDF / Impressão Comercial**: Layout com `@media print` estilizado para gerar propostas comerciais limpas em PDF com 1 clique para apresentações a clientes e leads.
+  - **Padronização Visual de Ícones (`src/components/ui/icons.tsx` & `ModuleIcon`)**: Mapeamento semântico unificado de todos os ícones de ação (`DollarSign` para financeiro/split, `Tag` para promoções, `Award` para fidelidade, `MapPin` para geofencing, `Pencil`, `Trash2`, `GripVertical`), eliminando SVGs inconsistentes.
+
+---
+
+## 🟢 [v3.4.0] - 2026-08-18 (Suíte Completa de SEO, Conversão, Cases, Mapas & Compliance)
+### 🚀 Suíte de Alto Impacto para SEO, Conversão de Vendas, Confirmações e Proteção de Dados
+
+- **📄 Páginas Novas & Compliance Legal**:
+  - **Página de Erro 404 Interativa (`src/app/not-found.tsx`)**: Layout amigável e limpo com caixa de busca, links rápidos para início, diretório de serviços e suporte.
+  - **Página de Obrigado & Confirmação Universal (`src/app/obrigado/page.tsx`)**: Confirmação instantânea pós-agendamento com botões "Adicionar ao Google Agenda", download de `.ics` (Apple Calendar/Outlook), envio de comprovante via WhatsApp, rotas e recibo digital.
+  - **Política de Privacidade (`src/app/privacidade/page.tsx`)**: Conformidade integral com LGPD e GDPR, detalhando finalidades de tratamento, direitos do titular e contato do DPO.
+  - **Termos de Uso do Serviço (`src/app/termos/page.tsx`)**: Regras de serviço, agendamentos, cancelamentos e responsabilidades jurídicas.
+
+- **🗺️ Módulo de Mapas & Rotas em 1 Toque (`CompanyMapRoutes`)**:
+  - Componente integrado nas páginas públicas (`src/components/ui/company-map-routes.tsx`) com embed interativo do Google Maps e botões diretos de navegação para **Google Maps**, **Waze** e **Apple Maps**.
+
+- **🔗 Links Personalizados & Compartilhamento Social (`CustomLinkShare`)**:
+  - Widget de compartilhamento (`src/components/ui/custom-link-share.tsx`) com botão de cópia de slug em 1 toque, feedback visual com toast e atalhos diretos para WhatsApp, Telegram e Twitter.
+
+- **📈 Sessão de Cases de Sucesso & Avaliações Reais**:
+  - Adicionada seção de cases de sucesso na landing page principal em 6 idiomas (Português, Inglês, Espanhol, Italiano, Francês, Alemão) destacando métricas comprovadas (+47% faturamento, 0% no-shows, 30h economizadas).
+  - Grid de avaliações verificadas de clientes com estrelas e depoimentos na landing page e integração dinâmica de avaliações reais vindas do banco de dados (`Review`) em `/[companySlug]`.
+
+- **⚡ Garantia de Tempo de Resposta (SLA) & CTA Fixo Mobile**:
+  - Bloco de garantias de resposta rápida (confirmação imediata 24/7, lembretes pontuais via WhatsApp e suporte técnico em até 15 minutos).
+  - Barra de CTA flutuante inferior no mobile com detecção de rolagem para retenção e conversão contínua.
+
+- **🔍 SEO Estruturado, Schema.org JSON-LD, Robots & Sitemap**:
+  - Injeção de marcações Schema.org (`Organization`, `SoftwareApplication`, `LocalBusiness`, `FAQPage` e `BreadcrumbList`) em formato JSON-LD.
+  - Configuração de template de títulos dinâmicos (`title.template: "%s | Kreator"`), meta descriptions exclusivas e metadados Open Graph / Twitter Cards.
+  - Gerador dinâmico de imagem de preview para redes sociais (`src/app/opengraph-image.tsx`) via `next/og`.
+  - Geração automática de `robots.txt` (`src/app/robots.ts`) e `sitemap.xml` dinâmico (`src/app/sitemap.ts`) indexando todas as rotas públicas e páginas de empresas ativas.
+
+- **📊 Integração Google Analytics (GA4)**:
+  - Componente `GoogleAnalytics` assíncrono via `next/script` com suporte a `NEXT_PUBLIC_GA_ID` e helper de despacho de eventos.
+
+- **🐛 Correções de Bugs & Ajustes Técnicos**:
+  - **[BUG] Erro de validação do Prisma no login com Google / Session (`Unknown argument client`)**: O Prisma Client gerado em `src/generated/prisma` estava desatualizado em relação aos campos `client` e `lastActivityAt` adicionados ao model `Session`. Executado `prisma generate` e `prisma db push` para sincronização completa do banco de dados e do client TypeScript.
+  - **[BUG] Aviso de scroll suave no Next.js (`missing-data-scroll-behavior`)**: Adicionado o atributo `data-scroll-behavior="smooth"` no elemento `<html>` em [`src/app/layout.tsx`](file:///d:/projetos/booking/src/app/layout.tsx) para conformidade com o Next.js durante transições de rota.
+  - **[BUG] Metadados genéricos em páginas filhas**: Rotas como `/empresas`, `/login`, `/register` e perfis de empresa compartilhavam o título estático do root layout. Corrigido com `generateMetadata` dinâmico e `metadata` dedicado em cada página.
+  - **[BUG] Risco de indexação de dados pessoais (PII) em recibos**: Recibos digitais (`/receipt/[bookingId]`) não possuíam diretiva contra indexação de motores de busca. Adicionado `robots: { index: false, follow: false }` para proteção de privacidade.
+  - **[BUG] Ausência de textos alternativos em ícones/logos**: Imagens e SVGs sem descrição foram auditados e receberam atributos `alt` contextuais e `aria-hidden="true"` / `aria-label` para acessibilidade.
+
+---
+
+## 🟢 [v3.3.0] - 2026-07-26 (Política de Faltas No-Show & Remarcações)
 ### 🛑 Gestão Inteligente de Faltas (No-Show) & Regra Dinâmica de Antecedência para Remarcação
 
 - **🛑 Registro Inteligente de Faltas (`markBookingNoShowAction`)**:

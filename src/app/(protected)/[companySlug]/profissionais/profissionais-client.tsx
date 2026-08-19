@@ -76,14 +76,14 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs">
+          <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs">
             <User className="w-4 h-4" />
             <span>Equipe & Profissionais</span>
           </div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">
+          <h1 className="text-2xl font-semibold text-[var(--color-text-heading)] tracking-tight mt-1">
             Profissionais Atendentes
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">
             {limit !== null
               ? `${professionals.length} de ${limit} profissionais ativos no plano atual.`
               : `${professionals.length} profissional(is) ativo(s) cadastrado(s).`}
@@ -92,7 +92,7 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
 
         <Link
           href={`/${companySlug}/profissionais/novo`}
-          className={`px-6 py-3 bg-[#635bff] hover:bg-[#544dc9] text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer inline-flex items-center gap-2 shrink-0 uppercase ${
+          className={`px-6 py-3 bg-[#635bff] hover:bg-[#544dc9] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer inline-flex items-center gap-2 shrink-0 uppercase ${
             atLimit ? "opacity-50 pointer-events-none" : ""
           }`}
         >
@@ -102,16 +102,16 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
       </div>
 
       {atLimit && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs font-bold text-amber-900">
+        <div className="bg-[var(--color-warning-light)] border border-[var(--color-warning-border)] rounded-[var(--radius-card)] p-4 text-xs font-bold text-[var(--color-warning)]">
           ⚠️ Limite de {limit} profissional(is) atingido no seu plano. Faça upgrade para adicionar mais profissionais.
         </div>
       )}
 
       {/* Tabela de Profissionais */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-4 shadow-xs">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <h2 className="text-base font-extrabold text-slate-900">Lista de Profissionais Cadastrados</h2>
-          <span className="text-xs text-slate-500 font-medium">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-6 sm:p-8 space-y-4 shadow-xs">
+        <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
+          <h2 className="text-base font-semibold text-[var(--color-text-heading)]">Lista de Profissionais Cadastrados</h2>
+          <span className="text-xs text-[var(--color-text-muted)] font-medium">
             Total: {professionals.length}
           </span>
         </div>
@@ -119,36 +119,36 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
             <thead>
-              <tr className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200/80">
+              <tr className="bg-[var(--color-bg-subtle)] text-[var(--color-text-muted)] font-bold border-b border-[var(--color-border)]">
                 <th className="px-4 py-3">Profissional / Cargo</th>
                 <th className="px-4 py-3">Contato (E-mail / WhatsApp)</th>
                 <th className="px-4 py-3 text-center">Comissão</th>
                 <th className="px-4 py-3 text-right">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-medium">
+            <tbody className="divide-y divide-[var(--color-border)] font-medium">
               {professionals.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-10 text-slate-400">
+                  <td colSpan={4} className="text-center py-10 text-[var(--color-text-subtle)]">
                     Nenhum profissional cadastrado. Clique no botão acima para adicionar!
                   </td>
                 </tr>
               ) : (
                 paginatedProfessionals.map((pro) => (
-                  <tr key={pro.id} className="hover:bg-slate-50/60 transition-colors">
+                  <tr key={pro.id} className="hover:bg-[var(--color-bg-subtle)] transition-colors">
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-700 font-extrabold flex items-center justify-center text-xs shrink-0">
+                        <div className="w-9 h-9 rounded-[var(--radius-card)] bg-[var(--color-primary-light)] border border-[var(--color-primary)] text-[var(--color-primary)] font-semibold flex items-center justify-center text-xs shrink-0">
                           {pro.avatarUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={pro.avatarUrl} alt={pro.name} className="w-full h-full object-cover rounded-2xl" />
+                            <img src={pro.avatarUrl} alt={pro.name} className="w-full h-full object-cover rounded-[var(--radius-card)]" />
                           ) : (
                             pro.name[0].toUpperCase()
                           )}
                         </div>
                         <div>
-                          <p className="font-extrabold text-slate-900 text-sm">{pro.name}</p>
-                          <span className="text-[11px] font-semibold text-indigo-600 block">
+                          <p className="font-semibold text-[var(--color-text-heading)] text-sm">{pro.name}</p>
+                          <span className="text-[var(--text-2xs)] font-semibold text-[var(--color-primary)] block">
                             {pro.roleTitle || "Profissional Atendente"}
                           </span>
                         </div>
@@ -156,13 +156,13 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
                     </td>
 
                     <td className="px-4 py-3.5 space-y-0.5">
-                      <p className="text-slate-700 font-medium">{pro.email || "Sem e-mail"}</p>
-                      <p className="text-slate-400 font-mono text-[11px]">{pro.phone || "Sem telefone"}</p>
+                      <p className="text-[var(--color-text)] font-medium">{pro.email || "Sem e-mail"}</p>
+                      <p className="text-[var(--color-text-subtle)] font-mono text-[var(--text-2xs)]">{pro.phone || "Sem telefone"}</p>
                     </td>
 
                     <td className="px-4 py-3.5 text-center">
-                      <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full font-black text-[11px] inline-flex items-center gap-1">
-                        <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="bg-[var(--color-success-light)] text-[var(--color-success)] border border-[var(--color-success-border)] px-3 py-1 rounded-full font-semibold text-[var(--text-2xs)] inline-flex items-center gap-1">
+                        <DollarSign className="w-3.5 h-3.5 text-[var(--color-success)]" />
                         {pro.commissionRate !== undefined ? `${pro.commissionRate}%` : "Padrão"}
                       </span>
                     </td>
@@ -171,7 +171,7 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
                       <ActionTooltip label="Editar Profissional">
                         <Link
                           href={`/${companySlug}/profissionais/${pro.id}/editar`}
-                          className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-all inline-flex items-center justify-center shadow-2xs"
+                          className="p-2 bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)] font-bold text-xs rounded-[var(--radius-control)] transition-all inline-flex items-center justify-center shadow-2xs"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </Link>
@@ -182,7 +182,7 @@ export function ProfissionaisClient({ companySlug, professionals, limit }: Props
                           type="button"
                           onClick={() => handleDelete(pro.id, pro.name)}
                           disabled={isPending}
-                          className="p-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-xl transition-all inline-flex items-center justify-center cursor-pointer shadow-2xs"
+                          className="p-2 bg-[var(--color-danger-light)] hover:bg-[var(--color-danger-light)] text-[var(--color-danger)] font-bold text-xs rounded-[var(--radius-control)] transition-all inline-flex items-center justify-center cursor-pointer shadow-2xs"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>

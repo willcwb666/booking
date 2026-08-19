@@ -1,5 +1,8 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { assertPublicHttpsUrl } from "@/lib/ssrf";
+
+const MAX_ICAL_BYTES = 5 * 1024 * 1024; // 5 MB — evita download abusivo
 
 export type ParsedIcalEvent = {
   uid: string;
@@ -127,19 +130,31 @@ export async function syncIcalFeedToBooking(
       url = "https://" + url.slice(9);
     }
 
+    // Anti-SSRF: exige HTTPS e recusa destinos internos (a URL vem do usuário)
+    await assertPublicHttpsUrl(url);
+
     const res = await fetch(url, {
       headers: {
         "User-Agent": "KreatorBookingCalendarSync/2.0",
         Accept: "text/calendar, text/plain",
       },
       next: { revalidate: 0 },
+      signal: AbortSignal.timeout(10000), // 10s
     });
 
     if (!res.ok) {
       throw new Error(`Falha ao baixar feed iCal (${res.status} ${res.statusText})`);
     }
 
+    // Limite de tamanho — evita consumir memória com respostas gigantes
+    const declared = Number(res.headers.get("content-length") ?? 0);
+    if (declared > MAX_ICAL_BYTES) {
+      throw new Error("Feed iCal excede o tamanho máximo permitido");
+    }
     const text = await res.text();
+    if (text.length > MAX_ICAL_BYTES) {
+      throw new Error("Feed iCal excede o tamanho máximo permitido");
+    }
     const events = parseIcal(text);
 
     // Filtra eventos relevantes (dos últimos 2 dias até os próximos 45 dias)
@@ -190,8 +205,12 @@ export async function syncIcalFeedToBooking(
     });
 
     return { success: true, syncedCount: count };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[syncIcalFeedToBooking] Erro:", err);
-    return { success: false, syncedCount: 0, error: err.message || "Erro na sincronização iCal" };
+    return {
+      success: false,
+      syncedCount: 0,
+      error: err instanceof Error ? err.message : "Erro na sincronização iCal",
+    };
   }
 }

@@ -18,16 +18,16 @@ export function CustomersTab({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 space-y-6 shadow-xs">
-        <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-          <span className="p-2.5 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-6 space-y-6 shadow-xs">
+        <div className="flex items-center gap-3 border-b border-[var(--color-border)] pb-4">
+          <span className="p-2.5 rounded-[var(--radius-card)] bg-[var(--color-primary-light)] text-[var(--color-primary)] border border-[var(--color-primary)]">
             <Users className="w-5 h-5" />
           </span>
           <div>
-            <h2 className="text-base font-extrabold text-slate-900">
+            <h2 className="text-base font-semibold text-[var(--color-text-heading)]">
               Política de Clientes & Tolerância de Faltas (No-Show)
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[var(--color-text-muted)]">
               Configure o limite de faltas sem aviso prévio permitidas por cliente e as ações automáticas de proteção.
             </p>
           </div>
@@ -39,49 +39,49 @@ export function CustomersTab({
             type="button"
             disabled={!canEdit}
             onClick={() => onChangeMaxAllowedNoShows(2)}
-            className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer ${
+            className={`p-4 rounded-[var(--radius-card)] border-2 text-left transition-all cursor-pointer ${
               isDefault
-                ? "border-emerald-600 bg-emerald-50/60 shadow-xs"
-                : "border-slate-200 bg-white hover:border-slate-300"
+                ? "border-[var(--color-success-border)] bg-[var(--color-success-light)] shadow-xs"
+                : "border-[var(--color-border)] bg-[var(--color-bg)] hover:border-[var(--color-border-strong)]"
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-[var(--color-text-heading)] flex items-center gap-1.5">
                 ⚡ Tolerância Padrão (2 Faltas)
               </span>
-              <span className="px-2 py-0.5 bg-emerald-600 text-white rounded-full text-[9px] font-black uppercase">
+              <span className="px-2 py-0.5 bg-[var(--color-success)] text-white rounded-full text-[var(--text-2xs)] font-semibold uppercase">
                 Recomendada
               </span>
             </div>
-            <p className="text-[11px] text-slate-600 font-medium mt-1.5 leading-relaxed">
+            <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)] font-medium mt-1.5 leading-relaxed">
               Permite até 2 faltas não justificadas por cliente antes de bloquear agendamentos gratuitos e exigir sinal Pix/Cartão.
             </p>
           </button>
 
           <div
-            className={`p-4 rounded-2xl border-2 text-left transition-all ${
+            className={`p-4 rounded-[var(--radius-card)] border-2 text-left transition-all ${
               !isDefault
-                ? "border-slate-900 bg-slate-50 shadow-xs"
-                : "border-slate-200 bg-white"
+                ? "border-[var(--color-navy)] bg-[var(--color-bg-subtle)] shadow-xs"
+                : "border-[var(--color-border)] bg-[var(--color-bg)]"
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-[var(--color-text-heading)] flex items-center gap-1.5">
                 🛠️ Tolerância Personalizada
               </span>
-              <span className="px-2 py-0.5 bg-slate-200 text-slate-700 rounded-full text-[9px] font-bold uppercase">
+              <span className="px-2 py-0.5 bg-[var(--color-bg-muted)] text-[var(--color-text)] rounded-full text-[var(--text-2xs)] font-bold uppercase">
                 Customizável
               </span>
             </div>
-            <p className="text-[11px] text-slate-600 font-medium mt-1.5 leading-relaxed">
+            <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)] font-medium mt-1.5 leading-relaxed">
               Defina um limite de faltas mais rígido (1 falta) ou mais flexível (3+ faltas) nos campos abaixo.
             </p>
           </div>
         </div>
 
-        <div className="space-y-4 border-t border-slate-100 pt-4">
+        <div className="space-y-4 border-t border-[var(--color-border)] pt-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-slate-800">
+            <label className="block text-xs font-bold text-[var(--color-text)]">
               Limite de Faltas Sem Aviso Permitidas (No-Shows Max)
             </label>
             <div className="flex items-center gap-3">
@@ -92,37 +92,37 @@ export function CustomersTab({
                 value={maxAllowedNoShows}
                 onChange={(e) => onChangeMaxAllowedNoShows(Number(e.target.value) || 1)}
                 disabled={!canEdit}
-                className="w-32 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-extrabold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                className="w-32 px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-sm font-semibold text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
               />
-              <span className="text-xs text-slate-500 font-medium">faltas sem aviso acumuladas</span>
+              <span className="text-xs text-[var(--color-text-muted)] font-medium">faltas sem aviso acumuladas</span>
             </div>
-            <p className="text-[11px] text-slate-500 leading-relaxed pt-1">
+            <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)] leading-relaxed pt-1">
               Quando um cliente ultrapassar este número de faltas não justificadas, o sistema acionará automaticamente a regra de proteção.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-            <div className="bg-amber-50/60 p-4 rounded-2xl border border-amber-200/80 space-y-2">
-              <div className="flex items-center gap-2 text-amber-900 font-extrabold text-xs">
-                <AlertTriangle className="w-4 h-4 text-amber-600" />
+            <div className="bg-[var(--color-warning-light)] p-4 rounded-[var(--radius-card)] border border-[var(--color-warning-border)] space-y-2">
+              <div className="flex items-center gap-2 text-[var(--color-warning)] font-semibold text-xs">
+                <AlertTriangle className="w-4 h-4 text-[var(--color-warning)]" />
                 <span>Alerta no Painel Interno (Atendente)</span>
               </div>
-              <p className="text-xs text-amber-800/90 leading-relaxed">
+              <p className="text-xs text-[var(--color-warning)] leading-relaxed">
                 Ao selecionar o cliente em um novo agendamento, o sistema exibirá um aviso vermelho em destaque:
-                <strong className="block mt-1 font-bold text-amber-950">
+                <strong className="block mt-1 font-bold text-[var(--color-warning)]">
                   "⚠️ Atenção: Cliente com {maxAllowedNoShows} faltas sem aviso acumuladas."
                 </strong>
               </p>
             </div>
 
-            <div className="bg-indigo-50/60 p-4 rounded-2xl border border-indigo-200/80 space-y-2">
-              <div className="flex items-center gap-2 text-indigo-900 font-extrabold text-xs">
-                <ShieldCheck className="w-4 h-4 text-indigo-600" />
+            <div className="bg-[var(--color-primary-light)] p-4 rounded-[var(--radius-card)] border border-[var(--color-primary)] space-y-2">
+              <div className="flex items-center gap-2 text-[var(--color-text-heading)] font-semibold text-xs">
+                <ShieldCheck className="w-4 h-4 text-[var(--color-primary)]" />
                 <span>Proteção no Agendamento Público Online</span>
               </div>
-              <p className="text-xs text-indigo-800/90 leading-relaxed">
+              <p className="text-xs text-[var(--color-primary)] leading-relaxed">
                 Quando o cliente tentar agendar sozinho pelo portal público, o agendamento gratuito será bloqueado e o sistema
-                <strong className="block mt-1 font-bold text-indigo-950">
+                <strong className="block mt-1 font-bold text-[var(--color-text-heading)]">
                   exigirá pagamento/sinal prévio obrigatório
                 </strong> para confirmar a reserva.
               </p>

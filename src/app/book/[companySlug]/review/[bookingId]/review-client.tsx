@@ -33,9 +33,9 @@ function StarRating({
           onClick={() => onChange(star)}
           onMouseEnter={() => setHovered(star)}
           onMouseLeave={() => setHovered(0)}
-          className="text-3xl transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+          className="text-3xl transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-info)] rounded"
         >
-          <span className={display >= star ? "text-yellow-400" : "text-gray-200"}>★</span>
+          <span className={display >= star ? "text-[var(--color-warning)]" : "text-[var(--color-text-subtle)]"}>★</span>
         </button>
       ))}
     </div>
@@ -71,48 +71,48 @@ export function ReviewClient({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm max-w-md w-full p-8">
+    <div className="min-h-screen bg-[var(--color-bg-subtle)] flex items-center justify-center p-4">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-card)] border border-[var(--color-border)] shadow-sm max-w-md w-full p-8">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center mx-auto mb-3">
+          <div className="w-14 h-14 rounded-full bg-[var(--color-info)] flex items-center justify-center mx-auto mb-3">
             <span className="text-white text-xl font-bold">{companyName[0].toUpperCase()}</span>
           </div>
-          <h1 className="text-lg font-bold text-gray-900">{companyName}</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-lg font-bold text-[var(--color-text-heading)]">{companyName}</h1>
+          <p className="text-sm text-[var(--color-text-muted)] mt-1">
             Serviço em {scheduledDate.split("-").reverse().join("/")}
           </p>
           {serviceLabels.length > 0 && (
-            <p className="text-xs text-gray-400 mt-0.5">{serviceLabels[0]}</p>
+            <p className="text-xs text-[var(--color-text-subtle)] mt-0.5">{serviceLabels[0]}</p>
           )}
         </div>
 
         {submitted ? (
           <div className="text-center py-4">
             <div className="text-4xl mb-3">🎉</div>
-            <h2 className="text-base font-semibold text-gray-900 mb-1">
+            <h2 className="text-base font-semibold text-[var(--color-text-heading)] mb-1">
               Obrigado pela avaliação!
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-[var(--color-text-muted)]">
               Seu feedback ajuda {companyName} a melhorar cada vez mais.
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
-            <p className="text-center text-sm text-gray-700 mb-5">
+            <p className="text-center text-sm text-[var(--color-text)] mb-5">
               {customerFirstName ? `Olá, ${customerFirstName}! Como` : "Como"} foi seu
               atendimento?
             </p>
 
             <div className="flex flex-col items-center gap-2 mb-6">
               <StarRating value={rating} onChange={setRating} />
-              <p className="text-sm font-medium text-gray-600 h-5">
+              <p className="text-sm font-medium text-[var(--color-text-muted)] h-5">
                 {rating > 0 ? STAR_LABELS[rating] : ""}
               </p>
             </div>
 
             <div className="mb-5">
-              <label htmlFor="comment" className="block text-sm text-gray-600 mb-1.5">
+              <label htmlFor="comment" className="block text-sm text-[var(--color-text-muted)] mb-1.5">
                 Comentário (opcional)
               </label>
               <textarea
@@ -120,18 +120,18 @@ export function ReviewClient({
                 name="comment"
                 rows={3}
                 placeholder="Conte como foi sua experiência…"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)] resize-none"
               />
             </div>
 
             {error && (
-              <p role="alert" className="text-sm text-red-600 mb-3 text-center">{error}</p>
+              <p role="alert" className="text-sm text-[var(--color-danger)] mb-3 text-center">{error}</p>
             )}
 
             <button
               type="submit"
               disabled={pending || rating === 0}
-              className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full py-3 bg-[var(--color-info)] text-white font-semibold rounded-[var(--radius-control)] hover:bg-[var(--color-info)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {pending ? "Enviando…" : "Enviar avaliação"}
             </button>

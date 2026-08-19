@@ -1,5 +1,11 @@
 import { googleAuthEnabled } from "@/lib/auth";
 import RegisterClient from "./register-client";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Criar Conta Grátis — Cadastre sua Empresa",
+  description: "Crie sua conta em 2 minutos, personalize sua página de agendamentos e comece a receber reservas online.",
+};
 
 // Só aceita caminhos relativos internos — evita open redirect
 function safeCallbackUrl(url: string | undefined): string | null {

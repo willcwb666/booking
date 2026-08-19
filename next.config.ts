@@ -5,14 +5,17 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const isDev = process.env.NODE_ENV === "development";
 
-// CSP: Stripe.js (checkout), Google Fonts (Instrument Serif via <link>), R2/imagens externas.
+// CSP: Stripe.js (checkout) e R2/imagens externas.
+// As fontes são auto-hospedadas por `next/font`, então fonts.googleapis.com e
+// fonts.gstatic.com saíram da política — menos um terceiro autorizado a
+// injetar CSS e a ver o IP de cada visitante.
 // Em dev o React Refresh precisa de 'unsafe-eval' e o HMR de websocket.
 const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://js.stripe.com`,
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
-  "font-src 'self' data: https://fonts.gstatic.com",
+  "font-src 'self' data:",
   `connect-src 'self' https://api.stripe.com${isDev ? " ws:" : ""}`,
   "frame-src https://js.stripe.com https://hooks.stripe.com",
   "object-src 'none'",

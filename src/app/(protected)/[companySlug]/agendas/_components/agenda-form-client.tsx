@@ -37,7 +37,7 @@ type Props = {
 function FieldError({ errors, field }: { errors: Record<string, string[]> | null; field: string }) {
   const msgs = errors?.[field];
   if (!msgs?.length) return null;
-  return <p className="text-xs text-red-600 mt-1" role="alert">{msgs[0]}</p>;
+  return <p className="text-xs text-[var(--color-danger)] mt-1" role="alert">{msgs[0]}</p>;
 }
 
 export function AgendaFormClient({ companySlug, professionals, existing }: Props) {
@@ -92,19 +92,19 @@ export function AgendaFormClient({ companySlug, professionals, existing }: Props
         <button
           type="button"
           onClick={() => router.push(`/${companySlug}/agendas`)}
-          className="text-sm text-gray-400 hover:text-gray-700"
+          className="text-sm text-[var(--color-text-subtle)] hover:text-[var(--color-text)]"
           aria-label="Voltar para agendas"
         >
           ← Agendas
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-[var(--color-text-heading)]">
           {existing ? "Editar Agenda" : "Nova Agenda"}
         </h1>
       </div>
 
       {errors?.["_"] && (
-        <div className="mb-5 bg-red-50 border border-red-200 rounded-xl px-4 py-3" role="alert">
-          <p className="text-sm text-red-700">{errors["_"][0]}</p>
+        <div className="mb-5 bg-[var(--color-danger-light)] border border-[var(--color-danger-border)] rounded-[var(--radius-control)] px-4 py-3" role="alert">
+          <p className="text-sm text-[var(--color-danger)]">{errors["_"][0]}</p>
         </div>
       )}
 
@@ -118,8 +118,8 @@ export function AgendaFormClient({ companySlug, professionals, existing }: Props
         ))}
 
         {/* Name */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+        <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
+          <label htmlFor="name" className="block text-sm font-medium text-[var(--color-text)] mb-1">
             Nome da agenda <span aria-hidden="true">*</span>
           </label>
           <input
@@ -129,17 +129,17 @@ export function AgendaFormClient({ companySlug, professionals, existing }: Props
             required
             autoFocus
             defaultValue={existing?.name ?? ""}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-[var(--color-border-strong)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
           />
           <FieldError errors={errors} field="name" />
         </div>
 
         {/* Dates */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <p className="text-sm font-medium text-gray-700 mb-3">Período</p>
+        <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
+          <p className="text-sm font-medium text-[var(--color-text)] mb-3">Período</p>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="startDate" className="block text-xs text-gray-500 mb-1">
+              <label htmlFor="startDate" className="block text-xs text-[var(--color-text-muted)] mb-1">
                 Início <span aria-hidden="true">*</span>
               </label>
               <input
@@ -148,12 +148,12 @@ export function AgendaFormClient({ companySlug, professionals, existing }: Props
                 type="date"
                 required
                 defaultValue={existing?.startDate ?? ""}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-[var(--color-border-strong)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
               />
               <FieldError errors={errors} field="startDate" />
             </div>
             <div>
-              <label htmlFor="endDate" className="block text-xs text-gray-500 mb-1">
+              <label htmlFor="endDate" className="block text-xs text-[var(--color-text-muted)] mb-1">
                 Término (opcional)
               </label>
               <input
@@ -161,7 +161,7 @@ export function AgendaFormClient({ companySlug, professionals, existing }: Props
                 name="endDate"
                 type="date"
                 defaultValue={existing?.endDate ?? ""}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-[var(--color-border-strong)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
               />
               <FieldError errors={errors} field="endDate" />
             </div>
@@ -169,9 +169,9 @@ export function AgendaFormClient({ companySlug, professionals, existing }: Props
         </div>
 
         {/* Working days */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
           <fieldset>
-            <legend id="days-legend" className="text-sm font-medium text-gray-700 mb-3">
+            <legend id="days-legend" className="text-sm font-medium text-[var(--color-text)] mb-3">
               Dias de trabalho <span aria-hidden="true">*</span>
             </legend>
             <div className="flex gap-2 flex-wrap" role="group" aria-labelledby="days-legend">
@@ -184,10 +184,10 @@ export function AgendaFormClient({ companySlug, professionals, existing }: Props
                     onClick={() => toggleDay(value)}
                     aria-pressed={checked}
                     aria-label={label}
-                    className={`w-12 h-12 rounded-lg text-sm font-medium border-2 transition-colors ${
+                    className={`w-12 h-12 rounded-[var(--radius-control)] text-sm font-medium border-2 transition-colors ${
                       checked
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
+                        ? "bg-[var(--color-info)] text-white border-[var(--color-info-border)]"
+                        : "bg-[var(--color-bg)] text-[var(--color-text-muted)] border-[var(--color-border)] hover:border-[var(--color-info-border)]"
                     }`}
                   >
                     {label}
@@ -200,11 +200,11 @@ export function AgendaFormClient({ companySlug, professionals, existing }: Props
         </div>
 
         {/* Times */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <p className="text-sm font-medium text-gray-700 mb-3">Horário de funcionamento</p>
+        <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
+          <p className="text-sm font-medium text-[var(--color-text)] mb-3">Horário de funcionamento</p>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label htmlFor="startTime" className="block text-xs text-gray-500 mb-1">
+              <label htmlFor="startTime" className="block text-xs text-[var(--color-text-muted)] mb-1">
                 Início <span aria-hidden="true">*</span>
               </label>
               <input
@@ -213,12 +213,12 @@ export function AgendaFormClient({ companySlug, professionals, existing }: Props
                 type="time"
                 required
                 defaultValue={existing?.startTime ?? "09:00"}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-[var(--color-border-strong)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
               />
               <FieldError errors={errors} field="startTime" />
             </div>
             <div>
-              <label htmlFor="endTime" className="block text-xs text-gray-500 mb-1">
+              <label htmlFor="endTime" className="block text-xs text-[var(--color-text-muted)] mb-1">
                 Término <span aria-hidden="true">*</span>
               </label>
               <input
@@ -227,12 +227,12 @@ export function AgendaFormClient({ companySlug, professionals, existing }: Props
                 type="time"
                 required
                 defaultValue={existing?.endTime ?? "18:00"}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-[var(--color-border-strong)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
               />
               <FieldError errors={errors} field="endTime" />
             </div>
             <div>
-              <label htmlFor="intervalMinutes" className="block text-xs text-gray-500 mb-1">
+              <label htmlFor="intervalMinutes" className="block text-xs text-[var(--color-text-muted)] mb-1">
                 Intervalo <span aria-hidden="true">*</span>
               </label>
               <select
@@ -240,7 +240,7 @@ export function AgendaFormClient({ companySlug, professionals, existing }: Props
                 name="intervalMinutes"
                 required
                 defaultValue={existing?.intervalMinutes ?? 60}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full border border-[var(--color-border-strong)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)] bg-[var(--color-bg)]"
               >
                 <option value={30}>30 min</option>
                 <option value={60}>1 hora</option>
@@ -251,9 +251,9 @@ export function AgendaFormClient({ companySlug, professionals, existing }: Props
 
         {/* Professionals */}
         {professionals.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
             <fieldset>
-              <legend id="profs-legend" className="text-sm font-medium text-gray-700 mb-3">
+              <legend id="profs-legend" className="text-sm font-medium text-[var(--color-text)] mb-3">
                 Profissionais nesta agenda
               </legend>
               <div className="space-y-2" role="group" aria-labelledby="profs-legend">
@@ -265,9 +265,9 @@ export function AgendaFormClient({ companySlug, professionals, existing }: Props
                         type="checkbox"
                         checked={checked}
                         onChange={() => toggleProf(pro.id)}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="w-4 h-4 rounded border-[var(--color-border-strong)] text-[var(--color-info)] focus:ring-[var(--color-info)]"
                       />
-                      <span className="text-sm text-gray-700">{pro.name}</span>
+                      <span className="text-sm text-[var(--color-text)]">{pro.name}</span>
                     </label>
                   );
                 })}
@@ -281,7 +281,7 @@ export function AgendaFormClient({ companySlug, professionals, existing }: Props
           <button
             type="button"
             onClick={() => router.push(`/${companySlug}/agendas`)}
-            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+            className="px-4 py-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
           >
             Cancelar
           </button>
@@ -290,7 +290,7 @@ export function AgendaFormClient({ companySlug, professionals, existing }: Props
             name="intent"
             value="draft"
             disabled={isPending}
-            className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+            className="px-4 py-2 text-sm font-medium border border-[var(--color-border-strong)] rounded-[var(--radius-control)] text-[var(--color-text)] hover:bg-[var(--color-bg-subtle)] disabled:opacity-60"
           >
             Salvar rascunho
           </button>
@@ -299,7 +299,7 @@ export function AgendaFormClient({ companySlug, professionals, existing }: Props
             name="intent"
             value="publish"
             disabled={isPending}
-            className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60"
+            className="px-4 py-2 text-sm font-medium bg-[var(--color-info)] text-white rounded-[var(--radius-control)] hover:bg-[var(--color-info)] disabled:opacity-60"
           >
             {isPending ? "Publicando..." : "Publicar"}
           </button>

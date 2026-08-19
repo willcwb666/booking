@@ -28,10 +28,10 @@ export function HelpHint({
   };
 
   const badgeStyles = {
-    help: "text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border-slate-200",
-    info: "text-blue-500 hover:text-blue-700 hover:bg-blue-50 border-blue-200",
-    tip: "text-amber-500 hover:text-amber-700 hover:bg-amber-50 border-amber-200",
-    ai: "text-purple-500 hover:text-purple-700 hover:bg-purple-50 border-purple-200",
+    help: "text-[var(--color-text-subtle)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-light)] border-[var(--color-border)]",
+    info: "text-[var(--color-info)] hover:text-[var(--color-info)] hover:bg-[var(--color-info-light)] border-[var(--color-info-border)]",
+    tip: "text-[var(--color-warning)] hover:text-[var(--color-warning)] hover:bg-[var(--color-warning-light)] border-[var(--color-warning-border)]",
+    ai: "text-[var(--color-primary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-light)] border-[var(--color-primary)]",
   };
 
   const positionClasses = {
@@ -59,15 +59,15 @@ export function HelpHint({
       {isOpen && (
         <div
           role="tooltip"
-          className={`absolute z-[9999] w-64 p-3 bg-slate-900/95 text-white text-xs rounded-2xl shadow-2xl backdrop-blur-md border border-slate-700/60 pointer-events-none transition-all duration-150 animate-in fade-in zoom-in-95 ${positionClasses[position]}`}
+          className={`absolute z-[9999] w-64 p-3 bg-[var(--color-navy)] text-white text-xs rounded-[var(--radius-card)] shadow-2xl backdrop-blur-md border border-[var(--color-navy)] pointer-events-none transition-all duration-150 animate-in fade-in zoom-in-95 ${positionClasses[position]}`}
         >
           {title && (
-            <p className="font-extrabold text-[11px] text-white flex items-center gap-1.5 mb-1 text-left">
+            <p className="font-semibold text-[var(--text-2xs)] text-white flex items-center gap-1.5 mb-1 text-left">
               {icons[variant]}
               <span>{title}</span>
             </p>
           )}
-          <div className="text-[11px] text-slate-300 font-normal leading-relaxed text-left">
+          <div className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] font-normal leading-relaxed text-left">
             {children}
           </div>
         </div>

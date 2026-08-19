@@ -12,7 +12,15 @@ import {
   deletePlanAction,
 } from "@/server/actions/plans";
 import { toast } from "@/lib/toast-service";
-import { CreditCard, CheckCircle2, Plus, Star } from "@/components/ui/icons";
+import {
+  CreditCard,
+  CheckCircle2,
+  Plus,
+  Star,
+  Pencil,
+  Trash2,
+  GripVertical,
+} from "@/components/ui/icons";
 
 type Feature = { id: string; featureKey: string; featureLabel: string; enabled: boolean };
 type Plan = {
@@ -28,39 +36,6 @@ type Plan = {
   syncedWithStripe: boolean;
   features: Feature[];
 };
-
-function IconPencil() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 20h9" />
-      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-    </svg>
-  );
-}
-
-function IconTrash() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-      <line x1="10" y1="11" x2="10" y2="17" />
-      <line x1="14" y1="11" x2="14" y2="17" />
-    </svg>
-  );
-}
-
-function IconGripVertical() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="9" cy="5" r="1" />
-      <circle cx="9" cy="12" r="1" />
-      <circle cx="9" cy="19" r="1" />
-      <circle cx="15" cy="5" r="1" />
-      <circle cx="15" cy="12" r="1" />
-      <circle cx="15" cy="19" r="1" />
-    </svg>
-  );
-}
 
 export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: Plan[]; stripeConfigured: boolean }) {
   const router = useRouter();
@@ -184,7 +159,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
           <CreditCard className="w-4 h-4" />
           <span>Gestão de Assinaturas</span>
         </div>
-        <h1 className="text-2xl font-extrabold text-[var(--color-text-heading)] tracking-tight mt-1">
+        <h1 className="text-2xl font-semibold text-[var(--color-text-heading)] tracking-tight mt-1">
           Planos do SaaS
         </h1>
         <p className="text-xs text-[var(--color-text-muted)] mt-1">
@@ -193,13 +168,13 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
       </div>
 
       {!stripeConfigured && (
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold">
-          ⚠ <code>STRIPE_SECRET_KEY</code> não configurada — os planos são salvos no banco, mas a cobrança só funcionará no Stripe após configurar a chave.
+        <div className="p-4 rounded-[var(--radius-card)] bg-[var(--color-warning-light)] border border-[var(--color-warning-border)] text-[var(--color-warning)] text-xs font-semibold">
+          <code>STRIPE_SECRET_KEY</code> não configurada — os planos são salvos no banco, mas a cobrança só funcionará no Stripe após configurar a chave.
         </div>
       )}
 
       {/* Tab Bar por Plano com Drag-and-Drop + Botão [+] Criar Novo Plano */}
-      <div className="bg-[var(--color-bg-muted)]/80 p-2 rounded-2xl border border-[var(--color-border)]/60 inline-flex flex-wrap items-center gap-2">
+      <div className="bg-[var(--color-bg-muted)]/80 p-2 rounded-[var(--radius-card)] border border-[var(--color-border)]/60 inline-flex flex-wrap items-center gap-2">
         {plansList.map((p, idx) => {
           const isActive = activeTab === p.id;
           return (
@@ -209,14 +184,14 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
               onDragStart={() => handleDragStart(idx)}
               onDragOver={(e) => handleDragOver(e, idx)}
               onDragEnd={handleDragEnd}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-grab active:cursor-grabbing border ${
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-[var(--radius-control)] text-xs font-semibold transition-all cursor-grab active:cursor-grabbing border ${
                 isActive
-                  ? "bg-white text-[var(--color-primary)] shadow-2xs border-[var(--color-border)] font-black"
+                  ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs border-[var(--color-border)] font-semibold"
                   : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] hover:bg-[var(--color-bg-muted)]/60 border-transparent"
               }`}
             >
               <span className="text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)]">
-                <IconGripVertical />
+                <GripVertical className="w-3.5 h-3.5" />
               </span>
 
               <button
@@ -226,7 +201,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
               >
                 <span>{p.displayName}</span>
                 {p.isPopular && (
-                  <span className="bg-amber-400 text-[var(--color-text-heading)] text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full shadow-2xs">
+                  <span className="bg-[var(--color-warning)] text-[var(--color-text-heading)] text-[var(--text-2xs)] font-semibold uppercase px-1.5 py-0.5 rounded-full shadow-2xs">
                     ★ Destaque
                   </span>
                 )}
@@ -237,9 +212,9 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
                 type="button"
                 onClick={() => handleDeletePlan(p.id)}
                 title="Excluir Plano"
-                className="p-1 text-[var(--color-text-subtle)] hover:text-red-600 transition-colors ml-1"
+                className="p-1 text-[var(--color-text-subtle)] hover:text-[var(--color-danger)] transition-colors ml-1"
               >
-                <IconTrash />
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
           );
@@ -248,9 +223,9 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
         <button
           type="button"
           onClick={() => setActiveTab("new")}
-          className={`px-4 py-2 text-xs font-extrabold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+          className={`px-4 py-2 text-xs font-semibold rounded-[var(--radius-control)] transition-all cursor-pointer flex items-center gap-1.5 ${
             activeTab === "new"
-              ? "bg-[var(--color-primary)] text-white shadow-2xs font-black"
+              ? "bg-[var(--color-primary)] text-white shadow-2xs font-semibold"
               : "text-[var(--color-primary)] hover:bg-[var(--color-primary-light)] bg-[var(--color-primary-light)]/50 border border-[var(--color-primary)]/20"
           }`}
         >
@@ -261,7 +236,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
 
       {/* Conteúdo da Aba do Plano Ativo */}
       {currentPlan && (
-        <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-6 shadow-xs animate-fadeIn">
+        <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-6 shadow-xs animate-fadeIn">
           <PlanCard
             plan={currentPlan}
             onSaved={() => router.refresh()}
@@ -272,9 +247,9 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
 
       {/* Conteúdo da Aba de Criação de Novo Plano */}
       {activeTab === "new" && (
-        <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-6 shadow-xs animate-fadeIn">
+        <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-6 shadow-xs animate-fadeIn">
           <div className="border-b border-[var(--color-border)] pb-4">
-            <h2 className="text-base font-extrabold text-[var(--color-text-heading)]">Cadastrar Novo Plano no SaaS</h2>
+            <h2 className="text-base font-semibold text-[var(--color-text-heading)]">Cadastrar Novo Plano no SaaS</h2>
             <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
               Crie uma nova opção de assinatura com precificação personalizada.
             </p>
@@ -290,7 +265,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
                   placeholder="Ex: Plano Enterprise"
                   value={newPlanName}
                   onChange={(e) => setNewPlanName(e.target.value)}
-                  className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
@@ -302,7 +277,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
                   placeholder="Ex: enterprise"
                   value={newPlanTier}
                   onChange={(e) => setNewPlanTier(e.target.value)}
-                  className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-mono text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs font-mono text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
             </div>
@@ -314,7 +289,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
                 placeholder="Ex: Ideal para grandes redes e franqueadas"
                 value={newPlanDesc}
                 onChange={(e) => setNewPlanDesc(e.target.value)}
-                className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
               />
             </div>
 
@@ -327,7 +302,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
                   min="0"
                   value={newPlanPriceMonthly}
                   onChange={(e) => setNewPlanPriceMonthly(parseFloat(e.target.value) || 0)}
-                  className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
@@ -339,7 +314,7 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
                   min="0"
                   value={newPlanPriceYearly}
                   onChange={(e) => setNewPlanPriceYearly(parseFloat(e.target.value) || 0)}
-                  className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
             </div>
@@ -348,9 +323,9 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
               <button
                 type="submit"
                 disabled={isPending}
-                className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer disabled:opacity-50"
               >
-                {isPending ? "Cadastrando..." : "Cadastrar Plano no Banco e Stripe ➔"}
+                {isPending ? "Cadastrando..." : "Cadastrar Plano no Banco e Stripe"}
               </button>
             </div>
           </form>
@@ -359,19 +334,19 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
 
       {/* RODAPÉ FIXO DE SALVAR E SINCRONIZAR */}
       {currentPlan && (
-        <div className="fixed bottom-6 right-8 z-40 bg-[var(--color-navy)]/90 backdrop-blur-md text-white px-6 py-3.5 rounded-2xl shadow-2xl border border-[var(--color-navy-hover)] flex items-center gap-4">
+        <div className="fixed bottom-6 right-8 z-40 bg-[var(--color-navy)]/90 backdrop-blur-md text-white px-6 py-3.5 rounded-[var(--radius-card)] shadow-2xl border border-[var(--color-navy-hover)] flex items-center gap-4">
           <div>
-            <span className="text-[10px] text-[var(--color-text-subtle)] font-bold uppercase tracking-wider block">
+            <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] font-bold uppercase tracking-wider block">
               Plano Selecionado: {currentPlan.displayName}
             </span>
-            <span className="text-xs font-extrabold text-white">Pronto para salvar no Stripe</span>
+            <span className="text-xs font-semibold text-white">Pronto para salvar no Stripe</span>
           </div>
 
           <button
             type="button"
             onClick={handleGlobalSaveCurrentPlan}
             disabled={isPending}
-            className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
+            className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-md transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
           >
             <CheckCircle2 className="w-4 h-4" />
             <span>Salvar e Sincronizar Plano</span>
@@ -414,36 +389,36 @@ function PlanCard({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-border)] pb-4">
         <div className="flex items-center gap-3">
-          <span className="text-xs font-mono font-bold bg-[var(--color-bg-muted)] text-[var(--color-text)] px-3 py-1 rounded-lg">
+          <span className="text-xs font-mono font-bold bg-[var(--color-bg-muted)] text-[var(--color-text)] px-3 py-1 rounded-[var(--radius-control)]">
             {plan.tier}
           </span>
           {plan.syncedWithStripe ? (
-            <span className="text-xs font-bold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">
+            <span className="text-xs font-bold bg-[var(--color-success-light)] text-[var(--color-success)] px-3 py-1 rounded-full">
               Sincronizado no Stripe
             </span>
           ) : (
-            <span className="text-xs font-bold bg-amber-100 text-amber-800 px-3 py-1 rounded-full">
+            <span className="text-xs font-bold bg-[var(--color-warning-light)] text-[var(--color-warning)] px-3 py-1 rounded-full">
               Não sincronizado
             </span>
           )}
         </div>
 
         {/* Checkbox "Destaque / Mais Popular" (Apenas 1 plano por vez) */}
-        <label className="flex items-center gap-2 bg-amber-50 border border-amber-200 px-4 py-2 rounded-xl text-xs font-bold text-amber-900 cursor-pointer shadow-2xs">
+        <label className="flex items-center gap-2 bg-[var(--color-warning-light)] border border-[var(--color-warning-border)] px-4 py-2 rounded-[var(--radius-control)] text-xs font-bold text-[var(--color-warning)] cursor-pointer shadow-2xs">
           <input
             type="checkbox"
             checked={Boolean(plan.isPopular)}
             onChange={onSetPopular}
-            className="w-4 h-4 text-amber-600 rounded"
+            className="w-4 h-4 text-[var(--color-warning)] rounded"
           />
-          <Star className="w-4 h-4 text-amber-500 fill-amber-400 shrink-0" />
+          <Star className="w-4 h-4 text-[var(--color-warning)] fill-amber-400 shrink-0" />
           <span>Destaque / Mais Popular na Landing Page</span>
         </label>
       </div>
 
       <form id={`plan-form-${plan.id}`} onSubmit={handleSubmit} className="space-y-4">
         {errors?._ && (
-          <p role="alert" className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl p-3">
+          <p role="alert" className="text-xs text-[var(--color-danger)] bg-[var(--color-danger-light)] border border-[var(--color-danger-border)] rounded-[var(--radius-control)] p-3">
             {errors._[0]}
           </p>
         )}
@@ -455,9 +430,9 @@ function PlanCard({
               name="displayName"
               defaultValue={plan.displayName}
               required
-              className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
             />
-            {errors?.displayName && <p className="text-xs text-red-600 mt-1">{errors.displayName[0]}</p>}
+            {errors?.displayName && <p className="text-xs text-[var(--color-danger)] mt-1">{errors.displayName[0]}</p>}
           </div>
 
           <div>
@@ -465,7 +440,7 @@ function PlanCard({
             <input
               name="description"
               defaultValue={plan.description}
-              className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
             />
           </div>
         </div>
@@ -479,9 +454,9 @@ function PlanCard({
               min="0"
               step="0.01"
               defaultValue={plan.priceMonthly}
-              className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
             />
-            {errors?.priceMonthly && <p className="text-xs text-red-600 mt-1">{errors.priceMonthly[0]}</p>}
+            {errors?.priceMonthly && <p className="text-xs text-[var(--color-danger)] mt-1">{errors.priceMonthly[0]}</p>}
           </div>
 
           <div>
@@ -492,9 +467,9 @@ function PlanCard({
               min="0"
               step="0.01"
               defaultValue={plan.priceYearly}
-              className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
             />
-            {errors?.priceYearly && <p className="text-xs text-red-600 mt-1">{errors.priceYearly[0]}</p>}
+            {errors?.priceYearly && <p className="text-xs text-[var(--color-danger)] mt-1">{errors.priceYearly[0]}</p>}
           </div>
         </div>
 
@@ -559,13 +534,13 @@ function FeaturesEditor({ planId, features, onSaved }: { planId: string; feature
 
   return (
     <div className="pt-4 border-t border-[var(--color-border)] space-y-3">
-      <span className="text-xs font-extrabold text-[var(--color-text-subtle)] uppercase tracking-wider block">
+      <span className="text-xs font-semibold text-[var(--color-text-subtle)] uppercase tracking-wider block">
         Recursos Incluídos neste Plano
       </span>
 
       <ul className="space-y-2">
         {features.map((f) => (
-          <li key={f.id} className="flex items-center justify-between gap-3 text-xs bg-[var(--color-bg-subtle)] p-2.5 rounded-xl border border-[var(--color-border)]/60">
+          <li key={f.id} className="flex items-center justify-between gap-3 text-xs bg-[var(--color-bg-subtle)] p-2.5 rounded-[var(--radius-control)] border border-[var(--color-border)]/60">
             {editingId === f.id ? (
               <div className="flex items-center gap-2 w-full">
                 <input
@@ -576,13 +551,13 @@ function FeaturesEditor({ planId, features, onSaved }: { planId: string; feature
                     if (e.key === "Enter") { e.preventDefault(); saveEdit(f); }
                     if (e.key === "Escape") setEditingId(null);
                   }}
-                  className="flex-1 bg-white border border-[var(--color-border)] rounded-lg px-3 py-1 text-xs focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="flex-1 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-1 text-xs focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
                 <button
                   type="button"
                   onClick={() => saveEdit(f)}
                   disabled={pending}
-                  className="px-3 py-1 text-xs font-bold bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)]"
+                  className="px-3 py-1 text-xs font-bold bg-[var(--color-primary)] text-white rounded-[var(--radius-control)] hover:bg-[var(--color-primary-hover)]"
                 >
                   Salvar
                 </button>
@@ -593,7 +568,7 @@ function FeaturesEditor({ planId, features, onSaved }: { planId: string; feature
                   {f.enabled ? "✓" : "✗"} {f.featureLabel}
                 </span>
 
-                {/* Ícones SVG Caneta e Lixeira */}
+                {/* Ícones Caneta e Lixeira */}
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
@@ -601,15 +576,15 @@ function FeaturesEditor({ planId, features, onSaved }: { planId: string; feature
                     title="Editar Recurso"
                     className="p-1 text-[var(--color-text-subtle)] hover:text-[var(--color-primary)] transition-colors"
                   >
-                    <IconPencil />
+                    <Pencil className="w-3.5 h-3.5" />
                   </button>
                   <button
                     type="button"
                     onClick={() => removeFeature(f.id)}
                     title="Excluir Recurso"
-                    className="p-1 text-[var(--color-text-subtle)] hover:text-red-600 transition-colors"
+                    className="p-1 text-[var(--color-text-subtle)] hover:text-[var(--color-danger)] transition-colors"
                   >
-                    <IconTrash />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </>
@@ -623,12 +598,12 @@ function FeaturesEditor({ planId, features, onSaved }: { planId: string; feature
           name="featureLabel"
           placeholder="Ex: Suporte prioritário 24/7"
           required
-          className="flex-1 border border-[var(--color-border)] rounded-xl px-3.5 py-2 text-xs font-medium text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+          className="flex-1 border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2 text-xs font-medium text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
         />
         <button
           type="submit"
           disabled={pending}
-          className="px-4 py-2 text-xs font-bold bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)] rounded-xl transition-colors shrink-0"
+          className="px-4 py-2 text-xs font-bold bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)] rounded-[var(--radius-control)] transition-colors shrink-0"
         >
           + Adicionar Recurso
         </button>

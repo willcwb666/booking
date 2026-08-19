@@ -7,7 +7,13 @@ const handlers = toNextJsHandler(auth);
 
 // Endpoints que validam credenciais — alvos de brute-force. O rate limit
 // precisa ficar AQUI (e não no proxy), pois o matcher do proxy exclui /api.
-const RATE_LIMITED_PATHS = ["/sign-in", "/sign-up", "/forget-password", "/reset-password"];
+const RATE_LIMITED_PATHS = [
+  "/sign-in",
+  "/sign-up",
+  "/forget-password",
+  "/request-password-reset",
+  "/reset-password",
+];
 
 export const GET = handlers.GET;
 

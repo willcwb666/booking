@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getActiveSession } from "@/lib/session";
 import { rateLimit } from "@/lib/rate-limit";
 import { generatePresignedUploadUrl, type UploadType } from "@/lib/r2";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getActiveSession();
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
   const rl = await rateLimit(`upload:presign:${session.user.id}`, 10, 60);

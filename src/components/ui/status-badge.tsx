@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { ActionTooltip } from "@/components/ui/action-tooltip";
 
 export type StatusBadgeVariant =
   | "primary"
@@ -22,24 +21,32 @@ export interface StatusBadgeProps {
   icon?: React.ReactNode;
 }
 
-const CONTAINER_CLASSES: Record<StatusBadgeVariant, string> = {
-  primary: "bg-indigo-50 border-indigo-200/80 text-indigo-700",
-  secondary: "bg-purple-50 border-purple-200/80 text-purple-700",
-  success: "bg-emerald-50 border-emerald-200/80 text-emerald-700",
-  warning: "bg-amber-50 border-amber-200/80 text-amber-800",
-  danger: "bg-red-50 border-red-200/80 text-red-700",
-  info: "bg-sky-50 border-sky-200/80 text-sky-700",
-  neutral: "bg-slate-100 border-slate-200 text-slate-600",
-};
-
-const DOT_CLASSES: Record<StatusBadgeVariant, string> = {
-  primary: "bg-indigo-500",
-  secondary: "bg-purple-500",
-  success: "bg-emerald-500",
-  warning: "bg-amber-500",
-  danger: "bg-red-500",
-  info: "bg-sky-500",
-  neutral: "bg-slate-400",
+/**
+ * Distintivo de status.
+ *
+ * Três coisas mudaram e todas por um motivo:
+ *
+ *  · Cores saem de tokens. Antes vinham fixas da paleta do Tailwind, então o
+ *    distintivo continuava claro mesmo no modo escuro — texto verde-escuro
+ *    sobre fundo verde-escuro, ilegível.
+ *
+ *  · O ponto verde não pulsa mais. Um `animate-pulse` numa tabela de 50 linhas
+ *    são 50 animações infinitas competindo pela atenção de quem só quer ler a
+ *    coluna. Movimento que se vê dezenas de vezes por dia deve sumir.
+ *
+ *  · Não embrulha mais tudo num tooltip. O texto já está visível; um tooltip
+ *    dizendo "Status: Ativo" sobre a palavra "Ativo" é ruído. Quando o rótulo
+ *    está oculto (`showLabel={false}`), o nome vai no `title` e no leitor de
+ *    tela, que é onde ele faz falta.
+ */
+const VARIANT_CLASS: Record<StatusBadgeVariant, string> = {
+  primary: "badge-primary",
+  secondary: "badge-primary",
+  success: "badge-success",
+  warning: "badge-warning",
+  danger: "badge-danger",
+  info: "badge-primary",
+  neutral: "badge-neutral",
 };
 
 export function StatusBadge({
@@ -51,48 +58,34 @@ export function StatusBadge({
   tooltip,
   icon,
 }: StatusBadgeProps) {
-  // Normalização do texto do status para exibição no Tooltip e Acessibilidade
-  let formattedLabel = children;
+  // Normaliza rótulos equivalentes vindos de telas diferentes
+  let label = children;
+  let resolved = variant;
   if (typeof children === "string") {
     const lower = children.toLowerCase();
-    if (lower === "habilitado" || lower === "ativa" || lower === "ativo") {
-      formattedLabel = "Ativo";
-      variant = variant === "neutral" ? "success" : variant;
-    } else if (lower === "desabilitado" || lower === "inativa" || lower === "inativo") {
-      formattedLabel = "Inativo";
-      variant = variant === "neutral" ? "neutral" : variant;
+    if (["habilitado", "ativa", "ativo"].includes(lower)) {
+      label = "Ativo";
+      if (variant === "neutral") resolved = "success";
+    } else if (["desabilitado", "inativa", "inativo"].includes(lower)) {
+      label = "Inativo";
     }
   }
 
-  const labelString = typeof formattedLabel === "string" ? formattedLabel : String(formattedLabel || variant);
-  const tooltipText = tooltip || `Status: ${labelString}`;
+  const labelText =
+    typeof label === "string" ? label : String(label ?? resolved);
 
-  const dotSize = size === "md" ? "w-2.5 h-2.5" : "w-2 h-2";
-  const padding = showLabel ? (size === "md" ? "px-3 py-1 text-xs" : "px-2.5 py-0.5 text-[11px]") : (size === "md" ? "p-2" : "p-1.5");
-
-  const badgeContent = (
+  return (
     <span
-      role="status"
-      aria-label={tooltipText}
-      className={`inline-flex items-center justify-center gap-1.5 border font-bold rounded-full tracking-wide transition-all select-none shadow-2xs ${CONTAINER_CLASSES[variant]} ${padding} ${className}`}
+      className={`badge ${VARIANT_CLASS[resolved]} ${icon ? "badge-plain" : ""} ${className}`}
+      style={
+        size === "md"
+          ? { fontSize: "var(--text-xs)", padding: "0.25rem 0.5rem" }
+          : undefined
+      }
+      title={!showLabel ? (tooltip ?? labelText) : tooltip}
     >
-      {icon ? (
-        <span className="shrink-0">{icon}</span>
-      ) : (
-        <span
-          className={`${dotSize} rounded-full shrink-0 ${DOT_CLASSES[variant]} ${
-            variant === "success" ? "animate-pulse" : ""
-          }`}
-          aria-hidden="true"
-        />
-      )}
-      {showLabel ? (
-        <span className="capitalize font-semibold tracking-tight">{formattedLabel}</span>
-      ) : (
-        <span className="sr-only">{labelString}</span>
-      )}
+      {icon && <span className="shrink-0">{icon}</span>}
+      {showLabel ? <span>{label}</span> : <span className="sr-only">{labelText}</span>}
     </span>
   );
-
-  return <ActionTooltip label={tooltipText}>{badgeContent}</ActionTooltip>;
 }

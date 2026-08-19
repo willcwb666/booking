@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
+import Link from "next/link";
 import {
   grantBatchModuleLicensesAction,
   renewModuleLicenseAction,
@@ -10,6 +11,7 @@ import {
 } from "@/server/actions/admin-modules";
 import { toast } from "@/lib/toast-service";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
+import { IconAction, RowActions } from "@/components/ui/icon-action";
 import {
   Tag,
   CheckCircle2,
@@ -20,25 +22,13 @@ import {
   Check,
   Sparkles,
   Trash2,
+  X,
+  FileText,
 } from "@/components/ui/icons";
 
-function IconPencil() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 20h9" />
-      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-    </svg>
-  );
-}
-
-function IconTrash() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2" />
-    </svg>
-  );
-}
+// Removidos daqui `IconPencil` e `IconTrash`: eram SVGs escritos à mão nesta
+// tela, nunca usados, e o traçado da lixeira estava malformado. O conjunto de
+// ícones da aplicação já tem os dois.
 
 type Company = { id: string; name: string; slug: string; businessType: string };
 type Segment = { code: string; label: string };
@@ -205,17 +195,26 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            setWizardStep(1);
-            setIsWizardOpen(true);
-          }}
-          className="px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer inline-flex items-center gap-2 shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>+ Liberar Módulo(s)</span>
-        </button>
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          {/* Única porta de entrada do catálogo de add-ons — sem este link a
+              página /admin/modulos/catalogo fica órfã. */}
+          <Link href="/admin/modulos/catalogo" className="btn btn-outline btn-sm">
+            <FileText className="w-3.5 h-3.5" />
+            <span>Catálogo de add-ons</span>
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => {
+              setWizardStep(1);
+              setIsWizardOpen(true);
+            }}
+            className="btn btn-primary btn-sm"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Liberar módulos</span>
+          </button>
+        </div>
       </div>
 
       {/* TABELA DE MÓDULOS ATIVOS POR EMPRESA (Com Botões Renovação e Revogação) */}
@@ -253,11 +252,11 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                     <td className="px-4 py-3 font-semibold text-[var(--color-primary)]">{lic.moduleName}</td>
                     <td className="px-4 py-3 text-center">
                       {lic.status === "TRIAL" ? (
-                        <span className="bg-amber-100 text-amber-900 text-[10px] font-black uppercase px-2.5 py-1 rounded-full">
+                        <span className="bg-[var(--color-warning-light)] text-[var(--color-warning)] text-[10px] font-black uppercase px-2.5 py-1 rounded-full">
                           Degustação
                         </span>
                       ) : (
-                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase px-2.5 py-1 rounded-full">
+                        <span className="bg-[var(--color-success-light)] text-[var(--color-success)] text-[10px] font-black uppercase px-2.5 py-1 rounded-full">
                           Definitivo
                         </span>
                       )}
@@ -266,29 +265,23 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                       {lic.expiresAt || "Vínculo Vitalício"}
                     </td>
                     <td className="px-4 py-3 text-center text-[var(--color-text-muted)]">{lic.grantedAt}</td>
-                    <td className="px-4 py-3 text-right space-x-2">
-                      {lic.status === "TRIAL" && (
-                        <ActionTooltip label="Renovar Licença (+30d)">
-                          <button
-                            type="button"
+                    <td className="px-4 py-3">
+                      <RowActions>
+                        {lic.status === "TRIAL" && (
+                          <IconAction
+                            intent="refresh"
+                            label={`Renovar ${lic.moduleName} de ${lic.companyName} por mais 30 dias`}
                             onClick={() => handleRenew(lic.companyId, lic.moduleCode)}
-                            disabled={isPending}
-                            className="p-2 bg-[var(--color-primary-light)] hover:bg-[var(--color-primary-light)] text-[var(--color-primary)] font-bold text-xs rounded-lg transition-colors cursor-pointer inline-flex items-center justify-center shadow-2xs"
-                          >
-                            <RotateCcw className="w-3.5 h-3.5" />
-                          </button>
-                        </ActionTooltip>
-                      )}
-                      <ActionTooltip label="Revogar Módulo">
-                        <button
-                          type="button"
+                            pending={isPending}
+                          />
+                        )}
+                        <IconAction
+                          intent="revoke"
+                          label={`Revogar ${lic.moduleName} de ${lic.companyName}`}
                           onClick={() => handleRevoke(lic.companyId, lic.moduleCode)}
-                          disabled={isPending}
-                          className="p-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-lg transition-colors cursor-pointer inline-flex items-center justify-center shadow-2xs"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </ActionTooltip>
+                          pending={isPending}
+                        />
+                      </RowActions>
                     </td>
                   </tr>
                 ))
@@ -316,13 +309,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                     : "Passo 3: Resumo & Confirmação Final"}
                 </h2>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsWizardOpen(false)}
-                className="text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)] font-bold text-sm"
-              >
-                ✕
-              </button>
+              <button type="button" onClick={() => setIsWizardOpen(false)} aria-label="Fechar" title="Fechar" className="icon-action"><X className="w-4 h-4" /></button>
             </div>
 
             {/* PASSO 1: SELEÇÃO DE EMPRESA(S) OU SEGMENTO(S) */}
@@ -530,8 +517,8 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                     </ul>
                   </div>
 
-                  <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 font-medium text-[11px]">
-                    🔔 Ao clicar em confirmar, os módulos serão liberados e as notificações no <strong>Sistema, E-mail, SMS e WhatsApp</strong> serão enviadas automaticamente.
+                  <div className="p-3 bg-[var(--color-warning-light)] rounded-xl border border-[var(--color-warning-border)] text-[var(--color-warning)] font-medium text-[11px]">
+                    Ao clicar em confirmar, os módulos serão liberados e as notificações no <strong>Sistema, E-mail, SMS e WhatsApp</strong> serão enviadas automaticamente.
                   </div>
                 </div>
               </div>
@@ -545,7 +532,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                   onClick={() => setWizardStep((wizardStep - 1) as any)}
                   className="px-4 py-2 bg-[var(--color-bg-muted)] text-[var(--color-text)] font-bold text-xs rounded-xl"
                 >
-                  ← Voltar
+                  Voltar
                 </button>
               ) : <div />}
 
@@ -565,17 +552,17 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                   }}
                   className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-extrabold text-xs rounded-xl shadow-xs"
                 >
-                  Avançar para Passo {wizardStep + 1} ➔
+                  Avançar para Passo {wizardStep + 1}
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={handleSaveWizard}
                   disabled={isPending}
-                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-md cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
+                  className="px-6 py-2.5 bg-[var(--color-success)] hover:bg-[var(--color-success)] text-white font-extrabold text-xs rounded-xl shadow-md cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
                 >
                   <Sparkles className="w-4 h-4" />
-                  <span>{isPending ? "Liberando..." : "Confirmar & Salvar Liberação 🚀"}</span>
+                  <span>{isPending ? "Liberando..." : "Confirmar & Salvar Liberação"}</span>
                 </button>
               )}
             </div>

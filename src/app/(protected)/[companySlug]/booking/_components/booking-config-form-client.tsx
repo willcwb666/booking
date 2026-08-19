@@ -53,7 +53,7 @@ function FieldError({
   const msgs = errors?.[field];
   if (!msgs?.length) return null;
   return (
-    <p className="text-xs text-red-600 mt-1" role="alert">
+    <p className="text-xs text-[var(--color-danger)] mt-1" role="alert">
       {msgs[0]}
     </p>
   );
@@ -132,31 +132,31 @@ export function BookingConfigFormClient({
         <button
           type="button"
           onClick={() => router.push(`/${companySlug}/booking`)}
-          className="text-sm text-gray-400 hover:text-gray-700"
+          className="text-sm text-[var(--color-text-subtle)] hover:text-[var(--color-text)]"
           aria-label="Voltar para booking"
         >
           ← Booking
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-[var(--color-text-heading)]">
           {existing ? "Editar configuração" : "Nova configuração"}
         </h1>
       </div>
 
       {errors?.["_"] && (
         <div
-          className="mb-5 bg-red-50 border border-red-200 rounded-xl px-4 py-3"
+          className="mb-5 bg-[var(--color-danger-light)] border border-[var(--color-danger-border)] rounded-[var(--radius-control)] px-4 py-3"
           role="alert"
         >
-          <p className="text-sm text-red-700">{errors["_"][0]}</p>
+          <p className="text-sm text-[var(--color-danger)]">{errors["_"][0]}</p>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Name */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
           <label
             htmlFor="name"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-[var(--color-text)] mb-1"
           >
             Nome da configuração <span aria-hidden="true">*</span>
           </label>
@@ -167,21 +167,21 @@ export function BookingConfigFormClient({
             required
             autoFocus
             defaultValue={existing?.name ?? ""}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-[var(--color-border-strong)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
           />
           <FieldError errors={errors} field="name" />
         </div>
 
         {/* Agenda */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
           <label
             htmlFor="agendaId"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-[var(--color-text)] mb-1"
           >
             Agenda <span aria-hidden="true">*</span>
           </label>
           {agendas.length === 0 ? (
-            <p className="text-sm text-amber-600">
+            <p className="text-sm text-[var(--color-warning)]">
               Nenhuma agenda ativa. Publique uma agenda primeiro.
             </p>
           ) : (
@@ -190,7 +190,7 @@ export function BookingConfigFormClient({
               name="agendaId"
               required
               defaultValue={existing?.agendaId ?? ""}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="w-full border border-[var(--color-border-strong)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)] bg-[var(--color-bg)]"
             >
               <option value="">Selecione uma agenda</option>
               {agendas.map((a) => (
@@ -204,17 +204,17 @@ export function BookingConfigFormClient({
         </div>
 
         {/* Service types */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
           <fieldset>
             <legend
               id="services-legend"
-              className="text-sm font-medium text-gray-700 mb-3"
+              className="text-sm font-medium text-[var(--color-text)] mb-3"
             >
               Tipos de serviço disponíveis <span aria-hidden="true">*</span>
             </legend>
 
             {services.length === 0 ? (
-              <p className="text-sm text-amber-600">
+              <p className="text-sm text-[var(--color-warning)]">
                 Nenhum serviço cadastrado. Adicione serviços primeiro.
               </p>
             ) : (
@@ -225,7 +225,7 @@ export function BookingConfigFormClient({
               >
                 {services.map((service) => (
                   <div key={service.id}>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                    <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
                       {service.name}
                     </p>
                     <div className="space-y-1.5 pl-2">
@@ -240,12 +240,12 @@ export function BookingConfigFormClient({
                               type="checkbox"
                               checked={checked}
                               onChange={() => toggleServiceType(st.id)}
-                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              className="w-4 h-4 rounded border-[var(--color-border-strong)] text-[var(--color-info)] focus:ring-[var(--color-info)]"
                             />
-                            <span className="text-sm text-gray-700 flex-1">
+                            <span className="text-sm text-[var(--color-text)] flex-1">
                               {st.name}
                             </span>
-                            <span className="text-xs text-gray-400">
+                            <span className="text-xs text-[var(--color-text-subtle)]">
                               {formatMinutes(st.estimatedMinutes)} · {formatMoney(st.price, company.currency, company.locale)}
                             </span>
                           </label>
@@ -262,11 +262,11 @@ export function BookingConfigFormClient({
 
         {/* Extra services */}
         {extraServices.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
             <fieldset>
               <legend
                 id="extras-legend"
-                className="text-sm font-medium text-gray-700 mb-3"
+                className="text-sm font-medium text-[var(--color-text)] mb-3"
               >
                 Serviços adicionais (opcionais ao cliente)
               </legend>
@@ -286,9 +286,9 @@ export function BookingConfigFormClient({
                         type="checkbox"
                         checked={checked}
                         onChange={() => toggleExtra(extra.id)}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="w-4 h-4 rounded border-[var(--color-border-strong)] text-[var(--color-info)] focus:ring-[var(--color-info)]"
                       />
-                      <span className="text-sm text-gray-700">{extra.name}</span>
+                      <span className="text-sm text-[var(--color-text)]">{extra.name}</span>
                     </label>
                   );
                 })}
@@ -298,20 +298,20 @@ export function BookingConfigFormClient({
         )}
 
         {/* Allow partial service */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
           <label className="flex items-start gap-3 cursor-pointer">
             <input
               type="checkbox"
               name="allowPartialService"
               value="true"
               defaultChecked={existing?.allowPartialService ?? false}
-              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-0.5"
+              className="w-4 h-4 rounded border-[var(--color-border-strong)] text-[var(--color-info)] focus:ring-[var(--color-info)] mt-0.5"
             />
             <div>
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-[var(--color-text)]">
                 Permitir serviço parcial
               </span>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                 O cliente pode agendar sem selecionar todos os tipos de serviço
               </p>
             </div>
@@ -323,7 +323,7 @@ export function BookingConfigFormClient({
           <button
             type="button"
             onClick={() => router.push(`/${companySlug}/booking`)}
-            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+            className="px-4 py-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
           >
             Cancelar
           </button>
@@ -332,7 +332,7 @@ export function BookingConfigFormClient({
             name="intent"
             value="draft"
             disabled={isPending}
-            className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+            className="px-4 py-2 text-sm font-medium border border-[var(--color-border-strong)] rounded-[var(--radius-control)] text-[var(--color-text)] hover:bg-[var(--color-bg-subtle)] disabled:opacity-60"
           >
             Salvar rascunho
           </button>
@@ -341,7 +341,7 @@ export function BookingConfigFormClient({
             name="intent"
             value="publish"
             disabled={isPending || agendas.length === 0}
-            className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60"
+            className="px-4 py-2 text-sm font-medium bg-[var(--color-info)] text-white rounded-[var(--radius-control)] hover:bg-[var(--color-info)] disabled:opacity-60"
           >
             {isPending ? "Publicando..." : "Publicar"}
           </button>

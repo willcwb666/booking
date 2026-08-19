@@ -63,28 +63,28 @@ export function CompanyCargosClient({ companySlug, roles: initialRoles }: Props)
   return (
     <div className="w-full max-w-6xl px-6 sm:px-10 py-8 text-left space-y-8 pb-32">
       <div>
-        <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs">
+        <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs">
           <User className="w-4 h-4" />
           <span>Gestão de Equipe & Catálogo</span>
         </div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">
+        <h1 className="text-2xl font-semibold text-[var(--color-text-heading)] tracking-tight mt-1">
           Cargos & Especialidades
         </h1>
-        <p className="text-xs text-slate-500 mt-1">
+        <p className="text-xs text-[var(--color-text-muted)] mt-1">
           Gerencie a lista de funções e especialidades atribuídas aos profissionais da empresa.
         </p>
       </div>
 
       {/* FORMULÁRIO DE ADIÇÃO DE NOVO CARGO */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-4 shadow-xs">
-        <h2 className="text-sm font-extrabold text-slate-900 border-b border-slate-100 pb-3">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-6 sm:p-8 space-y-4 shadow-xs">
+        <h2 className="text-sm font-semibold text-[var(--color-text-heading)] border-b border-[var(--color-border)] pb-3">
           ADICIONAR NOVO CARGO OU ESPECIALIDADE
         </h2>
 
         <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end text-xs">
           <div className="sm:col-span-1">
-            <label className="block font-bold text-slate-700 mb-1.5">
-              NOME DO CARGO <span className="text-red-500">*</span>
+            <label className="block font-bold text-[var(--color-text)] mb-1.5">
+              NOME DO CARGO <span className="text-[var(--color-danger)]">*</span>
             </label>
             <input
               type="text"
@@ -92,25 +92,25 @@ export function CompanyCargosClient({ companySlug, roles: initialRoles }: Props)
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex: House Cleaner, Helper, Barbeiro Senior"
               required
-              className="w-full border border-slate-200 rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-4 py-3 font-medium focus:ring-2 focus:ring-[var(--color-primary)]"
             />
           </div>
 
           <div className="sm:col-span-1">
-            <label className="block font-bold text-slate-700 mb-1.5">DESCRIÇÃO (OPCIONAL)</label>
+            <label className="block font-bold text-[var(--color-text)] mb-1.5">DESCRIÇÃO (OPCIONAL)</label>
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Ex: Responsável por limpeza pesada e higienização"
-              className="w-full border border-slate-200 rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-4 py-3 font-medium focus:ring-2 focus:ring-[var(--color-primary)]"
             />
           </div>
 
           <button
             type="submit"
             disabled={isPending}
-            className="px-6 py-3 bg-[#635bff] hover:bg-[#544dc9] text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer inline-flex items-center justify-center gap-2"
+            className="px-6 py-3 bg-[#635bff] hover:bg-[#544dc9] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer inline-flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
             <span>{isPending ? "SALVANDO..." : "+ CARGO"}</span>
@@ -119,29 +119,29 @@ export function CompanyCargosClient({ companySlug, roles: initialRoles }: Props)
       </div>
 
       {/* LISTA DE CARGOS CADASTRADOS */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-4 shadow-xs">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <h2 className="text-base font-extrabold text-slate-900">Cargos & Especialidades Cadastrados</h2>
-          <span className="text-xs text-slate-500 font-medium">Total: {rolesList.length}</span>
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-6 sm:p-8 space-y-4 shadow-xs">
+        <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
+          <h2 className="text-base font-semibold text-[var(--color-text-heading)]">Cargos & Especialidades Cadastrados</h2>
+          <span className="text-xs text-[var(--color-text-muted)] font-medium">Total: {rolesList.length}</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {rolesList.map((r) => (
             <div
               key={r.id}
-              className="p-4 rounded-2xl border border-slate-200/80 bg-slate-50/60 space-y-2 flex flex-col justify-between"
+              className="p-4 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-bg-subtle)] space-y-2 flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-extrabold text-slate-900">{r.name}</h3>
+                  <h3 className="text-sm font-semibold text-[var(--color-text-heading)]">{r.name}</h3>
                   {r.isPreset && (
-                    <span className="text-[10px] font-extrabold uppercase bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">
+                    <span className="text-[var(--text-2xs)] font-semibold uppercase bg-[var(--color-primary-light)] text-[var(--color-primary)] px-2 py-0.5 rounded-full">
                       Preset
                     </span>
                   )}
                 </div>
                 {r.description && (
-                  <p className="text-xs text-slate-500 mt-1">{r.description}</p>
+                  <p className="text-xs text-[var(--color-text-muted)] mt-1">{r.description}</p>
                 )}
               </div>
 
@@ -149,7 +149,7 @@ export function CompanyCargosClient({ companySlug, roles: initialRoles }: Props)
                 <button
                   type="button"
                   onClick={() => handleDelete(r.id, r.name)}
-                  className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer"
+                  className="px-3 py-1.5 bg-[var(--color-danger-light)] hover:bg-[var(--color-danger-light)] text-[var(--color-danger)] font-bold text-[var(--text-2xs)] rounded-[var(--radius-control)] transition-colors inline-flex items-center gap-1 cursor-pointer"
                 >
                   <Trash className="w-3.5 h-3.5" />
                   <span>EXCLUIR</span>

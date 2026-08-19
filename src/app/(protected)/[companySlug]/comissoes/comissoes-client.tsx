@@ -214,20 +214,20 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
       />
 
       {/* Filtro de Período e Profissionais */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs space-y-4">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-5 shadow-xs space-y-4">
         <form onSubmit={handleFilterSubmit} className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-slate-400" />
-              <span className="text-xs font-bold text-slate-700">Período:</span>
+              <Calendar className="w-4 h-4 text-[var(--color-text-subtle)]" />
+              <span className="text-xs font-bold text-[var(--color-text)]">Período:</span>
             </div>
             <div className="flex items-center gap-2">
               <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="input !w-auto !py-1 !px-2.5 text-xs" />
-              <span className="text-slate-400 text-xs">até</span>
+              <span className="text-[var(--color-text-subtle)] text-xs">até</span>
               <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="input !w-auto !py-1 !px-2.5 text-xs" />
             </div>
             <button type="submit" className="btn btn-primary btn-sm !text-xs">Aplicar</button>
-            <div className="flex items-center gap-1.5 pl-2 border-l border-slate-200">
+            <div className="flex items-center gap-1.5 pl-2 border-l border-[var(--color-border)]">
               <button type="button" onClick={() => setQuickRange("this_month")} className="btn btn-secondary btn-sm !text-xs">Este Mês</button>
               <button type="button" onClick={() => setQuickRange("last_month")} className="btn btn-outline btn-sm !text-xs">Mês Passado</button>
             </div>
@@ -235,7 +235,7 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
           <button
             type="button"
             onClick={() => setShowProfFilter(!showProfFilter)}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-all inline-flex items-center gap-2 ${selectedProfIds.length > 0 ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-slate-50 border-slate-200 text-slate-700"}`}
+            className={`px-3.5 py-2 rounded-[var(--radius-control)] text-xs font-bold border transition-all inline-flex items-center gap-2 ${selectedProfIds.length > 0 ? "bg-[var(--color-primary-light)] border-[var(--color-primary)] text-[var(--color-primary)]" : "bg-[var(--color-bg-subtle)] border-[var(--color-border)] text-[var(--color-text)]"}`}
           >
             <Filter className="w-3.5 h-3.5" />
             <span>{selectedProfIds.length === 0 ? "Filtrar Profissionais" : `${selectedProfIds.length} selecionado(s)`}</span>
@@ -243,17 +243,17 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
         </form>
 
         {showProfFilter && (
-          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
-              <span className="text-xs font-extrabold text-slate-800">Selecione Profissionais:</span>
+          <div className="p-4 bg-[var(--color-bg-subtle)] rounded-[var(--radius-card)] border border-[var(--color-border)] space-y-3">
+            <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-2">
+              <span className="text-xs font-semibold text-[var(--color-text)]">Selecione Profissionais:</span>
               <div className="flex gap-2 text-xs">
-                <button type="button" onClick={handleSelectAll} className="text-indigo-600 font-bold hover:underline">Selecionar Todos</button>
-                <button type="button" onClick={handleClearSelection} className="text-slate-500 font-medium hover:underline">Limpar</button>
+                <button type="button" onClick={handleSelectAll} className="text-[var(--color-primary)] font-bold hover:underline">Selecionar Todos</button>
+                <button type="button" onClick={handleClearSelection} className="text-[var(--color-text-muted)] font-medium hover:underline">Limpar</button>
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-48 overflow-y-auto">
               {report.professionals.map((prof) => (
-                <label key={prof.id} className="flex items-center gap-2 p-2 rounded-xl bg-white border border-slate-200 text-xs cursor-pointer">
+                <label key={prof.id} className="flex items-center gap-2 p-2 rounded-[var(--radius-control)] bg-[var(--color-bg)] border border-[var(--color-border)] text-xs cursor-pointer">
                   <input type="checkbox" checked={selectedProfIds.includes(prof.id)} onChange={() => toggleProf(prof.id)} />
                   {prof.name}
                 </label>
@@ -272,12 +272,12 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
       </div>
 
       {/* Tabela de Comissões */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-5 space-y-4 shadow-xs">
-        <h2 className="text-sm font-extrabold text-slate-900">Detalhamento por Profissional</h2>
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-5 space-y-4 shadow-xs">
+        <h2 className="text-sm font-semibold text-[var(--color-text-heading)]">Detalhamento por Profissional</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
             <thead>
-              <tr className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200/80">
+              <tr className="bg-[var(--color-bg-subtle)] text-[var(--color-text-muted)] font-bold border-b border-[var(--color-border)]">
                 <th className="px-4 py-3">Profissional</th>
                 <th className="px-4 py-3 text-center">Comissão (%)</th>
                 <th className="px-4 py-3 text-center">Atendimentos</th>
@@ -285,16 +285,16 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
                 <th className="px-4 py-3 text-right">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-medium">
+            <tbody className="divide-y divide-[var(--color-border)] font-medium">
               {paginatedProfessionals.map((prof) => (
                 <tr key={prof.id}>
-                  <td className="px-4 py-3.5 font-extrabold">{prof.name}</td>
+                  <td className="px-4 py-3.5 font-semibold">{prof.name}</td>
                   <td className="px-4 py-3.5 text-center">{prof.commissionPercentage}%</td>
                   <td className="px-4 py-3.5 text-center">{prof.completedBookingsCount}</td>
                   <td className="px-4 py-3.5 text-right">{formatMoney(prof.totalRevenueGenerated, company.currency, company.locale)}</td>
                   <td className="px-4 py-3.5 text-right space-x-2">
-                    <button type="button" onClick={() => { setEditingProf(prof); setNewPercentage(prof.commissionPercentage); }} className="p-1.5 bg-slate-100 rounded-lg"><Settings className="w-3.5 h-3.5" /></button>
-                    <button type="button" onClick={() => { setSelectedProfDetails(prof); setExtratoPage(1); }} className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg font-bold">Extrato</button>
+                    <button type="button" onClick={() => { setEditingProf(prof); setNewPercentage(prof.commissionPercentage); }} className="p-1.5 bg-[var(--color-bg-muted)] rounded-[var(--radius-control)]"><Settings className="w-3.5 h-3.5" /></button>
+                    <button type="button" onClick={() => { setSelectedProfDetails(prof); setExtratoPage(1); }} className="px-2.5 py-1 bg-[var(--color-primary-light)] text-[var(--color-primary)] rounded-[var(--radius-control)] font-bold">Extrato</button>
                   </td>
                 </tr>
               ))}
@@ -321,12 +321,12 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
           onClose={() => setEditingProf(null)}
         >
           <form onSubmit={handleSaveCommission} className="space-y-4">
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[var(--color-text-muted)]">
               Defina a porcentagem que este profissional recebe sobre os serviços que ele realiza.
             </p>
 
             <div>
-              <label htmlFor="commissionInput" className="block text-xs font-bold text-slate-700 mb-1">
+              <label htmlFor="commissionInput" className="block text-xs font-bold text-[var(--color-text)] mb-1">
                 Porcentagem de Comissão (%)
               </label>
               <div className="relative">
@@ -341,7 +341,7 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
                   className="input !pr-10"
                   required
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--color-text-subtle)]">
                   %
                 </span>
               </div>
@@ -375,14 +375,14 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
           onClose={() => setSelectedProfDetails(null)}
         >
           <div className="space-y-4 max-h-[75vh] overflow-y-auto">
-            <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-xs">
+            <div className="grid grid-cols-2 gap-3 p-3 bg-[var(--color-bg-subtle)] rounded-[var(--radius-control)] border border-[var(--color-border)] text-xs">
               <div>
-                <span className="text-slate-400 block">Total de Atendimentos:</span>
-                <span className="font-bold text-slate-900">{selectedProfDetails.completedBookingsCount}</span>
+                <span className="text-[var(--color-text-subtle)] block">Total de Atendimentos:</span>
+                <span className="font-bold text-[var(--color-text-heading)]">{selectedProfDetails.completedBookingsCount}</span>
               </div>
               <div>
-                <span className="text-slate-400 block">Comissão ({selectedProfDetails.commissionPercentage}%):</span>
-                <span className="font-bold text-amber-600">
+                <span className="text-[var(--color-text-subtle)] block">Comissão ({selectedProfDetails.commissionPercentage}%):</span>
+                <span className="font-bold text-[var(--color-warning)]">
                   {formatMoney(selectedProfDetails.totalCommissionAmount, company.currency, company.locale)}
                 </span>
               </div>
@@ -390,32 +390,32 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-slate-700">Atendimentos Concluídos no Período</h3>
-                <span className="text-[11px] text-slate-400">
+                <h3 className="text-xs font-bold text-[var(--color-text)]">Atendimentos Concluídos no Período</h3>
+                <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)]">
                   {selectedProfDetails.recentBookings.length} registro(s)
                 </span>
               </div>
 
               {selectedProfDetails.recentBookings.length === 0 ? (
-                <p className="text-xs text-slate-400 py-4 text-center">Nenhum atendimento no período selecionado.</p>
+                <p className="text-xs text-[var(--color-text-subtle)] py-4 text-center">Nenhum atendimento no período selecionado.</p>
               ) : (
-                <div className="border border-slate-100 rounded-xl overflow-hidden shadow-2xs">
-                  <div className="divide-y divide-slate-100">
+                <div className="border border-[var(--color-border)] rounded-[var(--radius-control)] overflow-hidden shadow-2xs">
+                  <div className="divide-y divide-[var(--color-border)]">
                     {selectedProfDetails.recentBookings
                       .slice((extratoPage - 1) * extratoPageSize, extratoPage * extratoPageSize)
                       .map((b) => (
-                        <div key={b.id} className="p-3 flex items-center justify-between text-xs hover:bg-slate-50/60 transition-colors">
+                        <div key={b.id} className="p-3 flex items-center justify-between text-xs hover:bg-[var(--color-bg-subtle)] transition-colors">
                           <div>
-                            <p className="font-bold text-slate-900">{b.serviceName}</p>
-                            <p className="text-[11px] text-slate-400">
+                            <p className="font-bold text-[var(--color-text-heading)]">{b.serviceName}</p>
+                            <p className="text-[var(--text-2xs)] text-[var(--color-text-subtle)]">
                               {b.customerName} · {b.scheduledDate.split("-").reverse().join("/")}
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold text-slate-900">
+                            <p className="font-bold text-[var(--color-text-heading)]">
                               {formatMoney(b.total, company.currency, company.locale)}
                             </p>
-                            <p className="text-[11px] font-bold text-amber-600">
+                            <p className="text-[var(--text-2xs)] font-bold text-[var(--color-warning)]">
                               +{formatMoney(b.commission, company.currency, company.locale)}
                             </p>
                           </div>
@@ -439,7 +439,7 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
               )}
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100">
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[var(--color-border)]">
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -451,7 +451,7 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
                     const text = `Olá, *${selectedProfDetails.name}*! 💈✂️\n\nSegue o fechamento das suas comissões de atendimentos na *${company.name}*:\n\n📅 *Período:* ${periodText}\n⭐ *Atendimentos Concluídos:* ${selectedProfDetails.completedBookingsCount}\n💼 *Faturamento Gerado:* ${totalRev}\n💰 *Comissão a Receber (${selectedProfDetails.commissionPercentage}%):* ${totalComm}\n\nExtrato gerado via sistema.`;
                     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-1.5 rounded-[var(--radius-control)] bg-[var(--color-success-light)] hover:bg-[var(--color-success-light)] text-[var(--color-success)] font-bold text-xs transition-colors inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <span>📲 Enviar no WhatsApp</span>
                 </button>
@@ -459,7 +459,7 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
                 <button
                   type="button"
                   onClick={() => window.print()}
-                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-1.5 rounded-[var(--radius-control)] bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)] font-bold text-xs transition-colors inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <span>🖨️ Imprimir Holerite / Extrato</span>
                 </button>

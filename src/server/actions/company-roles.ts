@@ -18,7 +18,18 @@ async function resolveCompany(slug: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return null;
   const company = await getCompanyBySlugForUser(slug, session.user.id);
-  return company ?? null;
+  if (!company) return null;
+  const role = company.members?.[0]?.role ?? "EMPLOYEE";
+  const canManage =
+    session.user.role === "admin" || role === "OWNER" || role === "MANAGER";
+  return { ...company, canManage };
+}
+
+/** Criar/remover cargo é configuração de organograma — só gestão. */
+async function resolveCompanyForManage(slug: string) {
+  const company = await resolveCompany(slug);
+  if (!company || !company.canManage) return null;
+  return company;
 }
 
 async function ensureTableExist() {
@@ -101,7 +112,7 @@ export async function createCompanyRoleAction(formData: FormData) {
 
   if (!name) return { success: false, error: "Nome do cargo é obrigatório." };
 
-  const company = await resolveCompany(slug);
+  const company = await resolveCompanyForManage(slug);
   if (!company) return { success: false, error: "Não autorizado." };
 
   await ensureTableExist();
@@ -122,7 +133,7 @@ export async function createCompanyRoleAction(formData: FormData) {
 }
 
 export async function deleteCompanyRoleAction(companySlug: string, roleId: string) {
-  const company = await resolveCompany(companySlug);
+  const company = await resolveCompanyForManage(companySlug);
   if (!company) return { success: false, error: "Não autorizado." };
 
   await ensureTableExist();

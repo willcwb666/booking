@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { getPlatformSettingsAction, type PlatformSettingsData } from "@/server/actions/admin-settings";
+import { getPlatformSettingsAction } from "@/server/actions/admin-settings";
+import type { PlatformSettingsData } from "@/lib/platform-settings";
 import { AlertTriangle, Clock } from "@/components/ui/icons";
 
 export function MaintenanceBanner() {
@@ -25,16 +26,16 @@ export function MaintenanceBanner() {
     <div
       className={`w-full px-6 py-3 text-xs font-bold flex flex-wrap items-center justify-between gap-4 border-b shadow-xs text-left animate-fadeIn ${
         isUnavailable
-          ? "bg-red-600 text-white border-red-700"
-          : "bg-amber-500 text-slate-950 border-amber-600"
+          ? "bg-[var(--color-danger)] text-white border-[var(--color-danger-border)]"
+          : "bg-[var(--color-warning)] text-[var(--color-text-heading)] border-[var(--color-warning-border)]"
       }`}
     >
       <div className="flex items-center gap-3">
-        <div className="p-1 rounded-lg bg-black/10 shrink-0">
+        <div className="p-1 rounded-[var(--radius-control)] bg-black/10 shrink-0">
           <AlertTriangle className="w-4 h-4" />
         </div>
         <div>
-          <span className="font-extrabold uppercase tracking-wider block text-[10px] opacity-90">
+          <span className="font-semibold uppercase tracking-wider block text-[var(--text-2xs)] opacity-90">
             {isUnavailable ? "⚠️ Manutenção Programada (Sistema Indisponível)" : "⚠️ Aviso de Desempenho (Manutenção)"}
           </span>
           <p className="mt-0.5">{settings.maintenanceMessage}</p>
@@ -42,7 +43,7 @@ export function MaintenanceBanner() {
       </div>
 
       {(settings.maintenanceStart || settings.maintenanceEnd) && (
-        <div className="flex items-center gap-2 bg-black/10 px-3 py-1.5 rounded-xl shrink-0 text-[11px]">
+        <div className="flex items-center gap-2 bg-black/10 px-3 py-1.5 rounded-[var(--radius-control)] shrink-0 text-[var(--text-2xs)]">
           <Clock className="w-3.5 h-3.5" />
           <span>
             {settings.maintenanceStart && `Início: ${new Date(settings.maintenanceStart).toLocaleString("pt-BR")}`}

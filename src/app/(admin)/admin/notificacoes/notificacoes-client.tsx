@@ -81,7 +81,7 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
             <Bell className="w-4 h-4" />
             <span>Notificações & Central de Pedidos</span>
           </div>
-          <h1 className="text-xl font-extrabold text-[var(--color-text-heading)] tracking-tight mt-1">
+          <h1 className="text-xl font-semibold text-[var(--color-text-heading)] tracking-tight mt-1">
             Solicitações do Sistema e Alertas
           </h1>
           <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
@@ -90,27 +90,27 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
         </div>
 
         {pendingCount > 0 && (
-          <span className="px-3.5 py-1.5 bg-amber-50 border border-amber-200 rounded-full text-xs font-bold text-amber-800 animate-pulse">
-            ⚠️ {pendingCount} notificação(ões) não lida(s)
+          <span className="px-3.5 py-1.5 bg-[var(--color-warning-light)] border border-[var(--color-warning-border)] rounded-full text-xs font-bold text-[var(--color-warning)] animate-pulse">
+            {pendingCount} notificação(ões) não lida(s)
           </span>
         )}
       </div>
 
       {/* Abas Superiores: Recebidas vs Enviadas */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-border)]/80 pb-4">
-        <div className="bg-[var(--color-bg-muted)]/80 p-1.5 rounded-xl border border-[var(--color-border)]/60 inline-flex gap-1">
+        <div className="bg-[var(--color-bg-muted)]/80 p-1.5 rounded-[var(--radius-control)] border border-[var(--color-border)]/60 inline-flex gap-1">
           <button
             type="button"
             onClick={() => setActiveTab("received")}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-2 ${
+            className={`px-4 py-2 text-xs font-bold rounded-[var(--radius-control)] transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === "received"
-                ? "bg-white text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80"
+                ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80"
                 : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
             }`}
           >
-            <span>📬 Notificações Recebidas</span>
+            <span>Notificações Recebidas</span>
             {pendingCount > 0 && (
-              <span className="bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+              <span className="bg-[var(--color-danger)] text-white text-[var(--text-2xs)] font-semibold px-2 py-0.5 rounded-full">
                 {pendingCount}
               </span>
             )}
@@ -118,14 +118,14 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
           <button
             type="button"
             onClick={() => setActiveTab("sent")}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-2 ${
+            className={`px-4 py-2 text-xs font-bold rounded-[var(--radius-control)] transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === "sent"
-                ? "bg-white text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80"
+                ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80"
                 : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
             }`}
           >
-            <span>📤 Notificações Enviadas</span>
-            <span className="text-[10px] text-[var(--color-text-subtle)] font-semibold">({sentList.length})</span>
+            <span>Notificações Enviadas</span>
+            <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] font-semibold">({sentList.length})</span>
           </button>
         </div>
 
@@ -134,7 +134,7 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
           <button
             type="button"
             onClick={() => setFilter("all")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${
+            className={`px-3 py-1.5 text-xs font-semibold rounded-[var(--radius-control)] ${
               filter === "all" ? "bg-[var(--color-bg-muted)] text-[var(--color-text-heading)] font-bold" : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
             }`}
           >
@@ -143,7 +143,7 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
           <button
             type="button"
             onClick={() => setFilter("pending")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${
+            className={`px-3 py-1.5 text-xs font-semibold rounded-[var(--radius-control)] ${
               filter === "pending" ? "bg-[var(--color-bg-muted)] text-[var(--color-text-heading)] font-bold" : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
             }`}
           >
@@ -152,7 +152,7 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
           <button
             type="button"
             onClick={() => setFilter("resolved")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${
+            className={`px-3 py-1.5 text-xs font-semibold rounded-[var(--radius-control)] ${
               filter === "resolved" ? "bg-[var(--color-bg-muted)] text-[var(--color-text-heading)] font-bold" : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
             }`}
           >
@@ -164,26 +164,26 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
       {/* Lista de Notificações */}
       <div className="space-y-3">
         {filteredNotifications.length === 0 ? (
-          <div className="p-12 text-center bg-white rounded-3xl border border-[var(--color-border)]/80 shadow-2xs text-xs text-[var(--color-text-subtle)]">
+          <div className="p-12 text-center bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)]/80 shadow-2xs text-xs text-[var(--color-text-subtle)]">
             Nenhuma notificação {activeTab === "received" ? "recebida" : "enviada"} encontrada neste filtro.
           </div>
         ) : (
           filteredNotifications.map((notif) => (
             <div
               key={notif.id}
-              className={`p-6 rounded-3xl border transition-all space-y-4 shadow-2xs ${
+              className={`p-6 rounded-[var(--radius-panel)] border transition-all space-y-4 shadow-2xs ${
                 !notif.isRead && activeTab === "received"
                   ? "bg-[var(--color-primary-light)]/40 border-[var(--color-primary)]/30 shadow-xs"
-                  : "bg-white border-[var(--color-border)]/80"
+                  : "bg-[var(--color-bg)] border-[var(--color-border)]/80"
               }`}
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-[var(--color-primary)]/30/60 font-bold">
+                  <div className="w-10 h-10 rounded-[var(--radius-card)] bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-[var(--color-primary)]/30/60 font-bold">
                     <Bell className="w-5 h-5 text-[var(--color-primary)]" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-extrabold text-[var(--color-text-heading)]">{notif.title}</h3>
+                    <h3 className="text-sm font-semibold text-[var(--color-text-heading)]">{notif.title}</h3>
                     <div className="flex items-center gap-3 text-xs text-[var(--color-text-muted)] mt-0.5">
                       {notif.payload?.companyName && (
                         <span className="flex items-center gap-1 font-semibold text-[var(--color-text)]">
@@ -216,7 +216,7 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
               <p className="text-xs text-[var(--color-text-muted)] leading-relaxed pl-13">{notif.message}</p>
 
               {notif.payload?.observation && (
-                <div className="ml-13 p-3.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)]/80 rounded-2xl text-xs text-[var(--color-text)] font-mono flex items-start gap-2.5">
+                <div className="ml-13 p-3.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)]/80 rounded-[var(--radius-card)] text-xs text-[var(--color-text)] font-mono flex items-start gap-2.5">
                   <MessageSquare className="w-4 h-4 text-[var(--color-primary)] shrink-0 mt-0.5" />
                   <div>
                     <strong className="text-[var(--color-text-heading)] font-sans block mb-0.5">Observação do Cliente:</strong>
@@ -232,10 +232,10 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
                     type="button"
                     onClick={() => handleExecuteReset(notif.id)}
                     disabled={isPending}
-                    className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                    className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
                   >
                     <RotateCcw className="w-4 h-4" />
-                    <span>{isPending ? "Executando Reset..." : "⚡ Executar Reset de Presets Agora"}</span>
+                    <span>{isPending ? "Executando Reset..." : "Executar Reset de Presets Agora"}</span>
                   </button>
                 )}
 
@@ -245,10 +245,10 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
                       type="button"
                       onClick={() => handleToggleReadStatus(notif)}
                       disabled={isPending}
-                      className={`p-2 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs ${
+                      className={`p-2 rounded-[var(--radius-control)] transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs ${
                         notif.isRead
-                          ? "bg-slate-100 hover:bg-slate-200 text-slate-500"
-                          : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                          ? "bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]"
+                          : "bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-white"
                       }`}
                     >
                       <CheckCircle2 className="w-4 h-4" />

@@ -40,12 +40,12 @@ export function ActionTooltip({
           role="tooltip"
           className={`absolute z-[9999] pointer-events-none transition-all duration-150 animate-in fade-in zoom-in-95 ${positionClasses[position]}`}
         >
-          <div className="bg-slate-900/95 text-white text-xs rounded-xl px-3 py-1.5 shadow-2xl backdrop-blur-md border border-slate-700/60 max-w-xs whitespace-normal text-center select-none space-y-0.5">
-            <p className="font-bold tracking-tight text-[11px] text-white leading-tight">
+          <div className="bg-[var(--color-navy)] text-white text-xs rounded-[var(--radius-control)] px-3 py-1.5 shadow-2xl backdrop-blur-md border border-[var(--color-navy)] max-w-xs whitespace-normal text-center select-none space-y-0.5">
+            <p className="font-bold tracking-tight text-[var(--text-2xs)] text-white leading-tight">
               {label}
             </p>
             {description && (
-              <p className="text-[10px] text-slate-300 font-normal leading-snug">
+              <p className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] font-normal leading-snug">
                 {description}
               </p>
             )}

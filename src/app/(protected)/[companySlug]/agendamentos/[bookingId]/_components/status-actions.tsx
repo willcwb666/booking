@@ -19,12 +19,12 @@ const TRANSITIONS: Record<string, { label: string; next: string; color: string }
   CONFIRMED: {
     label: "Iniciar atendimento",
     next: "IN_PROGRESS",
-    color: "bg-purple-600 hover:bg-purple-700 text-white",
+    color: "bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-white",
   },
   IN_PROGRESS: {
     label: "Concluir & Fechamento",
     next: "COMPLETED",
-    color: "bg-emerald-600 hover:bg-emerald-700 text-white",
+    color: "bg-[var(--color-success)] hover:bg-[var(--color-success)] text-white",
   },
 };
 
@@ -45,7 +45,7 @@ export function StatusActions({
 
   if (isFuture) {
     return (
-      <span className="text-xs text-amber-700 bg-amber-50 px-2.5 py-1.5 rounded-lg border border-amber-200 font-medium inline-flex items-center gap-1">
+      <span className="text-xs text-[var(--color-warning)] bg-[var(--color-warning-light)] px-2.5 py-1.5 rounded-[var(--radius-control)] border border-[var(--color-warning-border)] font-medium inline-flex items-center gap-1">
         <span>🗓️</span> Data Futura
       </span>
     );
@@ -80,14 +80,14 @@ export function StatusActions({
           onClick={handleClick}
           disabled={pending}
           className={[
-            "px-4 py-2 text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm",
+            "px-4 py-2 text-sm font-semibold rounded-[var(--radius-control)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm",
             transition.color,
           ].join(" ")}
         >
           {pending ? "Atualizando…" : transition.label}
         </button>
         {error && (
-          <p role="alert" className="text-xs text-red-600 mt-1">{error}</p>
+          <p role="alert" className="text-xs text-[var(--color-danger)] mt-1">{error}</p>
         )}
       </div>
 

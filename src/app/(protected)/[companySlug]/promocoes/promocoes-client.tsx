@@ -152,14 +152,14 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
                 ? "Nenhum cliente com opt-in de ofertas"
                 : undefined
             }
-            className="px-4 py-2 text-sm font-semibold bg-[var(--color-success)] text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-semibold bg-[var(--color-success)] text-white rounded-[var(--radius-control)] hover:opacity-90 disabled:opacity-50"
           >
             ✉ Criar e-mail
           </button>
           <button
             type="button"
             onClick={() => openDialog({ type: "create" })}
-            className="px-4 py-2 text-sm font-semibold bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-hover)]"
+            className="px-4 py-2 text-sm font-semibold bg-[var(--color-primary)] text-white rounded-[var(--radius-control)] hover:bg-[var(--color-primary-hover)]"
           >
             Nova promoção
           </button>
@@ -173,7 +173,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
       {feedback && (
         <div
           role={feedback.kind === "err" ? "alert" : "status"}
-          className={`mb-4 p-3 rounded-lg text-sm border ${
+          className={`mb-4 p-3 rounded-[var(--radius-control)] text-sm border ${
             feedback.kind === "ok"
               ? "bg-[var(--color-success-light)] border-[var(--color-success-border)] text-[var(--color-success)]"
               : "bg-[var(--color-danger-light)] border-[var(--color-danger-border)] text-[var(--color-danger)]"
@@ -184,7 +184,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
       )}
 
       {promotions.length === 0 ? (
-        <div className="bg-white rounded-xl border border-[var(--color-border)] p-10 text-center">
+        <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-10 text-center">
           <p className="text-[var(--color-text-muted)] text-sm">
             Nenhuma promoção cadastrada. Crie a primeira para oferecer descontos aos seus clientes.
           </p>
@@ -194,7 +194,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
           {promotions.map((p) => {
             const status = promoStatus(p);
             return (
-              <div key={p.id} className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+              <div key={p.id} className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -223,14 +223,14 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
                     <button
                       type="button"
                       onClick={() => openDialog({ type: "edit", item: p })}
-                      className="px-3 py-1.5 text-xs font-medium text-[var(--color-text)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-subtle)]"
+                      className="px-3 py-1.5 text-xs font-medium text-[var(--color-text)] border border-[var(--color-border)] rounded-[var(--radius-control)] hover:bg-[var(--color-bg-subtle)]"
                     >
                       Editar
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDelete(p.id)}
-                      className="px-3 py-1.5 text-xs font-medium text-[var(--color-danger)] border border-[var(--color-danger-border)] rounded-lg hover:bg-[var(--color-danger-light)]"
+                      className="px-3 py-1.5 text-xs font-medium text-[var(--color-danger)] border border-[var(--color-danger-border)] rounded-[var(--radius-control)] hover:bg-[var(--color-danger-light)]"
                     >
                       Excluir
                     </button>
@@ -250,7 +250,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
       <dialog
         ref={dialogRef}
         onClose={() => setDialog({ type: "none" })}
-        className="rounded-2xl p-0 backdrop:bg-black/40 w-full max-w-md m-auto"
+        className="rounded-[var(--radius-card)] p-0 backdrop:bg-black/40 w-full max-w-md m-auto"
       >
         {dialog.type !== "none" && (
           <form onSubmit={handleSubmit}>
@@ -266,7 +266,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
 
             <div className="p-5 space-y-4">
               {fieldErrors?._ && (
-                <p className="text-sm text-[var(--color-danger)] bg-[var(--color-danger-light)] border border-[var(--color-danger-border)] rounded-lg px-3 py-2" role="alert">
+                <p className="text-sm text-[var(--color-danger)] bg-[var(--color-danger-light)] border border-[var(--color-danger-border)] rounded-[var(--radius-control)] px-3 py-2" role="alert">
                   {fieldErrors._[0]}
                 </p>
               )}
@@ -285,7 +285,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
                       maxLength={120}
                       autoFocus
                       placeholder="Ex.: Ofertas de inverno ❄️"
-                      className="w-full border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                      className="w-full border border-[var(--color-border-strong)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                     />
                     <FieldError errors={fieldErrors} field="title" />
                   </div>
@@ -301,12 +301,12 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
                       required
                       maxLength={1000}
                       placeholder="Texto que aparece no corpo do e-mail, antes da lista de serviços."
-                      className="w-full border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
+                      className="w-full border border-[var(--color-border-strong)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
                     />
                     <FieldError errors={fieldErrors} field="description" />
                   </div>
 
-                  <div className="rounded-lg bg-[var(--color-bg-subtle)] border border-[var(--color-border)] p-3 text-xs text-[var(--color-text)] space-y-1">
+                  <div className="rounded-[var(--radius-control)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)] p-3 text-xs text-[var(--color-text)] space-y-1">
                     <p className="font-semibold text-[var(--color-text-heading)]">O e-mail incluirá automaticamente:</p>
                     <p>• Logo e nome da empresa no cabeçalho</p>
                     {activePromos.map((p) => (
@@ -337,7 +337,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
                   name="serviceTypeId"
                   required
                   defaultValue={dialog.type === "edit" ? dialog.item.serviceTypeId : ""}
-                  className="w-full border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-white"
+                  className="w-full border border-[var(--color-border-strong)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-bg)]"
                 >
                   <option value="" disabled>Selecione o serviço</option>
                   {serviceTypes.map((st) => (
@@ -361,7 +361,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
                   maxLength={300}
                   placeholder="Ex.: Promoção de inverno — 20% off"
                   defaultValue={dialog.type === "edit" ? dialog.item.description : ""}
-                  className="w-full border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
+                  className="w-full border border-[var(--color-border-strong)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
                 />
                 <FieldError errors={fieldErrors} field="description" />
               </div>
@@ -378,7 +378,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
                   step="0.01"
                   required
                   defaultValue={dialog.type === "edit" ? dialog.item.promoPrice : ""}
-                  className="w-full border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full border border-[var(--color-border-strong)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
                 <FieldError errors={fieldErrors} field="promoPrice" />
               </div>
@@ -394,7 +394,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
                     type="date"
                     required
                     defaultValue={dialog.type === "edit" ? dialog.item.startDate : ""}
-                    className="w-full border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    className="w-full border border-[var(--color-border-strong)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   />
                   <FieldError errors={fieldErrors} field="startDate" />
                 </div>
@@ -408,7 +408,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
                     type="date"
                     required
                     defaultValue={dialog.type === "edit" ? dialog.item.endDate : ""}
-                    className="w-full border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    className="w-full border border-[var(--color-border-strong)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   />
                   <FieldError errors={fieldErrors} field="endDate" />
                 </div>
@@ -428,7 +428,7 @@ export function PromocoesClient({ companySlug, promotions, serviceTypes, optInCo
               <button
                 type="submit"
                 disabled={isPending}
-                className={`px-4 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-60 transition-colors ${
+                className={`px-4 py-2 text-sm font-medium text-white rounded-[var(--radius-control)] disabled:opacity-60 transition-colors ${
                   dialog.type === "compose"
                     ? "bg-[var(--color-success)] hover:opacity-90"
                     : "bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)]"

@@ -74,7 +74,7 @@ function ProfileForm({ name, bio, location }: Pick<Props, "name" | "bio" | "loca
       {error && <p role="alert" className="text-sm text-[var(--color-danger)]">{error}</p>}
       {success && <p role="status" className="text-sm text-[var(--color-success)]">Perfil atualizado com sucesso!</p>}
       <button type="submit" disabled={pending}
-        className="px-4 py-2 bg-[var(--color-primary)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors">
+        className="px-4 py-2 bg-[var(--color-primary)] text-white text-sm font-semibold rounded-[var(--radius-control)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors">
         {pending ? "Salvando…" : "Salvar alterações"}
       </button>
     </form>
@@ -125,7 +125,7 @@ function PasswordForm() {
       {error && <p role="alert" className="text-sm text-[var(--color-danger)]">{error}</p>}
       {success && <p role="status" className="text-sm text-[var(--color-success)]">Senha alterada com sucesso!</p>}
       <button type="submit" disabled={pending}
-        className="px-4 py-2 bg-[var(--color-primary)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors">
+        className="px-4 py-2 bg-[var(--color-primary)] text-white text-sm font-semibold rounded-[var(--radius-control)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors">
         {pending ? "Alterando…" : "Alterar senha"}
       </button>
     </form>
@@ -230,7 +230,7 @@ function NotificacoesForm({ prefs }: { prefs: NotifPrefs }) {
       </p>
 
       {channels.map((ch) => (
-        <div key={ch.key} className="rounded-xl border border-[var(--color-border)] overflow-hidden">
+        <div key={ch.key} className="rounded-[var(--radius-control)] border border-[var(--color-border)] overflow-hidden">
           <label className="flex items-start gap-4 p-4 cursor-pointer hover:bg-[var(--color-bg-subtle)] transition-colors">
             <input
               type="checkbox"
@@ -257,7 +257,7 @@ function NotificacoesForm({ prefs }: { prefs: NotifPrefs }) {
       {success && <p role="status" className="text-sm text-[var(--color-success)]">Preferências salvas!</p>}
 
       <button type="submit" disabled={pending}
-        className="px-4 py-2 bg-[var(--color-primary)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors">
+        className="px-4 py-2 bg-[var(--color-primary)] text-white text-sm font-semibold rounded-[var(--radius-control)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors">
         {pending ? "Salvando…" : "Salvar preferências"}
       </button>
     </form>
@@ -285,15 +285,15 @@ export function PerfilClient({ name, email, bio, location, notifPrefs }: Props) 
 
       <div className="space-y-6">
         {/* Tabs */}
-        <div className="flex gap-1 bg-[var(--color-bg-muted)] p-1 rounded-lg w-fit">
+        <div className="flex gap-1 bg-[var(--color-bg-muted)] p-1 rounded-[var(--radius-control)] w-fit">
           {tabs.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => setTab(t.id)}
-              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+              className={`px-4 py-1.5 text-sm font-medium rounded-[var(--radius-sm)] transition-colors ${
                 tab === t.id
-                  ? "bg-white text-[var(--color-text-heading)] shadow-sm"
+                  ? "bg-[var(--color-bg)] text-[var(--color-text-heading)] shadow-sm"
                   : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
               }`}
             >

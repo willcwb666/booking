@@ -37,32 +37,32 @@ export default function ServiceIconGrid({ selectedIcon, onSelect, onClose }: Pro
   const visible = filtered.slice(0, MAX_RENDER);
 
   return (
-    <div className="p-4 bg-white border border-slate-200 rounded-3xl space-y-3 shadow-xl animate-in fade-in duration-200 mt-2">
+    <div className="p-4 bg-white border border-[var(--color-border)] rounded-[var(--radius-panel)] space-y-3 shadow-xl animate-in fade-in duration-200 mt-2">
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+        <span className="text-[var(--text-2xs)] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">
           CATÁLOGO LUCIDE ({ALL_ICONS.length} ÍCONES)
         </span>
-        <span className="text-[10px] text-slate-400">
+        <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)]">
           {filtered.length} encontrado(s)
           {filtered.length > MAX_RENDER && ` — refine a busca`}
         </span>
       </div>
 
       <div className="relative">
-        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+        <Search className="w-4 h-4 text-[var(--color-text-subtle)] absolute left-3.5 top-3" />
         <input
           type="text"
           autoFocus
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Busque em português ou inglês (ex: stove, fogão, fridge, geladeira, dente, camera, tesoura)..."
-          className="w-full border border-slate-200 rounded-xl pl-10 pr-9 py-2.5 text-xs font-medium focus:ring-2 focus:ring-indigo-500"
+          className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] pl-10 pr-9 py-2.5 text-xs font-medium focus:ring-2 focus:ring-[var(--color-primary)]"
         />
         {searchTerm && (
           <button
             type="button"
             onClick={() => setSearchTerm("")}
-            className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 font-bold"
+            className="absolute right-3 top-3 text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)] font-bold"
           >
             <X className="w-4 h-4" />
           </button>
@@ -70,9 +70,9 @@ export default function ServiceIconGrid({ selectedIcon, onSelect, onClose }: Pro
       </div>
 
       {visible.length === 0 ? (
-        <div className="py-6 text-center bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1">
-          <p className="font-bold text-slate-700 text-xs">Nenhum ícone encontrado para &quot;{searchTerm}&quot;</p>
-          <p className="text-[11px] text-slate-400">
+        <div className="py-6 text-center bg-[var(--color-bg-subtle)] rounded-[var(--radius-card)] border border-[var(--color-border)] space-y-1">
+          <p className="font-bold text-[var(--color-text)] text-xs">Nenhum ícone encontrado para &quot;{searchTerm}&quot;</p>
+          <p className="text-[var(--text-2xs)] text-[var(--color-text-subtle)]">
             Tente outro termo (ex: refrigerator, hard-hat, camera, dumbbell, coffee) ou em português.
           </p>
         </div>
@@ -90,14 +90,14 @@ export default function ServiceIconGrid({ selectedIcon, onSelect, onClose }: Pro
                     onClose();
                   }}
                   title={name}
-                  className={`p-2 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer text-center aspect-square ${
+                  className={`p-2 rounded-[var(--radius-control)] border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer text-center aspect-square ${
                     isSelected
-                      ? "bg-indigo-600 text-white border-indigo-600 shadow-sm font-extrabold scale-105"
-                      : "bg-white border-slate-200/90 hover:bg-indigo-50 hover:border-indigo-300 text-slate-700"
+                      ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-sm font-semibold scale-105"
+                      : "bg-white border-[var(--color-border)] hover:bg-[var(--color-primary-light)] hover:border-[var(--color-primary)] text-[var(--color-text)]"
                   }`}
                 >
                   <Comp className="w-4 h-4 shrink-0" />
-                  <span className="text-[9px] font-bold truncate max-w-full leading-tight">{name}</span>
+                  <span className="text-[var(--text-2xs)] font-bold truncate max-w-full leading-tight">{name}</span>
                 </button>
               );
             })}

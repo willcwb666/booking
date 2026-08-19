@@ -69,14 +69,14 @@ export function LandingTab({ companySlug, canEdit, availableServices }: Props) {
 
   return (
     <div className="space-y-6 text-left">
-      <div className="bg-white rounded-3xl border border-[var(--color-border)] p-6 sm:p-8 space-y-6 shadow-xs">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-6 sm:p-8 space-y-6 shadow-xs">
         <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-[var(--color-border)]">
+            <div className="w-10 h-10 rounded-[var(--radius-card)] bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-[var(--color-border)]">
               <Globe className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-[var(--color-text-heading)]">Customização da Landing Page Pública</h2>
+              <h2 className="text-base font-semibold text-[var(--color-text-heading)]">Customização da Landing Page Pública</h2>
               <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                 Personalize o visual e os serviços em destaque que os clientes verão no seu link de agendamento.
               </p>
@@ -87,7 +87,7 @@ export function LandingTab({ companySlug, canEdit, availableServices }: Props) {
             href={`/booking/${companySlug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text-heading)] font-bold text-xs rounded-xl transition-all inline-flex items-center gap-1.5"
+            className="px-4 py-2 bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text-heading)] font-bold text-xs rounded-[var(--radius-control)] transition-all inline-flex items-center gap-1.5"
           >
             <Globe className="w-3.5 h-3.5 text-[var(--color-primary)]" />
             <span>Ver Sua Landing Page ↗</span>
@@ -102,7 +102,7 @@ export function LandingTab({ companySlug, canEdit, availableServices }: Props) {
                 type="text"
                 value={config.heroTitle}
                 onChange={(e) => setConfig({ ...config, heroTitle: e.target.value })}
-                className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 placeholder="Ex: Seja bem-vindo à nossa barbearia"
               />
             </div>
@@ -115,19 +115,19 @@ export function LandingTab({ companySlug, canEdit, availableServices }: Props) {
                     type="color"
                     value={config.accentColor}
                     onChange={(e) => setConfig({ ...config, accentColor: e.target.value })}
-                    className="w-10 h-10 rounded-xl border border-[var(--color-border)] cursor-pointer p-0.5"
+                    className="w-10 h-10 rounded-[var(--radius-control)] border border-[var(--color-border)] cursor-pointer p-0.5"
                   />
                   <input
                     type="text"
                     value={config.accentColor}
                     onChange={(e) => setConfig({ ...config, accentColor: e.target.value })}
-                    className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs font-mono text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+                    className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs font-mono text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                   />
                 </div>
 
                 {/* Paletas de Cor Rápidas com 1 Clique */}
                 <div className="flex flex-wrap gap-1.5 items-center pt-1">
-                  <span className="text-[10px] text-[var(--color-text-subtle)] font-bold mr-1">Sugestões:</span>
+                  <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] font-bold mr-1">Sugestões:</span>
                   {[
                     { label: "💈 Azul Royal", color: "#2563eb" },
                     { label: "💅 Rosa Beauty", color: "#db2777" },
@@ -140,7 +140,7 @@ export function LandingTab({ companySlug, canEdit, availableServices }: Props) {
                       key={p.color}
                       type="button"
                       onClick={() => setConfig({ ...config, accentColor: p.color })}
-                      className="px-2 py-1 rounded-lg border border-[var(--color-border)] text-[10px] font-bold transition-all hover:scale-105 flex items-center gap-1 cursor-pointer bg-white"
+                      className="px-2 py-1 rounded-[var(--radius-control)] border border-[var(--color-border)] text-[var(--text-2xs)] font-bold transition-all hover:scale-105 flex items-center gap-1 cursor-pointer bg-[var(--color-bg)]"
                     >
                       <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: p.color }} />
                       <span>{p.label}</span>
@@ -157,7 +157,7 @@ export function LandingTab({ companySlug, canEdit, availableServices }: Props) {
               rows={2}
               value={config.heroSubtitle}
               onChange={(e) => setConfig({ ...config, heroSubtitle: e.target.value })}
-              className="w-full border border-[var(--color-border)] rounded-xl p-3 text-xs font-medium text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] p-3 text-xs font-medium text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
               placeholder="Ex: Reserve os melhores horários com nossos profissionais qualificados."
             />
           </div>
@@ -168,25 +168,25 @@ export function LandingTab({ companySlug, canEdit, availableServices }: Props) {
               type="text"
               value={config.bannerUrl}
               onChange={(e) => setConfig({ ...config, bannerUrl: e.target.value })}
-              className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
               placeholder="https://exemplo.com/imagem-estabelecimento.jpg"
             />
           </div>
 
           {/* Prévia ao Vivo da Bio do Estabelecimento */}
-          <div className="p-4 rounded-2xl bg-[var(--color-bg-subtle)] border border-[var(--color-border)] space-y-2">
-            <span className="text-[10px] font-black uppercase tracking-wider text-[var(--color-text-muted)] block">
+          <div className="p-4 rounded-[var(--radius-card)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)] space-y-2">
+            <span className="text-[var(--text-2xs)] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] block">
               👁️ Prévia ao Vivo do seu Card Público:
             </span>
-            <div className="p-4 rounded-2xl bg-white border border-[var(--color-border)] shadow-xs flex items-center gap-4">
+            <div className="p-4 rounded-[var(--radius-card)] bg-[var(--color-bg)] border border-[var(--color-border)] shadow-xs flex items-center gap-4">
               <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-lg shrink-0 shadow-xs"
+                className="w-12 h-12 rounded-[var(--radius-control)] flex items-center justify-center text-white font-semibold text-lg shrink-0 shadow-xs"
                 style={{ backgroundColor: config.accentColor || "#2563eb" }}
               >
                 {companySlug[0]?.toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-extrabold text-[var(--color-text-heading)] truncate">
+                <h4 className="text-sm font-semibold text-[var(--color-text-heading)] truncate">
                   {config.heroTitle || "Nome do Estabelecimento"}
                 </h4>
                 <p className="text-xs text-[var(--color-text-muted)] truncate">
@@ -194,7 +194,7 @@ export function LandingTab({ companySlug, canEdit, availableServices }: Props) {
                 </p>
               </div>
               <span
-                className="px-3 py-1.5 rounded-xl text-white font-extrabold text-xs shrink-0 shadow-xs hidden sm:inline-block"
+                className="px-3 py-1.5 rounded-[var(--radius-control)] text-white font-semibold text-xs shrink-0 shadow-xs hidden sm:inline-block"
                 style={{ backgroundColor: config.accentColor || "#2563eb" }}
               >
                 Agendar Horário
@@ -205,10 +205,10 @@ export function LandingTab({ companySlug, canEdit, availableServices }: Props) {
           {/* Seleção de Serviços em Destaque (Máximo 6) */}
           <div className="pt-2 border-t border-[var(--color-border)] space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-extrabold text-[var(--color-text-heading)]">
+              <span className="text-xs font-semibold text-[var(--color-text-heading)]">
                 Selecione os Serviços em Destaque na Capa (Até 6):
               </span>
-              <span className="text-[11px] font-bold text-[var(--color-primary)]">
+              <span className="text-[var(--text-2xs)] font-bold text-[var(--color-primary)]">
                 {config.featuredServiceIds.length} de 6 Selecionados
               </span>
             </div>
@@ -221,7 +221,7 @@ export function LandingTab({ companySlug, canEdit, availableServices }: Props) {
                     key={s.id}
                     type="button"
                     onClick={() => handleToggleService(s.id)}
-                    className={`p-3 rounded-2xl border text-xs font-bold transition-all text-left flex items-center justify-between cursor-pointer ${
+                    className={`p-3 rounded-[var(--radius-card)] border text-xs font-bold transition-all text-left flex items-center justify-between cursor-pointer ${
                       isSelected
                         ? "bg-[var(--color-primary-light)] border-[var(--color-primary)] text-[var(--color-primary)] shadow-2xs"
                         : "bg-[var(--color-bg-subtle)] border-[var(--color-border)] text-[var(--color-text-heading)] hover:bg-[var(--color-bg-muted)]"
@@ -242,7 +242,7 @@ export function LandingTab({ companySlug, canEdit, availableServices }: Props) {
               type="button"
               onClick={handleSave}
               disabled={isPending}
-              className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
+              className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>{isPending ? "Salvando..." : "Salvar Landing Page Customizada"}</span>

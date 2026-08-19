@@ -11,7 +11,7 @@ import { SEARCH_ALIASES, normalizeStr } from "@/components/ui/service-icon-share
 const ServiceIconGrid = nextDynamic(() => import("@/components/ui/service-icon-grid"), {
   ssr: false,
   loading: () => (
-    <div className="p-6 mt-2 bg-white border border-slate-200 rounded-3xl text-center text-xs text-slate-400">
+    <div className="p-6 mt-2 bg-white border border-[var(--color-border)] rounded-[var(--radius-panel)] text-center text-xs text-[var(--color-text-subtle)]">
       Carregando catálogo de ícones…
     </div>
   ),
@@ -60,23 +60,23 @@ export function ServiceIconPicker({ selectedIcon, onSelectIcon }: Props) {
 
   return (
     <div className="space-y-2 text-xs">
-      <label className="block font-bold text-slate-700 uppercase">ÍCONE DO SERVIÇO</label>
+      <label className="block font-bold text-[var(--color-text)] uppercase">ÍCONE DO SERVIÇO</label>
 
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-200/80 rounded-2xl flex-1">
-          <div className="w-8 h-8 rounded-xl bg-[#635bff] text-white flex items-center justify-center shrink-0 shadow-xs">
+        <div className="flex items-center gap-3 p-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-card)] flex-1">
+          <div className="w-8 h-8 rounded-[var(--radius-control)] bg-[#635bff] text-white flex items-center justify-center shrink-0 shadow-xs">
             <RenderServiceIcon iconName={selectedIcon} className="w-4 h-4" />
           </div>
           <div>
-            <span className="font-extrabold text-slate-900 block text-xs">{selectedIcon}</span>
-            <span className="text-[10px] text-slate-400 font-mono">Ícone Lucide: {selectedIcon}</span>
+            <span className="font-semibold text-[var(--color-text-heading)] block text-xs">{selectedIcon}</span>
+            <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] font-mono">Ícone Lucide: {selectedIcon}</span>
           </div>
         </div>
 
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-xs rounded-2xl transition-all cursor-pointer inline-flex items-center gap-2 uppercase shrink-0"
+          className="px-4 py-3 bg-[var(--color-bg-subtle)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)] font-semibold text-xs rounded-[var(--radius-card)] transition-all cursor-pointer inline-flex items-center gap-2 uppercase shrink-0"
         >
           <Search className="w-4 h-4" />
           <span>{isOpen ? "FECHAR" : "BUSCAR ÍCONE"}</span>

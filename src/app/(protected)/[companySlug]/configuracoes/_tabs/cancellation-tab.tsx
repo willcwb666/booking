@@ -27,7 +27,7 @@ export function CancellationTab({ canEdit, currency, formState, onChange }: Prop
 
   return (
     <div className="space-y-6 text-left">
-      <div className="bg-white rounded-3xl border border-[var(--color-border)] p-6 sm:p-8 space-y-6 shadow-sm">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-6 sm:p-8 space-y-6 shadow-sm">
         <div>
           <h2 className="text-base font-bold text-[var(--color-text-heading)]">Política de Cancelamentos & Tolerância</h2>
           <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
@@ -41,41 +41,41 @@ export function CancellationTab({ canEdit, currency, formState, onChange }: Prop
             type="button"
             disabled={!canEdit}
             onClick={handleSetDefault}
-            className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer ${
+            className={`p-4 rounded-[var(--radius-card)] border-2 text-left transition-all cursor-pointer ${
               isDefaultPolicy
-                ? "border-emerald-600 bg-emerald-50/60 shadow-xs"
-                : "border-stone-200 bg-white hover:border-stone-300"
+                ? "border-[var(--color-success-border)] bg-[var(--color-success-light)] shadow-xs"
+                : "border-[var(--color-border)] bg-[var(--color-bg)] hover:border-[var(--color-border-strong)]"
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-stone-900 flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-[var(--color-text-heading)] flex items-center gap-1.5">
                 ⚡ Política Padrão do Mercado
               </span>
-              <span className="px-2 py-0.5 bg-emerald-600 text-white rounded-full text-[9px] font-black uppercase">
+              <span className="px-2 py-0.5 bg-[var(--color-success)] text-white rounded-full text-[var(--text-2xs)] font-semibold uppercase">
                 Recomendada
               </span>
             </div>
-            <p className="text-[11px] text-stone-600 font-medium mt-1.5 leading-relaxed">
+            <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)] font-medium mt-1.5 leading-relaxed">
               24h de antecedência mínima, sem taxa punitiva e 15 minutos de tolerância de atraso. O padrão de ouro aceito pela maioria dos clientes.
             </p>
           </button>
 
           <div
-            className={`p-4 rounded-2xl border-2 text-left transition-all ${
+            className={`p-4 rounded-[var(--radius-card)] border-2 text-left transition-all ${
               !isDefaultPolicy
-                ? "border-stone-900 bg-stone-50 shadow-xs"
-                : "border-stone-200 bg-white"
+                ? "border-[var(--color-navy)] bg-[var(--color-bg-subtle)] shadow-xs"
+                : "border-[var(--color-border)] bg-[var(--color-bg)]"
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-stone-900 flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-[var(--color-text-heading)] flex items-center gap-1.5">
                 🛠️ Política Personalizada
               </span>
-              <span className="px-2 py-0.5 bg-stone-200 text-stone-700 rounded-full text-[9px] font-bold uppercase">
+              <span className="px-2 py-0.5 bg-[var(--color-bg-muted)] text-[var(--color-text)] rounded-full text-[var(--text-2xs)] font-bold uppercase">
                 Customizável
               </span>
             </div>
-            <p className="text-[11px] text-stone-600 font-medium mt-1.5 leading-relaxed">
+            <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)] font-medium mt-1.5 leading-relaxed">
               Ajuste manualmente os prazos, multas e minutos nos campos abaixo para atender às exigências específicas do seu negócio.
             </p>
           </div>
@@ -92,7 +92,7 @@ export function CancellationTab({ canEdit, currency, formState, onChange }: Prop
               value={formState.minCancellationNoticeHours}
               onChange={(e) => onChange("minCancellationNoticeHours", parseInt(e.target.value, 10))}
               disabled={!canEdit}
-              className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-white disabled:bg-[var(--color-bg-subtle)]"
+              className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-bg)] disabled:bg-[var(--color-bg-subtle)]"
             >
               <option value={12}>12 horas antes</option>
               <option value={24}>24 horas antes (Padrão)</option>
@@ -100,7 +100,7 @@ export function CancellationTab({ canEdit, currency, formState, onChange }: Prop
               <option value={48}>48 horas antes</option>
               <option value={72}>72 horas antes</option>
             </select>
-            <p className="mt-1 text-[11px] text-[var(--color-text-subtle)]">
+            <p className="mt-1 text-[var(--text-2xs)] text-[var(--color-text-subtle)]">
               Prazo mínimo antes do horário marcado.
             </p>
           </div>
@@ -119,9 +119,9 @@ export function CancellationTab({ canEdit, currency, formState, onChange }: Prop
               onChange={(e) => onChange("cancellationFee", parseFloat(e.target.value) || 0)}
               disabled={!canEdit}
               placeholder="0.00"
-              className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:bg-[var(--color-bg-subtle)]"
+              className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:bg-[var(--color-bg-subtle)]"
             />
-            <p className="mt-1 text-[11px] text-[var(--color-text-subtle)]">
+            <p className="mt-1 text-[var(--text-2xs)] text-[var(--color-text-subtle)]">
               Valor automático cobrado fora do prazo.
             </p>
           </div>
@@ -140,9 +140,9 @@ export function CancellationTab({ canEdit, currency, formState, onChange }: Prop
               onChange={(e) => onChange("lateToleranceMinutes", parseInt(e.target.value, 10) || 0)}
               disabled={!canEdit}
               placeholder="15"
-              className="w-full border border-[var(--color-border)] rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:bg-[var(--color-bg-subtle)]"
+              className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:bg-[var(--color-bg-subtle)]"
             />
-            <p className="mt-1 text-[11px] text-[var(--color-text-subtle)]">
+            <p className="mt-1 text-[var(--text-2xs)] text-[var(--color-text-subtle)]">
               Minutos tolerados antes do No-Show.
             </p>
           </div>

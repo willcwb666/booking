@@ -4,12 +4,16 @@ import { auth } from "@/lib/auth";
 import { getCompanyBySlugForUser } from "@/server/queries/companies";
 import { getBookingDashboardStats } from "@/server/queries/bookings";
 import { getReviewStats } from "@/server/queries/reviews";
+import { getCompanyOverview } from "@/server/queries/analytics";
+import { resolveRange, type RangeSearchParams } from "@/lib/analytics-range";
 import { DashboardClient } from "./dashboard-client";
 
 export default async function DashboardPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ companySlug: string }>;
+  searchParams: Promise<RangeSearchParams>;
 }) {
   const { companySlug } = await params;
   const session = await auth.api.getSession({ headers: await headers() });
@@ -18,9 +22,12 @@ export default async function DashboardPage({
   const company = await getCompanyBySlugForUser(companySlug, session.user.id);
   if (!company) notFound();
 
-  const [stats, reviewStats] = await Promise.all([
+  const range = resolveRange(await searchParams);
+
+  const [stats, reviewStats, overview] = await Promise.all([
     getBookingDashboardStats(company.id),
     getReviewStats(company.id),
+    getCompanyOverview(company.id, range),
   ]);
 
   return (
@@ -36,6 +43,8 @@ export default async function DashboardPage({
       }}
       stats={stats}
       reviewStats={reviewStats}
+      range={range}
+      overview={overview}
     />
   );
 }

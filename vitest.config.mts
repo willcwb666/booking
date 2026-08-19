@@ -8,6 +8,9 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts", "test/**/*.test.ts"],
+    // Carrega o .env antes dos módulos de teste — os testes de integração
+    // (RUN_DB_TESTS=1) precisam de DATABASE_URL já no import de @/lib/db.
+    setupFiles: ["./test/setup-env.ts"],
   },
   resolve: {
     alias: {

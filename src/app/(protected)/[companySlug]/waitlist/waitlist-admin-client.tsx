@@ -59,7 +59,7 @@ export function WaitlistAdminClient({
 
   if (entries.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-12 text-center">
         <p className="text-[var(--color-text-muted)] text-sm">Nenhum cliente na lista de espera.</p>
       </div>
     );

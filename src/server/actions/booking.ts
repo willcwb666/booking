@@ -7,15 +7,16 @@ import { decrypt } from "@/lib/encrypt";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { notifyBookingConfirmed, notifyBookingCancelled, notifyStatusChanged, notifyCompanyNewBooking, notifyBookingCompletedWithInvoice } from "@/lib/notifications";
+import { notifyBookingCompletedWithInvoice } from "@/lib/notifications";
 import { rateLimit } from "@/lib/rate-limit";
 import { createPixPayment } from "@/lib/mercadopago";
 import { triggerWebhooks } from "@/lib/webhooks";
 import { createCalendarEvent } from "@/lib/google-calendar";
-import { isSlotAvailable } from "@/lib/agenda";
+import { isSlotAvailable, resolveProfessionalForSlot, slotProfessionalKey } from "@/lib/agenda";
 import { calculateCancellationRefund, computeBookingCharge, roundMoney, toStripeCents } from "@/lib/pricing";
 import { notifyWaitlistForDate } from "./waitlist";
 import { randomUUID } from "crypto";
+import { enqueueNotification } from "@/lib/notification-outbox";
 
 type CreateResult =
   | { success: true; bookingId: string; paymentMethod: "CASH_CHECK" }
@@ -183,35 +184,15 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
   const recurrenceGroupId = rawFrequency !== "ONCE" ? randomUUID() : null;
   const recurrenceFrequency = rawFrequency !== "ONCE" ? rawFrequency : null;
 
-  // Resolução do profissional atribuído (específico ou auto-assignment inteligente)
-  let finalProfessionalId = chosenProfessionalId;
-  if (!finalProfessionalId) {
-    const agendaWithStaff = await db.agenda.findUnique({
-      where: { id: agendaId },
-      include: {
-        professionals: {
-          where: { professional: { isActive: true } },
-          select: { professionalId: true },
-        },
-      },
-    });
-    const staffIds = (agendaWithStaff?.professionals ?? []).map((p) => p.professionalId);
-    if (staffIds.length > 0) {
-      const busyBookings = await db.booking.findMany({
-        where: {
-          agendaId,
-          scheduledDate,
-          scheduledStartTime,
-          status: { notIn: ["CANCELLED"] },
-          professionalId: { in: staffIds },
-        },
-        select: { professionalId: true },
-      });
-      const busyIds = new Set(busyBookings.map((b) => b.professionalId));
-      const availableStaffId = staffIds.find((id) => !busyIds.has(id));
-      finalProfessionalId = availableStaffId ?? staffIds[0];
-    }
-  }
+  // Resolução do profissional atribuído (específico ou auto-assignment).
+  // A garantia contra corrida não está aqui e sim no índice único de
+  // `booking_slot`, que aborta a transação se o horário já foi vendido.
+  const finalProfessionalId = await resolveProfessionalForSlot(
+    agendaId,
+    scheduledDate,
+    scheduledStartTime,
+    chosenProfessionalId
+  );
 
   try {
     const { newBooking, membershipCovered, membershipDiscount, giftCardDebit } =
@@ -235,7 +216,9 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
         },
       });
 
-      // This may throw P2002 if slot is taken — intentional
+      // Trava atômica do horário: pode lançar P2002 se o MESMO profissional já
+      // estiver ocupado nesse slot — intencional, é o que impede duplo
+      // agendamento em corrida. Outros profissionais da agenda seguem livres.
       await tx.bookingSlot.create({
         data: {
           bookingId: newBooking.id,
@@ -243,6 +226,7 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
           date: scheduledDate,
           startTime: scheduledStartTime,
           endTime: scheduledEndTime,
+          professionalId: slotProfessionalKey(finalProfessionalId),
         },
       });
 
@@ -445,9 +429,16 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
         nextDate.setUTCDate(baseDate.getUTCDate() + daysStep * i);
         const nextDateStr = nextDate.toISOString().split("T")[0];
 
-        // Ocorrência só é criada se cair em slot válido da grade
-        // (respeita dias de funcionamento, exceções e horários ocupados)
-        const occurrenceOk = await isSlotAvailable(agendaId, nextDateStr, scheduledStartTime, scheduledEndTime);
+        // Ocorrência só é criada se cair em slot válido da grade PARA O MESMO
+        // profissional (respeita dias de funcionamento, exceções e ocupados) —
+        // sem passar o profissional, a série cairia em horários já vendidos.
+        const occurrenceOk = await isSlotAvailable(
+          agendaId,
+          nextDateStr,
+          scheduledStartTime,
+          scheduledEndTime,
+          finalProfessionalId
+        );
         if (!occurrenceOk) continue;
 
         try {
@@ -456,6 +447,8 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
               companyId: estimate.companyId,
               bookingConfigId: estimate.bookingConfigId,
               agendaId,
+              // A série inteira fica com o mesmo profissional do 1º atendimento
+              professionalId: finalProfessionalId,
               scheduledDate: nextDateStr,
               scheduledStartTime,
               scheduledEndTime,
@@ -474,6 +467,7 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
               date: nextDateStr,
               startTime: scheduledStartTime,
               endTime: scheduledEndTime,
+              professionalId: slotProfessionalKey(finalProfessionalId),
             },
           });
           // Copy customer detail and home access from primary booking
@@ -524,8 +518,8 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
         where: { id: booking.id },
         data: { status: "CONFIRMED", paymentStatus: "PAID" },
       });
-      void notifyBookingConfirmed(booking.id);
-      void notifyCompanyNewBooking(booking.id);
+      void enqueueNotification({ kind: "BOOKING_CONFIRMED", bookingId: booking.id });
+      void enqueueNotification({ kind: "COMPANY_NEW_BOOKING", bookingId: booking.id });
       void triggerWebhooks(booking.companyId, "BOOKING_CONFIRMED", { bookingId: booking.id });
       void syncToGoogleCalendar(booking.id);
       return { success: true, bookingId: booking.id, paymentMethod: "CASH_CHECK" };
@@ -535,8 +529,8 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
       // CASH_CHECK bookings are immediately CONFIRMED — notify now.
       // O eventual abatimento (gift card) já está registrado; o cliente paga
       // o restante (amountDue) no local.
-      void notifyBookingConfirmed(booking.id);
-      void notifyCompanyNewBooking(booking.id);
+      void enqueueNotification({ kind: "BOOKING_CONFIRMED", bookingId: booking.id });
+      void enqueueNotification({ kind: "COMPANY_NEW_BOOKING", bookingId: booking.id });
       void triggerWebhooks(booking.companyId, "BOOKING_CONFIRMED", { bookingId: booking.id });
       void syncToGoogleCalendar(booking.id);
       return { success: true, bookingId: booking.id, paymentMethod: "CASH_CHECK" };
@@ -669,8 +663,8 @@ export async function checkPixPaymentAction(bookingId: string): Promise<{ paid: 
             where: { id: bookingId },
             data: { paymentStatus: "PAID", status: "CONFIRMED" },
           });
-          void notifyBookingConfirmed(bookingId);
-          void notifyCompanyNewBooking(bookingId);
+          void enqueueNotification({ kind: "BOOKING_CONFIRMED", bookingId: bookingId });
+          void enqueueNotification({ kind: "COMPANY_NEW_BOOKING", bookingId: bookingId });
           return { paid: true };
         }
       }
@@ -758,7 +752,7 @@ export async function cancelBookingAction(formData: FormData): Promise<CancelRes
     });
   }
 
-  void notifyBookingCancelled(bookingId);
+  void enqueueNotification({ kind: "BOOKING_CANCELLED", bookingId: bookingId });
   void triggerWebhooks(booking.companyId, "BOOKING_CANCELLED", { bookingId });
   // Notify waitlist entries for this date
   void notifyWaitlistForDate(booking.agendaId, booking.scheduledDate, booking.companyId);
@@ -779,6 +773,13 @@ export async function refundBookingAction(
   });
   if (!member || (member.role !== "OWNER" && member.role !== "MANAGER")) {
     return { success: false, error: "Sem permissão" };
+  }
+
+  // Estorno é irreversível e sai dinheiro pelo gateway — limita rajada por
+  // usuário mesmo com permissão válida.
+  const rl = await rateLimit(`booking:refund:${session.user.id}`, 10, 300);
+  if (!rl.allowed) {
+    return { success: false, error: "Muitos estornos em sequência. Aguarde alguns minutos." };
   }
 
   const booking = await db.booking.findFirst({
@@ -846,7 +847,7 @@ export async function markBookingPaidAction(
   });
 
   if (wasPending) {
-    void notifyBookingConfirmed(bookingId);
+    void enqueueNotification({ kind: "BOOKING_CONFIRMED", bookingId: bookingId });
     void triggerWebhooks(booking.companyId, "BOOKING_CONFIRMED", { bookingId });
   }
 
@@ -903,8 +904,16 @@ export async function rescheduleBookingAction(
     }
   }
 
-  // Server-side slot validation (grade da agenda + exceções + ocupados)
-  const slotOk = await isSlotAvailable(booking.agendaId, newDate, newStartTime, newEndTime);
+  // Server-side slot validation (grade da agenda + exceções + ocupados) para o
+  // profissional DESTE agendamento — validar contra "qualquer profissional"
+  // deixaria reagendar por cima de um horário que ele já tem vendido.
+  const slotOk = await isSlotAvailable(
+    booking.agendaId,
+    newDate,
+    newStartTime,
+    newEndTime,
+    booking.professionalId
+  );
   if (!slotOk) {
     return { success: false, error: "Horário indisponível. Escolha outro horário." };
   }
@@ -921,6 +930,7 @@ export async function rescheduleBookingAction(
           date: newDate,
           startTime: newStartTime,
           endTime: newEndTime,
+          professionalId: slotProfessionalKey(booking.professionalId),
         },
       });
       await tx.booking.update({
@@ -994,7 +1004,7 @@ export async function updateBookingStatusAction(
     data: { status: newStatus as "IN_PROGRESS" | "COMPLETED" },
   });
 
-  void notifyStatusChanged(bookingId, newStatus);
+  void enqueueNotification({ kind: "STATUS_CHANGED", bookingId: bookingId, payload: { newStatus: newStatus } });
   if (newStatus === "COMPLETED") {
     void triggerWebhooks(booking.companyId, "BOOKING_COMPLETED", { bookingId });
   } else if (newStatus === "CONFIRMED") {
@@ -1110,7 +1120,7 @@ export async function completeBookingWithAdjustmentsAction(
     });
   });
 
-  void notifyStatusChanged(payload.bookingId, "COMPLETED");
+  void enqueueNotification({ kind: "STATUS_CHANGED", bookingId: payload.bookingId, payload: { newStatus: "COMPLETED" } });
   void notifyBookingCompletedWithInvoice(
     payload.bookingId,
     originalTotal,

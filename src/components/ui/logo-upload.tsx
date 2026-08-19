@@ -64,15 +64,15 @@ export function LogoUpload({ name = "logoUrl", initialUrl = null, label = "Logo"
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-[var(--color-text)] mb-1">{label}</label>
       <input type="hidden" name={name} value={url ?? ""} />
       <div className="flex items-center gap-3">
-        <div className="w-14 h-14 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+        <div className="w-14 h-14 rounded-[var(--radius-control)] border border-[var(--color-border)] bg-[var(--color-bg-subtle)] flex items-center justify-center overflow-hidden shrink-0">
           {url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={url} alt="Logo da empresa" className="w-full h-full object-cover" />
           ) : (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-300" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[var(--color-text-subtle)]" aria-hidden="true">
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
               <circle cx="8.5" cy="8.5" r="1.5" />
               <polyline points="21 15 16 10 5 21" />
@@ -96,7 +96,7 @@ export function LogoUpload({ name = "logoUrl", initialUrl = null, label = "Logo"
               type="button"
               disabled={disabled || uploading}
               onClick={() => fileRef.current?.click()}
-              className="px-3 py-1.5 text-sm font-medium border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="px-3 py-1.5 text-sm font-medium border border-[var(--color-border-strong)] rounded-[var(--radius-control)] text-[var(--color-text)] hover:bg-[var(--color-bg-subtle)] disabled:opacity-50"
             >
               {uploading ? "Enviando..." : url ? "Trocar logo" : "Enviar logo"}
             </button>
@@ -104,14 +104,14 @@ export function LogoUpload({ name = "logoUrl", initialUrl = null, label = "Logo"
               <button
                 type="button"
                 onClick={() => setUrl(null)}
-                className="text-xs text-gray-400 hover:text-red-600"
+                className="text-xs text-[var(--color-text-subtle)] hover:text-[var(--color-danger)]"
               >
                 Remover
               </button>
             )}
           </div>
-          <p className="text-xs text-gray-400 mt-1">JPG, PNG ou WebP · máx. 2 MB</p>
-          {error && <p className="text-xs text-red-600 mt-1" role="alert">{error}</p>}
+          <p className="text-xs text-[var(--color-text-subtle)] mt-1">JPG, PNG ou WebP · máx. 2 MB</p>
+          {error && <p className="text-xs text-[var(--color-danger)] mt-1" role="alert">{error}</p>}
         </div>
       </div>
     </div>

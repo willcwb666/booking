@@ -10,8 +10,9 @@ import {
 import { toast } from "@/lib/toast-service";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Edit2, Trash2 } from "@/components/ui/icons";
+import { Edit2, Trash2, X } from "@/components/ui/icons";
 
+import { IconAction, RowActions } from "@/components/ui/icon-action";
 type SegmentItem = {
   id: string;
   code: string;
@@ -153,23 +154,19 @@ export function SegmentsClient({ initialSegments }: { initialSegments: SegmentIt
                         </StatusBadge>
                       </button>
                     </td>
-                    <td className="py-4 px-5 text-right space-x-2">
-                      <ActionTooltip label="Editar Segmento">
-                        <button
+                    <td className="py-4 px-5">
+                      <RowActions>
+                        <IconAction
+                          intent="edit"
+                          label={`Editar segmento ${seg.label}`}
                           onClick={() => handleOpenEdit(seg)}
-                          className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                      </ActionTooltip>
-                      <ActionTooltip label="Excluir Segmento">
-                        <button
+                        />
+                        <IconAction
+                          intent="delete"
+                          label={`Excluir segmento ${seg.label}`}
                           onClick={() => handleDelete(seg.id)}
-                          className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </ActionTooltip>
+                        />
+                      </RowActions>
                     </td>
                   </tr>
                 ))
@@ -187,12 +184,7 @@ export function SegmentsClient({ initialSegments }: { initialSegments: SegmentIt
               <h3 className="text-lg font-bold text-[var(--color-text-heading)]">
                 {editingSegment ? "Editar Segmento" : "Novo Segmento de Negócio"}
               </h3>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)] font-bold text-lg"
-              >
-                ✕
-              </button>
+              <button onClick={() => setIsModalOpen(false)} aria-label="Fechar" title="Fechar" className="icon-action"><X className="w-4 h-4" /></button>
             </div>
 
             {errorMsg && (
@@ -227,7 +219,7 @@ export function SegmentsClient({ initialSegments }: { initialSegments: SegmentIt
                   name="label"
                   required
                   defaultValue={editingSegment?.label || ""}
-                  placeholder="Ex: 🦷 Clínica Odontológica"
+                  placeholder="Ex: Clínica Odontológica"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>

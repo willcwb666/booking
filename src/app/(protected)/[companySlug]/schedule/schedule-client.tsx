@@ -141,7 +141,7 @@ export function ScheduleClient({
     <div className="flex h-screen overflow-hidden">
       {/* ── Left panel ── */}
       <aside
-        className="w-56 shrink-0 border-r border-[var(--color-border)] bg-white flex flex-col overflow-y-auto py-4 gap-5"
+        className="w-56 shrink-0 border-r border-[var(--color-border)] bg-[var(--color-bg)] flex flex-col overflow-y-auto py-4 gap-5"
         aria-label="Painel de navegação do calendário"
       >
         {/* Mini calendar */}
@@ -163,7 +163,7 @@ export function ScheduleClient({
                 type="button"
                 onClick={() => navigate({ professional: "all" })}
                 aria-pressed={selectedProfessional === "all"}
-                className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                className={`w-full text-left px-3 py-1.5 rounded-[var(--radius-control)] text-sm transition-colors ${
                   selectedProfessional === "all"
                     ? "bg-[var(--color-primary-light)] text-[var(--color-primary)] font-medium"
                     : "text-[var(--color-text-muted)] hover:bg-[var(--color-bg-subtle)]"
@@ -178,7 +178,7 @@ export function ScheduleClient({
                   type="button"
                   onClick={() => navigate({ professional: p.id })}
                   aria-pressed={selectedProfessional === p.id}
-                  className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors truncate ${
+                  className={`w-full text-left px-3 py-1.5 rounded-[var(--radius-control)] text-sm transition-colors truncate ${
                     selectedProfessional === p.id
                       ? "bg-[var(--color-primary-light)] text-[var(--color-primary)] font-medium"
                       : "text-[var(--color-text-muted)] hover:bg-[var(--color-bg-subtle)]"
@@ -199,9 +199,9 @@ export function ScheduleClient({
           <ul className="space-y-1.5" role="list">
             {(
               [
-                { dot: "bg-blue-500", label: "Agendamento" },
-                { dot: "bg-violet-500", label: "Evento" },
-                { dot: "bg-orange-500", label: "Estimate" },
+                { dot: "bg-[var(--color-info)]", label: "Agendamento" },
+                { dot: "bg-[var(--color-primary)]", label: "Evento" },
+                { dot: "bg-[var(--color-warning)]", label: "Estimate" },
               ] as const
             ).map(({ dot, label }) => (
               <li key={label} className="flex items-center gap-2">
@@ -219,12 +219,12 @@ export function ScheduleClient({
       {/* ── Right panel ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Toolbar */}
-        <header className="flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)] bg-white shrink-0 flex-wrap">
+        <header className="flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg)] shrink-0 flex-wrap">
           {/* Today */}
           <button
             type="button"
             onClick={handleToday}
-            className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-subtle)] font-medium text-[var(--color-text-heading)]"
+            className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-[var(--radius-control)] hover:bg-[var(--color-bg-subtle)] font-medium text-[var(--color-text-heading)]"
           >
             Hoje
           </button>
@@ -235,7 +235,7 @@ export function ScheduleClient({
               type="button"
               onClick={handlePrev}
               aria-label="Período anterior"
-              className="p-1.5 rounded-lg hover:bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]"
+              className="p-1.5 rounded-[var(--radius-control)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><polyline points="15 18 9 12 15 6" /></svg>
             </button>
@@ -243,7 +243,7 @@ export function ScheduleClient({
               type="button"
               onClick={handleNext}
               aria-label="Próximo período"
-              className="p-1.5 rounded-lg hover:bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]"
+              className="p-1.5 rounded-[var(--radius-control)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><polyline points="9 18 15 12 9 6" /></svg>
             </button>
@@ -262,7 +262,7 @@ export function ScheduleClient({
           <div
             role="group"
             aria-label="Tipo de visualização"
-            className="flex border border-[var(--color-border)] rounded-lg overflow-hidden"
+            className="flex border border-[var(--color-border)] rounded-[var(--radius-control)] overflow-hidden"
           >
             {(["day", "week", "month"] as CalendarView[]).map((v) => (
               <button

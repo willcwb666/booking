@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getActiveSession } from "@/lib/session";
+import { RATE_LIMITS, enforceRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { db } from "@/lib/db";
 
 /**
@@ -13,8 +13,13 @@ function sanitizeCsvCell(value: string): string {
 }
 
 export async function GET(req: NextRequest) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getActiveSession();
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+
+  // Cada chamada despeja a base de clientes inteira em CSV — limitar reduz a
+  // janela de exfiltração se uma conta de gestor for comprometida.
+  const rl = await enforceRateLimit(RATE_LIMITS.EXPORT, session.user.id);
+  if (!rl.allowed) return rateLimitResponse(rl);
 
   const { searchParams } = req.nextUrl;
   const companySlug = searchParams.get("slug") ?? "";

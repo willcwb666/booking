@@ -1,30 +1,31 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useCompany } from "@/lib/company-context";
+import { formatMoney } from "@/lib/format";
 import { toast } from "@/lib/toast-service";
 import {
   ClipboardList,
   Package,
-  Plus,
   Search,
   CheckCircle2,
-  AlertTriangle,
-  RotateCcw,
   DollarSign,
-  CreditCard,
-  Trash2,
-  Users,
-  Sparkles,
+  Award,
   Printer,
   Calendar,
-  Gift,
-  Award,
+  X,
 } from "@/components/ui/icons";
 import { Modal } from "@/components/ui/modal";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { createPosSaleAction } from "@/server/actions/pos";
-import type { PosBookingOption, PosDashboardStats, PosSaleSummary } from "@/server/queries/pos";
+import type {
+  PosBookingOption,
+  PosDashboardStats,
+  PosSaleSummary,
+} from "@/server/queries/pos";
 
 type PosProductItem = {
   id: string;
@@ -52,6 +53,15 @@ type CartItem = {
   unitPrice: number;
 };
 
+/** Só o que a tela do recibo realmente usa — sem `any`. */
+type CompletedSale = {
+  id: string;
+  customerName: string | null;
+  total: number;
+  paymentMethod: string;
+  items: { id: string; name: string; quantity: number; totalPrice: number }[];
+};
+
 type Props = {
   companySlug: string;
   companyName: string;
@@ -61,6 +71,15 @@ type Props = {
   stats: PosDashboardStats;
   recentSales: { items: PosSaleSummary[]; total: number };
   professionals: ProfessionalOption[];
+};
+
+const PAYMENT_LABELS: Record<string, string> = {
+  PIX: "PIX",
+  CARD_CREDIT: "Crédito",
+  CARD_DEBIT: "Débito",
+  CASH: "Dinheiro",
+  GIFT_CARD: "Gift card",
+  MEMBERSHIP: "Clube",
 };
 
 export function PosClient({
@@ -74,75 +93,83 @@ export function PosClient({
   professionals,
 }: Props) {
   const router = useRouter();
+  const company = useCompany();
   const [isPending, startTransition] = useTransition();
 
-  // Mode: "BOOKING" (fechar agendamento existente) | "WALK_IN" (venda avulsa)
+  // PIX é meio de pagamento brasileiro. Numa empresa que opera em outra moeda
+  // ele não deve nem aparecer no caixa — antes era oferecido a todo mundo.
+  const paymentOptions = useMemo(() => {
+    const ids = ["CARD_CREDIT", "CARD_DEBIT", "CASH", "GIFT_CARD", "MEMBERSHIP"];
+    if (currency === "BRL") ids.unshift("PIX");
+    return ids.map((id) => ({ id, label: PAYMENT_LABELS[id] }));
+  }, [currency]);
+
   const [mode, setMode] = useState<"BOOKING" | "WALK_IN">("WALK_IN");
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
 
-  // Cliente & Profissional da Comanda
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [selectedProfId, setSelectedProfId] = useState<string>("");
 
-  // Carrinho da Comanda
   const [cart, setCart] = useState<CartItem[]>([]);
   const [discountAmount, setDiscountAmount] = useState<string>("");
-  const [paymentMethod, setPaymentMethod] = useState<string>("PIX");
+  const [paymentMethod, setPaymentMethod] = useState<string>(
+    currency === "BRL" ? "PIX" : "CARD_CREDIT"
+  );
   const [cashReceived, setCashReceived] = useState<string>("");
   const [notes, setNotes] = useState("");
 
-  // Filtros de Produtos
   const [productSearch, setProductSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
 
-  // Modal de Recibo / Sucesso
-  const [completedSale, setCompletedSale] = useState<any | null>(null);
+  const [completedSale, setCompletedSale] = useState<CompletedSale | null>(null);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
 
-  const fmtCurrency = (val: number) =>
-    val.toLocaleString(currency === "USD" ? "en-US" : "pt-BR", {
-      style: "currency",
-      currency: currency || "BRL",
-    });
+  const money = (val: number) => formatMoney(val, company.currency, company.locale);
 
-  // Categorias únicas
-  const categories = Array.from(new Set(products.map((p) => p.category).filter(Boolean))) as string[];
+  const categories = Array.from(
+    new Set(products.map((p) => p.category).filter(Boolean))
+  ) as string[];
 
-  // Produtos filtrados
   const filteredProducts = products.filter((p) => {
     const matchCat = selectedCategory === "ALL" || p.category === selectedCategory;
     const s = productSearch.toLowerCase().trim();
     const matchSearch =
       !s ||
       p.name.toLowerCase().includes(s) ||
-      (p.barcode && p.barcode.toLowerCase().includes(s)) ||
-      (p.category && p.category.toLowerCase().includes(s));
+      (p.barcode ? p.barcode.toLowerCase().includes(s) : false) ||
+      (p.category ? p.category.toLowerCase().includes(s) : false);
     return matchCat && matchSearch;
   });
 
-  // Totais do Carrinho
   const subtotal = cart.reduce((acc, it) => acc + it.quantity * it.unitPrice, 0);
-  const discountNum = discountAmount ? Math.max(0, parseFloat(discountAmount.replace(",", ".")) || 0) : 0;
-  const total = Math.max(0, subtotal - discountNum);
+  const rawDiscount = discountAmount
+    ? Math.max(0, parseFloat(discountAmount.replace(",", ".")) || 0)
+    : 0;
+  const discountNum = Math.min(rawDiscount, subtotal);
+  const discountExceedsSubtotal = rawDiscount > subtotal && subtotal > 0;
+  const total = subtotal - discountNum;
 
-  // Troco em Dinheiro
-  const cashGivenNum = cashReceived ? parseFloat(cashReceived.replace(",", ".")) || 0 : 0;
-  const changeAmount = paymentMethod === "CASH" ? Math.max(0, cashGivenNum - total) : 0;
+  const cashGivenNum = cashReceived
+    ? parseFloat(cashReceived.replace(",", ".")) || 0
+    : 0;
+  const isCash = paymentMethod === "CASH";
+  const cashIsShort = isCash && cashReceived.trim() !== "" && cashGivenNum < total;
+  const changeAmount = isCash ? Math.max(0, cashGivenNum - total) : 0;
 
-  // Cálculo estimado de comissão
   const selectedProf = professionals.find((p) => p.id === selectedProfId);
-  const estimatedCommission = cart.reduce((acc, it) => {
-    if (!selectedProf) return 0;
-    if (it.type === "PRODUCT" && selectedProf.productCommissionRate > 0) {
-      return acc + it.quantity * it.unitPrice * (selectedProf.productCommissionRate / 100);
-    }
-    if (it.type === "SERVICE" && selectedProf.serviceCommissionRate > 0) {
-      return acc + it.quantity * it.unitPrice * (selectedProf.serviceCommissionRate / 100);
-    }
-    return acc;
-  }, 0);
+  const estimatedCommission = selectedProf
+    ? cart.reduce((acc, it) => {
+        if (it.type === "PRODUCT" && selectedProf.productCommissionRate > 0) {
+          return acc + it.quantity * it.unitPrice * (selectedProf.productCommissionRate / 100);
+        }
+        if (it.type === "SERVICE" && selectedProf.serviceCommissionRate > 0) {
+          return acc + it.quantity * it.unitPrice * (selectedProf.serviceCommissionRate / 100);
+        }
+        return acc;
+      }, 0)
+    : 0;
 
   function handleSelectBooking(b: PosBookingOption) {
     setSelectedBookingId(b.id);
@@ -150,11 +177,8 @@ export function PosClient({
     setCustomerName(b.clientName);
     setCustomerPhone(b.clientPhone || "");
     setCustomerEmail(b.clientEmail || "");
-    if (b.professionalId) {
-      setSelectedProfId(b.professionalId);
-    }
+    if (b.professionalId) setSelectedProfId(b.professionalId);
 
-    // Carrega o serviço principal do agendamento no carrinho
     setCart([
       {
         tempId: `serv_${b.id}`,
@@ -221,7 +245,7 @@ export function PosClient({
 
   function handleFinalizeSale() {
     if (cart.length === 0) {
-      toast.error("Adicione ao menos um serviço ou produto à comanda.");
+      toast.error("Comanda vazia", "Adicione ao menos um serviço ou produto.");
       return;
     }
 
@@ -246,583 +270,717 @@ export function PosClient({
       });
 
       if (res.success && res.data) {
-        toast.success("Venda finalizada com sucesso!");
-        setCompletedSale(res.data);
+        const sale = res.data;
+        toast.success("Venda registrada", `Total de ${money(Number(sale.total))}.`);
+        setCompletedSale({
+          id: sale.id,
+          customerName: sale.customerName ?? null,
+          total: Number(sale.total),
+          paymentMethod: sale.paymentMethod,
+          items: sale.items.map((it) => ({
+            id: it.id,
+            name: it.name,
+            quantity: it.quantity,
+            totalPrice: Number(it.totalPrice),
+          })),
+        });
         setIsReceiptOpen(true);
         handleResetToWalkIn();
         router.refresh();
       } else {
-        toast.error(res.error || "Erro ao finalizar venda.");
+        toast.error("Não foi possível fechar", res.error || "Erro ao registrar a venda.");
       }
     });
   }
 
   return (
-    <div className="page-content space-y-8">
-      {/* HEADER EXECUTIVO POS */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 sm:p-8 rounded-3xl border border-[var(--color-border)] shadow-xs relative overflow-hidden">
-        <div className="space-y-1 z-10">
-          <div className="flex items-center gap-2 text-[var(--color-primary)] font-extrabold text-xs uppercase tracking-wider">
-            <ClipboardList className="w-4 h-4 text-indigo-500 animate-pulse" />
-            <span>Frente de Caixa & Balcão</span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-extrabold ml-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              CAIXA ABERTO
+    <div className="page-container pb-20">
+      <div className="page-content space-y-6">
+        <PageHeader
+          category="Caixa"
+          categoryIcon={<ClipboardList className="w-3.5 h-3.5" />}
+          title="Frente de caixa"
+          description="Feche um agendamento do dia ou registre uma venda de balcão. Produtos dão baixa no estoque na hora."
+          action={
+            <Link
+              href={`/${companySlug}/produtos`}
+              className="btn btn-outline btn-sm inline-flex items-center gap-1.5"
+            >
+              <Package className="w-3.5 h-3.5" />
+              <span>Produtos e estoque</span>
+            </Link>
+          }
+        />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="stat-card">
+            <span className="stat-card-label">Faturado hoje</span>
+            <span className="stat-card-value">{money(stats.todaySalesTotal)}</span>
+            <span className="stat-card-delta">
+              <DollarSign className="w-3 h-3 inline-block mr-1 align-[-1px]" />
+              {stats.todaySalesCount} {stats.todaySalesCount === 1 ? "venda" : "vendas"}
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-text-heading)] tracking-tight">
-            Comanda Rápida & Venda POS
-          </h1>
-          <p className="text-xs text-[var(--color-text-muted)] max-w-xl">
-            Feche agendamentos do dia adicionando produtos consumidos no atendimento ou realize vendas diretas de balcão com baixa automática no estoque.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5 shrink-0 z-10">
-          <Link
-            href={`/${companySlug}/produtos`}
-            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl transition-all font-extrabold text-xs inline-flex items-center justify-center gap-2 cursor-pointer border border-slate-200"
-          >
-            <Package className="w-4 h-4 text-[var(--color-primary)]" />
-            <span>Catálogo & Estoque</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* KPI METRICS DO DIA */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white p-6 rounded-3xl border border-[var(--color-border)] shadow-xs">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-extrabold text-[var(--color-text-subtle)] uppercase tracking-wider">
-              Total Faturado Hoje
+          <div className="stat-card">
+            <span className="stat-card-label">Produtos</span>
+            <span className="stat-card-value">{money(stats.todayProductsTotal)}</span>
+            <span className="stat-card-delta">
+              <Package className="w-3 h-3 inline-block mr-1 align-[-1px]" />
+              itens físicos vendidos hoje
             </span>
-            <div className="p-2.5 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-2xs">
-              <DollarSign className="w-4 h-4" />
+          </div>
+          <div className="stat-card">
+            <span className="stat-card-label">Serviços</span>
+            <span className="stat-card-value">{money(stats.todayServicesTotal)}</span>
+            <span className="stat-card-delta">
+              <ClipboardList className="w-3 h-3 inline-block mr-1 align-[-1px]" />
+              atendimentos fechados hoje
+            </span>
+          </div>
+          <div className="stat-card">
+            <span className="stat-card-label">Comissões</span>
+            <span className="stat-card-value">{money(stats.todayCommissionsTotal)}</span>
+            <span className="stat-card-delta">
+              <Award className="w-3 h-3 inline-block mr-1 align-[-1px]" />
+              a repassar aos profissionais
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* ── Esquerda: de onde a comanda vem ── */}
+          <div className="lg:col-span-7 space-y-6">
+            <div className="card">
+              <div className="card-header">
+                <span className="card-title flex items-center gap-2" style={{ fontSize: "var(--text-md)" }}>
+                  <Calendar className="w-4 h-4 text-[var(--color-text-subtle)]" />
+                  <span>Agendamentos de hoje</span>
+                </span>
+                <div className="segmented" role="tablist" aria-label="Origem da comanda">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={mode === "WALK_IN"}
+                    data-active={mode === "WALK_IN"}
+                    onClick={handleResetToWalkIn}
+                    className="segmented-item"
+                  >
+                    Avulsa
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={mode === "BOOKING"}
+                    data-active={mode === "BOOKING"}
+                    disabled={openBookings.length === 0}
+                    onClick={() => setMode("BOOKING")}
+                    className="segmented-item disabled:opacity-50"
+                  >
+                    Agendamento
+                  </button>
+                </div>
+              </div>
+
+              <div className="card-body">
+                {openBookings.length === 0 ? (
+                  <EmptyState
+                    icon={<Calendar className="w-5 h-5" />}
+                    title="Nenhum atendimento pendente hoje"
+                    description="Quando houver agendamentos do dia ainda em aberto, eles aparecem aqui para fechar em um clique. Enquanto isso, registre a venda como avulsa."
+                  />
+                ) : (
+                  <div
+                    className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-56 overflow-y-auto pr-1"
+                    role="listbox"
+                    aria-label="Agendamentos abertos"
+                  >
+                    {openBookings.map((b) => {
+                      const isSelected = selectedBookingId === b.id;
+                      return (
+                        <button
+                          key={b.id}
+                          type="button"
+                          role="option"
+                          aria-selected={isSelected}
+                          onClick={() => handleSelectBooking(b)}
+                          className={`p-3 rounded-[var(--radius-card)] border text-left transition-colors flex flex-col gap-2 ${
+                            isSelected
+                              ? "bg-[var(--color-primary-light)] border-[var(--color-primary)]"
+                              : "bg-[var(--color-bg-subtle)] border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
+                          }`}
+                        >
+                          <span className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-[var(--color-text-heading)] truncate" style={{ fontSize: "var(--text-sm)" }}>
+                              {b.clientName}
+                            </span>
+                            <span className="eyebrow shrink-0">{b.scheduledTime}</span>
+                          </span>
+                          <span className="flex items-center justify-between gap-2" style={{ fontSize: "var(--text-xs)" }}>
+                            <span className="text-[var(--color-text-muted)] truncate">
+                              {b.serviceName}
+                            </span>
+                            <span className="font-medium text-[var(--color-text-heading)] shrink-0 tabular-nums">
+                              {money(b.servicePrice)}
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="card-header">
+                <span className="card-title flex items-center gap-2" style={{ fontSize: "var(--text-md)" }}>
+                  <Package className="w-4 h-4 text-[var(--color-text-subtle)]" />
+                  <span>Produtos</span>
+                </span>
+                <div className="relative w-full max-w-[220px]">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-subtle)]" />
+                  <input
+                    type="search"
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    placeholder="Nome ou código de barras"
+                    aria-label="Buscar produto"
+                    className="input pl-9"
+                    style={{ paddingBlock: "0.4rem", fontSize: "var(--text-xs)" }}
+                  />
+                </div>
+              </div>
+
+              {categories.length > 0 && (
+                <div className="px-5 pt-4 scroller">
+                  <div className="segmented w-max" role="tablist" aria-label="Filtrar por categoria">
+                    {[{ id: "ALL", label: "Todas" }, ...categories.map((c) => ({ id: c, label: c }))].map(
+                      (cat) => (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          role="tab"
+                          aria-selected={selectedCategory === cat.id}
+                          data-active={selectedCategory === cat.id}
+                          onClick={() => setSelectedCategory(cat.id)}
+                          className="segmented-item whitespace-nowrap"
+                        >
+                          {cat.label}
+                        </button>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="card-body">
+                {filteredProducts.length === 0 ? (
+                  <EmptyState
+                    icon={<Package className="w-5 h-5" />}
+                    title={
+                      products.length === 0
+                        ? "Nenhum produto cadastrado"
+                        : "Nenhum produto com esse filtro"
+                    }
+                    description={
+                      products.length === 0
+                        ? "Cadastre produtos para vendê-los no balcão com baixa automática de estoque."
+                        : "Ajuste a busca ou escolha outra categoria."
+                    }
+                    action={
+                      products.length === 0 ? (
+                        <Link
+                          href={`/${companySlug}/produtos`}
+                          className="btn btn-primary btn-sm"
+                        >
+                          Cadastrar produto
+                        </Link>
+                      ) : undefined
+                    }
+                  />
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-96 overflow-y-auto pr-1">
+                    {filteredProducts.map((p) => {
+                      const isOutOfStock = p.stockQuantity <= 0;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          disabled={isOutOfStock}
+                          onClick={() => handleAddProduct(p)}
+                          aria-label={`Adicionar ${p.name} à comanda`}
+                          className="p-3 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-bg-subtle)] text-left transition-colors flex flex-col justify-between gap-3 enabled:hover:border-[var(--color-primary)] disabled:opacity-55 disabled:cursor-not-allowed"
+                        >
+                          <span className="min-w-0">
+                            <span
+                              className="font-medium text-[var(--color-text-heading)] line-clamp-2 leading-snug block"
+                              style={{ fontSize: "var(--text-sm)" }}
+                            >
+                              {p.name}
+                            </span>
+                            {p.category && (
+                              <span className="eyebrow block mt-0.5">{p.category}</span>
+                            )}
+                          </span>
+
+                          <span className="flex items-center justify-between gap-1 pt-2 border-t border-[var(--color-border)]">
+                            <span className="font-medium text-[var(--color-text-heading)] tabular-nums" style={{ fontSize: "var(--text-sm)" }}>
+                              {money(p.salePrice)}
+                            </span>
+                            <span
+                              className={`badge ${isOutOfStock ? "badge-danger" : "badge-neutral"}`}
+                            >
+                              {isOutOfStock ? "sem estoque" : `${p.stockQuantity} un`}
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-[var(--color-text-heading)] tracking-tight">
-            {fmtCurrency(stats.todaySalesTotal)}
-          </p>
-          <p className="text-[11px] text-[var(--color-text-muted)] font-medium mt-1">
-            {stats.todaySalesCount} venda(s) realizada(s)
-          </p>
-        </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-[var(--color-border)] shadow-xs">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-extrabold text-[var(--color-text-subtle)] uppercase tracking-wider">
-              Produtos Vendidos
-            </span>
-            <div className="p-2.5 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-2xs">
-              <Package className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-2xl sm:text-3xl font-black text-[var(--color-text-heading)] tracking-tight">
-            {fmtCurrency(stats.todayProductsTotal)}
-          </p>
-          <p className="text-[11px] text-[var(--color-text-muted)] font-medium mt-1">
-            Faturamento em itens físicos
-          </p>
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl border border-[var(--color-border)] shadow-xs">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-extrabold text-[var(--color-text-subtle)] uppercase tracking-wider">
-              Serviços Concluídos
-            </span>
-            <div className="p-2.5 rounded-2xl bg-sky-50 text-sky-600 border border-sky-100 shadow-2xs">
-              <ClipboardList className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-2xl sm:text-3xl font-black text-[var(--color-text-heading)] tracking-tight">
-            {fmtCurrency(stats.todayServicesTotal)}
-          </p>
-          <p className="text-[11px] text-[var(--color-text-muted)] font-medium mt-1">
-            Faturamento em atendimentos
-          </p>
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl border border-[var(--color-border)] shadow-xs">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-extrabold text-[var(--color-text-subtle)] uppercase tracking-wider">
-              Comissões Lançadas
-            </span>
-            <div className="p-2.5 rounded-2xl bg-purple-50 text-purple-600 border border-purple-100 shadow-2xs">
-              <Award className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-2xl sm:text-3xl font-black text-[var(--color-text-heading)] tracking-tight">
-            {fmtCurrency(stats.todayCommissionsTotal)}
-          </p>
-          <p className="text-[11px] text-[var(--color-text-muted)] font-medium mt-1">
-            Repasse aos profissionais hoje
-          </p>
-        </div>
-      </div>
-
-      {/* ÁREA PRINCIPAL DO POS: COLUNA ESQUERDA (CATÁLOGO & AGENDAMENTOS) + COLUNA DIREITA (COMANDA / CAIXA) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* COLUNA ESQUERDA (7 colunas): AGENDAMENTOS DO DIA + CATÁLOGO RÁPIDO */}
-        <div className="lg:col-span-7 space-y-6">
-          {/* SELETOR DE MODO: AGENDAMENTOS DO DIA VS VENDA DIRETA */}
-          <div className="bg-white p-5 rounded-3xl border border-[var(--color-border)] shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-black text-[var(--color-text-heading)] flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-indigo-500" />
-                <span>Agendamentos do Dia (Comandas Abertas)</span>
-              </h2>
-              {selectedBookingId && (
+          {/* ── Direita: a comanda ── */}
+          <div className="lg:col-span-5 card card-lg lg:sticky lg:top-4">
+            <div className="card-header">
+              <div className="min-w-0">
+                <h2 className="card-title">Comanda</h2>
+                <p className="text-[var(--color-text-muted)]" style={{ fontSize: "var(--text-xs)" }}>
+                  {mode === "BOOKING" ? "Fechando um agendamento" : "Venda de balcão"}
+                </p>
+              </div>
+              {cart.length > 0 && (
                 <button
                   type="button"
                   onClick={handleResetToWalkIn}
-                  className="text-xs font-bold text-red-600 hover:underline cursor-pointer"
+                  className="btn btn-ghost btn-sm inline-flex items-center gap-1.5"
                 >
-                  Limpar / Nova Venda Avulsa
+                  <X className="w-3.5 h-3.5" />
+                  <span>Limpar</span>
                 </button>
               )}
             </div>
 
-            {openBookings.length === 0 ? (
-              <p className="text-xs text-[var(--color-text-muted)] p-3 bg-[var(--color-bg-subtle)] rounded-2xl text-center">
-                Nenhum agendamento pendente para hoje. Use a venda avulsa abaixo!
-              </p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-48 overflow-y-auto pr-1">
-                {openBookings.map((b) => {
-                  const isSelected = selectedBookingId === b.id;
-                  return (
-                    <button
-                      key={b.id}
-                      type="button"
-                      onClick={() => handleSelectBooking(b)}
-                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                        isSelected
-                          ? "bg-indigo-50/80 border-indigo-300 ring-2 ring-indigo-400/20"
-                          : "bg-[var(--color-bg-subtle)] border-[var(--color-border)] hover:bg-slate-100"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-extrabold text-xs text-[var(--color-text-heading)] truncate">
-                          {b.clientName}
-                        </span>
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-white border border-[var(--color-border)] font-mono">
-                          {b.scheduledTime}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between gap-2 mt-2 text-[11px]">
-                        <span className="text-[var(--color-text-muted)] truncate">{b.serviceName}</span>
-                        <span className="font-black text-[var(--color-text-heading)] shrink-0">
-                          {fmtCurrency(b.servicePrice)}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
+            <div className="card-body space-y-5">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="field">
+                  <label className="input-label" htmlFor="pos-customer">
+                    Cliente
+                  </label>
+                  <input
+                    id="pos-customer"
+                    type="text"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Opcional"
+                    className="input"
+                  />
+                </div>
+
+                <div className="field">
+                  <label className="input-label" htmlFor="pos-phone">
+                    Telefone
+                  </label>
+                  <input
+                    id="pos-phone"
+                    type="tel"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    placeholder="Opcional"
+                    className="input"
+                  />
+                </div>
               </div>
-            )}
-          </div>
 
-          {/* CATÁLOGO RÁPIDO DE PRODUTOS PARA ADICIONAR NA COMANDA */}
-          <div className="bg-white p-5 rounded-3xl border border-[var(--color-border)] shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <h2 className="text-sm font-black text-[var(--color-text-heading)] flex items-center gap-2">
-                <Package className="w-4 h-4 text-emerald-500" />
-                <span>Adicionar Produtos à Comanda</span>
-              </h2>
+              <div className="field">
+                <label className="input-label" htmlFor="pos-professional">
+                  Profissional
+                </label>
+                <select
+                  id="pos-professional"
+                  value={selectedProfId}
+                  onChange={(e) => setSelectedProfId(e.target.value)}
+                  className="input"
+                >
+                  <option value="">Sem comissão</option>
+                  {professionals.map((prof) => (
+                    <option key={prof.id} value={prof.id}>
+                      {prof.name} — produtos {prof.productCommissionRate}% / serviços{" "}
+                      {prof.serviceCommissionRate}%
+                    </option>
+                  ))}
+                </select>
+                <span className="input-hint">
+                  Define quem recebe a comissão desta venda.
+                </span>
+              </div>
 
-              <div className="relative min-w-[200px]">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-subtle)]" />
-                <input
-                  type="text"
-                  value={productSearch}
-                  onChange={(e) => setProductSearch(e.target.value)}
-                  placeholder="Buscar produto..."
-                  className="w-full pl-8 pr-3 py-1.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-xl text-xs text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              {/* A observação já era enviada para a action e gravada na venda,
+                  mas a tela nunca ofereceu onde escrevê-la. */}
+              <div className="field">
+                <label className="input-label" htmlFor="pos-notes">
+                  Observação
+                </label>
+                <textarea
+                  id="pos-notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={2}
+                  placeholder="Fica registrada no comprovante interno"
+                  className="input resize-y"
                 />
               </div>
-            </div>
 
-            {/* CATEGORIAS PILLS */}
-            {categories.length > 0 && (
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                <button
-                  type="button"
-                  onClick={() => setSelectedCategory("ALL")}
-                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0 ${
-                    selectedCategory === "ALL"
-                      ? "bg-[var(--color-primary)] text-white"
-                      : "bg-[var(--color-bg-subtle)] text-[var(--color-text-muted)] hover:bg-slate-200"
-                  }`}
-                >
-                  Todos
-                </button>
-                {categories.map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-3 py-1 rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0 ${
-                      selectedCategory === cat
-                        ? "bg-[var(--color-primary)] text-white"
-                        : "bg-[var(--color-bg-subtle)] text-[var(--color-text-muted)] hover:bg-slate-200"
-                    }`}
+              <div className="space-y-2">
+                <span className="eyebrow">Itens ({cart.length})</span>
+
+                {cart.length === 0 ? (
+                  <p
+                    className="py-6 px-4 text-center text-[var(--color-text-muted)] bg-[var(--color-bg-subtle)] rounded-[var(--radius-card)] border border-dashed border-[var(--color-border)]"
+                    style={{ fontSize: "var(--text-sm)" }}
                   >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            )}
+                    Escolha um agendamento ou toque num produto para começar.
+                  </p>
+                ) : (
+                  <ul className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                    {cart.map((item) => (
+                      <li
+                        key={item.tempId}
+                        className="p-3 bg-[var(--color-bg-subtle)] rounded-[var(--radius-card)] border border-[var(--color-border)] flex items-center gap-3"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <span
+                            className="font-medium text-[var(--color-text-heading)] block truncate"
+                            style={{ fontSize: "var(--text-sm)" }}
+                          >
+                            {item.name}
+                          </span>
+                          <span
+                            className="text-[var(--color-text-subtle)]"
+                            style={{ fontSize: "var(--text-xs)" }}
+                          >
+                            {item.type === "PRODUCT" ? "Produto" : "Serviço"} ·{" "}
+                            {money(item.unitPrice)}
+                          </span>
+                        </div>
 
-            {/* GRID DE PRODUTOS */}
-            {filteredProducts.length === 0 ? (
-              <p className="text-xs text-[var(--color-text-muted)] py-6 text-center">
-                Nenhum produto encontrado.
-              </p>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-96 overflow-y-auto pr-1">
-                {filteredProducts.map((p) => {
-                  const isOutOfStock = p.stockQuantity <= 0;
-                  return (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateQuantity(item.tempId, -1)}
+                            className="btn btn-outline btn-icon btn-sm"
+                            aria-label={`Diminuir quantidade de ${item.name}`}
+                          >
+                            −
+                          </button>
+                          <span
+                            className="font-mono tabular-nums min-w-[1.75rem] text-center text-[var(--color-text-heading)]"
+                            style={{ fontSize: "var(--text-sm)" }}
+                            aria-label={`Quantidade: ${item.quantity}`}
+                          >
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateQuantity(item.tempId, 1)}
+                            className="btn btn-outline btn-icon btn-sm"
+                            aria-label={`Aumentar quantidade de ${item.name}`}
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span
+                            className="font-mono tabular-nums font-medium text-[var(--color-text-heading)] block"
+                            style={{ fontSize: "var(--text-sm)" }}
+                          >
+                            {money(item.quantity * item.unitPrice)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveItem(item.tempId)}
+                            className="text-[var(--color-danger)] hover:underline"
+                            style={{ fontSize: "var(--text-xs)" }}
+                          >
+                            Remover
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <fieldset className="space-y-2">
+                <legend className="eyebrow mb-2">Forma de pagamento</legend>
+                <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Forma de pagamento">
+                  {paymentOptions.map((m) => (
                     <button
-                      key={p.id}
+                      key={m.id}
                       type="button"
-                      disabled={isOutOfStock}
-                      onClick={() => handleAddProduct(p)}
-                      className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between group ${
-                        isOutOfStock
-                          ? "bg-slate-50 border-slate-200 opacity-60 cursor-not-allowed"
-                          : "bg-[var(--color-bg-subtle)] border-[var(--color-border)] hover:bg-white hover:border-[var(--color-primary)] hover:shadow-xs cursor-pointer active:scale-[0.98]"
+                      role="radio"
+                      aria-checked={paymentMethod === m.id}
+                      onClick={() => setPaymentMethod(m.id)}
+                      className={`btn btn-sm ${
+                        paymentMethod === m.id ? "btn-secondary" : "btn-outline"
                       }`}
                     >
-                      <div>
-                        <span className="font-bold text-xs text-[var(--color-text-heading)] line-clamp-2 leading-snug group-hover:text-[var(--color-primary)]">
-                          {p.name}
-                        </span>
-                        {p.category && (
-                          <span className="text-[10px] text-[var(--color-text-subtle)] block mt-0.5">
-                            {p.category}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between gap-1 mt-3 pt-2 border-t border-[var(--color-border)]/60">
-                        <span className="font-black text-xs text-[var(--color-text-heading)]">
-                          {fmtCurrency(p.salePrice)}
-                        </span>
-                        <span
-                          className={`text-[10px] font-bold px-1.5 py-0.2 rounded font-mono ${
-                            isOutOfStock
-                              ? "bg-red-100 text-red-700"
-                              : "bg-emerald-100 text-emerald-800"
-                          }`}
-                        >
-                          {p.stockQuantity} un
-                        </span>
-                      </div>
+                      {m.label}
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
+
+                {isCash && (
+                  <div className="pt-2 space-y-2">
+                    <div className="field">
+                      <label className="input-label" htmlFor="pos-cash">
+                        Valor recebido
+                      </label>
+                      <input
+                        id="pos-cash"
+                        type="text"
+                        inputMode="decimal"
+                        value={cashReceived}
+                        onChange={(e) => setCashReceived(e.target.value)}
+                        placeholder="0,00"
+                        aria-invalid={cashIsShort}
+                        className="input font-mono"
+                      />
+                    </div>
+                    {/* Antes o troco era travado em zero quando o valor recebido
+                        era menor que o total, sem dizer nada — o operador via
+                        "Troco: 0,00" e concluía que estava tudo certo. */}
+                    {cashIsShort ? (
+                      <p className="alert alert-warning">
+                        Faltam {money(total - cashGivenNum)} para cobrir o total.
+                      </p>
+                    ) : (
+                      <p
+                        className="flex items-center justify-between text-[var(--color-text)]"
+                        style={{ fontSize: "var(--text-sm)" }}
+                      >
+                        <span>Troco</span>
+                        <span className="font-mono tabular-nums font-medium text-[var(--color-text-heading)]">
+                          {money(changeAmount)}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                )}
+              </fieldset>
+
+              <div className="space-y-2 pt-1 border-t border-[var(--color-border)]">
+                <p
+                  className="flex items-center justify-between text-[var(--color-text-muted)] pt-3"
+                  style={{ fontSize: "var(--text-sm)" }}
+                >
+                  <span>Subtotal</span>
+                  <span className="font-mono tabular-nums">{money(subtotal)}</span>
+                </p>
+
+                <div className="flex items-center justify-between gap-3">
+                  <label
+                    htmlFor="pos-discount"
+                    className="text-[var(--color-text-muted)]"
+                    style={{ fontSize: "var(--text-sm)" }}
+                  >
+                    Desconto
+                  </label>
+                  <input
+                    id="pos-discount"
+                    type="text"
+                    inputMode="decimal"
+                    value={discountAmount}
+                    onChange={(e) => setDiscountAmount(e.target.value)}
+                    placeholder="0,00"
+                    aria-invalid={discountExceedsSubtotal}
+                    className="input font-mono text-right w-28"
+                    style={{ paddingBlock: "0.35rem" }}
+                  />
+                </div>
+                {discountExceedsSubtotal && (
+                  <p className="input-error">
+                    Desconto maior que o subtotal — aplicado {money(discountNum)}.
+                  </p>
+                )}
+
+                {estimatedCommission > 0 && (
+                  <p
+                    className="flex items-center justify-between text-[var(--color-text-muted)]"
+                    style={{ fontSize: "var(--text-sm)" }}
+                  >
+                    <span>Comissão de {selectedProf?.name}</span>
+                    <span className="font-mono tabular-nums">
+                      {money(estimatedCommission)}
+                    </span>
+                  </p>
+                )}
+
+                <p className="flex items-center justify-between pt-3 border-t border-[var(--color-border)]">
+                  <span className="font-medium text-[var(--color-text-heading)]">Total</span>
+                  <span className="stat-card-value font-mono">{money(total)}</span>
+                </p>
               </div>
-            )}
+
+              <button
+                type="button"
+                disabled={isPending || cart.length === 0}
+                onClick={handleFinalizeSale}
+                className="btn btn-primary btn-lg w-full inline-flex items-center justify-center gap-2"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>{isPending ? "Registrando…" : `Fechar venda · ${money(total)}`}</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* COLUNA DIREITA (5 colunas): A COMANDA / FRENTE DE CAIXA */}
-        <div className="lg:col-span-5 bg-white p-6 rounded-3xl border border-[var(--color-border)] shadow-sm space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-[var(--color-border)]">
-            <div>
-              <h2 className="text-base font-black text-[var(--color-text-heading)] flex items-center gap-2">
-                <ClipboardList className="w-5 h-5 text-[var(--color-primary)]" />
-                <span>Comanda do Balcão</span>
-              </h2>
-              <span className="text-[11px] text-[var(--color-text-muted)]">
-                {mode === "BOOKING" ? "Agendamento Vinculado" : "Venda Avulsa (Walk-in)"}
+        {/* Últimas vendas: já vinham do servidor e a tela simplesmente não as
+            mostrava — a consulta era paga e jogada fora. */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title" style={{ fontSize: "var(--text-md)" }}>
+              Últimas vendas
+            </h2>
+            {recentSales.total > recentSales.items.length && (
+              <span className="text-[var(--color-text-muted)] tabular-nums" style={{ fontSize: "var(--text-xs)" }}>
+                {recentSales.items.length} de {recentSales.total}
               </span>
-            </div>
-
-            {cart.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setCart([])}
-                className="text-xs font-bold text-red-600 hover:underline cursor-pointer"
-              >
-                Esvaziar
-              </button>
             )}
           </div>
 
-          {/* DADOS DO CLIENTE & PROFISSIONAL */}
-          <div className="space-y-3 bg-[var(--color-bg-subtle)] p-3.5 rounded-2xl border border-[var(--color-border)]">
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div>
-                <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase mb-0.5">
-                  Cliente
-                </label>
-                <input
-                  type="text"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Nome do cliente"
-                  className="w-full bg-white border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--color-text-heading)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase mb-0.5">
-                  Telefone / WhatsApp
-                </label>
-                <input
-                  type="text"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  placeholder="(41) 99999-9999"
-                  className="w-full bg-white border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--color-text-heading)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
-                />
-              </div>
+          {recentSales.items.length === 0 ? (
+            <EmptyState
+              icon={<ClipboardList className="w-5 h-5" />}
+              title="Nenhuma venda registrada ainda"
+              description="Assim que a primeira comanda for fechada, ela aparece aqui com itens, forma de pagamento e total."
+            />
+          ) : (
+            <div
+              className="table-container"
+              style={{ border: 0, borderRadius: "0 0 var(--radius-card) var(--radius-card)", boxShadow: "none" }}
+            >
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Comprovante</th>
+                    <th>Cliente</th>
+                    <th className="text-right">Itens</th>
+                    <th>Pagamento</th>
+                    <th className="text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentSales.items.map((sale) => (
+                    <tr key={sale.id}>
+                      <td>
+                        <span className="font-mono text-[var(--color-text-heading)]">
+                          #{sale.id.slice(-8).toUpperCase()}
+                        </span>
+                        <span
+                          className="block text-[var(--color-text-subtle)]"
+                          style={{ fontSize: "var(--text-xs)" }}
+                        >
+                          {new Date(sale.createdAt).toLocaleString(company.locale, {
+                            day: "2-digit",
+                            month: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </td>
+                      <td>{sale.customerName || "—"}</td>
+                      <td data-type="number">{sale.itemsCount}</td>
+                      <td>
+                        <span className="badge badge-neutral">
+                          {PAYMENT_LABELS[sale.paymentMethod] ?? sale.paymentMethod}
+                        </span>
+                      </td>
+                      <td data-type="number">{money(sale.total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-
-            <div>
-              <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase mb-0.5">
-                Profissional (Comissão)
-              </label>
-              <select
-                value={selectedProfId}
-                onChange={(e) => setSelectedProfId(e.target.value)}
-                className="w-full bg-white border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 text-xs font-bold text-[var(--color-text-heading)] focus:outline-none cursor-pointer"
-              >
-                <option value="">Nenhum / Estabelecimento Direto</option>
-                {professionals.map((prof) => (
-                  <option key={prof.id} value={prof.id}>
-                    {prof.name} (Prod: {prof.productCommissionRate}% | Serv: {prof.serviceCommissionRate}%)
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* ITENS DA COMANDA */}
-          <div className="space-y-2">
-            <label className="block text-[11px] font-black text-[var(--color-text-heading)] uppercase tracking-wider">
-              Itens da Comanda ({cart.length})
-            </label>
-
-            {cart.length === 0 ? (
-              <div className="py-8 text-center bg-[var(--color-bg-subtle)] rounded-2xl border border-dashed border-[var(--color-border)] text-xs text-[var(--color-text-muted)]">
-                Nenhum item na comanda. Selecione um agendamento ou adicione produtos do catálogo.
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                {cart.map((item) => (
-                  <div
-                    key={item.tempId}
-                    className="p-3 bg-[var(--color-bg-subtle)] rounded-2xl border border-[var(--color-border)] flex items-center justify-between gap-3 text-xs"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <span className="font-extrabold text-[var(--color-text-heading)] block truncate">
-                        {item.name}
-                      </span>
-                      <span className="text-[10px] text-[var(--color-text-subtle)]">
-                        {item.type === "PRODUCT" ? "Produto Físico" : "Serviço"} • {fmtCurrency(item.unitPrice)} un
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateQuantity(item.tempId, -1)}
-                        className="w-6 h-6 rounded-lg bg-white border border-[var(--color-border)] font-black text-xs flex items-center justify-center hover:bg-slate-100 cursor-pointer"
-                      >
-                        -
-                      </button>
-                      <span className="font-mono font-black text-xs px-1 min-w-[20px] text-center">
-                        {item.quantity}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateQuantity(item.tempId, 1)}
-                        className="w-6 h-6 rounded-lg bg-white border border-[var(--color-border)] font-black text-xs flex items-center justify-center hover:bg-slate-100 cursor-pointer"
-                      >
-                        +
-                      </button>
-                    </div>
-
-                    <div className="text-right shrink-0 min-w-[65px]">
-                      <span className="font-black text-xs text-[var(--color-text-heading)] block">
-                        {fmtCurrency(item.quantity * item.unitPrice)}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveItem(item.tempId)}
-                        className="text-[10px] text-red-500 hover:underline cursor-pointer"
-                      >
-                        Remover
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* FORMA DE PAGAMENTO */}
-          <div className="space-y-2 pt-2 border-t border-[var(--color-border)]">
-            <label className="block text-[11px] font-black text-[var(--color-text-heading)] uppercase tracking-wider">
-              Forma de Pagamento
-            </label>
-            <div className="grid grid-cols-3 gap-1.5">
-              {[
-                { id: "PIX", label: "PIX" },
-                { id: "CARD_CREDIT", label: "Crédito" },
-                { id: "CARD_DEBIT", label: "Débito" },
-                { id: "CASH", label: "Dinheiro" },
-                { id: "GIFT_CARD", label: "Gift Card" },
-                { id: "MEMBERSHIP", label: "Clube" },
-              ].map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => setPaymentMethod(m.id)}
-                  className={`py-2 px-2 rounded-xl text-xs font-extrabold border transition-all cursor-pointer text-center ${
-                    paymentMethod === m.id
-                      ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-xs"
-                      : "bg-[var(--color-bg-subtle)] text-[var(--color-text-heading)] border-[var(--color-border)] hover:bg-slate-100"
-                  }`}
-                >
-                  {m.label}
-                </button>
-              ))}
-            </div>
-
-            {/* SE DINHEIRO: CALCULADORA DE TROCO */}
-            {paymentMethod === "CASH" && (
-              <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 flex items-center justify-between gap-3 text-xs mt-2">
-                <div>
-                  <label className="block text-[10px] font-bold text-amber-900 uppercase">
-                    Valor Recebido ({currency})
-                  </label>
-                  <input
-                    type="text"
-                    value={cashReceived}
-                    onChange={(e) => setCashReceived(e.target.value)}
-                    placeholder="Ex: 100,00"
-                    className="w-28 bg-white border border-amber-300 rounded-lg px-2 py-1 text-xs font-mono font-bold focus:outline-none"
-                  />
-                </div>
-                <div className="text-right">
-                  <span className="text-[10px] text-amber-800 font-bold block uppercase">Troco:</span>
-                  <span className="text-sm font-black text-amber-900 font-mono">
-                    {fmtCurrency(changeAmount)}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* DESCONTO & RESUMO FINANCEIRO */}
-          <div className="space-y-2 pt-2 border-t border-[var(--color-border)] text-xs">
-            <div className="flex items-center justify-between text-[var(--color-text-muted)]">
-              <span>Subtotal:</span>
-              <span className="font-mono font-bold">{fmtCurrency(subtotal)}</span>
-            </div>
-
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[var(--color-text-muted)]">Desconto ({currency}):</span>
-              <input
-                type="text"
-                value={discountAmount}
-                onChange={(e) => setDiscountAmount(e.target.value)}
-                placeholder="0,00"
-                className="w-24 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-lg px-2 py-1 text-right text-xs font-mono font-bold focus:outline-none"
-              />
-            </div>
-
-            {estimatedCommission > 0 && (
-              <div className="flex items-center justify-between text-purple-700 bg-purple-50 p-2 rounded-xl border border-purple-100 text-[11px] font-bold">
-                <span>Comissão {selectedProf?.name}:</span>
-                <span className="font-mono">{fmtCurrency(estimatedCommission)}</span>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between pt-2 border-t border-[var(--color-border)] text-base font-black text-[var(--color-text-heading)]">
-              <span>Total a Cobrar:</span>
-              <span className="text-xl text-[var(--color-primary)] font-mono">{fmtCurrency(total)}</span>
-            </div>
-          </div>
-
-          {/* BOTÃO FINALIZAR VENDA */}
-          <button
-            type="button"
-            disabled={isPending || cart.length === 0}
-            onClick={handleFinalizeSale}
-            className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm rounded-2xl transition-all cursor-pointer shadow-md active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            <CheckCircle2 className="w-5 h-5" />
-            <span>{isPending ? "Processando Caixa..." : `Finalizar Venda (${fmtCurrency(total)})`}</span>
-          </button>
+          )}
         </div>
       </div>
 
-      {/* MODAL DE RECIBO / VENDA CONCLUÍDA */}
       {isReceiptOpen && completedSale && (
         <Modal
           isOpen={isReceiptOpen}
           onClose={() => setIsReceiptOpen(false)}
-          title="Recibo de Venda — Caixa Concluído"
+          title="Venda registrada"
         >
-          <div className="space-y-4 text-xs">
-            <div className="text-center py-3 bg-emerald-50 rounded-2xl border border-emerald-200">
-              <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto mb-1" />
-              <h3 className="text-sm font-black text-emerald-900">Venda Registrada com Sucesso!</h3>
-              <p className="text-[11px] text-emerald-700 font-mono">
+          <div className="space-y-4">
+            <div className="card card-body space-y-2 font-mono">
+              <div className="flex justify-between items-baseline pb-2 border-b border-[var(--color-border)]">
+                <span className="font-medium text-[var(--color-text-heading)]">
+                  {companyName}
+                </span>
+                <span className="text-[var(--color-text-muted)]" style={{ fontSize: "var(--text-xs)" }}>
+                  {new Date().toLocaleString(company.locale, {
+                    day: "2-digit",
+                    month: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </div>
+
+              <p className="text-[var(--color-text-muted)]" style={{ fontSize: "var(--text-xs)" }}>
                 Comprovante #{completedSale.id.slice(-8).toUpperCase()}
+                {completedSale.customerName ? ` · ${completedSale.customerName}` : ""}
+              </p>
+
+              <ul className="space-y-1 py-2 border-b border-[var(--color-border)]">
+                {completedSale.items.map((it) => (
+                  <li
+                    key={it.id}
+                    className="flex justify-between gap-3"
+                    style={{ fontSize: "var(--text-sm)" }}
+                  >
+                    <span className="truncate">
+                      {it.quantity}× {it.name}
+                    </span>
+                    <span className="tabular-nums shrink-0">{money(it.totalPrice)}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <p className="flex justify-between font-medium text-[var(--color-text-heading)]">
+                <span>Total</span>
+                <span className="tabular-nums">{money(completedSale.total)}</span>
+              </p>
+              <p
+                className="flex justify-between text-[var(--color-text-muted)]"
+                style={{ fontSize: "var(--text-xs)" }}
+              >
+                <span>Pagamento</span>
+                <span>
+                  {PAYMENT_LABELS[completedSale.paymentMethod] ?? completedSale.paymentMethod}
+                </span>
               </p>
             </div>
 
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 font-mono">
-              <div className="flex justify-between font-bold text-[var(--color-text-heading)] border-b border-slate-200 pb-1">
-                <span>{companyName}</span>
-                <span>{new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
-              </div>
-              {completedSale.customerName && (
-                <p className="text-[11px] text-[var(--color-text-muted)]">
-                  Cliente: {completedSale.customerName}
-                </p>
-              )}
-              <div className="space-y-1 py-2 border-b border-slate-200">
-                {completedSale.items?.map((it: any) => (
-                  <div key={it.id} className="flex justify-between text-[11px]">
-                    <span>
-                      {it.quantity}x {it.name}
-                    </span>
-                    <span>{fmtCurrency(Number(it.totalPrice))}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-between font-black text-sm text-[var(--color-text-heading)] pt-1">
-                <span>TOTAL:</span>
-                <span>{fmtCurrency(Number(completedSale.total))}</span>
-              </div>
-              <div className="flex justify-between text-[10px] text-[var(--color-text-muted)]">
-                <span>Forma de Pagamento:</span>
-                <span className="font-bold">{completedSale.paymentMethod}</span>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2 border-t border-[var(--color-border)]">
+            <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold rounded-xl transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                className="btn btn-outline btn-sm inline-flex items-center gap-1.5"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span>Imprimir Recibo</span>
+                <span>Imprimir</span>
               </button>
               <button
                 type="button"
                 onClick={() => setIsReceiptOpen(false)}
-                className="px-5 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-extrabold rounded-xl transition-all cursor-pointer"
+                className="btn btn-primary btn-sm"
               >
-                Fechar
+                Concluir
               </button>
             </div>
           </div>

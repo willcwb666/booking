@@ -88,10 +88,10 @@ export function GuidedTour() {
         <button
           type="button"
           onClick={openTour}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-900 hover:bg-stone-800 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-navy)] hover:bg-[var(--color-navy)] text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer"
           title="Dúvidas? Clique para ver o Guia do Sistema"
         >
-          <span className="bg-amber-500 text-stone-900 w-4 h-4 rounded-full flex items-center justify-center font-black text-[10px]">
+          <span className="bg-[var(--color-warning)] text-[var(--color-text-heading)] w-4 h-4 rounded-full flex items-center justify-center font-semibold text-[var(--text-2xs)]">
             ?
           </span>
           <span>Dicas</span>
@@ -100,23 +100,23 @@ export function GuidedTour() {
 
       {/* Modal / Balão do Tour Guiado */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-3xl border border-stone-200 p-6 sm:p-8 max-w-md w-full shadow-2xl relative space-y-6 text-left">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--color-navy)] backdrop-blur-xs animate-fadeIn">
+          <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-6 sm:p-8 max-w-md w-full shadow-2xl relative space-y-6 text-left">
             {/* Header do Balão */}
-            <div className="flex items-center justify-between border-b border-stone-100 pb-4">
+            <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
               <div className="flex items-center gap-2">
                 <span className="text-2xl">{activeStep.icon}</span>
                 <div>
-                  <span className="text-[11px] font-black text-amber-600 uppercase tracking-wider block">
+                  <span className="text-[var(--text-2xs)] font-semibold text-[var(--color-warning)] uppercase tracking-wider block">
                     Dica {activeStep.step} de {TOUR_STEPS.length}
                   </span>
-                  <h3 className="text-base font-bold text-stone-900">{activeStep.title}</h3>
+                  <h3 className="text-base font-bold text-[var(--color-text-heading)]">{activeStep.title}</h3>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={handleClose}
-                className="text-stone-400 hover:text-stone-700 text-lg font-bold p-1 rounded-lg transition-colors cursor-pointer"
+                className="text-[var(--color-text-subtle)] hover:text-[var(--color-text)] text-lg font-bold p-1 rounded-[var(--radius-control)] transition-colors cursor-pointer"
                 title="Pular Tutorial"
               >
                 ✕
@@ -125,7 +125,7 @@ export function GuidedTour() {
 
             {/* Conteúdo da Dica */}
             <div className="space-y-3">
-              <p className="text-xs text-stone-600 leading-relaxed">{activeStep.description}</p>
+              <p className="text-xs text-[var(--color-text-muted)] leading-relaxed">{activeStep.description}</p>
             </div>
 
             {/* Progresso visual */}
@@ -134,19 +134,19 @@ export function GuidedTour() {
                 <div
                   key={idx}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
-                    idx === currentStep ? "w-6 bg-amber-500" : "w-1.5 bg-stone-200"
+                    idx === currentStep ? "w-6 bg-[var(--color-warning)]" : "w-1.5 bg-[var(--color-bg-muted)]"
                   }`}
                 />
               ))}
             </div>
 
             {/* Botões de Navegação */}
-            <div className="flex items-center justify-between pt-2 border-t border-stone-100">
+            <div className="flex items-center justify-between pt-2 border-t border-[var(--color-border)]">
               <button
                 type="button"
                 onClick={handlePrev}
                 disabled={currentStep === 0}
-                className="px-4 py-2 text-xs font-bold text-stone-500 hover:text-stone-800 disabled:opacity-30 cursor-pointer"
+                className="px-4 py-2 text-xs font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text)] disabled:opacity-30 cursor-pointer"
               >
                 Anterior
               </button>
@@ -154,7 +154,7 @@ export function GuidedTour() {
               <button
                 type="button"
                 onClick={handleNext}
-                className="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer"
+                className="px-6 py-2.5 bg-[var(--color-warning)] hover:bg-[var(--color-warning)] text-white font-bold text-xs rounded-[var(--radius-control)] shadow-md transition-all cursor-pointer"
               >
                 {currentStep === TOUR_STEPS.length - 1 ? "Concluir Guia" : "Próximo ▸"}
               </button>

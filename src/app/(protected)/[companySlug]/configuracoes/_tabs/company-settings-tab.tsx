@@ -149,7 +149,7 @@ export function CompanySettingsTab({
                 <option key={m.code} value={m.code}>{m.name}</option>
               ))}
             </select>
-            <p className="mt-1 text-[11px] text-[var(--color-text-subtle)]">
+            <p className="mt-1 text-[var(--text-2xs)] text-[var(--color-text-subtle)]">
               Moeda: {market.currency} · Idioma: {market.locale}
             </p>
           </div>
@@ -167,7 +167,7 @@ export function CompanySettingsTab({
                 <option key={tz.id} value={tz.id}>{tz.label}</option>
               ))}
             </select>
-            <p className="mt-1 text-[11px] text-[var(--color-text-subtle)]">Usado nas agendas e lembretes.</p>
+            <p className="mt-1 text-[var(--text-2xs)] text-[var(--color-text-subtle)]">Usado nas agendas e lembretes.</p>
           </div>
         </div>
       </div>
@@ -190,7 +190,7 @@ export function CompanySettingsTab({
               disabled={multiCompPending}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-[var(--color-bg-muted)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[var(--color-border-strong)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-primary)]" />
+            <div className="w-11 h-6 bg-[var(--color-bg-muted)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[var(--color-bg)] after:border-[var(--color-border-strong)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-primary)]" />
           </label>
         </div>
       </div>

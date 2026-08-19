@@ -64,14 +64,14 @@ export function NotificationBell() {
       <button
         type="button"
         onClick={handleToggle}
-        className="relative p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all cursor-pointer border border-transparent hover:border-slate-200"
+        className="relative p-2 rounded-[var(--radius-control)] text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] hover:bg-[var(--color-bg-muted)] transition-all cursor-pointer border border-transparent hover:border-[var(--color-border)]"
         title="Notificações do Sistema"
         aria-label="Notificações do Sistema"
       >
-        <Bell className="w-5 h-5 text-slate-700" />
+        <Bell className="w-5 h-5 text-[var(--color-text)]" />
 
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-red-600 text-[10px] font-extrabold text-white shadow-xs animate-pulse border border-white">
+          <span className="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-[var(--color-danger)] text-[var(--text-2xs)] font-semibold text-white shadow-xs animate-pulse border border-white">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -79,36 +79,36 @@ export function NotificationBell() {
 
       {/* Popover de Notificações */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-3xl bg-white border border-slate-200/90 shadow-2xl z-50 overflow-hidden text-left animate-fadeIn">
+        <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-[var(--radius-panel)] bg-[var(--color-bg)] border border-[var(--color-border)] shadow-2xl z-50 overflow-hidden text-left animate-fadeIn">
           {/* Header */}
-          <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+          <div className="p-4 border-b border-[var(--color-border)] bg-[var(--color-bg-subtle)] flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Bell className="w-4 h-4 text-indigo-600" />
-              <h3 className="text-xs font-bold text-slate-900">Notificações do Sistema</h3>
+              <Bell className="w-4 h-4 text-[var(--color-primary)]" />
+              <h3 className="text-xs font-bold text-[var(--color-text-heading)]">Notificações do Sistema</h3>
             </div>
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="text-slate-400 hover:text-slate-700 text-xs font-bold p-1 cursor-pointer"
+              className="text-[var(--color-text-subtle)] hover:text-[var(--color-text)] text-xs font-bold p-1 cursor-pointer"
             >
               ✕
             </button>
           </div>
 
           {/* Abas: Recebidas vs Enviadas */}
-          <div className="p-2 bg-slate-100/60 border-b border-slate-200/60 flex gap-1 text-xs">
+          <div className="p-2 bg-[var(--color-bg-muted)] border-b border-[var(--color-border)] flex gap-1 text-xs">
             <button
               type="button"
               onClick={() => setActiveTab("received")}
-              className={`flex-1 py-1.5 px-3 rounded-lg font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 px-3 rounded-[var(--radius-control)] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                 activeTab === "received"
-                  ? "bg-white text-indigo-600 shadow-2xs border border-slate-200/80"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]"
+                  : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
               }`}
             >
               <span>📬 Recebidas</span>
               {unreadCount > 0 && (
-                <span className="bg-red-600 text-white text-[9px] px-1.5 py-0.2 rounded-full font-black">
+                <span className="bg-[var(--color-danger)] text-white text-[var(--text-2xs)] px-1.5 py-0.2 rounded-full font-semibold">
                   {unreadCount}
                 </span>
               )}
@@ -116,21 +116,21 @@ export function NotificationBell() {
             <button
               type="button"
               onClick={() => setActiveTab("sent")}
-              className={`flex-1 py-1.5 px-3 rounded-lg font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 px-3 rounded-[var(--radius-control)] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                 activeTab === "sent"
-                  ? "bg-white text-indigo-600 shadow-2xs border border-slate-200/80"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]"
+                  : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
               }`}
             >
               <span>📤 Enviadas</span>
-              <span className="text-[10px] text-slate-400">({sentList.length})</span>
+              <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)]">({sentList.length})</span>
             </button>
           </div>
 
           {/* Lista de Notificações */}
-          <div className="max-h-96 overflow-y-auto divide-y divide-slate-100">
+          <div className="max-h-96 overflow-y-auto divide-y divide-[var(--color-border)]">
             {currentList.length === 0 ? (
-              <div className="p-8 text-center text-xs text-slate-400">
+              <div className="p-8 text-center text-xs text-[var(--color-text-subtle)]">
                 Nenhuma notificação {activeTab === "received" ? "recebida" : "enviada"} até o momento.
               </div>
             ) : (
@@ -138,29 +138,29 @@ export function NotificationBell() {
                 <div
                   key={notif.id}
                   className={`p-4 text-xs space-y-2 transition-colors ${
-                    !notif.isRead && activeTab === "received" ? "bg-amber-50/40" : "bg-white"
+                    !notif.isRead && activeTab === "received" ? "bg-[var(--color-warning-light)]" : "bg-[var(--color-bg)]"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <span className="font-extrabold text-slate-900">{notif.title}</span>
-                    <span className="text-[10px] text-slate-400 shrink-0">{notif.createdAt}</span>
+                    <span className="font-semibold text-[var(--color-text-heading)]">{notif.title}</span>
+                    <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] shrink-0">{notif.createdAt}</span>
                   </div>
 
-                  <p className="text-slate-600 leading-relaxed text-[11px]">{notif.message}</p>
+                  <p className="text-[var(--color-text-muted)] leading-relaxed text-[var(--text-2xs)]">{notif.message}</p>
 
                   {notif.payload?.observation && (
-                    <div className="p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-[11px] text-slate-700 font-mono flex items-start gap-1.5">
-                      <MessageSquare className="w-3.5 h-3.5 text-indigo-600 shrink-0 mt-0.5" />
+                    <div className="p-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-[var(--text-2xs)] text-[var(--color-text)] font-mono flex items-start gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5 text-[var(--color-primary)] shrink-0 mt-0.5" />
                       <span>{notif.payload.observation}</span>
                     </div>
                   )}
 
                   {/* Ação Executável de Reset para Super Admin */}
                   {notif.type === "PRESET_RESET_REQUEST" && activeTab === "received" && (
-                    <div className="pt-2 flex items-center justify-between border-t border-slate-100">
+                    <div className="pt-2 flex items-center justify-between border-t border-[var(--color-border)]">
                       {notif.isResolved ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="inline-flex items-center gap-1 text-[var(--text-2xs)] font-bold text-[var(--color-success)] bg-[var(--color-success-light)] px-2.5 py-1 rounded-full border border-[var(--color-success-border)]">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-success)]" />
                           Executado
                         </span>
                       ) : (
@@ -168,7 +168,7 @@ export function NotificationBell() {
                           type="button"
                           onClick={() => handleExecuteReset(notif.id)}
                           disabled={isPending}
-                          className="px-3.5 py-1.5 bg-[#635bff] hover:bg-[#544dc9] text-white font-bold text-[11px] rounded-lg shadow-2xs transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                          className="px-3.5 py-1.5 bg-[#635bff] hover:bg-[#544dc9] text-white font-bold text-[var(--text-2xs)] rounded-[var(--radius-control)] shadow-2xs transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                         >
                           <RotateCcw className="w-3.5 h-3.5" />
                           <span>{isPending ? "Executando..." : "⚡ Executar Reset Agora"}</span>
@@ -179,7 +179,7 @@ export function NotificationBell() {
                         <button
                           type="button"
                           onClick={() => handleMarkRead(notif.id)}
-                          className="text-[10px] text-slate-400 hover:text-slate-700 underline font-medium"
+                          className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] hover:text-[var(--color-text)] underline font-medium"
                         >
                           Marcar como lida
                         </button>

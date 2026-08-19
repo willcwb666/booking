@@ -28,7 +28,7 @@ export function LanguageSwitcher({ className = "" }: { className?: string }) {
       onChange={(e) => change(e.target.value)}
       disabled={isPending}
       aria-label="Idioma / Language"
-      className={`text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 ${className}`}
+      className={`text-xs border border-[var(--color-border)] rounded-[var(--radius-control)] px-2 py-1.5 bg-[var(--color-bg)] text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-info)] ${className}`}
     >
       {OPTIONS.map((o) => (
         <option key={o.value} value={o.value}>{o.label}</option>

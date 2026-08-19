@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import { decrypt } from "@/lib/encrypt";
-import { notifyBookingConfirmed, notifyCompanyNewBooking } from "@/lib/notifications";
+
 import { triggerWebhooks } from "@/lib/webhooks";
 import { revertAndCancelUnpaidBooking } from "@/lib/booking-reversal";
 import { createHmac, timingSafeEqual } from "crypto";
+import { enqueueNotification } from "@/lib/notification-outbox";
 
 /**
  * Valida a assinatura HMAC do header `x-signature` do Mercado Pago.
@@ -110,8 +111,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       });
 
       if (!alreadyPaid) {
-        void notifyBookingConfirmed(booking.id);
-        void notifyCompanyNewBooking(booking.id);
+        void enqueueNotification({ kind: "BOOKING_CONFIRMED", bookingId: booking.id });
+        void enqueueNotification({ kind: "COMPANY_NEW_BOOKING", bookingId: booking.id });
         void triggerWebhooks(booking.companyId, "BOOKING_CONFIRMED", { bookingId: booking.id });
       }
     } else if (payment.status === "rejected" || payment.status === "cancelled") {

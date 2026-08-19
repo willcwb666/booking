@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useId, useRef } from "react";
 import { X } from "@/components/ui/icons";
 
 export interface ModalProps {
@@ -22,6 +22,20 @@ const SIZE_CLASSES = {
   full: "max-w-4xl",
 };
 
+/**
+ * Diálogo modal.
+ *
+ * Detalhes que o usuário não nota conscientemente, e que são justamente o
+ * ponto:
+ *
+ *  · A caixa entra de `scale(0.96)`, nunca de `scale(0)` — nada no mundo real
+ *    aparece a partir do nada.
+ *  · `transform-origin` fica no centro. Modal é a exceção da regra de origem:
+ *    ele não está ancorado a um gatilho, aparece no meio da tela.
+ *  · O foco entra no diálogo, circula dentro dele (Tab e Shift+Tab) e volta
+ *    para quem abriu ao fechar. Sem isso, o Tab escapa para a página atrás e o
+ *    usuário de teclado se perde.
+ */
 export function Modal({
   isOpen,
   onClose,
@@ -32,54 +46,115 @@ export function Modal({
   size = "md",
   closeOnOverlayClick = true,
 }: ModalProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  const titleId = useId();
+  const descId = useId();
+
+  const focusables = useCallback(() => {
+    if (!panelRef.current) return [] as HTMLElement[];
+    return Array.from(
+      panelRef.current.querySelectorAll<HTMLElement>(
+        'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
+      )
+    ).filter((el) => el.offsetParent !== null);
+  }, []);
+
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    };
-
+    restoreFocusRef.current = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", handleKeyDown);
 
+    // Foca o primeiro elemento útil; se não houver, o próprio painel
+    const first = focusables()[0];
+    (first ?? panelRef.current)?.focus();
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+
+      const items = focusables();
+      if (items.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      const firstEl = items[0];
+      const lastEl = items[items.length - 1];
+      const active = document.activeElement;
+
+      if (e.shiftKey && (active === firstEl || !panelRef.current?.contains(active))) {
+        e.preventDefault();
+        lastEl.focus();
+      } else if (!e.shiftKey && active === lastEl) {
+        e.preventDefault();
+        firstEl.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown, true);
     return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown, true);
+      restoreFocusRef.current?.focus?.();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, focusables]);
 
   if (!isOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+      className="fixed inset-0 flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+      style={{
+        zIndex: "var(--z-modal)",
+        background: "rgba(11, 15, 22, 0.55)",
+        backdropFilter: "blur(2px)",
+        animation: "fade-in var(--dur-fast) var(--ease-out)",
+      }}
       onClick={() => closeOnOverlayClick && onClose()}
-      role="dialog"
-      aria-modal="true"
     >
       <div
-        className={`w-full ${SIZE_CLASSES[size]} bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden transform transition-all animate-in zoom-in-95 duration-200`}
+        ref={panelRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        aria-describedby={description ? descId : undefined}
+        className={`w-full ${SIZE_CLASSES[size]} card card-lg overflow-hidden outline-none`}
+        style={{
+          boxShadow: "var(--shadow-xl)",
+          animation: "pop-in var(--dur-base) var(--ease-out)",
+          transformOrigin: "center",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         {(title || description) && (
-          <div className="flex items-start justify-between p-6 pb-4 border-b border-slate-100">
-            <div>
+          <div className="card-header items-start">
+            <div className="min-w-0">
               {title && (
-                <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+                <h2 id={titleId} className="card-title">
                   {title}
                 </h2>
               )}
               {description && (
-                <p className="text-xs text-slate-500 mt-1">{description}</p>
+                <p
+                  id={descId}
+                  className="text-[var(--color-text-muted)] mt-1"
+                  style={{ fontSize: "var(--text-sm)" }}
+                >
+                  {description}
+                </p>
               )}
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors shrink-0"
+              className="btn btn-ghost btn-icon btn-sm shrink-0"
               aria-label="Fechar"
             >
               <X className="w-4 h-4" />
@@ -87,12 +162,10 @@ export function Modal({
           </div>
         )}
 
-        {/* Content */}
-        <div className="p-6">{children}</div>
+        <div className="card-body">{children}</div>
 
-        {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 px-6 py-4 bg-slate-50 border-t border-slate-100">
+          <div className="card-footer flex items-center justify-end gap-2">
             {footer}
           </div>
         )}

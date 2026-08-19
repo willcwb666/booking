@@ -74,7 +74,7 @@ function InviteForm({
       <button
         type="submit"
         disabled={pending}
-        className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 cursor-pointer shrink-0 inline-flex items-center justify-center gap-2"
+        className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-white text-xs font-bold rounded-[var(--radius-control)] transition-all disabled:opacity-50 cursor-pointer shrink-0 inline-flex items-center justify-center gap-2"
       >
         <UserPlus className="w-4 h-4" />
         <span>{pending ? "Convidando…" : "Convidar"}</span>
@@ -113,7 +113,7 @@ function RoleSelect({
       onChange={handleChange}
       disabled={pending}
       aria-label={`Role de ${member.name}`}
-      className="text-xs border border-slate-200 rounded-xl px-3 py-1.5 font-bold text-slate-700 bg-white focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50"
+      className="text-xs border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-1.5 font-bold text-[var(--color-text)] bg-[var(--color-bg)] focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
     >
       <option value="MANAGER">Gerente</option>
       <option value="EMPLOYEE">Funcionário</option>
@@ -162,10 +162,10 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
       <div className="space-y-6">
         {/* Convidar membro */}
         {canInvite && (
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-4 shadow-xs">
+          <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-6 sm:p-8 space-y-4 shadow-xs">
             <div>
-              <h2 className="text-sm font-extrabold text-slate-900">Convidar novo membro</h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <h2 className="text-sm font-semibold text-[var(--color-text-heading)]">Convidar novo membro</h2>
+              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                 O usuário precisa ter uma conta cadastrada no sistema. Ao convidar, ele ingressa como Funcionário.
               </p>
             </div>
@@ -174,9 +174,9 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
         )}
 
         {/* Membros ativos */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs">
-          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-            <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+        <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] overflow-hidden shadow-xs">
+          <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg-subtle)]">
+            <h2 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">
               Membros Ativos ({active.length})
             </h2>
           </div>
@@ -188,7 +188,7 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
               description="Sua equipe ainda não possui membros ativos."
             />
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-[var(--color-border)]">
               {active.map((member) => {
                 const isSelf = member.userId === currentUserId;
                 const canEditRole = isOwner && !isSelf && member.role !== "OWNER";
@@ -197,28 +197,28 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
                 return (
                   <li
                     key={member.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-4 hover:bg-slate-50/50 transition-colors"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-4 hover:bg-[var(--color-bg-subtle)] transition-colors"
                   >
                     {/* Avatar + Info */}
                     <div className="flex items-center gap-3.5 min-w-0">
                       <div
-                        className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0"
+                        className="w-10 h-10 rounded-[var(--radius-card)] bg-[var(--color-primary-light)] border border-[var(--color-primary)] flex items-center justify-center shrink-0"
                         aria-hidden="true"
                       >
-                        <span className="text-sm font-extrabold text-indigo-600">
+                        <span className="text-sm font-semibold text-[var(--color-primary)]">
                           {member.name[0]?.toUpperCase()}
                         </span>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-slate-900 truncate">
+                        <p className="text-sm font-bold text-[var(--color-text-heading)] truncate">
                           {member.name}
                           {isSelf && (
-                            <span className="ml-2 text-xs text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded-md">
+                            <span className="ml-2 text-xs text-[var(--color-primary)] font-semibold bg-[var(--color-primary-light)] px-2 py-0.5 rounded-[var(--radius-sm)]">
                               você
                             </span>
                           )}
                         </p>
-                        <p className="text-xs text-slate-500 truncate">{member.email}</p>
+                        <p className="text-xs text-[var(--color-text-muted)] truncate">{member.email}</p>
                       </div>
                     </div>
 
@@ -237,7 +237,7 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
                           <button
                             type="button"
                             onClick={() => setMemberToRemove(member)}
-                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
+                            className="p-2 text-[var(--color-text-subtle)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-light)] rounded-[var(--radius-control)] transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -253,27 +253,27 @@ export function EquipeClient({ companySlug, members, currentUserId, currentUserR
 
         {/* Membros inativos */}
         {inactive.length > 0 && (
-          <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs opacity-75">
-            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-              <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+          <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] overflow-hidden shadow-xs opacity-75">
+            <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg-subtle)]">
+              <h2 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">
                 Membros Removidos ({inactive.length})
               </h2>
             </div>
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-[var(--color-border)]">
               {inactive.map((member) => (
                 <li
                   key={member.id}
                   className="flex items-center justify-between gap-4 px-6 py-4 opacity-60"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center shrink-0">
-                      <span className="text-sm font-bold text-slate-500">
+                    <div className="w-10 h-10 rounded-[var(--radius-card)] bg-[var(--color-bg-muted)] flex items-center justify-center shrink-0">
+                      <span className="text-sm font-bold text-[var(--color-text-muted)]">
                         {member.name[0]?.toUpperCase()}
                       </span>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-700 truncate">{member.name}</p>
-                      <p className="text-xs text-slate-400 truncate">{member.email}</p>
+                      <p className="text-sm font-medium text-[var(--color-text)] truncate">{member.name}</p>
+                      <p className="text-xs text-[var(--color-text-subtle)] truncate">{member.email}</p>
                     </div>
                   </div>
                   <StatusBadge variant="neutral">Inativo</StatusBadge>

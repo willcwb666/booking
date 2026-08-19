@@ -90,20 +90,20 @@ export function PresetResetRequestModal({ companySlug, isOpen, onClose }: Props)
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6 text-left">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--color-navy)] backdrop-blur-xs animate-fadeIn">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6 text-left">
         
         {/* Header do Passo */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
+            <div className="w-10 h-10 rounded-[var(--radius-control)] bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-[var(--color-primary)]">
               <RotateCcw className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] font-extrabold text-indigo-600 uppercase tracking-wider block">
+              <span className="text-[var(--text-2xs)] font-semibold text-[var(--color-primary)] uppercase tracking-wider block">
                 Passo {step} de 3
               </span>
-              <h3 className="text-base font-extrabold text-slate-900">
+              <h3 className="text-base font-semibold text-[var(--color-text-heading)]">
                 {step === 1 && "Solicitar Reset de Presets"}
                 {step === 2 && "Agendamentos em Aberto Detectados"}
                 {step === 3 && "Motivo / Pagamento da Solicitação"}
@@ -113,7 +113,7 @@ export function PresetResetRequestModal({ companySlug, isOpen, onClose }: Props)
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 text-sm font-bold p-1 cursor-pointer"
+            className="text-[var(--color-text-subtle)] hover:text-[var(--color-text)] text-sm font-bold p-1 cursor-pointer"
           >
             ✕
           </button>
@@ -122,25 +122,25 @@ export function PresetResetRequestModal({ companySlug, isOpen, onClose }: Props)
         {/* PASSO 1: Informações e Garantia sem perda de dados */}
         {step === 1 && (
           <div className="space-y-4">
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-xs text-[var(--color-text-muted)] leading-relaxed">
               O reset de presets restaurará o seu catálogo de serviços de volta à configuração padrão do segmento, sem que você perca nenhum dado cadastrado (clientes, histórico ou relatórios).
             </p>
 
             {presetResetFee > 0 && (
-              <div className="p-3.5 bg-indigo-50/80 border border-indigo-200/80 rounded-xl text-xs text-indigo-900 flex items-center justify-between font-bold">
+              <div className="p-3.5 bg-[var(--color-primary-light)] border border-[var(--color-primary)] rounded-[var(--radius-control)] text-xs text-[var(--color-text-heading)] flex items-center justify-between font-bold">
                 <div className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <DollarSign className="w-4 h-4 text-[var(--color-primary)] shrink-0" />
                   <span>Taxa de Reconfiguração do Catálogo:</span>
                 </div>
-                <span className="text-sm font-extrabold text-indigo-700 bg-white px-2.5 py-1 rounded-lg border border-indigo-200 shadow-2xs">
+                <span className="text-sm font-semibold text-[var(--color-primary)] bg-[var(--color-bg)] px-2.5 py-1 rounded-[var(--radius-control)] border border-[var(--color-primary)] shadow-2xs">
                   R$ {presetResetFee.toFixed(2)}
                 </span>
               </div>
             )}
 
-            <div className="p-3.5 bg-amber-50/80 border border-amber-200/80 rounded-xl text-[11px] text-amber-800 space-y-1">
+            <div className="p-3.5 bg-[var(--color-warning-light)] border border-[var(--color-warning-border)] rounded-[var(--radius-control)] text-[var(--text-2xs)] text-[var(--color-warning)] space-y-1">
               <div className="flex items-center gap-1.5 font-bold">
-                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                <AlertTriangle className="w-4 h-4 text-[var(--color-warning)] shrink-0" />
                 <span>Requisito Obrigatório:</span>
               </div>
               <p className="pl-5">A solicitação só poderá ser enviada se não houver agendamentos em aberto no momento.</p>
@@ -150,7 +150,7 @@ export function PresetResetRequestModal({ companySlug, isOpen, onClose }: Props)
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-all cursor-pointer"
+                className="px-4 py-2.5 bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)] font-semibold text-xs rounded-[var(--radius-control)] transition-all cursor-pointer"
               >
                 Cancelar
               </button>
@@ -158,7 +158,7 @@ export function PresetResetRequestModal({ companySlug, isOpen, onClose }: Props)
                 type="button"
                 onClick={checkOpenBookings}
                 disabled={isPending}
-                className="px-5 py-2.5 bg-[#635bff] hover:bg-[#544dc9] text-white font-semibold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                className="px-5 py-2.5 bg-[#635bff] hover:bg-[#544dc9] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer disabled:opacity-50"
               >
                 {isPending ? "Verificando agendamentos..." : "Verificar e Continuar ➔"}
               </button>
@@ -169,16 +169,16 @@ export function PresetResetRequestModal({ companySlug, isOpen, onClose }: Props)
         {/* PASSO 2: Resolução Direta de Agendamentos em Aberto */}
         {step === 2 && (
           <div className="space-y-4">
-            <p className="text-xs text-slate-600">
+            <p className="text-xs text-[var(--color-text-muted)]">
               Detectamos <strong>{openBookings.length} agendamento(s) em aberto</strong>. Finalize ou cancele cada um para liberar a solicitação de reset:
             </p>
 
-            <div className="max-h-60 overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded-xl p-2 bg-slate-50/50">
+            <div className="max-h-60 overflow-y-auto divide-y divide-[var(--color-border)] border border-[var(--color-border)] rounded-[var(--radius-control)] p-2 bg-[var(--color-bg-subtle)]">
               {openBookings.map((b) => (
                 <div key={b.id} className="py-2.5 px-2 flex items-center justify-between gap-3 text-xs">
                   <div>
-                    <p className="font-bold text-slate-900">{b.customerName}</p>
-                    <p className="text-[11px] text-slate-500">
+                    <p className="font-bold text-[var(--color-text-heading)]">{b.customerName}</p>
+                    <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)]">
                       {b.serviceName} · {b.scheduledDate} às {b.scheduledStartTime}
                     </p>
                   </div>
@@ -188,7 +188,7 @@ export function PresetResetRequestModal({ companySlug, isOpen, onClose }: Props)
                       type="button"
                       onClick={() => handleResolveStatus(b.id, "COMPLETED")}
                       disabled={isPending}
-                      className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[11px] rounded-lg shadow-2xs"
+                      className="px-2.5 py-1 bg-[var(--color-success)] hover:bg-[var(--color-success)] text-white font-semibold text-[var(--text-2xs)] rounded-[var(--radius-control)] shadow-2xs"
                     >
                       Finalizar
                     </button>
@@ -196,7 +196,7 @@ export function PresetResetRequestModal({ companySlug, isOpen, onClose }: Props)
                       type="button"
                       onClick={() => handleResolveStatus(b.id, "CANCELLED")}
                       disabled={isPending}
-                      className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white font-semibold text-[11px] rounded-lg shadow-2xs"
+                      className="px-2.5 py-1 bg-[var(--color-danger)] hover:bg-[var(--color-danger)] text-white font-semibold text-[var(--text-2xs)] rounded-[var(--radius-control)] shadow-2xs"
                     >
                       Cancelar
                     </button>
@@ -209,7 +209,7 @@ export function PresetResetRequestModal({ companySlug, isOpen, onClose }: Props)
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl"
+                className="px-4 py-2 bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)] font-semibold text-xs rounded-[var(--radius-control)]"
               >
                 Voltar / Cancelar
               </button>
@@ -220,13 +220,13 @@ export function PresetResetRequestModal({ companySlug, isOpen, onClose }: Props)
         {/* PASSO 3: Observação e Envio da Solicitação */}
         {step === 3 && (
           <div className="space-y-4">
-            <div className="p-3.5 bg-emerald-50/80 border border-emerald-200/80 rounded-xl text-[11px] text-emerald-800 font-semibold flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <div className="p-3.5 bg-[var(--color-success-light)] border border-[var(--color-success-border)] rounded-[var(--radius-control)] text-[var(--text-2xs)] text-[var(--color-success)] font-semibold flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[var(--color-success)] shrink-0" />
               <span>Nenhum agendamento em aberto! Sua solicitação está liberada para envio ao Super Admin.</span>
             </div>
 
             <div>
-              <label htmlFor="observation" className="block text-xs font-bold text-slate-700 mb-1">
+              <label htmlFor="observation" className="block text-xs font-bold text-[var(--color-text)] mb-1">
                 Observação / Motivo do Reset (Opcional)
               </label>
               <textarea
@@ -235,14 +235,14 @@ export function PresetResetRequestModal({ companySlug, isOpen, onClose }: Props)
                 value={observation}
                 onChange={(e) => setObservation(e.target.value)}
                 placeholder="Ex: Gostaria de restaurar os serviços padrão porque editei os valores incorretamente."
-                className="w-full border border-slate-200 rounded-xl p-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] p-3 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
               />
             </div>
 
             {presetResetFee > 0 && (
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-600 flex items-center justify-between font-medium">
+              <div className="p-3 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-[var(--text-2xs)] text-[var(--color-text-muted)] flex items-center justify-between font-medium">
                 <span>Taxa de Serviço:</span>
-                <span className="font-bold text-slate-900">R$ {presetResetFee.toFixed(2)} (Cobrança Stripe)</span>
+                <span className="font-bold text-[var(--color-text-heading)]">R$ {presetResetFee.toFixed(2)} (Cobrança Stripe)</span>
               </div>
             )}
 
@@ -250,7 +250,7 @@ export function PresetResetRequestModal({ companySlug, isOpen, onClose }: Props)
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl"
+                className="px-4 py-2.5 bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)] font-semibold text-xs rounded-[var(--radius-control)]"
               >
                 Cancelar
               </button>
@@ -258,7 +258,7 @@ export function PresetResetRequestModal({ companySlug, isOpen, onClose }: Props)
                 type="button"
                 onClick={handleSubmitRequest}
                 disabled={isPending}
-                className="px-6 py-2.5 bg-[#635bff] hover:bg-[#544dc9] text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                className="px-6 py-2.5 bg-[#635bff] hover:bg-[#544dc9] text-white font-bold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
               >
                 <span>{isPending ? "Processando..." : presetResetFee > 0 ? `💳 Efetuar Pagamento R$ ${presetResetFee.toFixed(2)} & Solicitar ➔` : "Enviar Solicitação ao Super Admin ➔"}</span>
               </button>

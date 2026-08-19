@@ -94,7 +94,7 @@ export default async function DashboardLayout({
           <div className="flex items-center gap-5">
             <Link
               href="/empresas"
-              className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-md bg-[var(--color-bg-subtle)] text-[14px] font-semibold text-[var(--color-text)] hover:text-[var(--color-navy)] transition-colors"
+              className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-[var(--radius-sm)] bg-[var(--color-bg-subtle)] text-[14px] font-semibold text-[var(--color-text)] hover:text-[var(--color-navy)] transition-colors"
             >
               <SearchIcon className="w-4 h-4" />
               Encontrar empresas

@@ -59,9 +59,9 @@ export default async function ConfirmedPage({
 
   if (isCardFailed) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl border border-red-200 p-8 max-w-md w-full text-center">
-          <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="min-h-screen bg-[var(--color-bg-subtle)] flex items-center justify-center p-4">
+        <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-danger-border)] p-8 max-w-md w-full text-center">
+          <div className="w-14 h-14 bg-[var(--color-danger-light)] rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
               width="28"
               height="28"
@@ -71,7 +71,7 @@ export default async function ConfirmedPage({
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-red-500"
+              className="text-[var(--color-danger)]"
               aria-hidden="true"
             >
               <circle cx="12" cy="12" r="10" />
@@ -79,13 +79,13 @@ export default async function ConfirmedPage({
               <line x1="9" y1="9" x2="15" y2="15" />
             </svg>
           </div>
-          <h1 className="text-lg font-bold text-gray-900 mb-2">{t("payFailedTitle")}</h1>
-          <p className="text-sm text-gray-600 mb-6">
+          <h1 className="text-lg font-bold text-[var(--color-text-heading)] mb-2">{t("payFailedTitle")}</h1>
+          <p className="text-sm text-[var(--color-text-muted)] mb-6">
             {t("payFailedText")}
           </p>
           <Link
             href={`/book/${companySlug}/${configId}/checkout?estimate=${booking.estimateId}`}
-            className="inline-block py-2 px-5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-block py-2 px-5 bg-[var(--color-info)] text-white text-sm font-semibold rounded-[var(--radius-control)] hover:bg-[var(--color-info)] transition-colors"
           >
             {t("tryAgain")}
           </Link>
@@ -97,12 +97,12 @@ export default async function ConfirmedPage({
   const { customerDetail: customer } = booking;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--color-bg-subtle)]">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-[var(--color-bg)] border-b border-[var(--color-border)]">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
           <div
-            className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center shrink-0"
+            className="w-10 h-10 rounded-[var(--radius-control)] bg-[var(--color-info)] flex items-center justify-center shrink-0"
             aria-hidden="true"
           >
             <span className="text-white font-bold">
@@ -110,8 +110,8 @@ export default async function ConfirmedPage({
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-semibold text-gray-900">{config.company.name}</h1>
-            <p className="text-xs text-gray-500">{config.name}</p>
+            <h1 className="text-sm font-semibold text-[var(--color-text-heading)]">{config.company.name}</h1>
+            <p className="text-xs text-[var(--color-text-muted)]">{config.name}</p>
           </div>
           <LanguageSwitcher />
         </div>
@@ -119,8 +119,8 @@ export default async function ConfirmedPage({
 
       <div className="max-w-2xl mx-auto px-4 py-10">
         {/* Success banner */}
-        <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-6 text-center">
-          <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+        <div className="bg-[var(--color-success-light)] border border-[var(--color-success-border)] rounded-[var(--radius-control)] p-6 mb-6 text-center">
+          <div className="w-14 h-14 bg-[var(--color-success-light)] rounded-full flex items-center justify-center mx-auto mb-3">
             <svg
               width="28"
               height="28"
@@ -130,16 +130,16 @@ export default async function ConfirmedPage({
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-green-600"
+              className="text-[var(--color-success)]"
               aria-hidden="true"
             >
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <h2 className="text-lg font-bold text-green-900 mb-1">
+          <h2 className="text-lg font-bold text-[var(--color-success)] mb-1">
             {isCash ? t("titleCash") : isPix && isCardSuccess ? t("titlePixPaid") : isPix ? t("titlePixWaiting") : isCardSuccess ? t("titleCardPaid") : t("titleReceived")}
           </h2>
-          <p className="text-sm text-green-700">
+          <p className="text-sm text-[var(--color-success)]">
             {isCash
               ? t("textCash")
               : isPix && isCardSuccess
@@ -156,54 +156,54 @@ export default async function ConfirmedPage({
         {booking.companyPaymentMethod?.kind === "MANUAL" &&
           booking.paymentStatus === "PENDING" &&
           (booking.companyPaymentMethod.handle || booking.companyPaymentMethod.instructions) && (
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-4">
-              <h2 className="text-sm font-semibold text-blue-900 mb-2">
+            <div className="bg-[var(--color-info-light)] border border-[var(--color-info-border)] rounded-[var(--radius-control)] p-5 mb-4">
+              <h2 className="text-sm font-semibold text-[var(--color-info)] mb-2">
                 {t("howToPay", { label: booking.companyPaymentMethod.label })}
               </h2>
               {booking.companyPaymentMethod.handle && (
-                <p className="text-sm font-mono font-medium text-blue-900 bg-white border border-blue-100 rounded-lg px-3 py-2 mb-2 break-all">
+                <p className="text-sm font-mono font-medium text-[var(--color-info)] bg-[var(--color-bg)] border border-[var(--color-info-border)] rounded-[var(--radius-control)] px-3 py-2 mb-2 break-all">
                   {booking.companyPaymentMethod.handle}
                 </p>
               )}
-              <p className="text-xs text-blue-700">
+              <p className="text-xs text-[var(--color-info)]">
                 {booking.companyPaymentMethod.instructions ?? t("afterPay")}
               </p>
             </div>
           )}
 
         {/* Booking details */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-          <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("detailsTitle")}</h2>
+        <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5 mb-4">
+          <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-4">{t("detailsTitle")}</h2>
           <dl className="space-y-3">
             <div className="flex justify-between text-sm">
-              <dt className="text-gray-500">{t("date")}</dt>
-              <dd className="font-medium text-gray-900">
+              <dt className="text-[var(--color-text-muted)]">{t("date")}</dt>
+              <dd className="font-medium text-[var(--color-text-heading)]">
                 {booking.scheduledDate.split("-").reverse().join("/")}
               </dd>
             </div>
             <div className="flex justify-between text-sm">
-              <dt className="text-gray-500">{t("time")}</dt>
-              <dd className="font-medium text-gray-900">
+              <dt className="text-[var(--color-text-muted)]">{t("time")}</dt>
+              <dd className="font-medium text-[var(--color-text-heading)]">
                 {booking.scheduledStartTime} – {booking.scheduledEndTime}
               </dd>
             </div>
             {booking.professional && (
               <div className="flex justify-between text-sm">
-                <dt className="text-gray-500">{t("professional")}</dt>
-                <dd className="font-medium text-gray-900">{booking.professional.name}</dd>
+                <dt className="text-[var(--color-text-muted)]">{t("professional")}</dt>
+                <dd className="font-medium text-[var(--color-text-heading)]">{booking.professional.name}</dd>
               </div>
             )}
             <div className="flex justify-between text-sm">
-              <dt className="text-gray-500">{t("payment")}</dt>
-              <dd className="font-medium text-gray-900">
+              <dt className="text-[var(--color-text-muted)]">{t("payment")}</dt>
+              <dd className="font-medium text-[var(--color-text-heading)]">
                 {booking.companyPaymentMethod?.label ??
                   (booking.paymentMethod === "CARD" ? t("card") : booking.paymentMethod === "PIX" ? "PIX" : t("cashCheck"))}
               </dd>
             </div>
             {customer && (
               <div className="flex justify-between text-sm">
-                <dt className="text-gray-500">{t("address")}</dt>
-                <dd className="font-medium text-gray-900 text-right">
+                <dt className="text-[var(--color-text-muted)]">{t("address")}</dt>
+                <dd className="font-medium text-[var(--color-text-heading)] text-right">
                   {customer.address}
                   {customer.aptNo ? `, ${customer.aptNo}` : ""} — {customer.city}
                 </dd>
@@ -213,34 +213,34 @@ export default async function ConfirmedPage({
         </div>
 
         {/* Order summary */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-900 mb-3">{t("servicesTitle")}</h2>
+        <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
+          <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-3">{t("servicesTitle")}</h2>
           <ul className="space-y-1.5 mb-3">
             {(booking.estimate?.serviceTypes ?? []).map((item) => (
               <li key={item.id} className="flex justify-between text-sm">
-                <span className="text-gray-700">
+                <span className="text-[var(--color-text)]">
                   {item.serviceType.service.name} — {item.serviceType.name}
                   {item.quantity > 1 && (
-                    <span className="text-gray-400 ml-1">×{item.quantity}</span>
+                    <span className="text-[var(--color-text-subtle)] ml-1">×{item.quantity}</span>
                   )}
                 </span>
-                <span className="font-medium text-gray-900">
+                <span className="font-medium text-[var(--color-text-heading)]">
                   {formatMoney(Number(item.subtotal), config.company.currency, config.company.locale)}
                 </span>
               </li>
             ))}
             {(booking.estimate?.extraServices ?? []).map((item) => (
               <li key={item.id} className="flex justify-between text-sm">
-                <span className="text-gray-700">{item.extraService.name}</span>
-                <span className="font-medium text-gray-900">
+                <span className="text-[var(--color-text)]">{item.extraService.name}</span>
+                <span className="font-medium text-[var(--color-text-heading)]">
                   {formatMoney(Number(item.subtotal), config.company.currency, config.company.locale)}
                 </span>
               </li>
             ))}
           </ul>
-          <div className="border-t border-gray-100 pt-3 flex justify-between">
-            <span className="text-sm font-semibold text-gray-700">{t("total")}</span>
-            <span className="text-base font-bold text-gray-900">
+          <div className="border-t border-[var(--color-border)] pt-3 flex justify-between">
+            <span className="text-sm font-semibold text-[var(--color-text)]">{t("total")}</span>
+            <span className="text-base font-bold text-[var(--color-text-heading)]">
               {formatMoney(Number(booking.estimate?.total ?? 0), config.company.currency, config.company.locale)}
             </span>
           </div>
@@ -251,7 +251,7 @@ export default async function ConfirmedPage({
           <a
             href={`/api/ics/${bookingId}?token=${generateIcsToken(bookingId)}`}
             download
-            className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+            className="text-xs text-[var(--color-info)] hover:underline flex items-center gap-1"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -263,7 +263,7 @@ export default async function ConfirmedPage({
           </a>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-4">
+        <p className="text-center text-xs text-[var(--color-text-subtle)] mt-4">
           {t("questions", { name: config.company.name })}
         </p>
       </div>

@@ -26,21 +26,21 @@ export function RefundButton({ bookingId, companySlug }: Props) {
 
   if (done) {
     return (
-      <span className="text-sm text-green-700 font-medium">Reembolso enviado</span>
+      <span className="text-sm text-[var(--color-success)] font-medium">Reembolso enviado</span>
     );
   }
 
   return (
     <div className="flex items-center gap-3">
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-[var(--color-danger)]">{error}</p>}
       <button
         type="button"
         onClick={handleClick}
         disabled={pending}
-        className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 ${
+        className={`px-3 py-1.5 text-sm font-medium rounded-[var(--radius-control)] border transition-colors disabled:opacity-50 ${
           confirm
-            ? "bg-red-600 text-white border-red-600 hover:bg-red-700"
-            : "text-red-600 bg-red-50 border-red-200 hover:bg-red-100"
+            ? "bg-[var(--color-danger)] text-white border-[var(--color-danger-border)] hover:bg-[var(--color-danger)]"
+            : "text-[var(--color-danger)] bg-[var(--color-danger-light)] border-[var(--color-danger-border)] hover:bg-[var(--color-danger-light)]"
         }`}
       >
         {pending ? "Processando…" : confirm ? "Confirmar reembolso" : "Reembolsar"}
@@ -49,7 +49,7 @@ export function RefundButton({ bookingId, companySlug }: Props) {
         <button
           type="button"
           onClick={() => setConfirm(false)}
-          className="text-xs text-gray-500 hover:text-gray-700"
+          className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
         >
           Cancelar
         </button>

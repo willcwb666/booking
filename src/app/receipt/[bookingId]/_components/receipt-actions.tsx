@@ -31,10 +31,10 @@ export function ReceiptActions({
   };
 
   return (
-    <div className="pt-6 border-t border-stone-200 flex flex-wrap items-center justify-center gap-3 print:hidden">
+    <div className="pt-6 border-t border-[var(--color-border)] flex flex-wrap items-center justify-center gap-3 print:hidden">
       <button
         onClick={handlePrint}
-        className="bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer"
+        className="bg-[var(--color-navy)] hover:bg-[var(--color-navy)] text-white font-bold text-xs px-5 py-2.5 rounded-[var(--radius-control)] shadow-sm transition-all flex items-center gap-2 cursor-pointer"
       >
         <span>🖨️</span>
         <span>Imprimir / Salvar em PDF</span>
@@ -42,7 +42,7 @@ export function ReceiptActions({
 
       <button
         onClick={handleSendWhatsApp}
-        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer"
+        className="bg-[var(--color-success)] hover:bg-[var(--color-success)] text-white font-bold text-xs px-5 py-2.5 rounded-[var(--radius-control)] shadow-sm transition-all flex items-center gap-2 cursor-pointer"
       >
         <span>📲</span>
         <span>Enviar no WhatsApp</span>

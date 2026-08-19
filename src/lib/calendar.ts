@@ -132,26 +132,39 @@ export function getMonthCells(
   return cells;
 }
 
+/**
+ * Cores dos tipos de evento no calendário.
+ *
+ * Duas correções aqui. A primeira: as cores saíam da paleta fixa do Tailwind
+ * (azul, violeta, laranja), então ignoravam o tema escolhido — o resto da tela
+ * mudava de acento e o calendário não.
+ *
+ * A segunda é um bug de verdade: a legenda da tela de agenda pintava as
+ * bolinhas com `--color-info`, `--color-primary` e `--color-warning`, enquanto
+ * os eventos usavam azul/violeta/laranja. Legenda e evento não combinavam, que
+ * é justamente a única coisa que uma legenda precisa fazer. Agora existe uma
+ * fonte única, e a legenda lê daqui.
+ */
 export const EVENT_TYPE_CONFIG = {
   APPOINTMENT: {
     label: "Agendamento",
-    bg: "bg-blue-100",
-    text: "text-blue-800",
-    border: "border-blue-400",
-    dot: "bg-blue-500",
+    bg: "bg-[var(--color-primary-light)]",
+    text: "text-[var(--color-primary)]",
+    border: "border-[var(--color-primary-muted)]",
+    dot: "bg-[var(--color-primary)]",
   },
   EVENT: {
     label: "Evento",
-    bg: "bg-violet-100",
-    text: "text-violet-800",
-    border: "border-violet-400",
-    dot: "bg-violet-500",
+    bg: "bg-[var(--color-bg-muted)]",
+    text: "text-[var(--color-navy)]",
+    border: "border-[var(--color-border-strong)]",
+    dot: "bg-[var(--color-navy)]",
   },
   ESTIMATE: {
-    label: "Estimate",
-    bg: "bg-orange-100",
-    text: "text-orange-800",
-    border: "border-orange-400",
-    dot: "bg-orange-500",
+    label: "Orçamento",
+    bg: "bg-[var(--color-warning-light)]",
+    text: "text-[var(--color-warning)]",
+    border: "border-[var(--color-warning-border)]",
+    dot: "bg-[var(--color-warning)]",
   },
 } as const;

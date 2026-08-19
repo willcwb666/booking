@@ -107,11 +107,48 @@ export default async function CompanyLayout({
           multiCompany={hasMultiCompanies}
           licensedModules={licensedModules}
         />
-        <main className="app-main overflow-auto">
+        <main className="app-main overflow-auto flex-1 flex flex-col">
+          {/* ── Top Command Bar ── */}
+          <header className="h-14 bg-[var(--color-bg)] border-b border-[var(--color-border)] px-6 flex items-center justify-between shrink-0 shadow-2xs z-20">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-mono font-bold text-[var(--color-text-muted)] uppercase tracking-wider hidden sm:inline">
+                Ambiente: <span className="text-[var(--color-text-heading)] font-semibold">{company.name}</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[var(--text-2xs)] font-bold bg-[var(--color-success-light)] text-[var(--color-success)] border border-[var(--color-success-border)]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)] animate-pulse"></span>
+                <span>Online</span>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <a
+                href={`/${company.slug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-tactile inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-control)] bg-[var(--color-bg-subtle)] hover:bg-[var(--color-bg-muted)] border border-[var(--color-border)] text-[var(--color-text)] text-xs font-bold transition-colors"
+                title="Abrir página pública do estabelecimento"
+              >
+                <span>Vitrine Pública</span>
+                <span className="text-[var(--text-2xs)]">↗</span>
+              </a>
+
+              <a
+                href={`/book/${company.slug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-tactile inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[var(--radius-control)] bg-[var(--color-navy)] hover:bg-[var(--color-navy)] text-white text-xs font-bold shadow-xs transition-colors"
+                title="Abrir link de agendamento do cliente"
+              >
+                <span>Link de Agendamento</span>
+                <span className="text-[var(--text-2xs)]">↗</span>
+              </a>
+            </div>
+          </header>
+
           <MaintenanceBanner />
           {/* Vencido, dentro da tolerância: aviso para renovar antes do bloqueio */}
           {showGraceBanner && (
-            <div className="bg-red-600 text-white px-6 py-3 text-sm font-semibold flex items-center justify-between shadow-md">
+            <div className="bg-[var(--color-danger)] text-white px-6 py-3 text-sm font-semibold flex items-center justify-between shadow-md">
               <div className="flex items-center gap-2">
                 <span>🚫</span>
                 <span>
@@ -123,7 +160,7 @@ export default async function CompanyLayout({
               </div>
               <a
                 href={`/${companySlug}/configuracoes`}
-                className="bg-white text-red-700 px-3 py-1 rounded-lg text-xs font-bold hover:bg-stone-100 transition-colors shrink-0"
+                className="bg-[var(--color-bg)] text-[var(--color-danger)] px-3 py-1 rounded-[var(--radius-control)] text-xs font-bold hover:bg-[var(--color-bg-muted)] transition-colors shrink-0"
               >
                 Pagar Agora
               </a>
@@ -132,7 +169,7 @@ export default async function CompanyLayout({
 
           {/* Banner de contagem regressiva 7 dias antes do vencimento */}
           {showRenewalWarning && (
-            <div className="bg-amber-500 text-stone-950 px-6 py-3 text-sm font-bold flex items-center justify-between shadow-md">
+            <div className="bg-[var(--color-warning)] text-[var(--color-text-heading)] px-6 py-3 text-sm font-bold flex items-center justify-between shadow-md">
               <div className="flex items-center gap-2">
                 <span>⚠️</span>
                 <span>
@@ -143,7 +180,7 @@ export default async function CompanyLayout({
               </div>
               <a
                 href={`/${companySlug}/configuracoes`}
-                className="bg-stone-900 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-stone-800 transition-colors shrink-0"
+                className="bg-[var(--color-navy)] text-white px-3 py-1 rounded-[var(--radius-control)] text-xs font-bold hover:bg-[var(--color-navy)] transition-colors shrink-0"
               >
                 Gerenciar Assinatura
               </a>

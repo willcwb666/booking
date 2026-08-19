@@ -15,16 +15,21 @@ export type AdminStats = {
 };
 
 export async function getAdminStats(): Promise<AdminStats> {
-  const [totalCompanies, totalUsers, totalBookings, pendingBookings, paidBookings] =
+  const [totalCompanies, totalUsers, totalBookings, pendingBookings, revenueRows] =
     await Promise.all([
       db.company.count(),
       db.user.count(),
       db.booking.count(),
       db.booking.count({ where: { status: "PENDING" } }),
-      db.booking.findMany({
-        where: { paymentStatus: "PAID" },
-        include: { estimate: { select: { total: true } } },
-      }),
+      // Soma no banco. Antes isto era um `findMany` de TODOS os agendamentos
+      // pagos, com o orçamento incluso, somado em JavaScript: funciona com dez
+      // empresas e derruba o processo com mil.
+      db.$queryRawUnsafe<Array<{ total: number | string | null }>>(
+        `SELECT COALESCE(SUM(e."total"), 0)::float8 AS total
+           FROM "booking" b
+           JOIN "estimate" e ON e.id = b."estimateId"
+          WHERE b."paymentStatus" = 'PAID'`
+      ),
     ]);
 
   let companiesWithPlans: Array<{
@@ -69,11 +74,7 @@ export async function getAdminStats(): Promise<AdminStats> {
     }));
   }
 
-  const totalRevenue =
-    paidBookings.reduce(
-      (sum, b) => sum + Math.round(Number(b.estimate?.total ?? 0) * 100),
-      0
-    ) / 100;
+  const totalRevenue = Math.round(Number(revenueRows[0]?.total ?? 0) * 100) / 100;
 
   let mrr = 0;
   let activeSubscriptionsCount = 0;
@@ -141,30 +142,101 @@ export async function getCompaniesForSelector(): Promise<CompanySelectorItem[]> 
   return rows;
 }
 
+export type AdminCompanySort =
+  | "name"
+  | "businessType"
+  | "planName"
+  | "memberCount"
+  | "bookingCount"
+  | "isActive"
+  | "createdAt";
+
 type GetAdminCompaniesOptions = {
   search?: string;
   page?: number;
   pageSize?: number;
+  businessType?: string;
+  planId?: string;
+  status?: "ACTIVE" | "INACTIVE";
+  sort?: AdminCompanySort;
+  dir?: "asc" | "desc";
 };
 
+/** Opções reais para os filtros — nada de lista fixa no cliente. */
+export async function getAdminCompanyFilterOptions() {
+  const [plans, types] = await Promise.all([
+    db.plan.findMany({
+      orderBy: { order: "asc" },
+      select: { id: true, displayName: true },
+    }),
+    db.company.groupBy({
+      by: ["businessType"],
+      _count: { _all: true },
+      orderBy: { businessType: "asc" },
+    }),
+  ]);
+
+  return {
+    plans,
+    businessTypes: types.map((t) => ({
+      value: t.businessType,
+      count: t._count._all,
+    })),
+  };
+}
+
+/**
+ * Empresas do super admin.
+ *
+ * Filtro e ordenação acontecem AQUI, não na tela. Antes a tela recebia uma
+ * página de 10 linhas e filtrava/ordenava só essas 10, enquanto a paginação
+ * seguia mostrando o total geral: filtrar por "Barbearia" exibia as barbearias
+ * *daquela página* e escrevia "nenhuma empresa encontrada" quando as demais
+ * estavam na página seguinte. Ordenar por nome reiniciava o alfabeto a cada
+ * página.
+ */
 export async function getAdminCompanies(opts: GetAdminCompaniesOptions = {}) {
-  const { search, page = 1, pageSize = 25 } = opts;
+  const {
+    search,
+    page = 1,
+    pageSize = 25,
+    businessType,
+    planId,
+    status,
+    sort = "createdAt",
+    dir = "desc",
+  } = opts;
+
+  const ORDER_BY: Record<AdminCompanySort, Record<string, unknown>> = {
+    name: { name: dir },
+    businessType: { businessType: dir },
+    planName: { plan: { displayName: dir } },
+    memberCount: { members: { _count: dir } },
+    bookingCount: { bookings: { _count: dir } },
+    isActive: { isActive: dir },
+    createdAt: { createdAt: dir },
+  };
 
   try {
-    const where = search
-      ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" as const } },
-            { slug: { contains: search, mode: "insensitive" as const } },
-          ],
-        }
-      : {};
+    const where = {
+      ...(search
+        ? {
+            OR: [
+              { name: { contains: search, mode: "insensitive" as const } },
+              { slug: { contains: search, mode: "insensitive" as const } },
+            ],
+          }
+        : {}),
+      ...(businessType ? { businessType } : {}),
+      ...(planId ? { planId } : {}),
+      ...(status ? { isActive: status === "ACTIVE" } : {}),
+    };
 
     const [total, rows] = await Promise.all([
       db.company.count({ where }),
       db.company.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy: ORDER_BY[sort],
         skip: (page - 1) * pageSize,
         take: pageSize,
         include: {
@@ -252,23 +324,32 @@ export type AdminUserItem = {
   createdAt: Date;
 };
 
+export type AdminUserFilter = "ALL" | "ADMIN" | "BANNED";
+
 type GetAdminUsersOptions = {
   search?: string;
   page?: number;
   pageSize?: number;
+  filter?: AdminUserFilter;
 };
 
 export async function getAdminUsers(opts: GetAdminUsersOptions = {}) {
-  const { search, page = 1, pageSize = 25 } = opts;
+  const { search, page = 1, pageSize = 25, filter = "ALL" } = opts;
 
-  const where = search
-    ? {
-        OR: [
-          { name: { contains: search, mode: "insensitive" as const } },
-          { email: { contains: search, mode: "insensitive" as const } },
-        ],
-      }
-    : {};
+  // O recorte é resolvido no banco. Filtrar em memória a página corrente
+  // mostraria "2 banidos" quando existem 40 espalhados pelas outras páginas.
+  const where = {
+    ...(search
+      ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" as const } },
+            { email: { contains: search, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+    ...(filter === "ADMIN" ? { role: "admin" } : {}),
+    ...(filter === "BANNED" ? { banned: true } : {}),
+  };
 
   const [total, rows] = await Promise.all([
     db.user.count({ where }),

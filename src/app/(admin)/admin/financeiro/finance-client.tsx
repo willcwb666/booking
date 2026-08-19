@@ -7,7 +7,7 @@ import { updateCompanySubscriptionAction, cancelDuplicateSubscriptionsAction } f
 import { toast } from "@/lib/toast-service";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { CreditCard, Settings } from "@/components/ui/icons";
+import { CreditCard, Settings, X } from "@/components/ui/icons";
 
 type PlanOption = {
   id: string;
@@ -176,7 +176,7 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
           disabled={isPending}
           className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-xl font-bold text-xs shadow-xs transition-all shrink-0 disabled:opacity-50 inline-flex items-center gap-2 cursor-pointer"
         >
-          <span>⚡ Sincronizar Todos os Planos com o Stripe</span>
+          <span>Sincronizar Todos os Planos com o Stripe</span>
         </button>
       </div>
 
@@ -357,7 +357,7 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
           <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-6 shadow-2xl border border-[var(--color-border)]">
             <div className="flex justify-between items-center border-b border-[var(--color-border)] pb-3">
               <h3 className="font-bold text-[var(--color-text-heading)] text-base">Gerenciar Assinatura SaaS</h3>
-              <button onClick={() => setEditingCompany(null)} className="text-[var(--color-text-subtle)] font-bold">✕</button>
+              <button onClick={() => setEditingCompany(null)} aria-label="Fechar" title="Fechar" className="icon-action"><X className="w-4 h-4" /></button>
             </div>
 
             <div>

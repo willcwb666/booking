@@ -45,7 +45,7 @@ export default async function AvaliacoesPage({
           <p className="page-description">{total} avaliação{total !== 1 ? "ões" : ""}</p>
         </div>
         {stats.average !== null && (
-          <div className="text-center bg-[var(--color-warning-light)] border border-[var(--color-warning-border)] rounded-xl px-5 py-3 shrink-0">
+          <div className="text-center bg-[var(--color-warning-light)] border border-[var(--color-warning-border)] rounded-[var(--radius-control)] px-5 py-3 shrink-0">
             <p className="text-3xl font-bold text-[var(--color-warning)]">{stats.average.toFixed(1)}</p>
             <Stars rating={Math.round(stats.average)} />
             <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{stats.count} avaliações</p>

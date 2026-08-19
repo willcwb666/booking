@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import { db } from "@/lib/db";
-import { notifyBookingReminder } from "@/lib/notifications";
+import { enqueueNotification, processOutbox } from "@/lib/notification-outbox";
 
 const DEFAULT_TZ = "America/Sao_Paulo";
 
@@ -42,8 +42,8 @@ export async function GET(req: NextRequest) {
   });
   const timezones = distinctTz.length > 0 ? distinctTz.map((t) => t.timezone) : [DEFAULT_TZ];
 
-  let sent24h = 0;
-  let sent2h = 0;
+  let queued24h = 0;
+  let queued2h = 0;
   const now = new Date();
 
   for (const tz of timezones) {
@@ -88,11 +88,27 @@ export async function GET(req: NextRequest) {
       select: { id: true },
     });
 
+    // Enfileira em vez de enviar direto: se o provedor de e-mail estiver fora
+    // no momento do cron, o lembrete é reenviado na próxima passada em vez de
+    // se perder. Antes, um `Promise.all` de envios diretos jogava fora tudo
+    // que falhasse.
     const all = [...tomorrowBookings, ...soonBookings];
-    await Promise.all(all.map((b) => notifyBookingReminder(b.id)));
-    sent24h += tomorrowBookings.length;
-    sent2h += soonBookings.length;
+    await Promise.all(
+      all.map((b) =>
+        enqueueNotification({ kind: "BOOKING_REMINDER", bookingId: b.id })
+      )
+    );
+    queued24h += tomorrowBookings.length;
+    queued2h += soonBookings.length;
   }
 
-  return NextResponse.json({ sent24h, sent2h, timezones: timezones.length });
+  // Drena a fila na mesma execução — inclui o que ficou de rodadas anteriores.
+  const outbox = await processOutbox(100);
+
+  return NextResponse.json({
+    queued24h,
+    queued2h,
+    timezones: timezones.length,
+    outbox,
+  });
 }

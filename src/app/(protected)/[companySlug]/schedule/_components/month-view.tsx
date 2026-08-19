@@ -126,14 +126,14 @@ export function MonthView({
                                     onEventClick(ev);
                                   }}
                                   aria-label={`${cfg.label}: ${ev.title}`}
-                                  className={`w-full text-left text-[10px] px-1.5 py-0.5 rounded truncate font-medium ${cfg.bg} ${cfg.text}`}
+                                  className={`w-full text-left text-[var(--text-2xs)] px-1.5 py-0.5 rounded truncate font-medium ${cfg.bg} ${cfg.text}`}
                                 >
                                   {ev.title}
                                 </button>
                               );
                             })}
                             {dayEvents.length > 3 && (
-                              <p className="text-[10px] text-[var(--color-text-subtle)] pl-1">
+                              <p className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] pl-1">
                                 +{dayEvents.length - 3} mais
                               </p>
                             )}

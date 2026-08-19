@@ -1,6 +1,19 @@
 import { db } from "@/lib/db";
 import Link from "next/link";
+import { Metadata } from "next";
 import { KreatorLogo } from "@/components/ui/kreator-logo";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+
+export const metadata: Metadata = {
+  title: "Diretório de Empresas & Serviços — Agendamento Online",
+  description:
+    "Busque oficinas mecânicas, barbearias, pet shops, estúdios e diaristas. Agende horários e aprove orçamentos online com confirmação imediata via WhatsApp.",
+  openGraph: {
+    title: "Diretório de Empresas & Serviços — Kreator",
+    description:
+      "Busque e agende serviços online com os melhores profissionais e estabelecimentos da sua região.",
+  },
+};
 
 const BUSINESS_LABELS: Record<string, string> = {
   HOME_CLEANING: "Limpeza residencial",
@@ -107,85 +120,160 @@ export default async function EmpresasPage({
   const tipos = Object.entries(BUSINESS_LABELS);
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      <header className="bg-white border-b border-stone-200">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/">
-            <KreatorLogo size={28} textClassName="font-semibold text-stone-900 text-lg" />
+    <div className="min-h-screen bg-[#FAFAFA] text-[var(--color-text-heading)] selection:bg-[var(--color-navy)] selection:text-white font-sans antialiased">
+      {/* ── Top Bar ── */}
+      <header className="sticky top-0 z-40 bg-[var(--color-bg)] backdrop-blur-xl border-b border-[var(--color-border)]">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link href="/" aria-label="Kreator Início">
+            <KreatorLogo size={28} textClassName="font-semibold text-[var(--color-text-heading)] text-lg" />
           </Link>
-          <Link href="/login" className="text-sm text-stone-600 hover:text-stone-900 transition-colors">
-            Entrar
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/register"
+              className="btn-tactile text-xs font-bold bg-[var(--color-navy)] text-white hover:bg-[var(--color-navy)] px-4 py-2 rounded-full shadow-xs"
+            >
+              Cadastrar Empresa
+            </Link>
+            <Link href="/login" className="text-xs font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] px-2 py-1 transition-colors">
+              Entrar
+            </Link>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-10">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-stone-900 mb-1">Encontre um serviço</h1>
-          <p className="text-stone-500 text-sm">Agende online em segundos, sem telefonema.</p>
+      <main className="max-w-6xl mx-auto px-6 py-10 space-y-7">
+        <Breadcrumbs
+          items={[
+            { name: "Início", url: "/" },
+            { name: "Diretório de Empresas", url: "/empresas" },
+          ]}
+        />
+
+        <div className="space-y-1.5">
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--color-text-heading)]">
+            Encontre Serviços <span className="font-serif italic font-normal text-[var(--color-success)]">& Estabelecimentos</span>
+          </h1>
+          <p className="text-[var(--color-text-muted)] text-sm font-medium">
+            Agende horários online em segundos com confirmação imediata via WhatsApp.
+          </p>
         </div>
 
-        {/* Search + filter */}
-        <form method="get" className="flex flex-col sm:flex-row gap-3 mb-8">
-          <input
-            name="q"
-            defaultValue={q}
-            placeholder="Buscar empresa..."
-            className="flex-1 border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
-          />
-          <select
-            name="tipo"
-            defaultValue={tipo}
-            className="border border-stone-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
-          >
-            <option value="">Todos os tipos</option>
-            {tipos.map(([val, label]) => (
-              <option key={val} value={val}>{label}</option>
+        {/* Search + filter form */}
+        <form method="get" className="bg-[var(--color-bg)] border border-[var(--color-border)] p-5 rounded-[var(--radius-panel)] space-y-3 shadow-xs">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              name="q"
+              defaultValue={q}
+              placeholder="Buscar por nome da empresa ou serviço..."
+              className="flex-1 border border-[var(--color-border)] rounded-[var(--radius-card)] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)] bg-[var(--color-bg-subtle)] text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)]"
+              aria-label="Buscar empresa por nome"
+            />
+            <select
+              name="tipo"
+              defaultValue={tipo}
+              className="border border-[var(--color-border)] rounded-[var(--radius-card)] px-4 py-3 text-sm bg-[var(--color-bg)] text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)] font-medium"
+              aria-label="Filtrar por tipo de negócio"
+            >
+              <option value="">Todos os segmentos</option>
+              {tipos.map(([val, label]) => (
+                <option key={val} value={val}>{label}</option>
+              ))}
+            </select>
+            <button
+              type="submit"
+              className="btn-tactile px-8 py-3 bg-[var(--color-navy)] text-white text-sm font-bold rounded-[var(--radius-card)] shadow-xs hover:bg-[var(--color-navy)]"
+            >
+              Buscar
+            </button>
+          </div>
+
+          {/* Quick Segment Filter Chips */}
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--color-border)]">
+            <Link
+              href="/empresas"
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                !tipo
+                  ? "bg-[var(--color-navy)] text-white font-semibold shadow-2xs"
+                  : "bg-[var(--color-bg-muted)] text-[var(--color-text)] hover:bg-[var(--color-bg-muted)] border border-[var(--color-border)]"
+              }`}
+            >
+              Todos
+            </Link>
+            {tipos.slice(0, 7).map(([val, label]) => (
+              <Link
+                key={val}
+                href={`/empresas?tipo=${val}`}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                  tipo === val
+                    ? "bg-[var(--color-navy)] text-white font-semibold shadow-2xs"
+                    : "bg-[var(--color-bg-muted)] text-[var(--color-text)] hover:bg-[var(--color-bg-muted)] border border-[var(--color-border)]"
+                }`}
+              >
+                {label}
+              </Link>
             ))}
-          </select>
-          <button
-            type="submit"
-            className="px-6 py-2.5 bg-stone-900 text-white text-sm font-medium rounded-xl hover:bg-stone-800 transition-colors"
-          >
-            Buscar
-          </button>
+          </div>
         </form>
 
         {companies.length === 0 ? (
-          <p className="text-center text-stone-400 py-20">Nenhuma empresa encontrada.</p>
+          <div className="p-16 rounded-[var(--radius-panel)] bg-[var(--color-bg)] border border-[var(--color-border)] text-center space-y-3 shadow-xs">
+            <span className="text-4xl block">🔍</span>
+            <h3 className="text-lg font-semibold text-[var(--color-text-heading)]">Nenhuma empresa encontrada</h3>
+            <p className="text-[var(--color-text-muted)] text-xs max-w-sm mx-auto">
+              Tente buscar por outro termo ou selecione todos os segmentos de serviços.
+            </p>
+          </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {companies.map((c) => (
               <Link
                 key={c.id}
                 href={`/book/${c.slug}`}
-                className="bg-white border border-stone-200 rounded-2xl p-5 hover:shadow-md hover:-translate-y-0.5 transition-all group"
+                className="card-tactile rounded-[var(--radius-panel)] p-6 bg-[var(--color-bg)] border border-[var(--color-border)] hover:border-[var(--color-border-strong)] group flex flex-col justify-between shadow-xs hover:shadow-md transition-all"
               >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-lg shrink-0 group-hover:bg-amber-200 transition-colors">
-                    {c.name.charAt(0).toUpperCase()}
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4">
+                    {c.logoUrl ? (
+                      <img
+                        src={c.logoUrl}
+                        alt={`Logotipo da empresa ${c.name}`}
+                        className="w-12 h-12 rounded-[var(--radius-card)] object-cover border border-[var(--color-border)] shrink-0"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-[var(--radius-card)] bg-[var(--color-bg-muted)] border border-[var(--color-border)] text-[var(--color-text-heading)] font-serif font-semibold text-xl flex items-center justify-center shrink-0">
+                        {c.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-[var(--color-text-heading)] text-base truncate group-hover:text-[var(--color-success)] transition-colors">
+                        {c.name}
+                      </p>
+                      <span className="inline-block text-[var(--text-2xs)] font-bold text-[var(--color-success)] bg-[var(--color-success-light)] px-2 py-0.5 rounded-[var(--radius-sm)] border border-[var(--color-success-border)] mt-1">
+                        {BUSINESS_LABELS[c.businessType] ?? c.businessType}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-stone-900 truncate">{c.name}</p>
-                    <p className="text-xs text-stone-500 mt-0.5">
-                      {BUSINESS_LABELS[c.businessType] ?? c.businessType}
+
+                  {c.address && (
+                    <p className="text-xs text-[var(--color-text-muted)] flex items-start gap-1.5 truncate">
+                      <span className="shrink-0">📍</span>
+                      <span className="truncate">{c.address}</span>
                     </p>
-                    {c.address && (
-                      <p className="text-xs text-stone-400 mt-1 truncate">{c.address}</p>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between mt-6 pt-4 border-t border-[var(--color-border)] text-xs">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[var(--color-text-muted)] font-medium">
+                      <strong className="text-[var(--color-text-heading)]">{c._count.bookings}</strong> serviços
+                    </span>
+                    {c._count.reviews > 0 && (
+                      <span className="text-[var(--color-warning)] font-bold flex items-center gap-1">
+                        ★ {c._count.reviews}
+                      </span>
                     )}
                   </div>
-                </div>
-                <div className="flex items-center gap-4 mt-4 pt-3 border-t border-stone-100">
-                  <span className="text-xs text-stone-500">
-                    <span className="font-medium text-stone-700">{c._count.bookings}</span> serviços
-                  </span>
-                  {c._count.reviews > 0 && (
-                    <span className="text-xs text-stone-500">
-                      <span className="font-medium text-amber-500">★</span>{" "}
-                      <span className="font-medium text-stone-700">{c._count.reviews}</span> avaliações
-                    </span>
-                  )}
-                  <span className="ml-auto text-xs font-medium text-amber-600 group-hover:underline">
+                  <span className="font-bold text-[var(--color-text-heading)] group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
                     Agendar →
                   </span>
                 </div>
@@ -194,6 +282,23 @@ export default async function EmpresasPage({
           </div>
         )}
       </main>
+
+      <footer className="border-t border-[var(--color-border)] bg-[var(--color-bg-muted)] py-8 text-center text-xs text-[var(--color-text-muted)] mt-16">
+        <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p>© {new Date().getFullYear()} Kreator. Todos os direitos reservados.</p>
+          <div className="flex gap-4 font-semibold text-[var(--color-text-muted)]">
+            <Link href="/privacidade" className="hover:text-[var(--color-text-heading)] underline">
+              Privacidade
+            </Link>
+            <Link href="/termos" className="hover:text-[var(--color-text-heading)] underline">
+              Termos
+            </Link>
+            <Link href="/" className="hover:text-[var(--color-text-heading)] underline">
+              Início
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

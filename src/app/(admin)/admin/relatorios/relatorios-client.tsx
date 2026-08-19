@@ -1,91 +1,159 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
-import { FileText, DollarSign, TrendingUp, Building2, CheckCircle2 } from "@/components/ui/icons";
+import { PageHeader } from "@/components/ui/page-header";
+import { EmptyState } from "@/components/ui/empty-state";
+import { IconAction, RowActions } from "@/components/ui/icon-action";
+import { BreakdownBars } from "@/components/charts/breakdown-bars";
+import { Building2, FileText } from "@/components/ui/icons";
 
-type Props = {
-  reports: any;
+/** Espelha o retorno de `getSuperAdminReportsAction`. Antes era `any`. */
+type Reports = {
+  mrr: number;
+  arr: number;
+  totalCompaniesCount: number;
+  activeCompanies: number;
+  overdueCompanies: number;
+  planDistribution: { name: string; count: number }[];
+  topCompaniesByVolume: {
+    id: string;
+    name: string;
+    slug: string;
+    planName: string;
+    bookingCount: number;
+    memberCount: number;
+  }[];
 };
 
-export function AdminRelatoriosClient({ reports }: Props) {
-  if (!reports) return null;
+export function AdminRelatoriosClient({ reports }: { reports: Reports }) {
+  const money = (val: number) =>
+    val.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      maximumFractionDigits: 0,
+    });
 
-  const fmtCurrency = (val: number) =>
-    val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const stats = [
+    { label: "MRR", value: money(reports.mrr), hint: "Receita recorrente mensal" },
+    { label: "ARR", value: money(reports.arr), hint: "Projeção anual (MRR × 12)" },
+    {
+      label: "Assinaturas em dia",
+      value: String(reports.activeCompanies),
+      hint: `de ${reports.totalCompaniesCount} empresas cadastradas`,
+    },
+    {
+      label: "Em atraso",
+      value: String(reports.overdueCompanies),
+      hint: "Status past_due ou unpaid",
+    },
+  ];
 
   return (
-    <div className="page-content space-y-8">
-      <div>
-        <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs">
-          <FileText className="w-4 h-4" />
-          <span>Relatórios de Gestão Plataforma</span>
-        </div>
-        <h1 className="text-2xl font-extrabold text-[var(--color-text-heading)] tracking-tight mt-1">
-          Relatórios & Performance Global do SaaS
-        </h1>
-        <p className="text-xs text-[var(--color-text-muted)] mt-1">
-          Consolidado financeiro de MRR, ARR, distribuição por plano e empresas com maior volume.
-        </p>
-      </div>
+    <div className="page-content space-y-6">
+      <PageHeader
+        category="Plataforma"
+        categoryIcon={<FileText className="w-3.5 h-3.5" />}
+        title="Relatórios"
+        description="Consolidado de receita recorrente, distribuição por plano e empresas com maior volume."
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-5 shadow-2xs">
-          <span className="text-[11px] font-bold text-[var(--color-text-subtle)] uppercase tracking-wider block mb-1">MRR Total</span>
-          <p className="text-2xl font-black text-emerald-600">{fmtCurrency(reports.mrr)}</p>
-          <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">Faturamento recorrente mensal</p>
-        </div>
-
-        <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-5 shadow-2xs">
-          <span className="text-[11px] font-bold text-[var(--color-text-subtle)] uppercase tracking-wider block mb-1">ARR Projetado</span>
-          <p className="text-2xl font-black text-blue-600">{fmtCurrency(reports.arr)}</p>
-          <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">Projeção anual acumulada</p>
-        </div>
-
-        <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-5 shadow-2xs">
-          <span className="text-[11px] font-bold text-[var(--color-text-subtle)] uppercase tracking-wider block mb-1">Empresas Adimplentes</span>
-          <p className="text-2xl font-black text-[var(--color-text-heading)]">{reports.activeCompanies}</p>
-          <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">de {reports.totalCompaniesCount} cadastradas</p>
-        </div>
-
-        <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-5 shadow-2xs">
-          <span className="text-[11px] font-bold text-[var(--color-text-subtle)] uppercase tracking-wider block mb-1">Inadimplência</span>
-          <p className="text-2xl font-black text-amber-600">{reports.overdueCompanies}</p>
-          <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">Pagamentos pendentes no Stripe</p>
-        </div>
+        {stats.map((s) => (
+          <div key={s.label} className="stat-card">
+            <span className="stat-card-label">{s.label}</span>
+            <span className="stat-card-value">{s.value}</span>
+            <span className="stat-card-delta">{s.hint}</span>
+          </div>
+        ))}
       </div>
 
-      {/* Tabela de Top Empresas por Volume de Reservas */}
-      <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-4 shadow-xs">
-        <h2 className="text-base font-extrabold text-[var(--color-text-heading)]">Ranking das Top 10 Empresas por Volume de Atendimentos</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead>
-              <tr className="bg-[var(--color-bg-subtle)] text-[var(--color-text-muted)] font-bold border-b border-[var(--color-border)]/80">
-                <th className="px-4 py-3">Empresa</th>
-                <th className="px-4 py-3">Plano Contratado</th>
-                <th className="px-4 py-3 text-center">Total de Agendamentos</th>
-                <th className="px-4 py-3 text-center">Membros</th>
-                <th className="px-4 py-3 text-right">Ação</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--color-border)] font-medium">
-              {reports.topCompaniesByVolume.map((c: any) => (
-                <tr key={c.id} className="hover:bg-[var(--color-bg-subtle)]/60">
-                  <td className="px-4 py-3 font-bold text-[var(--color-text-heading)]">{c.name}</td>
-                  <td className="px-4 py-3 text-[var(--color-text-muted)]">{c.planName}</td>
-                  <td className="px-4 py-3 text-center font-bold text-[var(--color-primary)]">{c.bookingCount}</td>
-                  <td className="px-4 py-3 text-center text-[var(--color-text)]">{c.memberCount}</td>
-                  <td className="px-4 py-3 text-right">
-                    <Link href={`/admin/companies?q=${c.slug}`} className="text-[var(--color-primary)] font-bold hover:underline">
-                      Detalhes ➔
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* A distribuição por plano já vinha calculada da action e a tela
+            simplesmente não a mostrava. */}
+        <article className="lg:col-span-5 card">
+          <div className="card-header">
+            <h2 className="card-title" style={{ fontSize: "var(--text-md)" }}>
+              Empresas por plano
+            </h2>
+          </div>
+          <div className="card-body">
+            <BreakdownBars
+              items={reports.planDistribution.map((p) => ({
+                label: p.name,
+                value: p.count,
+              }))}
+              categorical
+              format={(v) => String(v)}
+              emptyLabel="Nenhuma assinatura ativa"
+            />
+          </div>
+        </article>
+
+        <article className="lg:col-span-7 card overflow-hidden">
+          <div className="card-header">
+            <h2 className="card-title" style={{ fontSize: "var(--text-md)" }}>
+              Maior volume de atendimentos
+            </h2>
+            <span className="eyebrow">top 10</span>
+          </div>
+
+          {reports.topCompaniesByVolume.length === 0 ? (
+            <EmptyState
+              icon={<Building2 className="w-5 h-5" />}
+              title="Nenhum atendimento registrado"
+              description="O ranking aparece assim que as empresas começarem a receber agendamentos."
+            />
+          ) : (
+            <div
+              className="table-container"
+              style={{ border: 0, borderRadius: 0, boxShadow: "none" }}
+            >
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Empresa</th>
+                    <th scope="col">Plano</th>
+                    <th scope="col" className="text-right">
+                      Agendamentos
+                    </th>
+                    <th scope="col" className="text-right">
+                      Membros
+                    </th>
+                    <th scope="col" className="text-right">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reports.topCompaniesByVolume.map((c) => (
+                    <tr key={c.id}>
+                      <td className="font-medium text-[var(--color-text-heading)]">
+                        {c.name}
+                      </td>
+                      <td className="text-[var(--color-text-muted)]">{c.planName}</td>
+                      <td data-type="number">{c.bookingCount}</td>
+                      <td data-type="number">{c.memberCount}</td>
+                      <td>
+                        <RowActions>
+                          <IconAction
+                            intent="view"
+                            label={`Ver ${c.name} na lista de empresas`}
+                            href={`/admin/companies?q=${encodeURIComponent(c.slug)}`}
+                          />
+                          <IconAction
+                            intent="open"
+                            label={`Abrir painel de ${c.name}`}
+                            href={`/${c.slug}/dashboard`}
+                          />
+                        </RowActions>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </article>
       </div>
     </div>
   );

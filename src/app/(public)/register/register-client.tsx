@@ -207,7 +207,7 @@ export default function RegisterClient({
         <button
           type="submit"
           disabled={loading || !isPasswordValid}
-          className="btn btn-primary btn-lg w-full"
+          className="btn btn-primary btn-lg w-full btn-tactile"
         >
           {loading ? t("creating") : t("createAccount")}
         </button>

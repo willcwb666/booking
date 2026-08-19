@@ -24,9 +24,12 @@ const GoogleIcon = () => (
 export default function LoginClient({
   googleEnabled,
   callbackUrl,
+  notice,
 }: {
   googleEnabled: boolean;
   callbackUrl: string | null;
+  /** Aviso do redirecionamento (sessão expirada, derrubada em outro device). */
+  notice?: string | null;
 }) {
   const router = useRouter();
   const t = useTranslations("auth");
@@ -100,6 +103,14 @@ export default function LoginClient({
       )}
 
       <form onSubmit={handleEmailSignIn} className="auth-form">
+        {notice && !error && (
+          <p
+            role="status"
+            className="text-xs font-semibold text-[var(--color-warning)] bg-[var(--color-warning-light)] border border-[var(--color-warning-border)] rounded-[var(--radius-control)] px-3.5 py-2.5"
+          >
+            {notice}
+          </p>
+        )}
         {error && <AuthError message={error} />}
 
         <div>
@@ -118,7 +129,10 @@ export default function LoginClient({
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="input-label !mb-0" htmlFor="password">{t("password")}</label>
-            <Link href="#" className="text-xs text-primary hover:text-primary-hover transition-colors">
+            <Link
+              href="/recuperar-senha"
+              className="text-xs text-primary hover:text-primary-hover transition-colors"
+            >
               {t("forgotPassword")}
             </Link>
           </div>
@@ -162,7 +176,7 @@ export default function LoginClient({
           <span>{t("rememberMe")}</span>
         </label>
 
-        <button type="submit" disabled={loading} className="btn btn-primary btn-lg w-full">
+        <button type="submit" disabled={loading} className="btn btn-primary btn-lg w-full btn-tactile">
           {loading ? t("loggingIn") : t("loginButton")}
         </button>
       </form>

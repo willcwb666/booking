@@ -144,12 +144,12 @@ function StripePaymentForm({ returnUrl }: { returnUrl: string }) {
     <form onSubmit={handlePay} className="space-y-4">
       <PaymentElement />
       {error && (
-        <p role="alert" className="text-sm text-red-600">{error}</p>
+        <p role="alert" className="text-sm text-[var(--color-danger)]">{error}</p>
       )}
       <button
         type="submit"
         disabled={!stripe || paying}
-        className="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="w-full py-3 px-4 bg-[var(--color-info)] text-white font-semibold rounded-[var(--radius-control)] hover:bg-[var(--color-info)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {paying ? t("processing") : t("payNow")}
       </button>
@@ -217,15 +217,15 @@ function PixStep({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 text-center space-y-4">
-      <h2 className="text-sm font-semibold text-gray-900">{t("pixTitle")}</h2>
-      <p className="text-xs text-gray-500">{t("pixInstructions")}</p>
+    <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-6 text-center space-y-4">
+      <h2 className="text-sm font-semibold text-[var(--color-text-heading)]">{t("pixTitle")}</h2>
+      <p className="text-xs text-[var(--color-text-muted)]">{t("pixInstructions")}</p>
 
       {qrCodeBase64 && (
         <img
           src={`data:image/png;base64,${qrCodeBase64}`}
           alt={t("pixAlt")}
-          className="w-48 h-48 mx-auto border border-gray-200 rounded-lg p-2"
+          className="w-48 h-48 mx-auto border border-[var(--color-border)] rounded-[var(--radius-control)] p-2"
         />
       )}
 
@@ -233,12 +233,12 @@ function PixStep({
         <input
           readOnly
           value={qrCode}
-          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 bg-gray-50 truncate"
+          className="flex-1 border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-xs text-[var(--color-text)] bg-[var(--color-bg-subtle)] truncate"
         />
         <button
           type="button"
           onClick={handleCopy}
-          className="shrink-0 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          className="shrink-0 px-3 py-2 bg-[var(--color-info)] text-white text-xs font-medium rounded-[var(--radius-control)] hover:bg-[var(--color-info)] transition-colors"
         >
           {copied ? t("copied") : t("copy")}
         </button>
@@ -246,18 +246,18 @@ function PixStep({
 
       {expired ? (
         <div className="space-y-2">
-          <p className="text-xs text-yellow-600 font-medium">{t("pixExpired")}</p>
+          <p className="text-xs text-[var(--color-warning)] font-medium">{t("pixExpired")}</p>
           <button
             type="button"
             onClick={handleManualCheck}
             disabled={checking}
-            className="px-4 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="px-4 py-2 bg-[var(--color-info)] text-white text-xs font-medium rounded-[var(--radius-control)] hover:bg-[var(--color-info)] disabled:opacity-50 transition-colors"
           >
             {checking ? t("checking") : t("checkPayment")}
           </button>
         </div>
       ) : (
-        <p className="text-xs text-gray-400">{t("pixWaiting")}</p>
+        <p className="text-xs text-[var(--color-text-subtle)]">{t("pixWaiting")}</p>
       )}
     </div>
   );
@@ -511,19 +511,19 @@ export function CheckoutClient({
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--color-bg-subtle)]">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-[var(--color-bg)] border-b border-[var(--color-border)]">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
           <div
-            className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center shrink-0"
+            className="w-10 h-10 rounded-[var(--radius-control)] bg-[var(--color-info)] flex items-center justify-center shrink-0"
             aria-hidden="true"
           >
             <span className="text-white font-bold">{companyName[0].toUpperCase()}</span>
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-semibold text-gray-900">{companyName}</h1>
-            <p className="text-xs text-gray-500">{configName}</p>
+            <h1 className="text-sm font-semibold text-[var(--color-text-heading)]">{companyName}</h1>
+            <p className="text-xs text-[var(--color-text-muted)]">{configName}</p>
           </div>
           <LanguageSwitcher />
         </div>
@@ -533,26 +533,26 @@ export function CheckoutClient({
         {/* Step indicator */}
         <nav aria-label={t("stepsAria")} className="mb-8">
           <ol className="flex items-center gap-2 text-sm">
-            <li className="text-gray-400 line-through">
+            <li className="text-[var(--color-text-subtle)] line-through">
               <Link href={`/book/${companySlug}/${configId}`}>{t("stepServices")}</Link>
             </li>
-            <li className="text-gray-300" aria-hidden="true">›</li>
+            <li className="text-[var(--color-text-subtle)]" aria-hidden="true">›</li>
             <li
-              className={step === "datetime" ? "font-semibold text-blue-600" : "text-gray-400"}
+              className={step === "datetime" ? "font-semibold text-[var(--color-info)]" : "text-[var(--color-text-subtle)]"}
               aria-current={step === "datetime" ? "step" : undefined}
             >
               {t("stepDatetime")}
             </li>
-            <li className="text-gray-300" aria-hidden="true">›</li>
+            <li className="text-[var(--color-text-subtle)]" aria-hidden="true">›</li>
             <li
-              className={step === "details" ? "font-semibold text-blue-600" : "text-gray-400"}
+              className={step === "details" ? "font-semibold text-[var(--color-info)]" : "text-[var(--color-text-subtle)]"}
               aria-current={step === "details" ? "step" : undefined}
             >
               {t("stepDetails")}
             </li>
-            <li className="text-gray-300" aria-hidden="true">›</li>
+            <li className="text-[var(--color-text-subtle)]" aria-hidden="true">›</li>
             <li
-              className={step === "payment" ? "font-semibold text-blue-600" : "text-gray-400"}
+              className={step === "payment" ? "font-semibold text-[var(--color-info)]" : "text-[var(--color-text-subtle)]"}
               aria-current={step === "payment" ? "step" : undefined}
             >
               {t("stepPayment")}
@@ -569,12 +569,12 @@ export function CheckoutClient({
               <form onSubmit={handleSubmitDetails}>
                 {/* Seletor de Profissional */}
                 {professionals.length > 0 && (
-                  <div className="bg-white rounded-2xl border border-gray-200 p-5 mb-4 shadow-xs">
+                  <div className="bg-[var(--color-bg)] rounded-[var(--radius-card)] border border-[var(--color-border)] p-5 mb-4 shadow-xs">
                     <div className="mb-3">
-                      <h2 className="text-sm font-bold text-gray-900">
+                      <h2 className="text-sm font-bold text-[var(--color-text-heading)]">
                         Escolha o Profissional
                       </h2>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-[var(--color-text-muted)]">
                         Selecione seu profissional de preferência ou deixe com qualquer disponível.
                       </p>
                     </div>
@@ -584,18 +584,18 @@ export function CheckoutClient({
                       <button
                         type="button"
                         onClick={() => handleProfessionalSelect(null)}
-                        className={`p-3 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
+                        className={`p-3 rounded-[var(--radius-control)] border text-left flex items-center gap-3 transition-all cursor-pointer ${
                           selectedProfessionalId === null
-                            ? "border-blue-600 bg-blue-50/60 ring-2 ring-blue-600/20"
-                            : "border-gray-200 hover:border-gray-300 bg-white"
+                            ? "border-[var(--color-info-border)] bg-[var(--color-info-light)] ring-2 ring-[var(--color-info)]"
+                            : "border-[var(--color-border)] hover:border-[var(--color-border-strong)] bg-[var(--color-bg)]"
                         }`}
                       >
-                        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-[var(--color-info-light)] text-[var(--color-info)] flex items-center justify-center font-bold text-sm shrink-0">
                           ✨
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-gray-900">Qualquer Profissional</p>
-                          <p className="text-[11px] text-gray-500">Primeiro horário livre</p>
+                          <p className="text-xs font-bold text-[var(--color-text-heading)]">Qualquer Profissional</p>
+                          <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)]">Primeiro horário livre</p>
                         </div>
                       </button>
 
@@ -605,26 +605,26 @@ export function CheckoutClient({
                           key={prof.id}
                           type="button"
                           onClick={() => handleProfessionalSelect(prof.id)}
-                          className={`p-3 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
+                          className={`p-3 rounded-[var(--radius-control)] border text-left flex items-center gap-3 transition-all cursor-pointer ${
                             selectedProfessionalId === prof.id
-                              ? "border-blue-600 bg-blue-50/60 ring-2 ring-blue-600/20"
-                              : "border-gray-200 hover:border-gray-300 bg-white"
+                              ? "border-[var(--color-info-border)] bg-[var(--color-info-light)] ring-2 ring-[var(--color-info)]"
+                              : "border-[var(--color-border)] hover:border-[var(--color-border-strong)] bg-[var(--color-bg)]"
                           }`}
                         >
                           {prof.avatarUrl ? (
                             <img
                               src={prof.avatarUrl}
                               alt={prof.name}
-                              className="w-10 h-10 rounded-full object-cover shrink-0 border border-gray-200"
+                              className="w-10 h-10 rounded-full object-cover shrink-0 border border-[var(--color-border)]"
                             />
                           ) : (
-                            <div className="w-10 h-10 rounded-full bg-stone-100 text-stone-700 flex items-center justify-center font-bold text-xs shrink-0 uppercase border border-stone-200">
+                            <div className="w-10 h-10 rounded-full bg-[var(--color-bg-muted)] text-[var(--color-text)] flex items-center justify-center font-bold text-xs shrink-0 uppercase border border-[var(--color-border)]">
                               {prof.name.slice(0, 2)}
                             </div>
                           )}
                           <div className="min-w-0">
-                            <p className="text-xs font-bold text-gray-900 truncate">{prof.name}</p>
-                            <p className="text-[11px] text-gray-500 truncate">
+                            <p className="text-xs font-bold text-[var(--color-text-heading)] truncate">{prof.name}</p>
+                            <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)] truncate">
                               {prof.roleTitle || "Profissional"}
                             </p>
                           </div>
@@ -635,7 +635,7 @@ export function CheckoutClient({
                 )}
 
                 {/* Calendar */}
-                <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
+                <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5 mb-4">
                   <div className="flex items-center justify-between mb-4">
                     <button
                       type="button"
@@ -643,12 +643,12 @@ export function CheckoutClient({
                         if (calMonth === 0) { setCalMonth(11); setCalYear(y => y - 1); }
                         else setCalMonth(m => m - 1);
                       }}
-                      className="p-1.5 rounded hover:bg-gray-100"
+                      className="p-1.5 rounded hover:bg-[var(--color-bg-muted)]"
                       aria-label={t("prevMonth")}
                     >
                       ‹
                     </button>
-                    <h2 className="text-sm font-semibold text-gray-900 capitalize">
+                    <h2 className="text-sm font-semibold text-[var(--color-text-heading)] capitalize">
                       {monthTitle}
                     </h2>
                     <button
@@ -657,7 +657,7 @@ export function CheckoutClient({
                         if (calMonth === 11) { setCalMonth(0); setCalYear(y => y + 1); }
                         else setCalMonth(m => m + 1);
                       }}
-                      className="p-1.5 rounded hover:bg-gray-100"
+                      className="p-1.5 rounded hover:bg-[var(--color-bg-muted)]"
                       aria-label={t("nextMonth")}
                     >
                       ›
@@ -670,7 +670,7 @@ export function CheckoutClient({
                           <th
                             key={abbr}
                             scope="col"
-                            className="text-xs text-gray-400 font-medium pb-2"
+                            className="text-xs text-[var(--color-text-subtle)] font-medium pb-2"
                           >
                             {abbr}
                           </th>
@@ -699,11 +699,11 @@ export function CheckoutClient({
                                   aria-label={`${ds}${isSelected ? ", selecionado" : ""}${isToday ? ", hoje" : ""}`}
                                   className={[
                                     "w-8 h-8 mx-auto rounded-full text-xs font-medium transition-colors",
-                                    !isCurrentMonth ? "text-gray-300" : "",
-                                    disabled ? "cursor-not-allowed opacity-40" : "hover:bg-blue-50",
-                                    isSelected ? "bg-blue-600 text-white hover:bg-blue-600" : "",
-                                    isToday && !isSelected ? "border border-blue-400 text-blue-600" : "",
-                                    !isSelected && !isToday && isCurrentMonth ? "text-gray-700" : "",
+                                    !isCurrentMonth ? "text-[var(--color-text-subtle)]" : "",
+                                    disabled ? "cursor-not-allowed opacity-40" : "hover:bg-[var(--color-info-light)]",
+                                    isSelected ? "bg-[var(--color-info)] text-white hover:bg-[var(--color-info)]" : "",
+                                    isToday && !isSelected ? "border border-[var(--color-info-border)] text-[var(--color-info)]" : "",
+                                    !isSelected && !isToday && isCurrentMonth ? "text-[var(--color-text)]" : "",
                                   ].join(" ")}
                                 >
                                   {date.getUTCDate()}
@@ -719,14 +719,14 @@ export function CheckoutClient({
 
                 {/* Time slots */}
                 {selectedDate && (
-                  <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-                    <h2 className="text-sm font-semibold text-gray-900 mb-3">
+                  <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5 mb-4">
+                    <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-3">
                       {t("slotsTitle", { date: selectedDate.split("-").reverse().join("/") })}
                     </h2>
                     {loadingSlots ? (
-                      <p className="text-sm text-gray-500">{t("loadingSlots")}</p>
+                      <p className="text-sm text-[var(--color-text-muted)]">{t("loadingSlots")}</p>
                     ) : availableSlots.length === 0 ? (
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-[var(--color-text-muted)]">
                         {t("noSlots")}
                       </p>
                     ) : (
@@ -734,7 +734,7 @@ export function CheckoutClient({
                         <button
                           type="button"
                           onClick={() => setSelectedSlot(availableSlots[0])}
-                          className="text-xs text-blue-600 hover:underline mb-3 block"
+                          className="text-xs text-[var(--color-info)] hover:underline mb-3 block"
                         >
                           {t("firstAvailable")}
                         </button>
@@ -753,10 +753,10 @@ export function CheckoutClient({
                                 onClick={() => setSelectedSlot(slot)}
                                 aria-pressed={isSelected}
                                 className={[
-                                  "py-2 px-3 rounded-lg text-sm font-medium border transition-colors",
+                                  "py-2 px-3 rounded-[var(--radius-control)] text-sm font-medium border transition-colors",
                                   isSelected
-                                    ? "bg-blue-600 text-white border-blue-600"
-                                    : "border-gray-200 text-gray-700 hover:border-blue-300 hover:bg-blue-50",
+                                    ? "bg-[var(--color-info)] text-white border-[var(--color-info-border)]"
+                                    : "border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-info-border)] hover:bg-[var(--color-info-light)]",
                                 ].join(" ")}
                               >
                                 {slot.startTime}
@@ -770,7 +770,7 @@ export function CheckoutClient({
                 )}
 
                 {formErrors._ && (
-                  <p role="alert" className="text-sm text-red-600 mb-2">
+                  <p role="alert" className="text-sm text-[var(--color-danger)] mb-2">
                     {formErrors._[0]}
                   </p>
                 )}
@@ -778,7 +778,7 @@ export function CheckoutClient({
                 <button
                   type="submit"
                   disabled={!selectedDate || !selectedSlot}
-                  className="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="w-full py-3 px-4 bg-[var(--color-info)] text-white font-semibold rounded-[var(--radius-control)] hover:bg-[var(--color-info)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {t("continue")}
                 </button>
@@ -789,35 +789,35 @@ export function CheckoutClient({
             {step === "details" && (
               <form ref={formRef} onSubmit={handleSubmitBooking} className="space-y-5">
                 {/* Customer info */}
-                <div className="bg-white rounded-xl border border-gray-200 p-5">
-                  <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("yourDetails")}</h2>
+                <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
+                  <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-4">{t("yourDetails")}</h2>
                   <div className="grid grid-cols-2 gap-3 mb-3">
                     <div>
-                      <label htmlFor="firstName" className="block text-xs text-gray-600 mb-1">
+                      <label htmlFor="firstName" className="block text-xs text-[var(--color-text-muted)] mb-1">
                         {t("firstName")} <span aria-hidden="true">*</span>
                       </label>
                       <input
                         id="firstName"
                         name="firstName"
                         required
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
                       />
                     </div>
                     <div>
-                      <label htmlFor="lastName" className="block text-xs text-gray-600 mb-1">
+                      <label htmlFor="lastName" className="block text-xs text-[var(--color-text-muted)] mb-1">
                         {t("lastName")} <span aria-hidden="true">*</span>
                       </label>
                       <input
                         id="lastName"
                         name="lastName"
                         required
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
                       />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3 mb-3">
                     <div>
-                      <label htmlFor="email" className="block text-xs text-gray-600 mb-1">
+                      <label htmlFor="email" className="block text-xs text-[var(--color-text-muted)] mb-1">
                         {t("email")} <span aria-hidden="true">*</span>
                       </label>
                       <input
@@ -826,11 +826,11 @@ export function CheckoutClient({
                         type="email"
                         required
                         onBlur={(e) => handleEmailCheck(e.target.value)}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
                       />
                     </div>
                     <div>
-                      <label htmlFor="phone" className="block text-xs text-gray-600 mb-1">
+                      <label htmlFor="phone" className="block text-xs text-[var(--color-text-muted)] mb-1">
                         {t("phone")} <span aria-hidden="true">*</span>
                       </label>
                       <input
@@ -838,25 +838,25 @@ export function CheckoutClient({
                         name="phone"
                         type="tel"
                         required
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
                       />
                     </div>
                   </div>
 
                   {/* BANNER DE COBERTURA DO CLUBE DE ASSINATURAS */}
                   {checkingMembership && (
-                    <p className="text-xs text-blue-600 animate-pulse mb-3">
+                    <p className="text-xs text-[var(--color-info)] animate-pulse mb-3">
                       Verificando cobertura do Clube de Assinaturas...
                     </p>
                   )}
 
                   {membershipCoverage?.isCovered && (
-                    <div className="mb-3 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs space-y-1">
-                      <div className="flex items-center gap-1.5 font-black text-emerald-900">
+                    <div className="mb-3 p-3.5 rounded-[var(--radius-control)] bg-[var(--color-success-light)] border border-[var(--color-success-border)] text-[var(--color-success)] text-xs space-y-1">
+                      <div className="flex items-center gap-1.5 font-semibold text-[var(--color-success)]">
                         <span>✨ Agendamento coberto pelo seu plano:</span>
                         <span className="underline">{membershipCoverage.planName}</span>
                       </div>
-                      <p className="text-[11px] text-emerald-700">
+                      <p className="text-[var(--text-2xs)] text-[var(--color-success)]">
                         {membershipCoverage.isUnlimited
                           ? "Você possui agendamentos ilimitados ativos. Valor a pagar: R$ 0,00."
                           : `Será debitado 1 crédito do seu pacote (${membershipCoverage.remainingSessions ?? 0} restante(s)). Valor a pagar: R$ 0,00.`}
@@ -865,14 +865,14 @@ export function CheckoutClient({
                   )}
 
                   {membershipCoverage && !membershipCoverage.isCovered && membershipCoverage.discountPercent && membershipCoverage.discountPercent > 0 && (
-                    <div className="mb-3 p-3 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs">
+                    <div className="mb-3 p-3 rounded-[var(--radius-control)] bg-[var(--color-primary-light)] border border-[var(--color-primary)] text-[var(--color-primary)] text-xs">
                       <p className="font-bold">
                         🎁 Membro {membershipCoverage.planName}: {membershipCoverage.discountPercent}% de desconto aplicado!
                       </p>
                     </div>
                   )}
 
-                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <label className="flex items-center gap-2 text-sm text-[var(--color-text)]">
                     <input
                       type="checkbox"
                       name="sendReminders"
@@ -884,8 +884,8 @@ export function CheckoutClient({
                   </label>
 
                   {/* VALE-PRESENTE / GIFT CARD */}
-                  <div className="mt-4 pt-3 border-t border-gray-100 space-y-2">
-                    <label className="block text-xs font-bold text-gray-700">
+                  <div className="mt-4 pt-3 border-t border-[var(--color-border)] space-y-2">
+                    <label className="block text-xs font-bold text-[var(--color-text)]">
                       Possui um Vale-Presente / Gift Card?
                     </label>
                     <div className="flex gap-2">
@@ -895,13 +895,13 @@ export function CheckoutClient({
                         onChange={(e) => setGiftCardInput(e.target.value.toUpperCase())}
                         placeholder="Ex: GIFT-8X9K-42M1"
                         disabled={!!appliedGiftCard}
-                        className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs uppercase font-mono text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                        className="flex-1 border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-xs uppercase font-mono text-[var(--color-text)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-info)] disabled:bg-[var(--color-bg-muted)]"
                       />
                       {appliedGiftCard ? (
                         <button
                           type="button"
                           onClick={handleRemoveGiftCard}
-                          className="px-3 py-2 text-xs font-bold text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 rounded-lg transition-colors cursor-pointer"
+                          className="px-3 py-2 text-xs font-bold text-[var(--color-danger)] border border-[var(--color-danger-border)] bg-[var(--color-danger-light)] hover:bg-[var(--color-danger-light)] rounded-[var(--radius-control)] transition-colors cursor-pointer"
                         >
                           Remover
                         </button>
@@ -910,7 +910,7 @@ export function CheckoutClient({
                           type="button"
                           onClick={handleApplyGiftCard}
                           disabled={validatingGiftCard || !giftCardInput.trim()}
-                          className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg transition-colors cursor-pointer"
+                          className="px-4 py-2 text-xs font-bold text-white bg-[var(--color-info)] hover:bg-[var(--color-info)] disabled:opacity-50 rounded-[var(--radius-control)] transition-colors cursor-pointer"
                         >
                           {validatingGiftCard ? "Validando..." : "Aplicar"}
                         </button>
@@ -918,11 +918,11 @@ export function CheckoutClient({
                     </div>
 
                     {giftCardError && (
-                      <p className="text-[11px] text-red-600 font-medium">{giftCardError}</p>
+                      <p className="text-[var(--text-2xs)] text-[var(--color-danger)] font-medium">{giftCardError}</p>
                     )}
 
                     {appliedGiftCard && (
-                      <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between">
+                      <div className="p-2.5 rounded-[var(--radius-control)] bg-[var(--color-success-light)] border border-[var(--color-success-border)] text-[var(--color-success)] text-xs flex items-center justify-between">
                         <span>
                           ✓ Vale {appliedGiftCard.code} aplicado (Saldo: {formatMoney(appliedGiftCard.balance, currency, locale)})
                         </span>
@@ -943,63 +943,63 @@ export function CheckoutClient({
                 {isHomeService ? (
                   <>
                     {/* Address */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-5">
-                      <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("serviceAddress")}</h2>
+                    <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
+                      <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-4">{t("serviceAddress")}</h2>
                       <div className="space-y-3">
                         <div>
-                          <label htmlFor="address" className="block text-xs text-gray-600 mb-1">
+                          <label htmlFor="address" className="block text-xs text-[var(--color-text-muted)] mb-1">
                             {t("address")} <span aria-hidden="true">*</span>
                           </label>
                           <input
                             id="address"
                             name="address"
                             required
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
                           />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label htmlFor="aptNo" className="block text-xs text-gray-600 mb-1">
+                            <label htmlFor="aptNo" className="block text-xs text-[var(--color-text-muted)] mb-1">
                               {t("apt")}
                             </label>
                             <input
                               id="aptNo"
                               name="aptNo"
-                              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
                             />
                           </div>
                           <div>
-                            <label htmlFor="zip" className="block text-xs text-gray-600 mb-1">
+                            <label htmlFor="zip" className="block text-xs text-[var(--color-text-muted)] mb-1">
                               {t("zip")} <span aria-hidden="true">*</span>
                             </label>
                             <input
                               id="zip"
                               name="zip"
                               required
-                              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
                             />
                           </div>
                         </div>
                         <div>
-                          <label htmlFor="city" className="block text-xs text-gray-600 mb-1">
+                          <label htmlFor="city" className="block text-xs text-[var(--color-text-muted)] mb-1">
                             {t("city")} <span aria-hidden="true">*</span>
                           </label>
                           <input
                             id="city"
                             name="city"
                             required
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
                           />
                         </div>
                       </div>
                     </div>
 
                     {/* Home access */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-5">
-                      <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("homeAccess")}</h2>
+                    <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
+                      <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-4">{t("homeAccess")}</h2>
                       <fieldset className="space-y-2 mb-3">
-                        <legend className="text-xs text-gray-600 mb-2">{t("howEnter")}</legend>
-                        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <legend className="text-xs text-[var(--color-text-muted)] mb-2">{t("howEnter")}</legend>
+                        <label className="flex items-center gap-2 text-sm text-[var(--color-text)] cursor-pointer">
                           <input
                             type="radio"
                             name="accessType"
@@ -1008,12 +1008,12 @@ export function CheckoutClient({
                           />
                           {t("someoneHome")}
                         </label>
-                        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <label className="flex items-center gap-2 text-sm text-[var(--color-text)] cursor-pointer">
                           <input type="radio" name="accessType" value="hide_keys" />
                           {t("hideKeys")}
                         </label>
                       </fieldset>
-                      <label className="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                      <label className="flex items-center gap-2 text-sm text-[var(--color-text)] mb-3">
                         <input
                           type="checkbox"
                           name="keepKeyWithProvider"
@@ -1022,7 +1022,7 @@ export function CheckoutClient({
                         {t("keepKey")}
                       </label>
                       <div className="mb-3">
-                        <label htmlFor="accessNote" className="block text-xs text-gray-600 mb-1">
+                        <label htmlFor="accessNote" className="block text-xs text-[var(--color-text-muted)] mb-1">
                           {t("accessNote")}
                         </label>
                         <textarea
@@ -1030,18 +1030,18 @@ export function CheckoutClient({
                           name="accessNote"
                           rows={2}
                           placeholder={t("accessNotePlaceholder")}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                          className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)] resize-none"
                         />
                       </div>
                       <div>
-                        <label htmlFor="additionalNote" className="block text-xs text-gray-600 mb-1">
+                        <label htmlFor="additionalNote" className="block text-xs text-[var(--color-text-muted)] mb-1">
                           {t("additionalNote")}
                         </label>
                         <textarea
                           id="additionalNote"
                           name="additionalNote"
                           rows={2}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                          className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)] resize-none"
                         />
                       </div>
                     </div>
@@ -1052,25 +1052,25 @@ export function CheckoutClient({
                     <input type="hidden" name="city" value="Principal" />
                     <input type="hidden" name="zip" value="00000-000" />
                     <input type="hidden" name="accessType" value="someone_home" />
-                    <div className="bg-white rounded-xl border border-gray-200 p-5">
-                      <h2 className="text-sm font-semibold text-gray-900 mb-1">Observações do Agendamento</h2>
-                      <p className="text-xs text-gray-500 mb-3">Deseja adicionar alguma preferência ou aviso especial? (opcional)</p>
+                    <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
+                      <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-1">Observações do Agendamento</h2>
+                      <p className="text-xs text-[var(--color-text-muted)] mb-3">Deseja adicionar alguma preferência ou aviso especial? (opcional)</p>
                       <textarea
                         id="additionalNote"
                         name="additionalNote"
                         rows={2}
                         placeholder="Ex: preferência de profissional, estilo, restrições..."
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)] resize-none"
                       />
                     </div>
                   </>
                 )}
 
                 {/* Payment method */}
-                <div className="bg-white rounded-xl border border-gray-200 p-5">
-                  <h2 className="text-sm font-semibold text-gray-900 mb-3">{t("paymentMethod")}</h2>
+                <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
+                  <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-3">{t("paymentMethod")}</h2>
                   {paymentMethods.length === 0 ? (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-[var(--color-text-muted)]">
                       {t("noPaymentMethods")}
                     </p>
                   ) : (
@@ -1079,7 +1079,7 @@ export function CheckoutClient({
                       {paymentMethods.map((method, idx) => (
                         <label
                           key={`${method.id}-${idx}`}
-                          className="block p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50"
+                          className="block p-3 border border-[var(--color-border)] rounded-[var(--radius-control)] cursor-pointer hover:border-[var(--color-info-border)] has-[:checked]:border-[var(--color-info-border)] has-[:checked]:bg-[var(--color-info-light)]"
                         >
                           <span className="flex items-center gap-3">
                             <input
@@ -1088,12 +1088,12 @@ export function CheckoutClient({
                               checked={selectedMethodIdx === idx}
                               onChange={() => setSelectedMethodIdx(idx)}
                             />
-                            <span className="text-sm text-gray-700">{method.label}</span>
+                            <span className="text-sm text-[var(--color-text)]">{method.label}</span>
                           </span>
                           {selectedMethodIdx === idx && method.kind === "MANUAL" && (method.handle || method.instructions) && (
-                            <span className="block mt-2 ml-7 text-xs text-gray-500">
+                            <span className="block mt-2 ml-7 text-xs text-[var(--color-text-muted)]">
                               {method.handle && (
-                                <span className="block font-medium text-gray-700">{method.handle}</span>
+                                <span className="block font-medium text-[var(--color-text)]">{method.handle}</span>
                               )}
                               {method.instructions && <span className="block mt-0.5">{method.instructions}</span>}
                             </span>
@@ -1105,7 +1105,7 @@ export function CheckoutClient({
                 </div>
 
                 {formErrors._ && (
-                  <p role="alert" className="text-sm text-red-600">
+                  <p role="alert" className="text-sm text-[var(--color-danger)]">
                     {formErrors._[0]}
                   </p>
                 )}
@@ -1114,14 +1114,14 @@ export function CheckoutClient({
                   <button
                     type="button"
                     onClick={() => setStep("datetime")}
-                    className="flex-1 py-3 px-4 border border-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex-1 py-3 px-4 border border-[var(--color-border)] text-[var(--color-text)] font-semibold rounded-[var(--radius-control)] hover:bg-[var(--color-bg-subtle)] transition-colors"
                   >
                     {t("back")}
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="flex-1 py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="flex-1 py-3 px-4 bg-[var(--color-info)] text-white font-semibold rounded-[var(--radius-control)] hover:bg-[var(--color-info)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {submitting ? t("confirming") : t("confirmBooking")}
                   </button>
@@ -1142,8 +1142,8 @@ export function CheckoutClient({
 
             {/* ── Step: payment (Stripe) ── */}
             {step === "payment" && stripeClientSecret && (
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h2 className="text-sm font-semibold text-gray-900 mb-4">{t("payment")}</h2>
+              <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
+                <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-4">{t("payment")}</h2>
                 <Elements
                   stripe={stripePromise}
                   options={{ clientSecret: stripeClientSecret }}
@@ -1156,36 +1156,36 @@ export function CheckoutClient({
 
           {/* Order summary sidebar */}
           <aside>
-            <div className="bg-white rounded-xl border border-gray-200 p-5 sticky top-6">
-              <h2 className="text-sm font-semibold text-gray-900 mb-3">{t("summary")}</h2>
+            <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5 sticky top-6">
+              <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-3">{t("summary")}</h2>
               {selectedDate && selectedSlot && (
-                <div className="mb-3 pb-3 border-b border-gray-100">
-                  <p className="text-xs text-gray-500 mb-0.5">{t("dateTime")}</p>
-                  <p className="text-sm font-medium text-gray-800">
+                <div className="mb-3 pb-3 border-b border-[var(--color-border)]">
+                  <p className="text-xs text-[var(--color-text-muted)] mb-0.5">{t("dateTime")}</p>
+                  <p className="text-sm font-medium text-[var(--color-text)]">
                     {t("dateAt", { date: selectedDate.split("-").reverse().join("/"), time: selectedSlot.startTime })}
                   </p>
                 </div>
               )}
               <ul className="space-y-1.5 mb-3">
                 {orderItems.map((item, i) => (
-                  <li key={i} className="flex justify-between text-xs text-gray-600">
+                  <li key={i} className="flex justify-between text-xs text-[var(--color-text-muted)]">
                     <span className="flex-1 mr-2">{item.label}</span>
-                    <span className="font-medium text-gray-800 shrink-0">
+                    <span className="font-medium text-[var(--color-text)] shrink-0">
                       {formatMoney(item.subtotal, currency, locale)}
                     </span>
                   </li>
                 ))}
               </ul>
-              <div className="border-t border-gray-100 pt-3 space-y-1.5">
+              <div className="border-t border-[var(--color-border)] pt-3 space-y-1.5">
                 {membershipCoverage?.isCovered ? (
                   <>
-                    <div className="flex justify-between text-xs text-emerald-700 font-semibold bg-emerald-50 p-2 rounded-lg">
+                    <div className="flex justify-between text-xs text-[var(--color-success)] font-semibold bg-[var(--color-success-light)] p-2 rounded-[var(--radius-control)]">
                       <span>Plano {membershipCoverage.planName}:</span>
                       <span>- {formatMoney(estimateTotal, currency, locale)}</span>
                     </div>
                     <div className="flex justify-between pt-1">
-                      <span className="text-sm font-semibold text-gray-700">{t("total")}</span>
-                      <span className="text-base font-bold text-emerald-700">
+                      <span className="text-sm font-semibold text-[var(--color-text)]">{t("total")}</span>
+                      <span className="text-base font-bold text-[var(--color-success)]">
                         {formatMoney(0, currency, locale)} (Coberto)
                       </span>
                     </div>
@@ -1193,22 +1193,22 @@ export function CheckoutClient({
                 ) : (
                   <>
                     {membershipCoverage?.discountPercent && membershipCoverage.discountPercent > 0 && (
-                      <div className="flex justify-between text-xs text-indigo-700 font-semibold bg-indigo-50 p-2 rounded-lg">
+                      <div className="flex justify-between text-xs text-[var(--color-primary)] font-semibold bg-[var(--color-primary-light)] p-2 rounded-[var(--radius-control)]">
                         <span>Desconto Membro ({membershipCoverage.discountPercent}%):</span>
                         <span>- {formatMoney((estimateTotal * membershipCoverage.discountPercent) / 100, currency, locale)}</span>
                       </div>
                     )}
 
                     {appliedGiftCard && (
-                      <div className="flex justify-between text-xs text-emerald-700 font-semibold bg-emerald-50 p-2 rounded-lg">
+                      <div className="flex justify-between text-xs text-[var(--color-success)] font-semibold bg-[var(--color-success-light)] p-2 rounded-[var(--radius-control)]">
                         <span>Vale-Presente ({appliedGiftCard.code}):</span>
                         <span>- {formatMoney(appliedGiftCard.discountAmount, currency, locale)}</span>
                       </div>
                     )}
 
                     <div className="flex justify-between pt-1">
-                      <span className="text-sm font-semibold text-gray-700">{t("total")}</span>
-                      <span className="text-base font-bold text-gray-900">
+                      <span className="text-sm font-semibold text-[var(--color-text)]">{t("total")}</span>
+                      <span className="text-base font-bold text-[var(--color-text-heading)]">
                         {formatMoney(
                           Math.max(
                             0,
@@ -1225,19 +1225,19 @@ export function CheckoutClient({
                 )}
 
                 {requireDeposit && (
-                  <div className="pt-2 mt-2 border-t border-dashed border-gray-200 space-y-1">
-                    <div className="flex justify-between text-xs font-bold text-indigo-700 bg-indigo-50 p-2 rounded-lg">
+                  <div className="pt-2 mt-2 border-t border-dashed border-[var(--color-border)] space-y-1">
+                    <div className="flex justify-between text-xs font-bold text-[var(--color-primary)] bg-[var(--color-primary-light)] p-2 rounded-[var(--radius-control)]">
                       <span>Sinal para Reserva ({depositPercentage}%):</span>
                       <span>{formatMoney(calculateDeposit(estimateTotal, depositPercentage ?? 30).deposit, currency, locale)}</span>
                     </div>
-                    <div className="flex justify-between text-[11px] text-gray-500 px-1">
+                    <div className="flex justify-between text-[var(--text-2xs)] text-[var(--color-text-muted)] px-1">
                       <span>Restante no local:</span>
                       <span>{formatMoney(calculateDeposit(estimateTotal, depositPercentage ?? 30).remaining, currency, locale)}</span>
                     </div>
                   </div>
                 )}
               </div>
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-[var(--color-text-subtle)] mt-2">
                 {t("frequencyLabel", {
                   value:
                     frequency === "WEEKLY" ? tb("freqWeekly")

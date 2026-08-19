@@ -43,20 +43,20 @@ export function ModuleGrantPopup() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 text-center space-y-5">
-        <div className="w-16 h-16 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center mx-auto shadow-xs">
-          <Sparkles className="w-8 h-8 text-indigo-600 animate-pulse" />
+    <div className="fixed inset-0 z-50 bg-[var(--color-navy)] backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-2xl max-w-md w-full p-6 text-center space-y-5">
+        <div className="w-16 h-16 rounded-full bg-[var(--color-primary-light)] border border-[var(--color-primary)] text-[var(--color-primary)] flex items-center justify-center mx-auto shadow-xs">
+          <Sparkles className="w-8 h-8 text-[var(--color-primary)] animate-pulse" />
         </div>
 
         <div>
-          <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
+          <span className="text-[var(--text-2xs)] font-semibold uppercase tracking-wider text-[var(--color-primary)] bg-[var(--color-primary-light)] px-3 py-1 rounded-full">
             🎉 Novidade no seu Painel
           </span>
-          <h2 className="text-xl font-extrabold text-slate-900 mt-2">
+          <h2 className="text-xl font-semibold text-[var(--color-text-heading)] mt-2">
             {popupNotification.title}
           </h2>
-          <p className="text-xs text-slate-600 mt-2 leading-relaxed font-medium">
+          <p className="text-xs text-[var(--color-text-muted)] mt-2 leading-relaxed font-medium">
             {popupNotification.message}
           </p>
         </div>
@@ -65,7 +65,7 @@ export function ModuleGrantPopup() {
           <button
             type="button"
             onClick={handleDismiss}
-            className="w-full py-3 bg-[#635bff] hover:bg-[#544dc9] text-white font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+            className="w-full py-3 bg-[#635bff] hover:bg-[#544dc9] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
           >
             <CheckCircle2 className="w-4 h-4" />
             <span>Aproveitar Agora 🚀</span>

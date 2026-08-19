@@ -7,8 +7,8 @@ import { formatMoney } from "@/lib/format";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 const STATUS_STYLE: Record<string, string> = {
-  PENDING: "bg-blue-100 text-blue-700",
-  CONVERTED: "bg-emerald-100 text-emerald-700",
+  PENDING: "bg-[var(--color-info-light)] text-[var(--color-info)]",
+  CONVERTED: "bg-[var(--color-success-light)] text-[var(--color-success)]",
 };
 
 function formatDate(d: Date, locale: string) {
@@ -43,18 +43,18 @@ export default async function MeusOrcamentosPage({
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200">
+    <div className="min-h-screen bg-[var(--color-bg-subtle)]">
+      <header className="bg-[var(--color-bg)] border-b border-[var(--color-border)]">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4 min-w-0">
-            <Link href="/" className="text-sm text-gray-500 hover:text-gray-900 shrink-0">
+            <Link href="/" className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] shrink-0">
               {t("back")}
             </Link>
-            <h1 className="text-lg font-bold text-gray-900 truncate">{t("title")}</h1>
+            <h1 className="text-lg font-bold text-[var(--color-text-heading)] truncate">{t("title")}</h1>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <LanguageSwitcher />
-            <Link href="/empresas" className="text-sm font-medium text-blue-600 hover:text-blue-700">
+            <Link href="/empresas" className="text-sm font-medium text-[var(--color-info)] hover:text-[var(--color-info)]">
               {t("new")}
             </Link>
           </div>
@@ -63,17 +63,17 @@ export default async function MeusOrcamentosPage({
 
       <main className="max-w-3xl mx-auto px-4 py-8 space-y-4">
         {salvo && (
-          <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm" role="status">
+          <div className="p-3 rounded-[var(--radius-control)] bg-[var(--color-success-light)] border border-[var(--color-success-border)] text-[var(--color-success)] text-sm" role="status">
             {t("savedBanner")}
           </div>
         )}
 
         {estimates.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
-            <p className="text-gray-500 text-sm mb-4">{t("empty")}</p>
+          <div className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-10 text-center">
+            <p className="text-[var(--color-text-muted)] text-sm mb-4">{t("empty")}</p>
             <Link
               href="/empresas"
-              className="inline-block px-5 py-2.5 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700"
+              className="inline-block px-5 py-2.5 text-sm font-semibold bg-[var(--color-info)] text-white rounded-[var(--radius-control)] hover:bg-[var(--color-info)]"
             >
               {t("findCompanies")}
             </Link>
@@ -95,11 +95,11 @@ export default async function MeusOrcamentosPage({
               })),
             ];
             return (
-              <div key={est.id} className="bg-white rounded-xl border border-gray-200 p-5">
+              <div key={est.id} className="bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] p-5">
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900">{est.company.name}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm font-semibold text-[var(--color-text-heading)]">{est.company.name}</p>
+                    <p className="text-xs text-[var(--color-text-muted)]">
                       {est.bookingConfig.name} · {t("savedOn", { date: formatDate(est.updatedAt, est.company.locale) })}
                     </p>
                   </div>
@@ -108,38 +108,38 @@ export default async function MeusOrcamentosPage({
                   </span>
                 </div>
 
-                <ul className="space-y-1.5 mb-4 border-t border-gray-100 pt-3">
+                <ul className="space-y-1.5 mb-4 border-t border-[var(--color-border)] pt-3">
                   {items.map((item, i) => (
                     <li key={i} className="flex items-start justify-between gap-2 text-sm">
-                      <span className="text-gray-700 flex-1 min-w-0">
+                      <span className="text-[var(--color-text)] flex-1 min-w-0">
                         {item.label}
-                        {item.qty > 1 && <span className="text-gray-400 ml-1">×{item.qty}</span>}
+                        {item.qty > 1 && <span className="text-[var(--color-text-subtle)] ml-1">×{item.qty}</span>}
                       </span>
-                      <span className="text-gray-900 shrink-0">
+                      <span className="text-[var(--color-text-heading)] shrink-0">
                         {formatMoney(item.subtotal, est.company.currency, est.company.locale)}
                       </span>
                     </li>
                   ))}
                 </ul>
 
-                <div className="flex items-center justify-between gap-3 border-t border-gray-100 pt-3">
+                <div className="flex items-center justify-between gap-3 border-t border-[var(--color-border)] pt-3">
                   <p className="text-sm">
-                    <span className="text-gray-500">{t("total")} </span>
-                    <span className="font-bold text-gray-900">
+                    <span className="text-[var(--color-text-muted)]">{t("total")} </span>
+                    <span className="font-bold text-[var(--color-text-heading)]">
                       {formatMoney(Number(est.total), est.company.currency, est.company.locale)}
                     </span>
                   </p>
                   <div className="flex items-center gap-2">
                     <Link
                       href={`/book/${est.company.slug}/${est.bookingConfig.id}`}
-                      className="px-3 py-2 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50"
+                      className="px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] border border-[var(--color-border)] rounded-[var(--radius-control)] hover:bg-[var(--color-bg-subtle)]"
                     >
                       {t("redo")}
                     </Link>
                     {est.status === "PENDING" && (
                       <Link
                         href={`/book/${est.company.slug}/${est.bookingConfig.id}/checkout?estimate=${est.id}`}
-                        className="px-4 py-2 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        className="px-4 py-2 text-xs font-semibold bg-[var(--color-info)] text-white rounded-[var(--radius-control)] hover:bg-[var(--color-info)]"
                       >
                         {t("generateBooking")}
                       </Link>

@@ -54,14 +54,14 @@ export function SubscriptionBlock({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-[var(--color-bg-subtle)] flex flex-col items-center justify-center px-4 py-12">
       <div className="w-full max-w-3xl">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-red-100 text-red-600 mb-4 text-2xl" aria-hidden="true">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-[var(--radius-card)] bg-[var(--color-danger-light)] text-[var(--color-danger)] mb-4 text-2xl" aria-hidden="true">
             🔒
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Assinatura vencida</h1>
-          <p className="text-sm text-gray-600 mt-2 max-w-xl mx-auto">
+          <h1 className="text-2xl font-bold text-[var(--color-text-heading)]">Assinatura vencida</h1>
+          <p className="text-sm text-[var(--color-text-muted)] mt-2 max-w-xl mx-auto">
             O acesso de <span className="font-semibold">{companyName}</span> está suspenso porque a
             assinatura {overdueSince ? `venceu em ${overdueSince}` : "está vencida"} e o período de
             tolerância terminou. Escolha um plano e regularize para retomar o acesso — seus dados
@@ -124,11 +124,11 @@ export function SubscriptionBlock({
           )}
         </div>
 
-        <div className="mt-8 flex items-center justify-center gap-4 text-xs text-gray-400">
-          <a href="/selecionar-empresa" className="hover:text-gray-600">Trocar de empresa</a>
+        <div className="mt-8 flex items-center justify-center gap-4 text-xs text-[var(--color-text-subtle)]">
+          <a href="/selecionar-empresa" className="hover:text-[var(--color-text-muted)]">Trocar de empresa</a>
           <span aria-hidden="true">·</span>
           <form action={logoutAction}>
-            <button type="submit" className="hover:text-gray-600">Sair da conta</button>
+            <button type="submit" className="hover:text-[var(--color-text-muted)]">Sair da conta</button>
           </form>
         </div>
       </div>

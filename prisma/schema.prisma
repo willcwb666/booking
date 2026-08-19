@@ -175,9 +175,63 @@ model Session {
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   impersonatedBy String?
 
+  // ─── Política de sessão (idle timeout + sessão única) ───
+  // Origem da sessão. "WEB" = navegador (sujeito a sessão única e idle curto),
+  // "MOBILE" = app nativo (política própria, mais frouxa). Definido no
+  // databaseHook de criação a partir do header `x-client`.
+  client         String   @default("WEB")
+  // Último acesso autenticado observado. Base do timeout de inatividade —
+  // NÃO usar `updatedAt`, que o better-auth mexe só a cada `updateAge`.
+  lastActivityAt DateTime @default(now())
+
   @@unique([token])
   @@index([userId])
+  @@index([userId, client])
   @@map("session")
+}
+
+/// Fila de saída de notificações.
+///
+/// Antes, confirmações e lembretes eram disparados com `void notify…(id)`:
+/// sem await, sem fila, sem retry e sem registro. Se o provedor de e-mail
+/// desse timeout, a confirmação simplesmente não acontecia e ninguém ficava
+/// sabendo — que é exatamente a reclamação mais comum contra os concorrentes
+/// ("o cliente não recebeu", "o lembrete parou de funcionar sozinho").
+///
+/// Agora a intenção de notificar é gravada na MESMA transação do agendamento.
+/// Um worker consome com backoff, e o que falhou fica visível.
+model NotificationOutbox {
+  id            String    @id @default(cuid())
+  /// Ex.: BOOKING_CONFIRMED, BOOKING_REMINDER, COMPANY_NEW_BOOKING
+  kind          String
+  bookingId     String?
+  companyId     String?
+  /// JSON com argumentos extras do disparo (ex.: novo status)
+  payload       String?
+  /// PENDING | SENT | FAILED
+  status        String    @default("PENDING")
+  attempts      Int       @default(0)
+  lastError     String?
+  /// Backoff: só é elegível a partir deste instante
+  nextAttemptAt DateTime  @default(now())
+  sentAt        DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status, nextAttemptAt])
+  @@index([bookingId])
+  @@map("notification_outbox")
+}
+
+/// Configurações globais da plataforma (chave/valor), editadas pelo super admin.
+/// Antes esta tabela era criada em runtime via `CREATE TABLE IF NOT EXISTS` —
+/// agora é um model versionado por migration.
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("system_setting")
 }
 
 model Account {
@@ -265,6 +319,9 @@ model Company {
   phone         String?
   address       String?
   isActive      Boolean         @default(true)
+  // Token secreto para o feed público de calendário (.ics) — sem ele o feed
+  // exporia PII (nomes/telefones) só com o slug da empresa
+  calendarFeedToken String?     @unique
   // Internacionalização — cada empresa opera em um mercado
   currency      String          @default("BRL")               // ISO 4217 (BRL, USD, …)
   timezone      String          @default("America/Sao_Paulo") // IANA
@@ -280,6 +337,12 @@ model Company {
   cancellationFee            Decimal @default(0) @db.Decimal(10, 2)
   lateToleranceMinutes       Int     @default(15)
   maxAllowedNoShows          Int     @default(2)
+  // Check-in por proximidade. Sem coordenadas o geofence é PULADO — antes o
+  // código comparava a posição do cliente com um ponto fixo em Curitiba,
+  // então qualquer empresa fora de lá reprovava todo mundo.
+  latitude                   Float?
+  longitude                  Float?
+  checkinRadiusMeters        Int     @default(250)
   // Notificações e Canais
   notifyEmailEnabled         Boolean @default(true)
   notifyTextEnabled          Boolean @default(true)
@@ -653,6 +716,10 @@ model Booking {
   cancellationReason    String?
   refundAmount          Decimal?        @db.Decimal(10, 2)
   refundedAt            DateTime?
+  // Chegada confirmada pelo cliente. Sem este campo o check-in não deixava
+  // rastro: o estado "já fez check-in" era inalcançável e o operador não
+  // tinha como saber quem chegou.
+  checkedInAt           DateTime?
   // Rescheduling
   rescheduledFromId     String?
   rescheduledFrom       Booking?        @relation("RescheduledFrom", fields: [rescheduledFromId], references: [id], onDelete: SetNull)
@@ -675,6 +742,10 @@ model Booking {
   @@index([companyId, scheduledDate])
   @@index([companyId, customerId])
   @@index([agendaId, scheduledDate])
+  // Agenda individual do profissional e relatório de comissão filtram por
+  // profissional + data; sem este índice a consulta caía no índice de agenda
+  // e filtrava o resto em memória.
+  @@index([professionalId, scheduledDate])
   @@map("booking")
 }
 
@@ -687,8 +758,14 @@ model BookingSlot {
   date      String   // "YYYY-MM-DD"
   startTime String   // "HH:MM"
   endTime   String   // "HH:MM"
+  // Profissional que ocupa o slot. String vazia = agenda sem equipe (recurso
+  // único). NUNCA null: em Postgres dois NULLs são distintos num índice único,
+  // o que anularia a trava de duplo agendamento.
+  professionalId String @default("")
 
-  @@unique([agendaId, date, startTime])
+  // A trava de duplo agendamento é POR PROFISSIONAL — sem isso uma barbearia
+  // com 3 barbeiros só conseguiria vender um horário das 10:00.
+  @@unique([agendaId, date, startTime, professionalId])
   @@index([agendaId, date])
   @@map("booking_slot")
 }

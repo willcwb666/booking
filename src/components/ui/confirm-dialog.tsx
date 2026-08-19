@@ -17,24 +17,24 @@ export interface ConfirmDialogProps {
 }
 
 const VARIANT_ICONS = {
-  danger: <AlertTriangle className="w-6 h-6 text-red-600" />,
-  warning: <AlertTriangle className="w-6 h-6 text-amber-600" />,
-  info: <Info className="w-6 h-6 text-indigo-600" />,
-  success: <CheckCircle2 className="w-6 h-6 text-emerald-600" />,
+  danger: <AlertTriangle className="w-6 h-6 text-[var(--color-danger)]" />,
+  warning: <AlertTriangle className="w-6 h-6 text-[var(--color-warning)]" />,
+  info: <Info className="w-6 h-6 text-[var(--color-primary)]" />,
+  success: <CheckCircle2 className="w-6 h-6 text-[var(--color-success)]" />,
 };
 
 const VARIANT_ICON_BG = {
-  danger: "bg-red-50 border-red-100",
-  warning: "bg-amber-50 border-amber-100",
-  info: "bg-indigo-50 border-indigo-100",
-  success: "bg-emerald-50 border-emerald-100",
+  danger: "bg-[var(--color-danger-light)] border-[var(--color-danger-border)]",
+  warning: "bg-[var(--color-warning-light)] border-[var(--color-warning-border)]",
+  info: "bg-[var(--color-primary-light)] border-[var(--color-primary)]",
+  success: "bg-[var(--color-success-light)] border-[var(--color-success-border)]",
 };
 
 const VARIANT_BUTTONS = {
-  danger: "bg-red-600 hover:bg-red-700 text-white shadow-xs focus:ring-red-500",
-  warning: "bg-amber-600 hover:bg-amber-700 text-white shadow-xs focus:ring-amber-500",
-  info: "bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs focus:ring-indigo-500",
-  success: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs focus:ring-emerald-500",
+  danger: "bg-[var(--color-danger)] hover:bg-[var(--color-danger)] text-white shadow-xs focus:ring-[var(--color-danger)]",
+  warning: "bg-[var(--color-warning)] hover:bg-[var(--color-warning)] text-white shadow-xs focus:ring-[var(--color-warning)]",
+  info: "bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-white shadow-xs focus:ring-[var(--color-primary)]",
+  success: "bg-[var(--color-success)] hover:bg-[var(--color-success)] text-white shadow-xs focus:ring-[var(--color-success)]",
 };
 
 export function ConfirmDialog({
@@ -57,16 +57,16 @@ export function ConfirmDialog({
     <Modal isOpen={isOpen} onClose={onClose} size="sm">
       <div className="flex flex-col items-center text-center space-y-4 pt-2 pb-2">
         <div
-          className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${VARIANT_ICON_BG[variant]}`}
+          className={`w-12 h-12 rounded-[var(--radius-card)] flex items-center justify-center border ${VARIANT_ICON_BG[variant]}`}
         >
           {VARIANT_ICONS[variant]}
         </div>
 
         <div className="space-y-1">
-          <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">
+          <h3 className="text-lg font-semibold text-[var(--color-text-heading)] tracking-tight">
             {title}
           </h3>
-          <p className="text-xs text-slate-500 leading-relaxed max-w-xs mx-auto">
+          <p className="text-xs text-[var(--color-text-muted)] leading-relaxed max-w-xs mx-auto">
             {description}
           </p>
         </div>
@@ -76,7 +76,7 @@ export function ConfirmDialog({
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all disabled:opacity-50 cursor-pointer"
+            className="flex-1 px-4 py-2.5 bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)] text-xs font-bold rounded-[var(--radius-control)] transition-all disabled:opacity-50 cursor-pointer"
           >
             {cancelText}
           </button>
@@ -84,7 +84,7 @@ export function ConfirmDialog({
             type="button"
             onClick={handleConfirm}
             disabled={isLoading}
-            className={`flex-1 px-4 py-2.5 text-xs font-bold rounded-xl transition-all disabled:opacity-50 cursor-pointer inline-flex items-center justify-center gap-2 ${VARIANT_BUTTONS[variant]}`}
+            className={`flex-1 px-4 py-2.5 text-xs font-bold rounded-[var(--radius-control)] transition-all disabled:opacity-50 cursor-pointer inline-flex items-center justify-center gap-2 ${VARIANT_BUTTONS[variant]}`}
           >
             {isLoading ? (
               <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

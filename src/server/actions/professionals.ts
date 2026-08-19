@@ -13,7 +13,21 @@ async function resolveCompany(slug: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return null;
   const company = await getCompanyBySlugForUser(slug, session.user.id);
-  return company ?? null;
+  if (!company) return null;
+  const role = company.members?.[0]?.role ?? "EMPLOYEE";
+  const isGlobalAdmin = session.user.role === "admin";
+  return { ...company, role, canManage: isGlobalAdmin || role === "OWNER" || role === "MANAGER" };
+}
+
+/**
+ * Cadastro de profissional carrega comissão, chave PIX e documento — dados
+ * financeiros. Sem esta trava um EMPLOYEE podia alterar a própria comissão e
+ * a chave PIX de recebimento da empresa.
+ */
+async function resolveCompanyForManage(slug: string) {
+  const company = await resolveCompany(slug);
+  if (!company || !company.canManage) return null;
+  return company;
 }
 
 async function ensureProfessionalColumnsExist() {
@@ -58,7 +72,8 @@ export type FullProfessionalData = {
 };
 
 export async function getProfessionalByIdAction(companySlug: string, professionalId: string): Promise<FullProfessionalData | null> {
-  const company = await resolveCompany(companySlug);
+  // Devolve comissão, documento e chave PIX — leitura restrita à gestão
+  const company = await resolveCompanyForManage(companySlug);
   if (!company) return null;
 
   await ensureProfessionalColumnsExist();
@@ -122,7 +137,7 @@ export async function createProfessionalAction(
   formData: FormData
 ): Promise<ActionResult> {
   const slug = formData.get("companySlug") as string;
-  const company = await resolveCompany(slug);
+  const company = await resolveCompanyForManage(slug);
   if (!company) return { success: false, errors: { _: ["Não autorizado"] } };
 
   await ensureProfessionalColumnsExist();
@@ -199,6 +214,7 @@ export async function createProfessionalAction(
     await db.professional.create({
       data: {
         id,
+        // companyId sempre da empresa resolvida pela sessão, nunca do formulário
         companyId: company.id,
         name,
         email,
@@ -218,7 +234,7 @@ export async function updateProfessionalAction(
 ): Promise<ActionResult> {
   const slug = formData.get("companySlug") as string;
   const id = formData.get("id") as string;
-  const company = await resolveCompany(slug);
+  const company = await resolveCompanyForManage(slug);
   if (!company) return { success: false, errors: { _: ["Não autorizado"] } };
 
   await ensureProfessionalColumnsExist();
@@ -279,8 +295,10 @@ export async function updateProfessionalAction(
     );
   } catch (err) {
     console.error("Erro na atualização SQL de profissional, executando fallback Prisma:", err);
-    await db.professional.update({
-      where: { id },
+    // updateMany com companyId: o `update({ where: { id } })` original escrevia
+    // em profissional de QUALQUER empresa se o SQL bruto falhasse (IDOR).
+    await db.professional.updateMany({
+      where: { id, companyId: company.id },
       data: {
         name,
         email,
@@ -299,7 +317,7 @@ export async function deleteProfessionalAction(
 ): Promise<ActionResult> {
   const slug = formData.get("companySlug") as string;
   const id = formData.get("id") as string;
-  const company = await resolveCompany(slug);
+  const company = await resolveCompanyForManage(slug);
   if (!company) return { success: false, errors: { _: ["Não autorizado"] } };
 
   try {
@@ -309,7 +327,12 @@ export async function deleteProfessionalAction(
       company.id
     );
   } catch {
-    await db.professional.update({ where: { id }, data: { isActive: false } });
+    // Escopado por companyId — sem isso o fallback desativaria profissional de
+    // outra empresa a partir de um id adivinhado.
+    await db.professional.updateMany({
+      where: { id, companyId: company.id },
+      data: { isActive: false },
+    });
   }
 
   revalidatePath(`/${slug}/profissionais`);

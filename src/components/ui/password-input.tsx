@@ -13,7 +13,7 @@ export function PasswordInput({ label, error, className = "", ...props }: Passwo
   return (
     <div className="w-full space-y-1">
       {label && (
-        <label htmlFor={props.id} className="block text-xs font-semibold text-stone-700">
+        <label htmlFor={props.id} className="block text-xs font-semibold text-[var(--color-text)]">
           {label}
         </label>
       )}
@@ -21,13 +21,13 @@ export function PasswordInput({ label, error, className = "", ...props }: Passwo
         <input
           {...props}
           type={showPassword ? "text" : "password"}
-          className={`w-full border border-stone-200 rounded-xl pl-3 pr-10 py-2.5 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all ${className}`}
+          className={`w-full border border-[var(--color-border)] rounded-[var(--radius-control)] pl-3 pr-10 py-2.5 text-sm text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-warning)] focus:border-[var(--color-warning-border)] transition-all ${className}`}
         />
         <button
           type="button"
           onClick={() => setShowPassword((prev) => !prev)}
           tabIndex={-1}
-          className="absolute right-3 p-1 text-stone-400 hover:text-stone-700 transition-colors cursor-pointer"
+          className="absolute right-3 p-1 text-[var(--color-text-subtle)] hover:text-[var(--color-text)] transition-colors cursor-pointer"
           title={showPassword ? "Ocultar senha" : "Ver senha"}
           aria-label={showPassword ? "Ocultar senha" : "Ver senha"}
         >
@@ -45,7 +45,7 @@ export function PasswordInput({ label, error, className = "", ...props }: Passwo
           )}
         </button>
       </div>
-      {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+      {error && <p className="text-xs text-[var(--color-danger)] mt-1">{error}</p>}
     </div>
   );
 }

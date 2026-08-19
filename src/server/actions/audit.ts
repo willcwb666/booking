@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { writeAuditRow } from "@/lib/audit";
 
 export type AuditLogItem = {
   id: string;
@@ -22,39 +23,25 @@ export async function logAuditEvent(params: {
   details?: Record<string, any> | string;
 }) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
     const reqHeaders = await headers();
-    const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0] || reqHeaders.get("x-real-ip") || "unknown";
+    const session = await auth.api.getSession({ headers: reqHeaders });
+    const ip =
+      reqHeaders.get("x-forwarded-for")?.split(",")[0] ||
+      reqHeaders.get("x-real-ip") ||
+      "unknown";
 
-    await db.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "audit_log" (
-        "id" TEXT PRIMARY KEY,
-        "companyId" TEXT,
-        "userId" TEXT,
-        "action" TEXT NOT NULL,
-        "entity" TEXT NOT NULL,
-        "details" TEXT,
-        "ipAddress" TEXT,
-        "createdAt" TIMESTAMP NOT NULL DEFAULT NOW()
-      );
-    `);
-
-    const id = `aud_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-    const detailsStr = typeof params.details === "object" ? JSON.stringify(params.details) : params.details || null;
-
-    await db.$executeRawUnsafe(
-      `
-      INSERT INTO "audit_log" (id, "companyId", "userId", action, entity, details, "ipAddress", "createdAt")
-      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-    `,
-      id,
-      params.companyId || null,
-      session?.user?.id || null,
-      params.action,
-      params.entity,
-      detailsStr,
-      ip
-    );
+    // Prisma, não SQL bruto. A versão anterior rodava um
+    // `CREATE TABLE IF NOT EXISTS` a CADA evento auditado — DDL em caminho
+    // quente, pegando lock de tabela, para criar algo que já existe desde a
+    // migration. `audit_log` é o model AuditLog do schema.
+    await writeAuditRow({
+      companyId: params.companyId ?? null,
+      userId: session?.user?.id ?? null,
+      action: params.action,
+      entity: params.entity,
+      details: params.details,
+      ipAddress: ip,
+    });
   } catch (err) {
     console.error("[audit-log] Failed to write audit log:", err);
   }

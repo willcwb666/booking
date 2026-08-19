@@ -10,8 +10,9 @@ import {
 import { toast } from "@/lib/toast-service";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Edit2, Trash2 } from "@/components/ui/icons";
+import { Edit2, Trash2, X } from "@/components/ui/icons";
 
+import { IconAction, RowActions } from "@/components/ui/icon-action";
 type PresetItem = {
   id: string;
   businessType: string;
@@ -26,16 +27,16 @@ type PresetItem = {
 };
 
 const BUSINESS_LABELS: Record<string, string> = {
-  MECHANIC: "🛠️ Oficina Mecânica",
-  BARBER: "💈 Barbearia",
-  HOME_CLEANING: "🧹 Limpeza Residencial",
-  PET_GROOMER: "🐶 Pet Shop & Groomer",
-  HAIR_SALON: "💅 Salão de Beleza & Estética",
-  CAR_WASH: "🚗 Lava-Rápido",
-  LAWN_CARE: "🌿 Jardinagem",
-  POOL_CLEANING: "🏊 Limpeza de Piscinas",
-  PHOTOGRAPHER: "📷 Fotografia",
-  OTHER: "⚙️ Outros Serviços",
+  MECHANIC: "Oficina Mecânica",
+  BARBER: "Barbearia",
+  HOME_CLEANING: "Limpeza Residencial",
+  PET_GROOMER: "Pet Shop & Groomer",
+  HAIR_SALON: "Salão de Beleza & Estética",
+  CAR_WASH: "Lava-Rápido",
+  LAWN_CARE: "Jardinagem",
+  POOL_CLEANING: "Limpeza de Piscinas",
+  PHOTOGRAPHER: "Fotografia",
+  OTHER: "Outros Serviços",
 };
 
 export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[] }) {
@@ -246,23 +247,19 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                         </StatusBadge>
                       </button>
                     </td>
-                    <td className="py-4 px-5 text-right space-x-2">
-                      <ActionTooltip label="Editar Preset">
-                        <button
+                    <td className="py-4 px-5">
+                      <RowActions>
+                        <IconAction
+                          intent="edit"
+                          label={`Editar preset ${preset.title}`}
                           onClick={() => handleOpenEdit(preset)}
-                          className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                      </ActionTooltip>
-                      <ActionTooltip label="Excluir Preset">
-                        <button
+                        />
+                        <IconAction
+                          intent="delete"
+                          label={`Excluir preset ${preset.title}`}
                           onClick={() => handleDelete(preset.id)}
-                          className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </ActionTooltip>
+                        />
+                      </RowActions>
                     </td>
                   </tr>
                 ))
@@ -280,12 +277,7 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
               <h3 className="text-lg font-bold text-[var(--color-text-heading)]">
                 {editingPreset ? "Editar Preset de Serviço" : "Novo Preset de Serviço"}
               </h3>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)] font-bold text-lg"
-              >
-                ✕
-              </button>
+              <button onClick={() => setIsModalOpen(false)} aria-label="Fechar" title="Fechar" className="icon-action"><X className="w-4 h-4" /></button>
             </div>
 
             {errorMsg && (

@@ -193,7 +193,7 @@ export function SettingsClient({
       </div>
 
       {/* Navegação por Abas Organizadas */}
-      <div className="bg-[var(--color-bg-muted)] p-1.5 rounded-xl border border-[var(--color-border)] inline-flex flex-wrap gap-1 mb-8">
+      <div className="bg-[var(--color-bg-muted)] p-1.5 rounded-[var(--radius-control)] border border-[var(--color-border)] inline-flex flex-wrap gap-1 mb-8">
         {tabs.map((t) => {
           const isActive = tab === t.id;
           return (
@@ -201,7 +201,7 @@ export function SettingsClient({
               key={t.id}
               type="button"
               onClick={() => setTab(t.id)}
-              className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer inline-flex items-center gap-2 ${
+              className={`px-4 py-2 text-xs font-semibold rounded-[var(--radius-control)] transition-all cursor-pointer inline-flex items-center gap-2 ${
                 isActive
                   ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-[var(--shadow-xs)] border border-[var(--color-border)] font-bold"
                   : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] hover:bg-[var(--color-bg-hover)]"
@@ -285,12 +285,12 @@ export function SettingsClient({
 
       {/* Barra Global de Ação Fixa de Salvar Alterações */}
       {tab !== "plano" && tab !== "reset" && canEdit && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[var(--color-navy)] text-white px-6 py-3.5 rounded-2xl shadow-[var(--shadow-lg)] flex items-center justify-between gap-6 max-w-xl w-full">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[var(--color-navy)] text-white px-6 py-3.5 rounded-[var(--radius-card)] shadow-[var(--shadow-lg)] flex items-center justify-between gap-6 max-w-xl w-full">
           <div className="text-xs">
             <span className="font-bold block text-white">
               {isDirty ? "Campos alterados!" : "Nenhuma alteração pendente"}
             </span>
-            <span className="text-white/60 text-[11px]">
+            <span className="text-white/60 text-[var(--text-2xs)]">
               {isDirty ? "Clique para salvar todas as mudanças efetuadas." : "Altere qualquer campo para habilitar o salvamento."}
             </span>
           </div>

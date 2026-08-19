@@ -1,14 +1,29 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { randomBytes } from "crypto";
 import { db } from "@/lib/db";
+import { getActiveSession } from "@/lib/session";
+import { RATE_LIMITS, enforceRateLimit } from "@/lib/rate-limit";
+import { assertPublicHttpsUrl } from "@/lib/ssrf";
 import { syncGoogleCalendarToBooking } from "@/lib/google-calendar";
 import { syncIcalFeedToBooking } from "@/lib/ical-sync";
 
+/** Retorna o token do feed .ics da empresa, gerando um na primeira chamada. */
+async function getOrCreateFeedToken(companyId: string): Promise<string> {
+  const company = await db.company.findUnique({
+    where: { id: companyId },
+    select: { calendarFeedToken: true },
+  });
+  if (company?.calendarFeedToken) return company.calendarFeedToken;
+
+  const token = randomBytes(24).toString("hex");
+  await db.company.update({ where: { id: companyId }, data: { calendarFeedToken: token } });
+  return token;
+}
+
 async function verifyCompanyAccess(companySlug: string) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getActiveSession();
   if (!session) throw new Error("Não autenticado");
 
   const company = await db.company.findUnique({
@@ -43,6 +58,11 @@ export async function triggerGoogleCalendarSyncAction(
   try {
     const { company, user } = await verifyCompanyAccess(companySlug);
 
+    // Sync bate na API do Google e escreve em lote — sem limite, um botão
+    // clicado em sequência vira consumo de quota e carga de escrita.
+    const rl = await enforceRateLimit(RATE_LIMITS.CALENDAR_SYNC, company.id);
+    if (!rl.allowed) return { success: false, syncedCount: 0, error: rl.message };
+
     const result = await syncGoogleCalendarToBooking(
       company.id,
       user.id,
@@ -53,8 +73,12 @@ export async function triggerGoogleCalendarSyncAction(
     revalidatePath(`/${companySlug}/configuracoes`);
     revalidatePath(`/${companySlug}/schedule`);
     return result;
-  } catch (err: any) {
-    return { success: false, syncedCount: 0, error: err.message || "Erro ao sincronizar Google Calendar" };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      syncedCount: 0,
+      error: err instanceof Error ? err.message : "Erro ao sincronizar Google Calendar",
+    };
   }
 }
 
@@ -80,6 +104,15 @@ export async function updateIcalFeedAction(
       revalidatePath(`/${companySlug}/configuracoes`);
       return { success: true, message: "Feed iCal removido" };
     }
+
+    // Resolver DNS a cada salvamento é caro e é a porta de entrada de SSRF —
+    // limita antes de tocar na rede.
+    const rl = await enforceRateLimit(RATE_LIMITS.CALENDAR_FEED_UPDATE, company.id);
+    if (!rl.allowed) return { success: false, error: rl.message };
+
+    // Valida ANTES de persistir: uma URL interna não pode nem chegar ao banco,
+    // senão fica ali esperando um caminho de sync que esqueça a checagem.
+    await assertPublicHttpsUrl(trimmedUrl);
 
     await db.calendarIntegration.upsert({
       where: {
@@ -108,15 +141,15 @@ export async function updateIcalFeedAction(
     revalidatePath(`/${companySlug}/configuracoes`);
     revalidatePath(`/${companySlug}/schedule`);
     return syncRes;
-  } catch (err: any) {
-    return { success: false, error: err.message || "Erro ao salvar feed iCal" };
+  } catch (err: unknown) {
+    return { success: false, error: err instanceof Error ? err.message : "Erro ao salvar feed iCal" };
   }
 }
 
 /** Consulta status das integrações de calendário da empresa/usuário */
 export async function getCalendarIntegrationStatusAction(companySlug: string) {
   try {
-    const { user } = await verifyCompanyAccess(companySlug);
+    const { company, user } = await verifyCompanyAccess(companySlug);
 
     const integrations = await db.calendarIntegration.findMany({
       where: { userId: user.id },
@@ -125,8 +158,13 @@ export async function getCalendarIntegrationStatusAction(companySlug: string) {
     const googleInt = integrations.find((i) => i.provider === "GOOGLE");
     const icalInt = integrations.find((i) => i.provider === "ICAL_FEED");
 
+    // Caminho do feed .ics COM token secreto (o feed contém PII)
+    const token = await getOrCreateFeedToken(company.id);
+    const icalExportPath = `/api/ics/agenda?company=${encodeURIComponent(companySlug)}&token=${token}`;
+
     return {
       success: true,
+      icalExportPath,
       google: {
         isConnected: !!googleInt && googleInt.isActive && !!googleInt.accessToken,
         lastSyncedAt: googleInt?.lastSyncedAt ? googleInt.lastSyncedAt.toISOString() : null,
@@ -137,7 +175,7 @@ export async function getCalendarIntegrationStatusAction(companySlug: string) {
         lastSyncedAt: icalInt?.lastSyncedAt ? icalInt.lastSyncedAt.toISOString() : null,
       },
     };
-  } catch (err: any) {
-    return { success: false, error: err.message };
+  } catch (err: unknown) {
+    return { success: false, error: err instanceof Error ? err.message : "Erro" };
   }
 }

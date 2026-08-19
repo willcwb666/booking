@@ -51,6 +51,45 @@ export async function sendVerificationEmail({
   }
 }
 
+export async function sendPasswordResetEmail({
+  to,
+  userName,
+  url,
+}: {
+  to: string;
+  userName: string;
+  url: string;
+}) {
+  try {
+    await resend.emails.send({
+      from: FROM,
+      to,
+      subject: "Redefinir sua senha — Agendei",
+      html: `
+        <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
+          <h2 style="color:#1d4ed8;margin-bottom:4px">Redefinir sua senha</h2>
+          <p style="color:#6b7280;margin-top:0">Olá, ${escapeHtml(userName)}.</p>
+          <p style="color:#374151">
+            Recebemos um pedido para redefinir a senha da sua conta.
+            O link abaixo vale por 1 hora e só pode ser usado uma vez.
+          </p>
+          <p style="margin:24px 0">
+            <a href="${url}" style="display:inline-block;background:#1d4ed8;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">
+              Criar nova senha
+            </a>
+          </p>
+          <p style="color:#9ca3af;font-size:12px">
+            Se você não pediu isso, ignore este e-mail — sua senha atual continua valendo.
+          </p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:32px">Agendei · Agendamentos online</p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("[email] password reset failed:", err);
+  }
+}
+
 type BookingEmailData = {
   to: string;
   customerName: string;

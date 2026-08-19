@@ -61,7 +61,7 @@ export function DashboardNav({ companies }: { companies: CompanyLink[] }) {
       </nav>
 
       <div className="mt-8">
-        <p className="px-3 mb-1 text-[11px] font-bold uppercase tracking-wider text-text-muted">
+        <p className="px-3 mb-1 text-[var(--text-2xs)] font-bold uppercase tracking-wider text-text-muted">
           Minhas empresas
         </p>
         <nav className="space-y-0.5" aria-label="Minhas empresas">

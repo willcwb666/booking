@@ -1,157 +1,38 @@
 "use client";
 
+import React, { useState, useTransition } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import Link from "next/link";
-import { useTransition, useState, useRef } from "react";
-import { banUserAction, unbanUserAction, toggleUserAdminAction } from "@/server/actions/admin";
-import type { AdminUserItem } from "@/server/queries/admin";
-import { ActionTooltip } from "@/components/ui/action-tooltip";
+import {
+  banUserAction,
+  unbanUserAction,
+  toggleUserAdminAction,
+} from "@/server/actions/admin";
+import type { AdminUserItem, AdminUserFilter } from "@/server/queries/admin";
+import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Ban, CheckCircle2, Shield } from "@/components/ui/icons";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Pagination } from "@/components/ui/pagination";
+import { Modal } from "@/components/ui/modal";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { IconAction, RowActions } from "@/components/ui/icon-action";
+import { toast } from "@/lib/toast-service";
+import { Users, Search, X } from "@/components/ui/icons";
 
 type SerializedItem = Omit<AdminUserItem, "createdAt"> & { createdAt: string };
 
-function BanDialog({ userId, onDone }: { userId: string; onDone: () => void }) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-
-  function open() {
-    setError(null);
-    dialogRef.current?.showModal();
-  }
-
-  function close() {
-    dialogRef.current?.close();
-  }
-
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const reason = (fd.get("reason") as string) ?? "";
-    startTransition(async () => {
-      const result = await banUserAction(userId, reason);
-      if (!result.success) {
-        setError(result.error);
-        return;
-      }
-      close();
-      onDone();
-    });
-  }
-
-  return (
-    <>
-      <ActionTooltip label="Banir Usuário">
-        <button
-          onClick={open}
-          className="p-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-medium cursor-pointer inline-flex items-center justify-center"
-        >
-          <Ban className="w-4 h-4" />
-        </button>
-      </ActionTooltip>
-      <dialog
-        ref={dialogRef}
-        onClick={(e) => { if (e.target === dialogRef.current) close(); }}
-        className="rounded-xl border border-[var(--color-border)] shadow-xl p-0 backdrop:bg-black/40 max-w-sm w-full"
-      >
-        <form onSubmit={handleSubmit}>
-          <div className="px-5 py-4 border-b border-[var(--color-border)]">
-            <h2 className="text-sm font-semibold text-[var(--color-text-heading)]">Banir usuário</h2>
-          </div>
-          <div className="px-5 py-4">
-            <label className="block text-xs text-[var(--color-text-muted)] mb-1.5" htmlFor="ban-reason">
-              Motivo (opcional)
-            </label>
-            <textarea
-              id="ban-reason"
-              name="reason"
-              rows={3}
-              className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
-            />
-            {error && <p role="alert" className="text-xs text-red-600 mt-1">{error}</p>}
-          </div>
-          <div className="px-5 py-4 border-t border-[var(--color-border)] flex gap-2 justify-end">
-            <button type="button" onClick={close} className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-bg-subtle)]">
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={pending}
-              className="px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
-            >
-              {pending ? "…" : "Confirmar"}
-            </button>
-          </div>
-        </form>
-      </dialog>
-    </>
-  );
-}
-
-function UserActions({ item, onDone }: { item: SerializedItem; onDone: () => void }) {
-  const [unbanPending, startUnbanTransition] = useTransition();
-  const [adminPending, startAdminTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-
-  function handleUnban() {
-    startUnbanTransition(async () => {
-      const result = await unbanUserAction(item.id);
-      if (!result.success) { setError(result.error); return; }
-      onDone();
-    });
-  }
-
-  function handleToggleAdmin() {
-    startAdminTransition(async () => {
-      const result = await toggleUserAdminAction(item.id);
-      if (!result.success) { setError(result.error); return; }
-      onDone();
-    });
-  }
-
-  return (
-    <div className="flex gap-2 items-center justify-end flex-wrap">
-      {error && <p className="text-xs text-red-600">{error}</p>}
-      {item.banned ? (
-        <ActionTooltip label="Desbanir Usuário">
-          <button
-            onClick={handleUnban}
-            disabled={unbanPending}
-            className="p-2 border border-emerald-200 text-emerald-700 rounded-lg hover:bg-emerald-50 disabled:opacity-50 transition-colors font-medium inline-flex items-center justify-center cursor-pointer"
-          >
-            <CheckCircle2 className="w-4 h-4" />
-          </button>
-        </ActionTooltip>
-      ) : (
-        <BanDialog userId={item.id} onDone={onDone} />
-      )}
-      <ActionTooltip label={item.role === "admin" ? "Remover Privilégios de Admin" : "Promover a Super Admin"}>
-        <button
-          onClick={handleToggleAdmin}
-          disabled={adminPending}
-          className={`p-2 border rounded-lg transition-colors font-medium inline-flex items-center justify-center cursor-pointer disabled:opacity-50 ${
-            item.role === "admin"
-              ? "border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100"
-              : "border-slate-200 text-slate-600 hover:bg-slate-100"
-          }`}
-        >
-          <Shield className="w-4 h-4" />
-        </button>
-      </ActionTooltip>
-    </div>
-  );
-}
-
-import { Pagination } from "@/components/ui/pagination";
+const FILTERS: { id: AdminUserFilter; label: string }[] = [
+  { id: "ALL", label: "Todos" },
+  { id: "ADMIN", label: "Super admins" },
+  { id: "BANNED", label: "Banidos" },
+];
 
 export function AdminUsersClient({
   items,
   total,
   page,
   pageSize = 10,
-  pageCount,
   search,
+  filter,
 }: {
   items: SerializedItem[];
   total: number;
@@ -159,122 +40,391 @@ export function AdminUsersClient({
   pageSize?: number;
   pageCount: number;
   search: string;
+  filter: AdminUserFilter;
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
 
-  function buildUrl(updates: { q?: string; page?: number; pageSize?: number }) {
+  const [searchDraft, setSearchDraft] = useState(search);
+  const [banTarget, setBanTarget] = useState<SerializedItem | null>(null);
+  const [banReason, setBanReason] = useState("");
+  const [unbanTarget, setUnbanTarget] = useState<SerializedItem | null>(null);
+  const [roleTarget, setRoleTarget] = useState<SerializedItem | null>(null);
+
+  function buildUrl(patch: {
+    q?: string;
+    page?: number;
+    pageSize?: number;
+    filter?: AdminUserFilter;
+  }) {
     const params = new URLSearchParams();
-    const q = updates.q ?? search;
-    const p = updates.page ?? page;
-    const ps = updates.pageSize ?? pageSize;
+    const q = patch.q ?? search;
+    const f = patch.filter ?? filter;
+    const p = patch.page ?? page;
+    const ps = patch.pageSize ?? pageSize;
     if (q) params.set("q", q);
+    if (f !== "ALL") params.set("filter", f);
     if (p > 1) params.set("page", String(p));
-    if (ps && ps !== 10) params.set("pageSize", String(ps));
+    if (ps !== 10) params.set("pageSize", String(ps));
     const qs = params.toString();
     return `${pathname}${qs ? `?${qs}` : ""}`;
   }
 
-  function handleSearch(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    router.push(buildUrl({ q: (fd.get("q") as string) ?? "", page: 1 }));
+  function go(patch: Parameters<typeof buildUrl>[0]) {
+    startTransition(() =>
+      router.push(buildUrl({ page: 1, ...patch }), { scroll: false })
+    );
   }
+
+  function handleBan() {
+    if (!banTarget) return;
+    const target = banTarget;
+    startTransition(async () => {
+      const result = await banUserAction(target.id, banReason);
+      if (!result.success) {
+        toast.error("Não foi possível banir", result.error);
+        return;
+      }
+      toast.success("Usuário banido", target.email);
+      setBanTarget(null);
+      setBanReason("");
+      router.refresh();
+    });
+  }
+
+  function handleUnban() {
+    if (!unbanTarget) return;
+    const target = unbanTarget;
+    startTransition(async () => {
+      const result = await unbanUserAction(target.id);
+      if (!result.success) {
+        toast.error("Não foi possível desbanir", result.error);
+        return;
+      }
+      toast.success("Usuário reativado", target.email);
+      setUnbanTarget(null);
+      router.refresh();
+    });
+  }
+
+  function handleToggleAdmin() {
+    if (!roleTarget) return;
+    const target = roleTarget;
+    startTransition(async () => {
+      const result = await toggleUserAdminAction(target.id);
+      if (!result.success) {
+        toast.error("Não foi possível alterar", result.error);
+        return;
+      }
+      toast.success(
+        target.role === "admin"
+          ? "Privilégios removidos"
+          : "Promovido a super admin",
+        target.email
+      );
+      setRoleTarget(null);
+      router.refresh();
+    });
+  }
+
+  const hasActiveFilter = Boolean(search) || filter !== "ALL";
 
   return (
     <div className="page-content space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold text-[var(--color-text-heading)] tracking-tight">Usuários Registrados</h1>
-        <p className="text-xs text-[var(--color-text-muted)] mt-1">{total} usuário{total !== 1 ? "s" : ""} cadastrado(s) na plataforma</p>
+      <PageHeader
+        category="Plataforma"
+        categoryIcon={<Users className="w-3.5 h-3.5" />}
+        title="Usuários"
+        description="Todas as contas da plataforma. Banir corta o acesso imediatamente; super admin dá acesso a tudo."
+        action={
+          <span className="eyebrow">
+            {total} {total === 1 ? "usuário" : "usuários"}
+          </span>
+        }
+      />
+
+      <div className="scroller -mx-1 px-1">
+        <div className="segmented w-max" role="tablist" aria-label="Filtrar usuários">
+          {FILTERS.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              role="tab"
+              aria-selected={filter === f.id}
+              data-active={filter === f.id}
+              onClick={() => go({ filter: f.id })}
+              className="segmented-item whitespace-nowrap"
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-5 shadow-2xs">
-        <form onSubmit={handleSearch} className="flex gap-2 max-w-md w-full">
+      <div className="toolbar" data-pending={isPending || undefined}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            go({ q: searchDraft.trim() });
+          }}
+          className="relative max-w-xs w-full"
+          role="search"
+        >
+          <Search className="w-4 h-4 text-[var(--color-text-subtle)] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
-            name="q"
-            defaultValue={search}
-            placeholder="Buscar por nome ou e-mail..."
-            className="border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] w-full"
+            type="search"
+            value={searchDraft}
+            onChange={(e) => setSearchDraft(e.target.value)}
+            placeholder="Nome ou e-mail"
+            aria-label="Buscar usuário"
+            className="input pl-9"
           />
-          <button
-            type="submit"
-            className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer shrink-0"
-          >
-            Buscar
-          </button>
-          {search && (
-            <Link href={pathname} className="px-3 py-2.5 text-xs text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)] flex items-center">
-              Limpar
-            </Link>
-          )}
         </form>
+
+        {hasActiveFilter && (
+          <button
+            type="button"
+            onClick={() => {
+              setSearchDraft("");
+              startTransition(() => router.push(pathname, { scroll: false }));
+            }}
+            className="btn btn-ghost btn-sm inline-flex items-center gap-1.5"
+          >
+            <X className="w-3.5 h-3.5" />
+            Limpar
+          </button>
+        )}
+
+        <span className="toolbar-spacer" />
       </div>
 
-        {items.length === 0 ? (
-          <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
-            <p className="text-[var(--color-text-muted)] text-sm">Nenhum usuário encontrado.</p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg-subtle)]">
-                    <th scope="col" className="text-left px-5 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Usuário</th>
-                    <th scope="col" className="text-center px-5 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Empresas</th>
-                    <th scope="col" className="text-left px-5 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Role</th>
-                    <th scope="col" className="text-left px-5 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Status</th>
-                    <th scope="col" className="px-5 py-3 text-right"><span className="sr-only">Ações</span></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--color-border)]">
-                  {items.map((item) => (
-                    <tr key={item.id} className="hover:bg-[var(--color-bg-subtle)] transition-colors">
-                      <td className="px-5 py-3">
-                        <p className="font-medium text-[var(--color-text-heading)]">{item.name}</p>
-                        <p className="text-xs text-[var(--color-text-subtle)]">{item.email}</p>
-                      </td>
-                      <td className="px-5 py-3 text-center text-[var(--color-text)]">{item.companyCount}</td>
-                      <td className="px-5 py-3">
-                        {item.role === "admin" ? (
-                          <StatusBadge variant="secondary" tooltip="Super Admin da Plataforma">
-                            Admin
-                          </StatusBadge>
-                        ) : (
-                          <span className="text-[var(--color-text-subtle)] text-xs font-medium">Usuário</span>
-                        )}
-                      </td>
-                      <td className="px-5 py-3">
+      {items.length === 0 ? (
+        <div className="card">
+          <EmptyState
+            icon={<Users className="w-5 h-5" />}
+            title={
+              hasActiveFilter
+                ? "Nenhum usuário com esses filtros"
+                : "Nenhum usuário cadastrado"
+            }
+            description={
+              hasActiveFilter
+                ? "Nenhuma conta em toda a base corresponde à busca ou ao filtro."
+                : "As contas aparecem aqui conforme as pessoas se cadastram."
+            }
+            action={
+              hasActiveFilter ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchDraft("");
+                    router.push(pathname);
+                  }}
+                  className="btn btn-outline btn-sm"
+                >
+                  Limpar filtros
+                </button>
+              ) : undefined
+            }
+          />
+        </div>
+      ) : (
+        <div className="card overflow-hidden">
+          <div
+            className="table-container"
+            style={{ border: 0, borderRadius: 0, boxShadow: "none" }}
+          >
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">Usuário</th>
+                  <th scope="col" className="text-right">
+                    Empresas
+                  </th>
+                  <th scope="col">Perfil</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" className="text-right">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item) => (
+                  <tr key={item.id}>
+                    <td>
+                      <p className="font-medium text-[var(--color-text-heading)]">
+                        {item.name}
+                      </p>
+                      <p
+                        className="text-[var(--color-text-subtle)]"
+                        style={{ fontSize: "var(--text-xs)" }}
+                      >
+                        {item.email}
+                      </p>
+                    </td>
+                    <td data-type="number">{item.companyCount}</td>
+                    <td>
+                      {item.role === "admin" ? (
+                        <StatusBadge variant="primary">Super admin</StatusBadge>
+                      ) : (
+                        <span className="text-[var(--color-text-subtle)]">
+                          Usuário
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {item.banned ? (
+                        <StatusBadge
+                          variant="danger"
+                          tooltip={item.banReason || undefined}
+                        >
+                          Banido
+                        </StatusBadge>
+                      ) : (
+                        <StatusBadge variant="success">Ativo</StatusBadge>
+                      )}
+                    </td>
+                    <td>
+                      <RowActions>
+                        <IconAction
+                          intent="promote"
+                          label={
+                            item.role === "admin"
+                              ? `Remover privilégios de super admin de ${item.name}`
+                              : `Promover ${item.name} a super admin`
+                          }
+                          pressed={item.role === "admin"}
+                          onClick={() => setRoleTarget(item)}
+                          pending={isPending}
+                        />
                         {item.banned ? (
-                          <StatusBadge variant="danger" tooltip="Usuário Banido">
-                            Banido
-                          </StatusBadge>
+                          <IconAction
+                            intent="unblock"
+                            label={`Reativar ${item.name}`}
+                            onClick={() => setUnbanTarget(item)}
+                            pending={isPending}
+                          />
                         ) : (
-                          <StatusBadge variant="success" tooltip="Usuário Ativo">
-                            Ativo
-                          </StatusBadge>
+                          <IconAction
+                            intent="block"
+                            label={`Banir ${item.name}`}
+                            onClick={() => {
+                              setBanReason("");
+                              setBanTarget(item);
+                            }}
+                            pending={isPending}
+                          />
                         )}
-                      </td>
-                      <td className="px-5 py-3 text-right">
-                        <UserActions item={item} onDone={() => router.refresh()} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </RowActions>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <Pagination
+            currentPage={page}
+            totalItems={total}
+            pageSize={pageSize}
+            pageSizeOptions={[10, 20, 30, 50, 100]}
+            onPageChange={(newPage) => router.push(buildUrl({ page: newPage }))}
+            onPageSizeChange={(newSize) =>
+              router.push(buildUrl({ page: 1, pageSize: newSize }))
+            }
+            itemLabel="usuários"
+          />
+        </div>
+      )}
+
+      {/* Banir usa o Modal do sistema (foco preso, Escape, restauração de
+          foco) em vez de um <dialog> cru com estilo próprio. */}
+      {banTarget && (
+        <Modal
+          isOpen={Boolean(banTarget)}
+          onClose={() => setBanTarget(null)}
+          title={`Banir ${banTarget.name}`}
+        >
+          <div className="space-y-4">
+            <p
+              className="text-[var(--color-text-muted)]"
+              style={{ fontSize: "var(--text-sm)" }}
+            >
+              O acesso é cortado imediatamente, em todas as empresas. O motivo
+              fica registrado e aparece no status do usuário.
+            </p>
+
+            <div className="field">
+              <label className="input-label" htmlFor="ban-reason">
+                Motivo (opcional)
+              </label>
+              <textarea
+                id="ban-reason"
+                value={banReason}
+                onChange={(e) => setBanReason(e.target.value)}
+                rows={3}
+                className="input resize-y"
+                placeholder="Ex.: uso indevido confirmado em 12/08"
+              />
             </div>
 
-            <Pagination
-              currentPage={page}
-              totalItems={total}
-              pageSize={pageSize}
-              pageSizeOptions={[10, 20, 30, 50, 100]}
-              onPageChange={(newPage) => router.push(buildUrl({ page: newPage }))}
-              onPageSizeChange={(newSize) => router.push(buildUrl({ page: 1, pageSize: newSize }))}
-              itemLabel="usuários"
-            />
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setBanTarget(null)}
+                className="btn btn-outline btn-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleBan}
+                disabled={isPending}
+                className="btn btn-destructive btn-sm"
+              >
+                {isPending ? "Banindo…" : "Banir usuário"}
+              </button>
+            </div>
           </div>
-        )}
+        </Modal>
+      )}
+
+      {unbanTarget && (
+        <ConfirmDialog
+          isOpen={Boolean(unbanTarget)}
+          onClose={() => setUnbanTarget(null)}
+          onConfirm={handleUnban}
+          title="Reativar usuário"
+          description={`${unbanTarget.name} volta a ter acesso ao sistema.`}
+          variant="success"
+          confirmText="Reativar"
+          isLoading={isPending}
+        />
+      )}
+
+      {/* Promover a super admin dá acesso a toda a plataforma e a todas as
+          empresas. Acontecia em um clique, sem confirmação. */}
+      {roleTarget && (
+        <ConfirmDialog
+          isOpen={Boolean(roleTarget)}
+          onClose={() => setRoleTarget(null)}
+          onConfirm={handleToggleAdmin}
+          title={
+            roleTarget.role === "admin"
+              ? "Remover privilégios de super admin"
+              : "Promover a super admin"
+          }
+          description={
+            roleTarget.role === "admin"
+              ? `${roleTarget.name} deixa de administrar a plataforma e volta a ser um usuário comum.`
+              : `${roleTarget.name} passa a ver e alterar os dados de TODAS as empresas da plataforma, incluindo faturamento e permissões de outros administradores.`
+          }
+          variant={roleTarget.role === "admin" ? "warning" : "danger"}
+          confirmText={roleTarget.role === "admin" ? "Remover" : "Promover"}
+          isLoading={isPending}
+        />
+      )}
     </div>
   );
 }

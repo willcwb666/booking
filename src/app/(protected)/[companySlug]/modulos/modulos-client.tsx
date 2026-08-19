@@ -55,14 +55,14 @@ export function CompanyModulosClient({ companySlug, modules, activeModuleCodes }
     <div className="w-full px-6 sm:px-10 py-8 text-left space-y-8 pb-32">
       {/* Header da Loja */}
       <div>
-        <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs">
+        <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs">
           <Tag className="w-4 h-4" />
           <span>App Marketplace</span>
         </div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">
+        <h1 className="text-2xl font-semibold text-[var(--color-text-heading)] tracking-tight mt-1">
           Módulos & Add-ons
         </h1>
-        <p className="text-xs text-slate-500 mt-1">
+        <p className="text-xs text-[var(--color-text-muted)] mt-1">
           Turbine a operação do seu negócio com ferramentas avançadas. Ativação instantânea no seu painel.
         </p>
       </div>
@@ -76,38 +76,38 @@ export function CompanyModulosClient({ companySlug, modules, activeModuleCodes }
           return (
             <div
               key={m.id}
-              className={`bg-white rounded-3xl border transition-all p-6 space-y-4 shadow-2xs relative flex flex-col justify-between ${
+              className={`bg-[var(--color-bg)] rounded-[var(--radius-panel)] border transition-all p-6 space-y-4 shadow-2xs relative flex flex-col justify-between ${
                 isOwned
-                  ? "border-emerald-200 bg-emerald-50/20"
+                  ? "border-[var(--color-success-border)] bg-[var(--color-success-light)]"
                   : inCart
-                  ? "border-indigo-500 ring-2 ring-indigo-500 shadow-md"
-                  : "border-slate-200/80 hover:border-slate-300"
+                  ? "border-[var(--color-primary)] ring-2 ring-[var(--color-primary)] shadow-md"
+                  : "border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg">
+                  <span className="text-[var(--text-2xs)] font-semibold uppercase tracking-wider bg-[var(--color-bg-muted)] text-[var(--color-text)] px-2.5 py-1 rounded-[var(--radius-control)]">
                     {m.category}
                   </span>
                   {isOwned ? (
-                    <span className="text-[11px] font-bold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full flex items-center gap-1">
+                    <span className="text-[var(--text-2xs)] font-bold bg-[var(--color-success-light)] text-[var(--color-success)] px-3 py-1 rounded-full flex items-center gap-1">
                       <CheckCircle2 className="w-3.5 h-3.5" /> Ativo
                     </span>
                   ) : inCart ? (
-                    <span className="text-[11px] font-bold bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full">
+                    <span className="text-[var(--text-2xs)] font-bold bg-[var(--color-primary-light)] text-[var(--color-primary)] px-3 py-1 rounded-full">
                       No Carrinho
                     </span>
                   ) : null}
                 </div>
 
-                <h3 className="text-base font-extrabold text-slate-900">{m.name}</h3>
-                <p className="text-xs text-slate-500 mt-1">{m.description}</p>
+                <h3 className="text-base font-semibold text-[var(--color-text-heading)]">{m.name}</h3>
+                <p className="text-xs text-[var(--color-text-muted)] mt-1">{m.description}</p>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 space-y-3">
+              <div className="pt-4 border-t border-[var(--color-border)] space-y-3">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400 font-bold uppercase text-[10px]">Investimento</span>
-                  <span className="text-base font-black text-slate-900">
+                  <span className="text-[var(--color-text-subtle)] font-bold uppercase text-[var(--text-2xs)]">Investimento</span>
+                  <span className="text-base font-semibold text-[var(--color-text-heading)]">
                     {m.monthlyPrice > 0 ? `${fmtCurrency(m.monthlyPrice)}/mês` : fmtCurrency(m.lifetimePrice)}
                   </span>
                 </div>
@@ -116,9 +116,9 @@ export function CompanyModulosClient({ companySlug, modules, activeModuleCodes }
                   <button
                     type="button"
                     onClick={() => toggleCartItem(m.code)}
-                    className={`w-full py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                    className={`w-full py-2.5 rounded-[var(--radius-control)] font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-2 ${
                       inCart
-                        ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                        ? "bg-[var(--color-bg-muted)] text-[var(--color-text)] hover:bg-[var(--color-bg-muted)]"
                         : "bg-[#635bff] hover:bg-[#544dc9] text-white shadow-xs"
                     }`}
                   >
@@ -128,7 +128,7 @@ export function CompanyModulosClient({ companySlug, modules, activeModuleCodes }
                 ) : (
                   <button
                     disabled
-                    className="w-full py-2.5 rounded-xl font-bold text-xs bg-emerald-100 text-emerald-800 cursor-default flex items-center justify-center gap-2"
+                    className="w-full py-2.5 rounded-[var(--radius-control)] font-bold text-xs bg-[var(--color-success-light)] text-[var(--color-success)] cursor-default flex items-center justify-center gap-2"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>Módulo Desbloqueado</span>
@@ -142,12 +142,12 @@ export function CompanyModulosClient({ companySlug, modules, activeModuleCodes }
 
       {/* BARRA FIXA DO CARRINHO DE COMPRAS & CHECKOUT STRIPE */}
       {cart.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 backdrop-blur-md text-white px-6 py-4 rounded-2xl shadow-2xl border border-slate-700 flex flex-wrap items-center justify-between gap-6 max-w-2xl w-full">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[var(--color-navy)] backdrop-blur-md text-white px-6 py-4 rounded-[var(--radius-card)] shadow-2xl border border-[var(--color-navy)] flex flex-wrap items-center justify-between gap-6 max-w-2xl w-full">
           <div>
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+            <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] font-bold uppercase tracking-wider block">
               {cart.length} Módulo(s) Selecionado(s)
             </span>
-            <span className="text-lg font-black text-emerald-400">
+            <span className="text-lg font-semibold text-[var(--color-success)]">
               Total: {fmtCurrency(cartTotal)} {billingCycle === "MONTHLY" ? "/mês" : " (À vista)"}
             </span>
           </div>
@@ -157,7 +157,7 @@ export function CompanyModulosClient({ companySlug, modules, activeModuleCodes }
               type="button"
               onClick={handleCheckoutStripe}
               disabled={isPending}
-              className="px-6 py-3 bg-[#635bff] hover:bg-[#544dc9] text-white font-extrabold text-xs rounded-xl shadow-lg transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
+              className="px-6 py-3 bg-[#635bff] hover:bg-[#544dc9] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-lg transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
             >
               <CreditCard className="w-4 h-4" />
               <span>{isPending ? "Processando..." : "Pagar e Ativar no Stripe ➔"}</span>

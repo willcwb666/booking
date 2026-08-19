@@ -7,32 +7,40 @@ export interface EmptyStateProps {
   title: string;
   description?: string;
   action?: React.ReactNode;
+  /** Dica secundária abaixo da ação (ex.: link para a documentação) */
+  hint?: React.ReactNode;
   className?: string;
 }
 
+/**
+ * Estado vazio.
+ *
+ * Uma tela sem dados é a primeira coisa que todo cliente novo vê. Ela precisa
+ * dizer o que apareceria ali e como fazer aparecer — não só "nenhum
+ * resultado". Por isso `action` é praticamente obrigatório na prática.
+ */
 export function EmptyState({
   icon,
   title,
   description,
   action,
+  hint,
   className = "",
 }: EmptyStateProps) {
   return (
-    <div className={`flex flex-col items-center justify-center text-center py-12 px-4 space-y-3 ${className}`}>
-      {icon && (
-        <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-1">
-          {icon}
-        </div>
-      )}
-      <h3 className="text-sm font-extrabold text-slate-800 tracking-tight">
-        {title}
-      </h3>
-      {description && (
-        <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
-          {description}
+    <div className={`empty-state ${className}`}>
+      {icon && <div className="empty-state-icon">{icon}</div>}
+      <h3 className="empty-state-title">{title}</h3>
+      {description && <p className="empty-state-description">{description}</p>}
+      {action && <div className="pt-1.5">{action}</div>}
+      {hint && (
+        <p
+          className="text-[var(--color-text-subtle)]"
+          style={{ fontSize: "var(--text-xs)" }}
+        >
+          {hint}
         </p>
       )}
-      {action && <div className="pt-2">{action}</div>}
     </div>
   );
 }

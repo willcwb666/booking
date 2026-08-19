@@ -50,7 +50,7 @@ export function CancelDialog({ bookingId, companySlug }: Props) {
       <button
         type="button"
         onClick={openDialog}
-        className="px-3 py-1.5 text-sm border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-medium"
+        className="px-3 py-1.5 text-sm border border-[var(--color-danger-border)] text-[var(--color-danger)] rounded-[var(--radius-control)] hover:bg-[var(--color-danger-light)] transition-colors font-medium"
       >
         Cancelar agendamento
       </button>
@@ -58,14 +58,14 @@ export function CancelDialog({ bookingId, companySlug }: Props) {
       <dialog
         ref={dialogRef}
         onClick={handleBackdropClick}
-        className="rounded-xl border border-gray-200 shadow-xl p-0 backdrop:bg-black/40 max-w-md w-full"
+        className="rounded-[var(--radius-control)] border border-[var(--color-border)] shadow-xl p-0 backdrop:bg-black/40 max-w-md w-full"
       >
         <form onSubmit={handleSubmit}>
-          <div className="px-6 py-5 border-b border-gray-100">
-            <h2 className="text-base font-semibold text-gray-900">
+          <div className="px-6 py-5 border-b border-[var(--color-border)]">
+            <h2 className="text-base font-semibold text-[var(--color-text-heading)]">
               Cancelar agendamento
             </h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-[var(--color-text-muted)] mt-1">
               Esta ação não pode ser desfeita. Se o pagamento foi realizado por cartão, um
               reembolso será processado automaticamente.
             </p>
@@ -74,7 +74,7 @@ export function CancelDialog({ bookingId, companySlug }: Props) {
           <div className="px-6 py-4">
             <label
               htmlFor="cancel-reason"
-              className="block text-sm text-gray-600 mb-1.5"
+              className="block text-sm text-[var(--color-text-muted)] mb-1.5"
             >
               Motivo do cancelamento (opcional)
             </label>
@@ -82,28 +82,28 @@ export function CancelDialog({ bookingId, companySlug }: Props) {
               id="cancel-reason"
               name="reason"
               rows={3}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
+              className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-danger)] resize-none"
               placeholder="Ex.: cliente solicitou cancelamento…"
             />
             {error && (
-              <p role="alert" className="text-sm text-red-600 mt-2">
+              <p role="alert" className="text-sm text-[var(--color-danger)] mt-2">
                 {error}
               </p>
             )}
           </div>
 
-          <div className="px-6 py-4 border-t border-gray-100 flex gap-3 justify-end">
+          <div className="px-6 py-4 border-t border-[var(--color-border)] flex gap-3 justify-end">
             <button
               type="button"
               onClick={closeDialog}
-              className="px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 text-sm border border-[var(--color-border)] rounded-[var(--radius-control)] text-[var(--color-text)] hover:bg-[var(--color-bg-subtle)] transition-colors"
             >
               Voltar
             </button>
             <button
               type="submit"
               disabled={pending}
-              className="px-4 py-2 text-sm bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 text-sm bg-[var(--color-danger)] text-white font-semibold rounded-[var(--radius-control)] hover:bg-[var(--color-danger)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {pending ? "Cancelando…" : "Confirmar cancelamento"}
             </button>

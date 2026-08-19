@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getActiveSession } from "@/lib/session";
 import { exchangeCode } from "@/lib/google-calendar";
 import { db } from "@/lib/db";
 
@@ -13,7 +12,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(new URL("/onboarding?error=google_calendar", request.url));
   }
 
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getActiveSession();
   if (!session || session.user.id !== state) {
     return NextResponse.redirect(new URL("/login", request.url));
   }

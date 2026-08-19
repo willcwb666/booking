@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCompany } from "@/lib/company-context";
@@ -33,6 +33,14 @@ type Props = {
   services: UnifiedServiceRow[];
 };
 
+type StatusFilter = "ALL" | "ACTIVE" | "INACTIVE";
+
+const STATUS_TABS: { id: StatusFilter; label: string }[] = [
+  { id: "ALL", label: "Todos" },
+  { id: "ACTIVE", label: "Ativos" },
+  { id: "INACTIVE", label: "Desabilitados" },
+];
+
 function formatDuration(minutes: number) {
   if (minutes < 60) return `${minutes} min`;
   const h = Math.floor(minutes / 60);
@@ -46,11 +54,11 @@ export function ServicosClient({ companySlug, services: initialServices }: Props
 
   const [servicesList, setServicesList] = useState<UnifiedServiceRow[]>(initialServices);
   const [searchTerm, setSearchTerm] = useState("");
+  const [status, setStatus] = useState<StatusFilter>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isPending, startTransition] = useTransition();
 
-  // ConfirmDialog State
   const [confirmService, setConfirmService] = useState<{
     id: string;
     name: string;
@@ -68,11 +76,10 @@ export function ServicosClient({ companySlug, services: initialServices }: Props
           currentIsActive ? "Desabilitado!" : "Reativado!",
           `Serviço '${name}' ${currentIsActive ? "desabilitado" : "reativado"} com sucesso.`
         );
-        setServicesList(
-          servicesList.map((s) =>
-            s.id === id ? { ...s, isActive: !currentIsActive } : s
-          )
+        setServicesList((prev) =>
+          prev.map((s) => (s.id === id ? { ...s, isActive: !currentIsActive } : s))
         );
+        setConfirmService(null);
         router.refresh();
       } else {
         toast.error("Erro", "Falha ao alterar status do serviço.");
@@ -80,205 +87,263 @@ export function ServicosClient({ companySlug, services: initialServices }: Props
     });
   }
 
-  const filteredServices = servicesList.filter((s) =>
-    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (s.description && s.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const inactiveCount = servicesList.filter((s) => !s.isActive).length;
+
+  const filteredServices = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return servicesList.filter((s) => {
+      if (status === "ACTIVE" && !s.isActive) return false;
+      if (status === "INACTIVE" && s.isActive) return false;
+      if (!term) return true;
+      return (
+        s.name.toLowerCase().includes(term) ||
+        (s.description?.toLowerCase().includes(term) ?? false)
+      );
+    });
+  }, [servicesList, searchTerm, status]);
 
   const paginatedServices = filteredServices.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
-  return (
-    <div className="w-full max-w-7xl px-6 sm:px-10 py-8 text-left space-y-8 pb-32">
-      {/* Header Padronizado */}
-      <PageHeader
-        category="Catálogo de Atendimentos"
-        categoryIcon={<Scissors className="w-4 h-4" />}
-        title="Lista de Serviços"
-        description="Gerencie o catálogo de serviços, modalidades e adicionais oferecidos na sua empresa."
-        action={
-          <Link
-            href={`/${companySlug}/servicos/novo`}
-            className="px-6 py-3 bg-[#635bff] hover:bg-[#544dc9] text-white font-extrabold text-xs rounded-xl shadow-xs transition-all cursor-pointer inline-flex items-center gap-2 shrink-0 uppercase"
-          >
-            <Plus className="w-4 h-4" />
-            <span>+ SERVIÇO</span>
-          </Link>
-        }
-      />
+  const hasActiveFilter = status !== "ALL" || searchTerm.trim().length > 0;
 
-      {/* Busca Rápida & Tabela Principal */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-6 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  function resetFilters() {
+    setSearchTerm("");
+    setStatus("ALL");
+    setCurrentPage(1);
+  }
+
+  return (
+    <div className="page-container pb-20">
+      <div className="page-content space-y-6">
+        <PageHeader
+          category="Catálogo"
+          categoryIcon={<Scissors className="w-3.5 h-3.5" />}
+          title="Serviços"
+          description="O que sua empresa oferece, por quanto e em quanto tempo. É esta lista que o cliente vê ao agendar."
+          action={
+            <Link
+              href={`/${companySlug}/servicos/novo`}
+              className="btn btn-primary btn-sm inline-flex items-center gap-1.5"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Novo serviço</span>
+            </Link>
+          }
+        />
+
+        {/* Filtro de status: um serviço desabilitado continua no catálogo, só
+            some da vitrine — por isso "Desabilitados" é uma visão, não um
+            depósito de lixo. */}
+        <div className="scroller -mx-1 px-1">
+          <div
+            className="segmented w-max"
+            role="tablist"
+            aria-label="Filtrar serviços por status"
+          >
+            {STATUS_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={status === tab.id}
+                data-active={status === tab.id}
+                onClick={() => {
+                  setStatus(tab.id);
+                  setCurrentPage(1);
+                }}
+                className="segmented-item whitespace-nowrap inline-flex items-center gap-1.5"
+              >
+                <span>{tab.label}</span>
+                {tab.id === "INACTIVE" && inactiveCount > 0 && (
+                  <span className="badge badge-count badge-neutral">{inactiveCount}</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="toolbar">
           <SearchInput
             value={searchTerm}
             onChange={(val) => {
               setSearchTerm(val);
               setCurrentPage(1);
             }}
-            placeholder="Buscar serviço por nome ou descrição..."
+            placeholder="Buscar por nome ou descrição"
           />
-
-          <span className="text-xs text-slate-500 font-medium">
-            Total: {filteredServices.length} serviço(s)
+          <span className="toolbar-spacer" />
+          <span className="text-[var(--color-text-muted)] tabular-nums" style={{ fontSize: "var(--text-xs)" }}>
+            {filteredServices.length}{" "}
+            {filteredServices.length === 1 ? "serviço" : "serviços"}
           </span>
         </div>
 
-        {/* TABELA DE SERVIÇOS */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead>
-              <tr className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200/80">
-                <th className="px-4 py-3">Ícone & Descrição do Serviço</th>
-                <th className="px-4 py-3 text-center">Tipo</th>
-                <th className="px-4 py-3 text-right">Valor</th>
-                <th className="px-4 py-3 text-center">Duração</th>
-                <th className="px-4 py-3 text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 font-medium">
-              {filteredServices.length === 0 ? (
-                <tr>
-                  <td colSpan={5}>
-                    <EmptyState
-                      icon={<Scissors className="w-6 h-6" />}
-                      title="Nenhum serviço encontrado"
-                      description="Não encontramos nenhum serviço com o termo buscado ou no catálogo atual."
-                      action={
-                        <Link
-                          href={`/${companySlug}/servicos/novo`}
-                          className="px-4 py-2 bg-indigo-50 text-indigo-700 font-bold text-xs rounded-xl hover:bg-indigo-100 transition-colors inline-block"
-                        >
-                          Cadastrar Novo Serviço
-                        </Link>
-                      }
-                    />
-                  </td>
-                </tr>
-              ) : (
-                paginatedServices.map((srv) => (
-                  <tr
-                    key={srv.id}
-                    className={`hover:bg-slate-50/60 transition-colors ${
-                      !srv.isActive ? "opacity-50 bg-slate-50/30" : ""
-                    }`}
+        {filteredServices.length === 0 ? (
+          <div className="card">
+            <EmptyState
+              icon={<Scissors className="w-5 h-5" />}
+              title={
+                hasActiveFilter
+                  ? "Nenhum serviço com esses filtros"
+                  : "Seu catálogo ainda está vazio"
+              }
+              description={
+                hasActiveFilter
+                  ? "Nenhum serviço corresponde à busca ou ao status selecionado."
+                  : "Cadastre o primeiro serviço para que os clientes possam agendar. Nome, preço e duração já bastam para começar."
+              }
+              action={
+                hasActiveFilter ? (
+                  <button type="button" onClick={resetFilters} className="btn btn-outline btn-sm">
+                    Limpar filtros
+                  </button>
+                ) : (
+                  <Link
+                    href={`/${companySlug}/servicos/novo`}
+                    className="btn btn-primary btn-sm inline-flex items-center gap-1.5"
                   >
-                    {/* Ícone + Descrição */}
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100/80">
-                          {srv.icon ? (
-                            <RenderServiceIcon iconName={srv.icon} className="w-5 h-5" />
-                          ) : (
-                            <Scissors className="w-5 h-5" />
-                          )}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-extrabold text-slate-900 text-sm">{srv.name}</p>
-                            {!srv.isActive && (
-                              <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold">
-                                Desativado
-                              </span>
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Cadastrar serviço</span>
+                  </Link>
+                )
+              }
+            />
+          </div>
+        ) : (
+          <div className="card overflow-hidden">
+            <div className="table-container" style={{ border: 0, borderRadius: 0, boxShadow: "none" }}>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Serviço</th>
+                    <th>Tipo</th>
+                    <th className="text-right">Valor</th>
+                    <th className="text-right">Duração</th>
+                    <th>Status</th>
+                    <th className="text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedServices.map((srv) => (
+                    <tr key={srv.id} className={srv.isActive ? "" : "opacity-65"}>
+                      <td>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span
+                            className="w-9 h-9 rounded-[var(--radius-control)] bg-[var(--color-bg-subtle)] text-[var(--color-text-muted)] border border-[var(--color-border)] grid place-items-center shrink-0"
+                            aria-hidden="true"
+                          >
+                            {srv.icon ? (
+                              <RenderServiceIcon iconName={srv.icon} className="w-4 h-4" />
+                            ) : (
+                              <Scissors className="w-4 h-4" />
+                            )}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="font-medium text-[var(--color-text-heading)] truncate">
+                              {srv.name}
+                            </p>
+                            {srv.description && (
+                              <p
+                                className="text-[var(--color-text-muted)] truncate max-w-sm"
+                                style={{ fontSize: "var(--text-xs)" }}
+                              >
+                                {srv.description}
+                              </p>
                             )}
                           </div>
-                          {srv.description && (
-                            <p className="text-slate-500 text-[11px] mt-0.5 max-w-sm truncate">
-                              {srv.description}
-                            </p>
-                          )}
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Tipo */}
-                    <td className="px-4 py-3.5 text-center">
-                      <StatusBadge
-                        variant={srv.type === "PADRÃO" ? "primary" : "warning"}
-                        size="sm"
-                      >
-                        {srv.type}
-                      </StatusBadge>
-                    </td>
+                      {/* Tipo é categoria, não estado — por isso vai em rótulo
+                          neutro e não em distintivo colorido. */}
+                      <td>
+                        <span className="eyebrow">{srv.type}</span>
+                      </td>
 
-                    {/* Valor */}
-                    <td className="px-4 py-3.5 text-right font-extrabold text-slate-900 text-sm">
-                      {formatMoney(srv.price, company.currency, company.locale)}
-                    </td>
+                      <td data-type="number">
+                        {formatMoney(srv.price, company.currency, company.locale)}
+                      </td>
 
-                    {/* Duração */}
-                    <td className="px-4 py-3.5 text-center text-slate-600 font-semibold">
-                      {formatDuration(srv.estimatedMinutes)}
-                    </td>
+                      <td data-type="number">{formatDuration(srv.estimatedMinutes)}</td>
 
-                    {/* Ações */}
-                    <td className="px-4 py-3.5 text-right space-x-2">
-                      <ActionTooltip label="Editar Serviço">
-                        <Link
-                          href={`/${companySlug}/servicos/${srv.id}/editar`}
-                          className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-all inline-flex items-center justify-center shadow-2xs"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </Link>
-                      </ActionTooltip>
+                      <td>
+                        <StatusBadge variant={srv.isActive ? "success" : "neutral"}>
+                          {srv.isActive ? "Ativo" : "Inativo"}
+                        </StatusBadge>
+                      </td>
 
-                      <ActionTooltip label={srv.isActive ? "Desabilitar Serviço" : "Reativar Serviço"}>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setConfirmService({
-                              id: srv.id,
-                              name: srv.name,
-                              currentIsActive: srv.isActive,
-                            })
-                          }
-                          disabled={isPending}
-                          className={`p-2 rounded-xl transition-all inline-flex items-center justify-center cursor-pointer shadow-2xs ${
-                            srv.isActive
-                              ? "bg-amber-50 hover:bg-amber-100 text-amber-700"
-                              : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700"
-                          }`}
-                        >
-                          {srv.isActive ? <Ban className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                        </button>
-                      </ActionTooltip>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                      <td>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <ActionTooltip label="Editar serviço">
+                            <Link
+                              href={`/${companySlug}/servicos/${srv.id}/editar`}
+                              className="btn btn-ghost btn-icon"
+                              aria-label={`Editar ${srv.name}`}
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </Link>
+                          </ActionTooltip>
 
-        {filteredServices.length > 0 && (
-          <Pagination
-            currentPage={currentPage}
-            totalItems={filteredServices.length}
-            pageSize={pageSize}
-            pageSizeOptions={[10, 20, 30, 50, 100]}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={setPageSize}
-            itemLabel="serviços"
-          />
+                          <ActionTooltip
+                            label={srv.isActive ? "Desabilitar serviço" : "Reativar serviço"}
+                          >
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setConfirmService({
+                                  id: srv.id,
+                                  name: srv.name,
+                                  currentIsActive: srv.isActive,
+                                })
+                              }
+                              disabled={isPending}
+                              className="btn btn-ghost btn-icon"
+                              aria-label={`${srv.isActive ? "Desabilitar" : "Reativar"} ${srv.name}`}
+                            >
+                              {srv.isActive ? (
+                                <Ban className="w-3.5 h-3.5" />
+                              ) : (
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </ActionTooltip>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredServices.length}
+              pageSize={pageSize}
+              pageSizeOptions={[10, 20, 30, 50, 100]}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              itemLabel="serviços"
+            />
+          </div>
         )}
       </div>
 
-      {/* Modal de Confirmação Reutilizável */}
       {confirmService && (
         <ConfirmDialog
           isOpen={Boolean(confirmService)}
           onClose={() => setConfirmService(null)}
           onConfirm={executeToggleDisable}
           title={
-            confirmService.currentIsActive
-              ? "Desabilitar Serviço"
-              : "Reativar Serviço"
+            confirmService.currentIsActive ? "Desabilitar serviço" : "Reativar serviço"
           }
-          description={`Tem certeza que deseja ${
-            confirmService.currentIsActive ? "desabilitar" : "reativar"
-          } o serviço '${confirmService.name}'?`}
+          description={
+            confirmService.currentIsActive
+              ? `"${confirmService.name}" deixa de aparecer para os clientes agendarem. Os agendamentos já marcados continuam valendo, e você pode reativar quando quiser.`
+              : `"${confirmService.name}" volta a aparecer para os clientes agendarem.`
+          }
           variant={confirmService.currentIsActive ? "warning" : "success"}
           confirmText={confirmService.currentIsActive ? "Desabilitar" : "Reativar"}
           isLoading={isPending}

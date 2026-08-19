@@ -1,10 +1,11 @@
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
 import { headers } from "next/headers";
-import { notifyBookingConfirmed, notifyCompanyNewBooking } from "@/lib/notifications";
+
 import { revertAndCancelUnpaidBooking } from "@/lib/booking-reversal";
 import type { NextRequest } from "next/server";
 import type Stripe from "stripe";
+import { enqueueNotification } from "@/lib/notification-outbox";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -39,8 +40,8 @@ export async function POST(req: NextRequest) {
     });
 
     if (!alreadyPaid) {
-      void notifyBookingConfirmed(booking.id);
-      void notifyCompanyNewBooking(booking.id);
+      void enqueueNotification({ kind: "BOOKING_CONFIRMED", bookingId: booking.id });
+      void enqueueNotification({ kind: "COMPANY_NEW_BOOKING", bookingId: booking.id });
     }
   }
 

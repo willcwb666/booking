@@ -9,6 +9,7 @@ import {
 import { toast } from "@/lib/toast-service";
 import { StatusBadge } from "@/components/ui/status-badge";
 
+import { X } from "@/components/ui/icons";
 type Props = {
   companySlug: string;
   companyName: string;
@@ -84,7 +85,7 @@ export function SubscriptionsModal({ companySlug, companyName, onClose }: Props)
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-[var(--color-border)]">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-[var(--color-border)]">
         
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
@@ -92,12 +93,9 @@ export function SubscriptionsModal({ companySlug, companyName, onClose }: Props)
             <h2 className="text-xl font-bold text-[var(--color-text-heading)]">Gerenciar Assinaturas no Stripe</h2>
             <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Empresa: {companyName}</p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)] p-1 text-lg font-bold"
-          >
-            ✕
-          </button>
+          <button onClick={onClose} aria-label="Fechar" title="Fechar" className="icon-action">
+                <X className="w-4 h-4" />
+              </button>
         </div>
 
         {/* Loading state */}
@@ -109,7 +107,7 @@ export function SubscriptionsModal({ companySlug, companyName, onClose }: Props)
 
         {/* Error state */}
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">
+          <div className="p-4 bg-[var(--color-danger-light)] border border-[var(--color-danger-border)] rounded-[var(--radius-control)] text-xs text-[var(--color-danger)] font-medium">
             {error}
           </div>
         )}
@@ -129,9 +127,9 @@ export function SubscriptionsModal({ companySlug, companyName, onClose }: Props)
                 return (
                   <div
                     key={sub.id}
-                    className={`p-5 rounded-2xl border transition-all ${
+                    className={`p-5 rounded-[var(--radius-card)] border transition-all ${
                       isActive
-                        ? "border-emerald-200 bg-emerald-50/40"
+                        ? "border-[var(--color-success-border)] bg-[var(--color-success-light)]"
                         : "border-[var(--color-border)] bg-[var(--color-bg-subtle)]/50 opacity-80"
                     }`}
                   >
@@ -152,13 +150,13 @@ export function SubscriptionsModal({ companySlug, companyName, onClose }: Props)
                       </div>
 
                       <div className="text-right">
-                        <p className="text-base font-black text-[var(--color-text-heading)]">
+                        <p className="text-base font-semibold text-[var(--color-text-heading)]">
                           {sub.currency} {sub.amount.toFixed(2)}{" "}
                           <span className="text-xs font-normal text-[var(--color-text-muted)]">
                             /{sub.interval === "year" ? "ano" : "mês"}
                           </span>
                         </p>
-                        <p className="text-[11px] text-[var(--color-text-subtle)]">
+                        <p className="text-[var(--text-2xs)] text-[var(--color-text-subtle)]">
                           Criada em: {formatDate(sub.created)}
                         </p>
                       </div>
@@ -177,7 +175,7 @@ export function SubscriptionsModal({ companySlug, companyName, onClose }: Props)
                                 [sub.id]: e.target.checked,
                               }))
                             }
-                            className="rounded border-[var(--color-border-strong)] text-red-600 focus:ring-red-500"
+                            className="rounded border-[var(--color-border-strong)] text-[var(--color-danger)] focus:ring-[var(--color-danger)]"
                           />
                           <span>Efetuar reembolso automático no cartão ao cancelar</span>
                         </label>
@@ -186,7 +184,7 @@ export function SubscriptionsModal({ companySlug, companyName, onClose }: Props)
                           type="button"
                           onClick={() => handleCancelSubscription(sub.id)}
                           disabled={isPending || refundingSubId === sub.id}
-                          className="w-full sm:w-auto px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm disabled:opacity-50 shrink-0"
+                          className="w-full sm:w-auto px-4 py-2 bg-[var(--color-danger)] hover:bg-[var(--color-danger)] text-white rounded-[var(--radius-control)] text-xs font-bold transition-all shadow-sm disabled:opacity-50 shrink-0"
                         >
                           {refundingSubId === sub.id
                             ? "Processando..."
@@ -212,7 +210,7 @@ export function SubscriptionsModal({ companySlug, companyName, onClose }: Props)
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 bg-[var(--color-navy)] text-white rounded-xl text-xs font-bold hover:bg-[var(--color-navy-hover)] transition-colors"
+            className="px-5 py-2.5 bg-[var(--color-navy)] text-white rounded-[var(--radius-control)] text-xs font-bold hover:bg-[var(--color-navy-hover)] transition-colors"
           >
             Fechar
           </button>

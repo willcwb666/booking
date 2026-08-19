@@ -60,16 +60,16 @@ export function CreateEventDialog({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl border border-stone-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        <div className="px-6 py-5 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
-          <h2 id="create-event-title" className="text-base font-bold text-stone-900">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-card)] shadow-2xl border border-[var(--color-border)] w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="px-6 py-5 border-b border-[var(--color-border)] flex items-center justify-between bg-[var(--color-bg-subtle)]">
+          <h2 id="create-event-title" className="text-base font-bold text-[var(--color-text-heading)]">
             Novo evento
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Fechar"
-            className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+            className="p-1.5 rounded-[var(--radius-control)] text-[var(--color-text-subtle)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg-muted)] transition-colors"
           >
             ✕
           </button>
@@ -77,7 +77,7 @@ export function CreateEventDialog({
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
         {errors?.["_"] && (
-          <div className="bg-[var(--color-danger-light)] border border-[var(--color-danger-border)] rounded-lg px-3 py-2" role="alert">
+          <div className="bg-[var(--color-danger-light)] border border-[var(--color-danger-border)] rounded-[var(--radius-control)] px-3 py-2" role="alert">
             <p className="text-sm text-[var(--color-danger)]">{errors["_"][0]}</p>
           </div>
         )}

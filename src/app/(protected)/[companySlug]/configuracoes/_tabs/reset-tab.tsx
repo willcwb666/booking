@@ -24,14 +24,14 @@ export function ResetTab({ canEdit, onRequestReset }: Props) {
 
   return (
     <div className="space-y-6 text-left">
-      <div className="bg-white rounded-3xl border border-[var(--color-border)] p-6 sm:p-8 space-y-6 shadow-xs">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-6 sm:p-8 space-y-6 shadow-xs">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-[var(--color-border)]">
+            <div className="w-12 h-12 rounded-[var(--radius-card)] bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-[var(--color-border)]">
               <RotateCcw className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-[var(--color-text-heading)]">Solicitar Reset de Presets</h2>
+              <h2 className="text-base font-semibold text-[var(--color-text-heading)]">Solicitar Reset de Presets</h2>
               <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                 Restaure o catálogo de serviços da sua empresa para o padrão original do segmento.
               </p>
@@ -39,9 +39,9 @@ export function ResetTab({ canEdit, onRequestReset }: Props) {
           </div>
 
           {presetResetFee > 0 && (
-            <div className="p-3 bg-[var(--color-primary-light)] border border-[var(--color-border)] rounded-2xl text-right">
-              <span className="text-[10px] text-[var(--color-primary)] font-bold uppercase tracking-wider block">Taxa Oficial</span>
-              <span className="text-sm font-extrabold text-[var(--color-primary)]">R$ {presetResetFee.toFixed(2)}</span>
+            <div className="p-3 bg-[var(--color-primary-light)] border border-[var(--color-border)] rounded-[var(--radius-card)] text-right">
+              <span className="text-[var(--text-2xs)] text-[var(--color-primary)] font-bold uppercase tracking-wider block">Taxa Oficial</span>
+              <span className="text-sm font-semibold text-[var(--color-primary)]">R$ {presetResetFee.toFixed(2)}</span>
             </div>
           )}
         </div>
@@ -50,7 +50,7 @@ export function ResetTab({ canEdit, onRequestReset }: Props) {
           <p>
             Caso você tenha editado preços ou serviços incorretamente e deseje retornar à configuração inicial do seu nicho de negócio, é possível solicitar o reset do catálogo ao Super Admin.
           </p>
-          <div className="p-4 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-2xl space-y-2.5">
+          <div className="p-4 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-card)] space-y-2.5">
             <div className="flex items-center gap-2 font-bold text-[var(--color-text-heading)]">
               <Info className="w-4 h-4 text-[var(--color-primary)] shrink-0" />
               <span>Como funciona o reset:</span>
@@ -77,7 +77,7 @@ export function ResetTab({ canEdit, onRequestReset }: Props) {
             <button
               type="button"
               onClick={onRequestReset}
-              className="px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-2"
+              className="px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer flex items-center gap-2"
             >
               <RotateCcw className="w-4 h-4" />
               <span>{presetResetFee > 0 ? `Solicitar Reset de Presets (R$ ${presetResetFee.toFixed(2)})` : "Solicitar Reset ao Super Admin"}</span>

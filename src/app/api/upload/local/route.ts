@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getActiveSession } from "@/lib/session";
 import { rateLimit } from "@/lib/rate-limit";
 import fs from "fs";
 import path from "path";
@@ -9,8 +8,34 @@ import path from "path";
 const ALLOWED_EXT = new Set(["jpg", "jpeg", "png", "webp"]);
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 
+/**
+ * Este caminho grava em `public/uploads` no disco da instância. Serve só para
+ * desenvolvimento sem R2 configurado.
+ *
+ * Em produção ele está DESLIGADO de propósito: em runtime serverless o
+ * filesystem é efêmero e somente leitura fora de /tmp, então o upload ou falha
+ * ou some no próximo deploy; com mais de uma instância, a logo enviada
+ * aparece só para quem cai na máquina que gravou. O caminho correto é o
+ * presigned URL do R2 (`/api/upload/presign`).
+ *
+ * Para habilitar conscientemente num servidor único com disco persistente,
+ * defina ALLOW_LOCAL_UPLOADS=true.
+ */
+const LOCAL_UPLOADS_ENABLED =
+  process.env.NODE_ENV !== "production" || process.env.ALLOW_LOCAL_UPLOADS === "true";
+
 export async function PUT(request: NextRequest): Promise<NextResponse> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  if (!LOCAL_UPLOADS_ENABLED) {
+    return NextResponse.json(
+      {
+        error:
+          "Upload local indisponível nesta instalação. Configure o armazenamento de arquivos (R2).",
+      },
+      { status: 503 }
+    );
+  }
+
+  const session = await getActiveSession();
   if (!session) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }

@@ -47,7 +47,7 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
      <div className="page-content space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-black text-[var(--color-text-heading)] tracking-tight">
+        <h1 className="text-2xl font-semibold text-[var(--color-text-heading)] tracking-tight">
           <Award className="w-6 h-6 text-[var(--color-primary)] inline-block mr-2" />
           Programa de Fidelidade & Pontos
         </h1>
@@ -88,7 +88,7 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
               disabled={!isEnabled}
               className="input"
             />
-            <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">Ex: R$ 100 pago = {100 * pointsPerCurrency} pontos</p>
+            <p className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] mt-1">Ex: R$ 100 pago = {100 * pointsPerCurrency} pontos</p>
           </div>
 
           <div>
@@ -103,7 +103,7 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
               disabled={!isEnabled}
               className="input"
             />
-            <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">Pontos necessários para o voucher</p>
+            <p className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] mt-1">Pontos necessários para o voucher</p>
           </div>
 
           <div>
@@ -119,7 +119,7 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
               disabled={!isEnabled}
               className="input"
             />
-            <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">Desconto aplicado ao atingir a meta</p>
+            <p className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] mt-1">Desconto aplicado ao atingir a meta</p>
           </div>
         </div>
 
@@ -148,7 +148,7 @@ export function LoyaltyClient({ companySlug, initialProgram, customers }: Props)
             {customers.map((c, i) => (
               <div key={i} className="py-3 flex items-center justify-between text-xs">
                 <span className="font-semibold text-[var(--color-text-heading)]">{c.customerEmail}</span>
-                <span className="font-black text-[var(--color-warning)] bg-[var(--color-warning-light)] border border-[var(--color-warning-border)] px-3 py-1 rounded-full">
+                <span className="font-semibold text-[var(--color-warning)] bg-[var(--color-warning-light)] border border-[var(--color-warning-border)] px-3 py-1 rounded-full">
                   ⭐ {c.points} pontos
                 </span>
               </div>

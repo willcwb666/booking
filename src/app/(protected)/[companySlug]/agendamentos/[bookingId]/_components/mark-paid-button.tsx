@@ -27,15 +27,15 @@ export function MarkPaidButton({ bookingId, companySlug }: Props) {
 
   return (
     <div className="flex items-center gap-3">
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-[var(--color-danger)]">{error}</p>}
       <button
         type="button"
         onClick={handleClick}
         disabled={pending}
-        className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 ${
+        className={`px-3 py-1.5 text-sm font-medium rounded-[var(--radius-control)] border transition-colors disabled:opacity-50 ${
           confirm
-            ? "bg-green-600 text-white border-green-600 hover:bg-green-700"
-            : "text-green-700 bg-green-50 border-green-200 hover:bg-green-100"
+            ? "bg-[var(--color-success)] text-white border-[var(--color-success-border)] hover:bg-[var(--color-success)]"
+            : "text-[var(--color-success)] bg-[var(--color-success-light)] border-[var(--color-success-border)] hover:bg-[var(--color-success-light)]"
         }`}
       >
         {pending ? "Salvando…" : confirm ? "Confirmar recebimento" : "Marcar como pago"}
@@ -44,7 +44,7 @@ export function MarkPaidButton({ bookingId, companySlug }: Props) {
         <button
           type="button"
           onClick={() => setConfirm(false)}
-          className="text-xs text-gray-500 hover:text-gray-700"
+          className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
         >
           Cancelar
         </button>

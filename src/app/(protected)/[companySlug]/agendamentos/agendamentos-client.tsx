@@ -8,7 +8,8 @@ import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/components/ui/page-header";
 import { Modal } from "@/components/ui/modal";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
-import { Phone, UserX, AlertTriangle, CheckCircle2, Plus, Play, Check } from "@/components/ui/icons";
+import { Phone, UserX, AlertTriangle, CheckCircle2, Plus, Play, Check, Calendar } from "@/components/ui/icons";
+import { EmptyState } from "@/components/ui/empty-state";
 import { markBookingNoShowAction, updateBookingStatusAction, createWalkInBookingAction } from "@/server/actions/booking";
 import { toast } from "@/lib/toast-service";
 import { Pagination } from "@/components/ui/pagination";
@@ -62,7 +63,7 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_COLORS: Record<string, string> = {
   PENDING: "badge badge-warning",
   CONFIRMED: "badge badge-primary",
-  IN_PROGRESS: "badge bg-purple-100 text-purple-800 border-purple-200",
+  IN_PROGRESS: "badge bg-[var(--color-primary-light)] text-[var(--color-primary)] border-[var(--color-primary)]",
   COMPLETED: "badge badge-success",
   CANCELLED: "badge badge-danger",
   RESCHEDULED: "badge badge-warning",
@@ -229,92 +230,138 @@ export function AgendamentosClient({
 
   const statuses = ["ALL", "PENDING", "CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "RESCHEDULED", "NO_SHOW"];
 
+  // "Nada aqui" e "nada com esse filtro" pedem textos e saídas diferentes
+  const hasActiveFilter =
+    (filters.status && filters.status !== "ALL") ||
+    !!filters.q ||
+    !!filters.from ||
+    !!filters.to;
+
   return (
     <div className="page-container pb-20">
      <div className="page-content space-y-6">
       <PageHeader
         title="Agendamentos"
-        description={`Gerencie reservas, confirme presenças ou registre faltas em ${company.name}. Total: ${total} registro(s).`}
+        description="Confirme presenças, registre faltas e encaixe clientes que chegaram sem hora marcada."
         action={
           <button
             type="button"
             onClick={() => setShowWalkInModal(true)}
-            className="btn btn-primary btn-sm inline-flex items-center gap-1.5 font-bold shadow-xs"
+            className="btn btn-primary btn-tactile"
           >
             <Plus className="w-4 h-4" />
-            <span>+ Encaixe Rápido (Walk-in)</span>
+            <span>Encaixar cliente</span>
           </button>
         }
       />
 
       <div className="space-y-4">
-        {/* Subheader com Filtros */}
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-[var(--color-bg-elevated)] p-4 rounded-2xl border border-[var(--color-border)] shadow-xs">
-          {/* Status Tabs */}
-          <div className="flex flex-wrap gap-1.5" role="tablist">
+        {/*
+          Filtro de status como controle segmentado: são 8 opções mutuamente
+          exclusivas e de uso constante. Antes eram 8 botões soltos, todos com
+          o mesmo peso visual do botão de ação principal — a tela inteira
+          competia por atenção.
+        */}
+        <div className="scroller -mx-1 px-1">
+          <div className="segmented w-max" role="tablist" aria-label="Filtrar por status">
             {statuses.map((s) => (
               <Link
                 key={s}
                 href={buildUrl({ status: s, page: 1 })}
                 role="tab"
                 aria-selected={filters.status === s}
-                className={filters.status === s ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm"}
+                data-active={filters.status === s}
+                className="segmented-item whitespace-nowrap"
               >
                 {STATUS_LABELS[s]}
               </Link>
             ))}
           </div>
+        </div>
 
-          <div className="flex flex-wrap gap-3">
-            {/* Search */}
-            <form onSubmit={handleSearchSubmit} className="flex gap-2">
-              <input
-                name="q"
-                defaultValue={filters.q}
-                placeholder="Buscar por cliente…"
-                className="input !w-52"
-              />
-              <button type="submit" className="btn btn-secondary btn-sm">
-                Buscar
-              </button>
-            </form>
+        {/* Busca e período numa linha só, com a contagem à direita */}
+        <div className="toolbar">
+          <form onSubmit={handleSearchSubmit} className="flex gap-2">
+            <input
+              name="q"
+              defaultValue={filters.q}
+              placeholder="Buscar cliente"
+              aria-label="Buscar por cliente"
+              className="input !w-48"
+            />
+            <button type="submit" className="btn btn-secondary btn-sm">
+              Buscar
+            </button>
+          </form>
 
-            {/* Date range */}
-            <form onSubmit={handleDateSubmit} className="flex gap-2 items-center">
-              <input
-                name="from"
-                type="date"
-                defaultValue={filters.from}
-                className="input !w-auto"
-                aria-label="Data inicial"
-              />
-              <span className="text-[var(--color-text-subtle)] text-sm">–</span>
-              <input
-                name="to"
-                type="date"
-                defaultValue={filters.to}
-                className="input !w-auto"
-                aria-label="Data final"
-              />
-              <button type="submit" className="btn btn-secondary btn-sm">
-                Filtrar
-              </button>
-              {(filters.from || filters.to) && (
-                <Link
-                  href={buildUrl({ from: "", to: "", page: 1 })}
-                  className="text-xs text-[var(--color-text-subtle)] hover:text-[var(--color-text)]"
-                >
-                  Limpar
-                </Link>
-              )}
-            </form>
-          </div>
+          <form onSubmit={handleDateSubmit} className="flex gap-2 items-center">
+            <input
+              name="from"
+              type="date"
+              defaultValue={filters.from}
+              className="input !w-auto"
+              aria-label="Data inicial"
+            />
+            <span className="text-[var(--color-text-subtle)]">–</span>
+            <input
+              name="to"
+              type="date"
+              defaultValue={filters.to}
+              className="input !w-auto"
+              aria-label="Data final"
+            />
+            <button type="submit" className="btn btn-secondary btn-sm">
+              Aplicar
+            </button>
+            {(filters.from || filters.to) && (
+              <Link href={buildUrl({ from: "", to: "", page: 1 })} className="btn btn-ghost btn-sm">
+                Limpar
+              </Link>
+            )}
+          </form>
+
+          <span className="toolbar-spacer" />
+
+          <span
+            className="mono text-[var(--color-text-muted)]"
+            style={{ fontSize: "var(--text-xs)" }}
+          >
+            {total} {total === 1 ? "registro" : "registros"}
+          </span>
         </div>
 
         {/* Table */}
         {items.length === 0 ? (
-          <div className="card p-12 text-center">
-            <p className="text-[var(--color-text-muted)] text-sm">Nenhum agendamento encontrado.</p>
+          <div className="card">
+            <EmptyState
+              icon={<Calendar className="w-5 h-5" />}
+              title={
+                hasActiveFilter
+                  ? "Nenhum agendamento com esses filtros"
+                  : "Nenhum agendamento ainda"
+              }
+              description={
+                hasActiveFilter
+                  ? "Tente ampliar o período ou trocar o status."
+                  : `Quando alguém marcar horário em ${company.name}, aparece aqui. Você também pode encaixar um cliente que chegou agora.`
+              }
+              action={
+                hasActiveFilter ? (
+                  <Link href={buildUrl({ status: "ALL", q: "", from: "", to: "", page: 1 })} className="btn btn-secondary">
+                    Limpar filtros
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowWalkInModal(true)}
+                    className="btn btn-primary"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Encaixar cliente
+                  </button>
+                )
+              }
+            />
           </div>
         ) : (
           <div className="table-container">
@@ -388,7 +435,7 @@ export function AgendamentosClient({
                                 type="button"
                                 onClick={() => handleUpdateStatus(item.id, "IN_PROGRESS")}
                                 disabled={isPending}
-                                className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-lg transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+                                className="inline-flex items-center gap-1 text-[var(--text-2xs)] font-bold text-[var(--color-primary)] bg-[var(--color-primary-light)] hover:bg-[var(--color-primary-light)] border border-[var(--color-primary)] px-2.5 py-1 rounded-[var(--radius-control)] transition-all shadow-2xs cursor-pointer disabled:opacity-50"
                                 title="Fazer Check-in (Cliente chegou / Na cadeira)"
                               >
                                 <Play className="w-3 h-3 fill-current" />
@@ -401,7 +448,7 @@ export function AgendamentosClient({
                                 type="button"
                                 onClick={() => handleUpdateStatus(item.id, "COMPLETED")}
                                 disabled={isPending}
-                                className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+                                className="inline-flex items-center gap-1 text-[var(--text-2xs)] font-bold text-[var(--color-success)] bg-[var(--color-success-light)] hover:bg-[var(--color-success-light)] border border-[var(--color-success-border)] px-2.5 py-1 rounded-[var(--radius-control)] transition-all shadow-2xs cursor-pointer disabled:opacity-50"
                                 title="Concluir Atendimento"
                               >
                                 <Check className="w-3.5 h-3.5" />
@@ -414,7 +461,7 @@ export function AgendamentosClient({
                                 <button
                                   type="button"
                                   onClick={() => setSelectedNoShowBooking(item)}
-                                  className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
+                                  className="p-1.5 bg-[var(--color-danger-light)] hover:bg-[var(--color-danger-light)] text-[var(--color-danger)] border border-[var(--color-danger-border)] rounded-[var(--radius-control)] text-xs font-bold transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
                                 >
                                   <UserX className="w-3.5 h-3.5" />
                                 </button>
@@ -428,7 +475,7 @@ export function AgendamentosClient({
                                 )}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-[11px] font-bold text-[var(--color-success)] hover:opacity-80 bg-[var(--color-success-light)] border border-[var(--color-success-border)] px-2.5 py-1 rounded-lg transition-all"
+                                className="inline-flex items-center gap-1 text-[var(--text-2xs)] font-bold text-[var(--color-success)] hover:opacity-80 bg-[var(--color-success-light)] border border-[var(--color-success-border)] px-2.5 py-1 rounded-[var(--radius-control)] transition-all"
                                 title="Enviar mensagem via WhatsApp"
                               >
                                 <Phone className="w-3.5 h-3.5" />
@@ -473,12 +520,12 @@ export function AgendamentosClient({
           size="md"
         >
           <form onSubmit={handleCreateWalkIn} className="space-y-4">
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[var(--color-text-muted)]">
               Lance na fila um cliente que acabou de chegar sem agendamento prévio.
             </p>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">Nome do Cliente *</label>
+              <label className="text-xs font-bold text-[var(--color-text)]">Nome do Cliente *</label>
               <input
                 type="text"
                 required
@@ -491,7 +538,7 @@ export function AgendamentosClient({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">Telefone / WhatsApp (Opcional)</label>
+              <label className="text-xs font-bold text-[var(--color-text)]">Telefone / WhatsApp (Opcional)</label>
               <input
                 type="tel"
                 value={walkInPhone}
@@ -502,7 +549,7 @@ export function AgendamentosClient({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">Serviço *</label>
+              <label className="text-xs font-bold text-[var(--color-text)]">Serviço *</label>
               <select
                 required
                 value={walkInServiceId}
@@ -523,7 +570,7 @@ export function AgendamentosClient({
 
             {professionals.length > 0 && (
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">Profissional Responsável</label>
+                <label className="text-xs font-bold text-[var(--color-text)]">Profissional Responsável</label>
                 <select
                   value={walkInProfId}
                   onChange={(e) => setWalkInProfId(e.target.value)}
@@ -540,37 +587,37 @@ export function AgendamentosClient({
             )}
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">Status Inicial</label>
+              <label className="text-xs font-bold text-[var(--color-text)]">Status Inicial</label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setWalkInStatus("IN_PROGRESS")}
-                  className={`p-3 rounded-xl border text-xs font-bold transition-all text-left ${
+                  className={`p-3 rounded-[var(--radius-control)] border text-xs font-bold transition-all text-left ${
                     walkInStatus === "IN_PROGRESS"
-                      ? "border-purple-600 bg-purple-50 text-purple-900 shadow-xs"
-                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                      ? "border-[var(--color-primary)] bg-[var(--color-primary-light)] text-[var(--color-text-heading)] shadow-xs"
+                      : "border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-subtle)]"
                   }`}
                 >
                   <span>💺 Já na Cadeira</span>
-                  <p className="text-[10px] font-normal text-slate-500 mt-0.5">Em atendimento agora</p>
+                  <p className="text-[var(--text-2xs)] font-normal text-[var(--color-text-muted)] mt-0.5">Em atendimento agora</p>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setWalkInStatus("CONFIRMED")}
-                  className={`p-3 rounded-xl border text-xs font-bold transition-all text-left ${
+                  className={`p-3 rounded-[var(--radius-control)] border text-xs font-bold transition-all text-left ${
                     walkInStatus === "CONFIRMED"
-                      ? "border-blue-600 bg-blue-50 text-blue-900 shadow-xs"
-                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                      ? "border-[var(--color-info-border)] bg-[var(--color-info-light)] text-[var(--color-info)] shadow-xs"
+                      : "border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-subtle)]"
                   }`}
                 >
                   <span>🛋️ Na Recepção</span>
-                  <p className="text-[10px] font-normal text-slate-500 mt-0.5">Aguardando vez</p>
+                  <p className="text-[var(--text-2xs)] font-normal text-[var(--color-text-muted)] mt-0.5">Aguardando vez</p>
                 </button>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+            <div className="flex justify-end gap-2 pt-3 border-t border-[var(--color-border)]">
               <button
                 type="button"
                 onClick={() => setShowWalkInModal(false)}
@@ -599,18 +646,18 @@ export function AgendamentosClient({
           size="md"
         >
           <div className="space-y-5">
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-1">
-              <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Cliente / Agendamento</p>
-              <h3 className="text-sm font-extrabold text-slate-900">
+            <div className="bg-[var(--color-bg-subtle)] p-4 rounded-[var(--radius-card)] border border-[var(--color-border)] space-y-1">
+              <p className="text-xs text-[var(--color-text-muted)] font-bold uppercase tracking-wider">Cliente / Agendamento</p>
+              <h3 className="text-sm font-semibold text-[var(--color-text-heading)]">
                 {selectedNoShowBooking.customerName}
               </h3>
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {selectedNoShowBooking.scheduledDate.split("-").reverse().join("/")} às {selectedNoShowBooking.scheduledStartTime}
               </p>
             </div>
 
             <div className="space-y-3">
-              <p className="text-xs font-extrabold text-slate-800">
+              <p className="text-xs font-semibold text-[var(--color-text)]">
                 O cliente avisou previamente que não poderia comparecer?
               </p>
 
@@ -619,13 +666,13 @@ export function AgendamentosClient({
                   type="button"
                   disabled={isPending}
                   onClick={() => handleConfirmNoShow(true)}
-                  className="p-4 rounded-2xl bg-slate-100 hover:bg-slate-200 border border-slate-300/80 text-left transition-all cursor-pointer space-y-1 disabled:opacity-50"
+                  className="p-4 rounded-[var(--radius-card)] bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] border border-[var(--color-border-strong)] text-left transition-all cursor-pointer space-y-1 disabled:opacity-50"
                 >
-                  <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-slate-600" />
+                  <span className="text-xs font-semibold text-[var(--color-text-heading)] flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-[var(--color-text-muted)]" />
                     Sim, Avisou Previamente
                   </span>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[var(--text-2xs)] text-[var(--color-text-muted)]">
                     Marca como Cancelado regular. Não penaliza o contador de faltas do cliente.
                   </p>
                 </button>
@@ -634,13 +681,13 @@ export function AgendamentosClient({
                   type="button"
                   disabled={isPending}
                   onClick={() => handleConfirmNoShow(false)}
-                  className="p-4 rounded-2xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-left transition-all cursor-pointer space-y-1 disabled:opacity-50"
+                  className="p-4 rounded-[var(--radius-card)] bg-[var(--color-danger-light)] hover:bg-[var(--color-danger-light)] border border-[var(--color-danger-border)] text-left transition-all cursor-pointer space-y-1 disabled:opacity-50"
                 >
-                  <span className="text-xs font-black text-rose-900 flex items-center gap-1.5">
-                    <AlertTriangle className="w-4 h-4 text-rose-600" />
+                  <span className="text-xs font-semibold text-[var(--color-danger)] flex items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4 text-[var(--color-danger)]" />
                     Não, Faltou Sem Aviso (No-Show)
                   </span>
-                  <p className="text-[11px] text-rose-700">
+                  <p className="text-[var(--text-2xs)] text-[var(--color-danger)]">
                     Grava falta sem aviso. Soma +1 no histórico de no-show do cliente.
                   </p>
                 </button>

@@ -1,0 +1,94 @@
+name: CI
+
+# Roda em todo push e PR. Antes não havia nada: nenhuma verificação automática
+# entre "funciona na minha máquina" e produção.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+concurrency:
+  # Um push novo cancela a execução anterior do mesmo branch
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck, testes e build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: booking_ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/booking_ci
+      REDIS_URL: redis://localhost:6379
+      # Segredos de teste — nunca reutilizar em ambiente real
+      BETTER_AUTH_SECRET: ci-secret-not-used-in-production
+      AUTH_SECRET: ci-secret-not-used-in-production
+      ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Gerar Prisma Client
+        run: pnpm exec prisma generate
+
+      - name: Aplicar migrations
+        run: pnpm exec prisma migrate deploy
+
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit
+
+      - name: Testes unitários
+        run: pnpm exec vitest run
+
+      - name: Testes de integração (banco real)
+        run: pnpm exec vitest run
+        env:
+          RUN_DB_TESTS: "1"
+
+      - name: Build de produção
+        run: pnpm exec next build
+
+      # O lint ainda tem dívida herdada (any, imports não usados). Roda para dar
+      # visibilidade sem travar o merge; quando o número zerar, remover o
+      # `continue-on-error` e ele vira obrigatório.
+      - name: Lint (informativo)
+        run: pnpm exec eslint src
+        continue-on-error: true
