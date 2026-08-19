@@ -13,12 +13,27 @@ export default async function PerfilPage() {
       email: true,
       bio: true,
       location: true,
+      role: true,
+      twoFactorEnabled: true,
       notificationPrefs: true,
+      companyUsers: { where: { isActive: true }, select: { role: true } },
     },
   });
   if (!user) notFound();
 
   const prefs = user.notificationPrefs;
+
+  /**
+   * Quem administra empresa não escolhe se usa verificação em duas etapas.
+   *
+   * A conta de OWNER/MANAGER alcança token de gateway de pagamento, a agenda
+   * inteira do negócio e a carteira de clientes; a de super admin alcança tudo
+   * isso em todos os tenants. Deixar opcional para esses papéis é o mesmo que
+   * não ter.
+   */
+  const twoFactorRequired =
+    user.role === "admin" ||
+    user.companyUsers.some((m) => m.role === "OWNER" || m.role === "MANAGER");
 
   return (
     <PerfilClient
@@ -26,6 +41,8 @@ export default async function PerfilPage() {
       email={user.email}
       bio={user.bio ?? ""}
       location={user.location ?? ""}
+      twoFactorEnabled={user.twoFactorEnabled ?? false}
+      twoFactorRequired={twoFactorRequired}
       notifPrefs={{
         enableEmail:     prefs?.enableEmail     ?? true,
         enablePush:      prefs?.enablePush      ?? true,

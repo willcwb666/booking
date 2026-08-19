@@ -133,6 +133,8 @@ model User {
   // better-auth admin plugin
   role          String?
   banned        Boolean?  @default(false)
+  // better-auth twoFactor plugin
+  twoFactorEnabled Boolean? @default(false)
   banReason     String?
   banExpires    DateTime?
 
@@ -158,6 +160,7 @@ model User {
   pushTokens            PushToken[]
   notificationPrefs     UserNotificationPreference?
   calendarIntegrations  CalendarIntegration[]
+  twoFactors            TwoFactor[]
 
   @@unique([email])
   @@map("user")
@@ -252,6 +255,25 @@ model Account {
 
   @@index([userId])
   @@map("account")
+}
+
+/**
+ * Segredo TOTP e códigos de recuperação — tabela do plugin `twoFactor`.
+ *
+ * O nome das colunas é ditado pelo plugin, não por nós: `backupCodes` guarda a
+ * lista serializada e criptografada, e o better-auth queima cada código no uso.
+ * Escrever isso à mão seria reimplementar o que já veio no pacote.
+ */
+model TwoFactor {
+  id          String  @id
+  secret      String
+  backupCodes String
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([secret])
+  @@index([userId])
+  @@map("two_factor")
 }
 
 model Verification {

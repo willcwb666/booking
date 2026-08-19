@@ -90,6 +90,54 @@ export async function sendPasswordResetEmail({
   }
 }
 
+/**
+ * Código de verificação em duas etapas.
+ *
+ * Diferente dos demais e-mails do sistema, uma falha aqui trava o login de
+ * alguém — mas ainda assim não relança: quem chama é o plugin de auth, e uma
+ * exceção ali vira erro de login sem explicação. O usuário tem TOTP e códigos
+ * de recuperação como caminhos alternativos.
+ */
+export async function sendTwoFactorOtpEmail({
+  to,
+  userName,
+  code,
+}: {
+  to: string;
+  userName: string;
+  code: string;
+}) {
+  try {
+    await resend.emails.send({
+      from: FROM,
+      to,
+      subject: `${code} é o seu código de acesso — Kreator`,
+      html: `
+        <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
+          <h2 style="color:#1d4ed8;margin-bottom:4px">Código de verificação</h2>
+          <p style="color:#6b7280;margin-top:0">Olá, ${escapeHtml(userName)}.</p>
+          <p style="color:#374151">
+            Use o código abaixo para concluir seu login. Ele vale por poucos
+            minutos e só pode ser usado uma vez.
+          </p>
+          <p style="margin:24px 0">
+            <span style="display:inline-block;background:#f3f4f6;color:#111827;padding:16px 28px;border-radius:8px;font-size:28px;font-weight:bold;letter-spacing:6px;font-family:monospace">
+              ${escapeHtml(code)}
+            </span>
+          </p>
+          <p style="color:#9ca3af;font-size:12px">
+            Se não foi você que tentou entrar, alguém tem a sua senha.
+            Troque-a agora — o código sozinho não dá acesso a nada.
+          </p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:32px">Kreator · Agendamentos online</p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("[email] 2fa otp failed:", err);
+  }
+}
+
 type BookingEmailData = {
   to: string;
   customerName: string;

@@ -1,9 +1,13 @@
 import "server-only";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { admin } from "better-auth/plugins";
+import { admin, twoFactor } from "better-auth/plugins";
 import { db } from "@/lib/db";
-import { sendVerificationEmail, sendPasswordResetEmail } from "@/lib/email";
+import {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendTwoFactorOtpEmail,
+} from "@/lib/email";
 import { detectSessionClient, enforceSingleWebSession } from "@/lib/session-policy";
 import { writeAuditRow } from "@/lib/audit";
 
@@ -14,6 +18,9 @@ export const googleAuthEnabled = Boolean(
 );
 
 export const auth = betterAuth({
+  // Vira o "issuer" do TOTP — é o nome que aparece no app autenticador do
+  // usuário, ao lado do código de 6 dígitos.
+  appName: "Kreator",
   database: prismaAdapter(db, {
     provider: "postgresql",
   }),
@@ -122,7 +129,32 @@ export const auth = betterAuth({
       });
     },
   },
-  plugins: [admin()],
+  plugins: [
+    admin(),
+    /**
+     * Verificação em duas etapas.
+     *
+     * Canais: TOTP (app autenticador) como principal, OTP por e-mail como
+     * alternativa, e códigos de recuperação de uso único.
+     *
+     * WhatsApp foi deliberadamente deixado de fora, apesar de o desenho
+     * original pedir. É o canal mais fraco disponível para segundo fator:
+     * SIM swap é ataque corrente no Brasil, e a Meta restringe template de OTP
+     * — ou seja, seria mais frágil e mais burocrático que as duas opções
+     * acima. TOTP é offline, grátis e resistente a troca de chip.
+     */
+    twoFactor({
+      otpOptions: {
+        async sendOTP({ user, otp }) {
+          await sendTwoFactorOtpEmail({
+            to: user.email,
+            userName: user.name || user.email,
+            code: otp,
+          });
+        },
+      },
+    }),
+  ],
   user: {
     additionalFields: {
       bio: {

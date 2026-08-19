@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition, useRef, useState } from "react";
+import { TwoFactorPanel } from "@/components/ui/two-factor-panel";
 import {
   updateProfileAction,
   changePasswordAction,
@@ -23,6 +24,8 @@ type Props = {
   bio: string;
   location: string;
   notifPrefs: NotifPrefs;
+  twoFactorEnabled: boolean;
+  twoFactorRequired: boolean;
 };
 
 type Tab = "perfil" | "seguranca" | "notificacoes";
@@ -266,7 +269,15 @@ function NotificacoesForm({ prefs }: { prefs: NotifPrefs }) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export function PerfilClient({ name, email, bio, location, notifPrefs }: Props) {
+export function PerfilClient({
+  name,
+  email,
+  bio,
+  location,
+  notifPrefs,
+  twoFactorEnabled,
+  twoFactorRequired,
+}: Props) {
   const [tab, setTab] = useState<Tab>("perfil");
 
   const tabs: { id: Tab; label: string }[] = [
@@ -310,12 +321,26 @@ export function PerfilClient({ name, email, bio, location, notifPrefs }: Props) 
         )}
 
         {tab === "seguranca" && (
-          <div className="card card-body">
-            <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-1">Alterar senha</h2>
-            <p className="text-xs text-[var(--color-text-muted)] mb-4">
-              Depois de alterar a senha, você continuará logado neste dispositivo.
-            </p>
-            <PasswordForm />
+          <div className="space-y-6">
+            {/* Verificação em duas etapas vem antes da senha: é a decisão de
+                segurança que muda mais e a que o usuário não sabe que existe. */}
+            <div className="card card-body">
+              <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-1">
+                Verificação em duas etapas
+              </h2>
+              <p className="text-xs text-[var(--color-text-muted)] mb-4">
+                Uma segunda prova de identidade no login, além da senha.
+              </p>
+              <TwoFactorPanel enabled={twoFactorEnabled} required={twoFactorRequired} />
+            </div>
+
+            <div className="card card-body">
+              <h2 className="text-sm font-semibold text-[var(--color-text-heading)] mb-1">Alterar senha</h2>
+              <p className="text-xs text-[var(--color-text-muted)] mb-4">
+                Depois de alterar a senha, você continuará logado neste dispositivo.
+              </p>
+              <PasswordForm />
+            </div>
           </div>
         )}
 
