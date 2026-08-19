@@ -6,12 +6,24 @@ import { Users, AlertTriangle, ShieldCheck, Info } from "@/components/ui/icons";
 type Props = {
   maxAllowedNoShows: number;
   onChangeMaxAllowedNoShows: (val: number) => void;
+  requireDeposit: boolean;
+  onChangeRequireDeposit: (val: boolean) => void;
+  depositPercentage: number;
+  onChangeDepositPercentage: (val: number) => void;
+  dynamicDeposit: boolean;
+  onChangeDynamicDeposit: (val: boolean) => void;
   canEdit: boolean;
 };
 
 export function CustomersTab({
   maxAllowedNoShows,
   onChangeMaxAllowedNoShows,
+  requireDeposit,
+  onChangeRequireDeposit,
+  depositPercentage,
+  onChangeDepositPercentage,
+  dynamicDeposit,
+  onChangeDynamicDeposit,
   canEdit,
 }: Props) {
   const isDefault = maxAllowedNoShows === 2;
@@ -121,14 +133,116 @@ export function CustomersTab({
                 <span>Proteção no Agendamento Público Online</span>
               </div>
               <p className="text-xs text-[var(--color-primary)] leading-relaxed">
-                Quando o cliente tentar agendar sozinho pelo portal público, o agendamento gratuito será bloqueado e o sistema
+                Ao passar deste limite, o cliente que agendar pelo portal público
                 <strong className="block mt-1 font-bold text-[var(--color-text-heading)]">
-                  exigirá pagamento/sinal prévio obrigatório
-                </strong> para confirmar a reserva.
+                  paga o valor integral antecipado
+                </strong>
+                para confirmar a reserva. Exige o sinal por confiança ligado abaixo.
               </p>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Sinal por faixa de confiança ─────────────────────────────────── */}
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-6 space-y-6 shadow-xs">
+        <div className="flex items-center gap-3 border-b border-[var(--color-border)] pb-4">
+          <span className="p-2.5 rounded-[var(--radius-card)] bg-[var(--color-primary-light)] text-[var(--color-primary)] border border-[var(--color-primary)]">
+            <ShieldCheck className="w-5 h-5" />
+          </span>
+          <div>
+            <h2 className="text-base font-semibold text-[var(--color-text-heading)]">
+              Sinal de reserva
+            </h2>
+            <p className="text-xs text-[var(--color-text-muted)]">
+              Quanto o cliente paga adiantado para segurar o horário.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={requireDeposit}
+              disabled={!canEdit}
+              onChange={(e) => onChangeRequireDeposit(e.target.checked)}
+              className="mt-0.5"
+            />
+            <span>
+              <span className="block text-xs font-bold text-[var(--color-text-heading)]">
+                Cobrar sinal de todos os clientes
+              </span>
+              <span className="block text-[var(--text-2xs)] text-[var(--color-text-muted)] leading-relaxed">
+                Todo agendamento online paga a porcentagem abaixo, sem distinção.
+              </span>
+            </span>
+          </label>
+
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={dynamicDeposit}
+              disabled={!canEdit}
+              onChange={(e) => onChangeDynamicDeposit(e.target.checked)}
+              className="mt-0.5"
+            />
+            <span>
+              <span className="block text-xs font-bold text-[var(--color-text-heading)]">
+                Cobrar só de quem tem falta registrada
+              </span>
+              <span className="block text-[var(--text-2xs)] text-[var(--color-text-muted)] leading-relaxed">
+                Substitui a regra acima. Cliente fiel agenda sem pagar nada adiantado.
+              </span>
+            </span>
+          </label>
+        </div>
+
+        <div className="space-y-1.5 border-t border-[var(--color-border)] pt-4">
+          <label className="block text-xs font-bold text-[var(--color-text)]">
+            Porcentagem do sinal
+          </label>
+          <div className="flex items-center gap-3">
+            <input
+              type="number"
+              min={1}
+              max={100}
+              value={depositPercentage}
+              onChange={(e) => onChangeDepositPercentage(Number(e.target.value) || 1)}
+              disabled={!canEdit || (!requireDeposit && !dynamicDeposit)}
+              className="w-32 px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-sm font-semibold text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
+            />
+            <span className="text-xs text-[var(--color-text-muted)] font-medium">
+              % do valor do serviço
+            </span>
+          </div>
+        </div>
+
+        {dynamicDeposit && (
+          <div className="border-t border-[var(--color-border)] pt-4 space-y-2">
+            <p className="text-xs font-bold text-[var(--color-text)] flex items-center gap-1.5">
+              <Info className="w-3.5 h-3.5 text-[var(--color-text-subtle)]" />
+              Quem paga o quê
+            </p>
+            {/* As faixas saem de contadores que o dono já vê na ficha do cliente.
+                Um número opaco decidindo cobrar dinheiro é indefensável numa
+                conversa com o cliente; estas quatro linhas cabem numa frase. */}
+            <dl className="text-[var(--text-2xs)] leading-relaxed divide-y divide-[var(--color-border)]">
+              {[
+                ["Confiável", "3+ atendimentos concluídos, sem falta recente", "Não paga sinal"],
+                ["Neutro", "Primeiro agendamento ou histórico curto", "Não paga sinal"],
+                ["Risco", "Faltou nos últimos 180 dias", `Paga ${depositPercentage}%`],
+                ["Bloqueado", `Passou de ${maxAllowedNoShows} faltas`, "Paga 100% adiantado"],
+              ].map(([tier, rule, charge]) => (
+                <div key={tier} className="grid grid-cols-[5rem_1fr_auto] gap-3 py-1.5">
+                  <dt className="font-semibold text-[var(--color-text-heading)]">{tier}</dt>
+                  <dd className="text-[var(--color-text-muted)]">{rule}</dd>
+                  <dd className="font-medium text-[var(--color-text)] text-right">{charge}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
       </div>
     </div>
   );

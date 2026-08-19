@@ -1,5 +1,9 @@
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+import { resolveDeposit } from "@/lib/trust-tier";
+import { getCustomerTrust } from "@/server/queries/customer-trust";
 import { CheckoutClient } from "./checkout-client";
 
 export default async function CheckoutPage({
@@ -88,7 +92,32 @@ export default async function CheckoutPage({
 
   const paymentSettings = await db.companyPaymentSettings.findUnique({
     where: { companyId: estimate.companyId },
-    select: { requireDeposit: true, depositPercentage: true },
+    select: { requireDeposit: true, depositPercentage: true, dynamicDeposit: true },
+  });
+
+  /**
+   * Sinal exibido no checkout.
+   *
+   * A faixa é resolvida a partir do e-mail da SESSÃO, nunca de um e-mail
+   * digitado. Consultar a faixa por e-mail arbitrário seria um oráculo público:
+   * qualquer pessoa descobriria quem tem falta registrada em qualquer empresa,
+   * e poderia varrer uma lista para mapear a carteira de clientes. Por isso não
+   * existe action pública que receba e-mail e devolva a faixa.
+   *
+   * Consequência aceita: quem agenda sem login vê o sinal da faixa neutra. O
+   * servidor continua sendo a autoridade — `createBookingAction` reavalia a
+   * faixa pelo e-mail informado e cobra o que for devido.
+   */
+  const session = await auth.api.getSession({ headers: await headers() });
+  const trust = await getCustomerTrust({
+    companyId: estimate.companyId,
+    customerEmail: session?.user.email ?? null,
+  });
+  const depositPolicy = resolveDeposit({
+    dynamicDeposit: paymentSettings?.dynamicDeposit ?? false,
+    requireDeposit: paymentSettings?.requireDeposit ?? false,
+    depositPercentage: paymentSettings?.depositPercentage ?? 30,
+    trust,
   });
 
   const professionals = await db.professional.findMany({
@@ -123,8 +152,8 @@ export default async function CheckoutPage({
       currency={config.company.currency}
       locale={config.company.locale}
       businessType={config.company.businessType}
-      requireDeposit={paymentSettings?.requireDeposit ?? false}
-      depositPercentage={paymentSettings?.depositPercentage ?? 30}
+      requireDeposit={depositPolicy.percentage > 0}
+      depositPercentage={depositPolicy.percentage}
       agendaConfig={{
         startDate: agenda.startDate,
         endDate: agenda.endDate,

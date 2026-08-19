@@ -944,6 +944,11 @@ model CompanyPaymentSettings {
   pixKeyType      String?  // "cpf" | "cnpj" | "email" | "phone" | "random"
   requireDeposit  Boolean  @default(false)
   depositPercentage Float  @default(30)
+  // Sinal por faixa de confiança do cliente em vez de chave global.
+  // Padrão desligado de propósito: ligar muda quanto os clientes pagam, e essa
+  // troca é do dono — não pode ser efeito colateral de atualizar o sistema.
+  // Ver `src/lib/trust-tier.ts`.
+  dynamicDeposit  Boolean  @default(false)
   mercadoPagoAccessToken String? // encrypted
   updatedAt       DateTime @updatedAt
 

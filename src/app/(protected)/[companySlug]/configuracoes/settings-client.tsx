@@ -55,6 +55,9 @@ type Props = {
     cancellationFee: number;
     lateToleranceMinutes: number;
     maxAllowedNoShows?: number;
+    requireDeposit?: boolean;
+    depositPercentage?: number;
+    dynamicDeposit?: boolean;
     notifyEmailEnabled: boolean;
     notifyTextEnabled: boolean;
     notifySmsEnabled: boolean;
@@ -130,6 +133,9 @@ export function SettingsClient({
     cancellationFee: initial.cancellationFee ?? 0,
     lateToleranceMinutes: initial.lateToleranceMinutes ?? 15,
     maxAllowedNoShows: initial.maxAllowedNoShows ?? 2,
+    requireDeposit: initial.requireDeposit ?? false,
+    depositPercentage: initial.depositPercentage ?? 30,
+    dynamicDeposit: initial.dynamicDeposit ?? false,
   });
 
   const [formState, setFormState] = useState<UnifiedCompanySettingsPayload>(buildPayload);
@@ -273,6 +279,12 @@ export function SettingsClient({
           canEdit={canEdit}
           maxAllowedNoShows={formState.maxAllowedNoShows}
           onChangeMaxAllowedNoShows={(val) => handleChange("maxAllowedNoShows", val)}
+          requireDeposit={formState.requireDeposit ?? false}
+          onChangeRequireDeposit={(val) => handleChange("requireDeposit", val)}
+          depositPercentage={formState.depositPercentage ?? 30}
+          onChangeDepositPercentage={(val) => handleChange("depositPercentage", val)}
+          dynamicDeposit={formState.dynamicDeposit ?? false}
+          onChangeDynamicDeposit={(val) => handleChange("dynamicDeposit", val)}
         />
       )}
 

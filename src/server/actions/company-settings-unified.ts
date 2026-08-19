@@ -37,6 +37,8 @@ export type UnifiedCompanySettingsPayload = {
   // Sinal / Depósito Anti-No-Show
   requireDeposit?: boolean;
   depositPercentage?: number;
+  /** Cobra o sinal por faixa de confiança do cliente. Ver `src/lib/trust-tier.ts`. */
+  dynamicDeposit?: boolean;
 };
 
 export async function updateCompanySettingsUnifiedAction(
@@ -104,18 +106,16 @@ export async function updateCompanySettingsUnifiedAction(
     },
   });
 
-  if (payload.requireDeposit !== undefined) {
+  if (payload.requireDeposit !== undefined || payload.dynamicDeposit !== undefined) {
+    const deposit = {
+      requireDeposit: payload.requireDeposit ?? false,
+      depositPercentage: payload.depositPercentage ?? 30,
+      dynamicDeposit: payload.dynamicDeposit ?? false,
+    };
     await db.companyPaymentSettings.upsert({
       where: { companyId: targetCompanyId },
-      update: {
-        requireDeposit: payload.requireDeposit,
-        depositPercentage: payload.depositPercentage ?? 30,
-      },
-      create: {
-        companyId: targetCompanyId,
-        requireDeposit: payload.requireDeposit,
-        depositPercentage: payload.depositPercentage ?? 30,
-      },
+      update: deposit,
+      create: { companyId: targetCompanyId, ...deposit },
     });
   }
 

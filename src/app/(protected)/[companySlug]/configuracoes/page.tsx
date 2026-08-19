@@ -60,6 +60,11 @@ export default async function ConfiguracoesPage({
     }),
   ]);
 
+  const depositSettings = await db.companyPaymentSettings.findUnique({
+    where: { companyId: company.id },
+    select: { requireDeposit: true, depositPercentage: true, dynamicDeposit: true },
+  });
+
   return (
     <SettingsClient
       companySlug={companySlug}
@@ -78,6 +83,9 @@ export default async function ConfiguracoesPage({
         cancellationFee: Number(fullCompany?.cancellationFee ?? 0),
         lateToleranceMinutes: fullCompany?.lateToleranceMinutes ?? 15,
         maxAllowedNoShows: fullCompany?.maxAllowedNoShows ?? 2,
+        requireDeposit: depositSettings?.requireDeposit ?? false,
+        depositPercentage: depositSettings?.depositPercentage ?? 30,
+        dynamicDeposit: depositSettings?.dynamicDeposit ?? false,
         notifyEmailEnabled: fullCompany?.notifyEmailEnabled ?? true,
         notifyTextEnabled: fullCompany?.notifyTextEnabled ?? true,
         notifySmsEnabled: fullCompany?.notifySmsEnabled ?? false,

@@ -15,6 +15,8 @@ import { createCalendarEvent } from "@/lib/google-calendar";
 import { isSlotAvailable, resolveProfessionalForSlot, slotProfessionalKey } from "@/lib/agenda";
 import { calculateCancellationRefund, computeBookingCharge, roundMoney, toStripeCents } from "@/lib/pricing";
 import { notifyWaitlistForDate } from "@/lib/waitlist-notify";
+import { resolveDeposit } from "@/lib/trust-tier";
+import { getCustomerTrust } from "@/server/queries/customer-trust";
 import { randomUUID } from "crypto";
 import { enqueueNotification } from "@/lib/notification-outbox";
 
@@ -168,6 +170,20 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
   // Fetch company payment settings (needed for PIX)
   const paymentSettings = await db.companyPaymentSettings.findUnique({
     where: { companyId: estimate.companyId },
+  });
+
+  // Faixa de confiança do cliente — decide o sinal quando a empresa liga a
+  // regra dinâmica. Fica fora da transação de propósito: é leitura pura e não
+  // precisa segurar lock enquanto o agendamento é gravado.
+  const trust = await getCustomerTrust({
+    companyId: estimate.companyId,
+    customerEmail: email,
+  });
+  const depositPolicy = resolveDeposit({
+    dynamicDeposit: paymentSettings?.dynamicDeposit ?? false,
+    requireDeposit: paymentSettings?.requireDeposit ?? false,
+    depositPercentage: paymentSettings?.depositPercentage ?? 30,
+    trust,
   });
 
   // Validate PIX availability (PIX automático exige token do Mercado Pago;
@@ -507,8 +523,11 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
       membershipCovered,
       membershipDiscount,
       giftCardDebit,
-      requireDeposit: paymentSettings?.requireDeposit ?? false,
-      depositPercentage: paymentSettings?.depositPercentage ?? 30,
+      // `resolveDeposit` já reconciliou a chave global com a faixa do cliente:
+      // percentual zero significa "sem sinal", independente de qual das duas
+      // regras levou a isso.
+      requireDeposit: depositPolicy.percentage > 0,
+      depositPercentage: depositPolicy.percentage,
     });
 
     // Totalmente coberto (plano/pacote ou gift card): nada a cobrar online —
