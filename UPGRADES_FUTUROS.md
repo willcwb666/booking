@@ -43,7 +43,7 @@ menor. As features abaixo defendem essa posição; não a substituem.
 | 04 | Yield management | ✅ **Concluído** — `e7fa3ab`, só o desconto | — |
 | 13 | Estoque | ✅ **Concluído** — `f273dfb`, só o alerta | — |
 | 02 | Kreator Pass | ✅ **Concluído** — `4404d96` | — |
-| 11 | Drive-time & buffer de trânsito | **Fazer a versão barata** (haversine, sem Google) | 2–3 d |
+| 11 | Drive-time & buffer de trânsito | ✅ **Concluído** — `6124589`, haversine | — |
 | 09 | Before/After Vault | **Fazer o cofre, não a IA** | 5–6 d |
 | 14 | Metas da equipe | **Fazer só o painel individual** | 3 d |
 | 01 | i18n autônoma | **Fazer depois** — DDI agora, cache de tradução depois | 4–6 d |
@@ -71,7 +71,8 @@ Tudo calculado sobre dado que já existe. Nenhuma integração externa nova — 
 assim ficou: nenhum dos quatro precisou de serviço de terceiro.
 
 ### Bloco 3 — Diferenciação (4–6 semanas) — **em andamento**
-~~`02 Kreator Pass`~~ → `11 drive-time` → `09 vault` → `14 painel individual`
+~~`02 Kreator Pass`~~ → ~~`11 drive-time`~~ → `09 vault` →
+`14 painel individual`
 
 ### Bloco 4 — A aposta
 `07 AI Receptionist`, como módulo licenciado (`SystemModule` +
@@ -567,9 +568,11 @@ empresa.
 
 ---
 
-## 11. Drive-time & buffer de trânsito
+## 11. Drive-time & buffer de trânsito — ✅ CONCLUÍDO (`6124589`, 2026-08-19)
 
-**Veredito: fazer a versão barata.** Fica quase de graça porque a base já existe.
+**Veredito: fazer a versão barata.** Fica quase de graça porque a base já
+existe — e ficou: a haversine já estava escrita, e o bloqueio saiu como
+`ScheduleEvent`, que a agenda já sabia exibir e filtrar.
 
 ### A dor
 Serviço a domicílio (mecânico móvel, diarista, banho e tosa móvel, estética):
@@ -585,6 +588,37 @@ cliente às 14h no bairro A e às 15h no bairro B garante atraso.
 - O buffer entra como bloqueio na agenda, visível e editável
 
 Isso entrega ~80% do valor com zero dependência externa.
+
+### Três correções ao escopo acima
+**A reserva é nas duas pontas da janela, não só depois do atendimento.** Um
+bloco só na frente deixaria vendável o horário colado no atendimento seguinte,
+e quem o comprasse chegaria atrasado por construção. Reservar a viagem no
+início e no fim da janela deixa livre só o miolo — e quando a janela é menor
+que duas viagens, ela fecha inteira.
+
+**Existe teto por trecho (120 min por padrão).** Geocodificador que não acha a
+rua devolve o centroide do município, às vezes do errado; uma reta de trezentos
+quilômetros viraria quinze horas de bloqueio. Com teto, dado ruim vira erro
+limitado em vez de agenda destruída.
+
+**Distância zero não gera bloqueio.** Dois banhos na mesma casa, dois carros na
+mesma garagem: sem a regra, o recurso puniria o agendamento mais lucrativo do
+dia.
+
+### O trecho da base ficou de fora, e o motivo importa
+Reservar a viagem da base até o primeiro atendimento exigiria coordenada da
+empresa. O único campo que existe — `Company.latitude` — alimenta o geofence do
+check-in, que hoje é **pulado em toda empresa** porque nenhuma tela jamais
+preencheu esse campo. Gravá-lo aqui ligaria em silêncio uma validação que nunca
+rodou, e ela passaria a reprovar check-in legítimo. Isso é uma decisão do
+check-in, não desta ficha.
+
+### Geocodificação
+Nominatim do OpenStreetMap: gratuito, sem chave, com cache de um endereço por
+consulta na vida (`geocode_cache`) e no máximo uma requisição por segundo.
+Falha do provedor é tratada diferente de "endereço inexistente" — gravar uma
+queda de dois minutos como inexistente condenaria aquele endereço a uma semana
+sem proteção. Toda falha devolve nulo e o agendamento segue.
 
 ### Google Distance Matrix — depois, e só no plano superior
 Custa por requisição e exige conta de faturamento. E tem uma limitação que o
@@ -817,6 +851,14 @@ age sobre a conversão do trial, que é onde o funil vaza mais.
 
 ## Histórico
 
+- **2026-08-19 (noite, 2)** — **Item 11** concluído (`6124589`): reserva de
+  tempo de viagem entre atendimentos consecutivos, em linha reta, sem Google.
+  Três correções ao escopo da ficha — reserva nas duas pontas da janela, teto
+  por trecho e distância zero sem bloqueio — estão registradas acima. O trecho
+  da base até o primeiro atendimento ficou de fora por um achado colateral: o
+  geofence do check-in está pulado em toda empresa desde que foi construído,
+  porque `Company.latitude` nunca foi preenchido por tela nenhuma, e escrever
+  ali ligaria a validação em silêncio.
 - **2026-08-19 (noite)** — Bloco 2 executado e Bloco 3 aberto. **Item 06**
   (`9e13414`): o consentimento de marketing só existia para quem tinha conta, e
   a maioria agenda sem criar uma — "nunca escolheu" e "escolheu não receber"
