@@ -48,13 +48,13 @@ export function VIPExperienceSelector({ initialPreferences, onChange }: Props) {
   };
 
   return (
-    <div className="bg-[var(--color-bg)] border border-[var(--color-border)]/90 rounded-3xl p-5 sm:p-6 space-y-5 shadow-xs card-tactile text-left">
+    <div className="bg-[var(--color-bg)] border border-[var(--color-border)]/90 rounded-[var(--radius-panel)] p-5 sm:p-6 space-y-5 shadow-xs card-tactile text-left">
       <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-3">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-[var(--color-success)]" />
-          <h3 className="text-sm font-black text-[var(--color-text-heading)]">Personalize seu Atendimento VIP</h3>
+          <h3 className="text-sm font-semibold text-[var(--color-text-heading)]">Personalize seu Atendimento VIP</h3>
         </div>
-        <span className="text-[10px] font-bold text-[var(--color-text-muted)] bg-[var(--color-bg-subtle)] px-2 py-0.5 rounded-full">
+        <span className="text-[length:var(--text-2xs)] font-bold text-[var(--color-text-muted)] bg-[var(--color-bg-subtle)] px-2 py-0.5 rounded-full">
           Opcional · 1 Toque
         </span>
       </div>
@@ -76,7 +76,7 @@ export function VIPExperienceSelector({ initialPreferences, onChange }: Props) {
                   setConversationMode(key);
                   updatePreferences(key, welcomeDrink, sensitivityMode, customObservation);
                 }}
-                className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                className={`p-3 rounded-[var(--radius-panel)] border text-left transition-all cursor-pointer ${
                   isSelected
                     ? "bg-[var(--color-navy)] text-white border-[var(--color-border-strong)] shadow-xs ring-1 ring-[var(--color-border-strong)]"
                     : "bg-[var(--color-bg-subtle)] text-[var(--color-text)] border-[var(--color-border)] hover:bg-[var(--color-bg-subtle)]"
@@ -86,8 +86,8 @@ export function VIPExperienceSelector({ initialPreferences, onChange }: Props) {
                   <span className="text-base">{item.icon}</span>
                   {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-success)]" />}
                 </div>
-                <p className="text-xs font-black">{item.title}</p>
-                <p className={`text-[10px] mt-0.5 ${isSelected ? "text-[var(--color-text-subtle)]" : "text-[var(--color-text-muted)]"}`}>
+                <p className="text-xs font-semibold">{item.title}</p>
+                <p className={`text-[length:var(--text-2xs)] mt-0.5 ${isSelected ? "text-[var(--color-text-subtle)]" : "text-[var(--color-text-muted)]"}`}>
                   {item.subtitle}
                 </p>
               </button>
@@ -113,7 +113,7 @@ export function VIPExperienceSelector({ initialPreferences, onChange }: Props) {
                   setWelcomeDrink(key);
                   updatePreferences(conversationMode, key, sensitivityMode, customObservation);
                 }}
-                className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-[var(--radius-card)] border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   isSelected
                     ? "bg-[var(--color-success)] text-white border-[var(--color-success)] shadow-2xs"
                     : "bg-[var(--color-bg-subtle)] text-[var(--color-text)] border-[var(--color-border)] hover:bg-[var(--color-bg-subtle)]"
@@ -144,7 +144,7 @@ export function VIPExperienceSelector({ initialPreferences, onChange }: Props) {
                   setSensitivityMode(key);
                   updatePreferences(conversationMode, welcomeDrink, key, customObservation);
                 }}
-                className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-[var(--radius-card)] border text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   isSelected
                     ? "bg-[var(--color-navy)] text-white border-[var(--color-border-strong)] shadow-2xs"
                     : "bg-[var(--color-bg-subtle)] text-[var(--color-text)] border-[var(--color-border)] hover:bg-[var(--color-bg-subtle)]"

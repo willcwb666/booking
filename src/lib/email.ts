@@ -441,3 +441,59 @@ export async function sendBookingCompletedInvoiceEmail(data: CompletedInvoiceEma
     console.error("[email] invoice email failed:", err);
   }
 }
+
+export type PlatformBroadcastEmailData = {
+  to: string;
+  recipientName: string;
+  companyName: string;
+  title: string;
+  description: string;
+};
+
+/**
+ * Anúncio de novidades da plataforma para o responsável por uma empresa.
+ *
+ * Existe porque a tela de configurações do super admin oferecia um canal
+ * "E-mail" marcado por padrão, registrava no log de auditoria que o e-mail
+ * fora usado, e relatava "disparado com sucesso" — mas a action só criava a
+ * notificação do sino. Nenhum e-mail saía.
+ */
+export async function sendPlatformBroadcastEmail(data: PlatformBroadcastEmailData) {
+  const appUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+
+  return resend.emails.send({
+    from: FROM,
+    to: data.to,
+    subject: data.title,
+    html: `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#111827">
+        <p style="margin:0 0 4px 0;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#6b7280">
+          Novidades da plataforma
+        </p>
+        <h1 style="margin:0 0 20px 0;font-size:22px;line-height:1.3;color:#111827">
+          ${escapeHtml(data.title)}
+        </h1>
+
+        <p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;color:#374151">
+          Olá, ${escapeHtml(data.recipientName)}.
+        </p>
+
+        <div style="font-size:15px;line-height:1.6;color:#374151;white-space:pre-wrap;border-left:3px solid #e5e7eb;padding-left:16px;margin:0 0 24px 0">
+${escapeHtml(data.description)}
+        </div>
+
+        <p style="margin:0 0 32px 0">
+          <a href="${appUrl}"
+             style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600">
+            Abrir o painel
+          </a>
+        </p>
+
+        <p style="color:#9ca3af;font-size:12px;margin:0">
+          Enviado para a conta responsável por ${escapeHtml(data.companyName)}.
+        </p>
+        <p style="color:#9ca3af;font-size:12px;margin-top:24px">Agendei · Agendamentos online</p>
+      </div>
+    `,
+  });
+}

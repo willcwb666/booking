@@ -177,7 +177,7 @@ export function AddonCatalogClient({ modules }: Props) {
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Voltar para Gerenciador de Licenças</span>
           </Link>
-          <h1 className="text-xl sm:text-2xl font-black text-[var(--color-text-heading)] tracking-tight flex items-center gap-2.5">
+          <h1 className="text-xl sm:text-2xl font-semibold text-[var(--color-text-heading)] tracking-tight flex items-center gap-2.5">
             <span>Catálogo Oficial de Add-ons & Módulos</span>
             <span className="text-xs font-bold text-[var(--color-success)] bg-[var(--color-success-light)] border border-[var(--color-success-border)] px-2.5 py-0.5 rounded-full">
               {modules.length} Disponíveis
@@ -191,7 +191,7 @@ export function AddonCatalogClient({ modules }: Props) {
         <div className="flex items-center gap-2.5 self-stretch sm:self-auto">
           <Link
             href="/admin/modulos"
-            className="btn-tactile flex-1 sm:flex-none px-4 py-2.5 rounded-2xl bg-[var(--color-bg)] border border-[var(--color-border)] hover:bg-[var(--color-bg-subtle)] text-[var(--color-text)] text-xs font-extrabold shadow-2xs flex items-center justify-center gap-2"
+            className="btn-tactile flex-1 sm:flex-none px-4 py-2.5 rounded-[var(--radius-panel)] bg-[var(--color-bg)] border border-[var(--color-border)] hover:bg-[var(--color-bg-subtle)] text-[var(--color-text)] text-xs font-semibold shadow-2xs flex items-center justify-center gap-2"
           >
             <Zap className="w-3.5 h-3.5 text-[var(--color-warning)]" />
             <span>Liberar Licenças</span>
@@ -200,7 +200,7 @@ export function AddonCatalogClient({ modules }: Props) {
           <button
             type="button"
             onClick={handlePrint}
-            className="btn-tactile flex-1 sm:flex-none px-4 py-2.5 rounded-2xl bg-[var(--color-navy)] hover:bg-[var(--color-navy)] text-white text-xs font-extrabold shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+            className="btn-tactile flex-1 sm:flex-none px-4 py-2.5 rounded-[var(--radius-panel)] bg-[var(--color-navy)] hover:bg-[var(--color-navy)] text-white text-xs font-semibold shadow-xs flex items-center justify-center gap-2 cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Imprimir / Salvar em PDF</span>
@@ -212,7 +212,7 @@ export function AddonCatalogClient({ modules }: Props) {
       <div className="hidden print:block border-b-2 border-[var(--color-border-strong)] pb-4 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black text-[var(--color-text-heading)] tracking-tight">
+            <h1 className="text-2xl font-semibold text-[var(--color-text-heading)] tracking-tight">
               Kreator SaaS — Catálogo Oficial de Add-ons & Módulos
             </h1>
             <p className="text-xs text-[var(--color-text-muted)] font-medium mt-0.5">
@@ -228,28 +228,28 @@ export function AddonCatalogClient({ modules }: Props) {
 
       {/* ── Cards de Indicadores Executivos ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 print:grid-cols-4">
-        <div className="p-4 rounded-3xl bg-[var(--color-bg)] border border-[var(--color-border)]/90 shadow-2xs">
-          <span className="text-[11px] font-bold text-[var(--color-text-muted)] block">Total de Add-ons</span>
-          <p className="text-xl font-black text-[var(--color-text-heading)] mt-1">{modules.length} Módulos</p>
-          <span className="text-[10px] text-[var(--color-success)] font-bold mt-0.5 block">100% Modulares & Plugáveis</span>
+        <div className="p-4 rounded-[var(--radius-panel)] bg-[var(--color-bg)] border border-[var(--color-border)]/90 shadow-2xs">
+          <span className="text-[length:var(--text-xs)] font-bold text-[var(--color-text-muted)] block">Total de Add-ons</span>
+          <p className="text-xl font-semibold text-[var(--color-text-heading)] mt-1">{modules.length} Módulos</p>
+          <span className="text-[length:var(--text-2xs)] text-[var(--color-success)] font-bold mt-0.5 block">100% Modulares & Plugáveis</span>
         </div>
 
-        <div className="p-4 rounded-3xl bg-[var(--color-bg)] border border-[var(--color-border)]/90 shadow-2xs">
-          <span className="text-[11px] font-bold text-[var(--color-text-muted)] block">Categorias Comerciais</span>
-          <p className="text-xl font-black text-[var(--color-text-heading)] mt-1">4 Pilares</p>
-          <span className="text-[10px] text-[var(--color-text-muted)] font-medium mt-0.5 block">Vendas, Ops, Fin, IA</span>
+        <div className="p-4 rounded-[var(--radius-panel)] bg-[var(--color-bg)] border border-[var(--color-border)]/90 shadow-2xs">
+          <span className="text-[length:var(--text-xs)] font-bold text-[var(--color-text-muted)] block">Categorias Comerciais</span>
+          <p className="text-xl font-semibold text-[var(--color-text-heading)] mt-1">4 Pilares</p>
+          <span className="text-[length:var(--text-2xs)] text-[var(--color-text-muted)] font-medium mt-0.5 block">Vendas, Ops, Fin, IA</span>
         </div>
 
-        <div className="p-4 rounded-3xl bg-[var(--color-bg)] border border-[var(--color-border)]/90 shadow-2xs">
-          <span className="text-[11px] font-bold text-[var(--color-text-muted)] block">Potencial por Estabelecimento</span>
-          <p className="text-xl font-black text-[var(--color-success)] mt-1">{fmtCurrency(totalMonthlyPotential)}<span className="text-xs text-[var(--color-text-muted)] font-normal">/mês</span></p>
-          <span className="text-[10px] text-[var(--color-text-muted)] font-medium mt-0.5 block">Se contratado pacote full</span>
+        <div className="p-4 rounded-[var(--radius-panel)] bg-[var(--color-bg)] border border-[var(--color-border)]/90 shadow-2xs">
+          <span className="text-[length:var(--text-xs)] font-bold text-[var(--color-text-muted)] block">Potencial por Estabelecimento</span>
+          <p className="text-xl font-semibold text-[var(--color-success)] mt-1">{fmtCurrency(totalMonthlyPotential)}<span className="text-xs text-[var(--color-text-muted)] font-normal">/mês</span></p>
+          <span className="text-[length:var(--text-2xs)] text-[var(--color-text-muted)] font-medium mt-0.5 block">Se contratado pacote full</span>
         </div>
 
-        <div className="p-4 rounded-3xl bg-[var(--color-bg)] border border-[var(--color-border)]/90 shadow-2xs">
-          <span className="text-[11px] font-bold text-[var(--color-text-muted)] block">Modelo de Contratação</span>
-          <p className="text-xl font-black text-[var(--color-text-heading)] mt-1">Recorrente & Setup</p>
-          <span className="text-[10px] text-[var(--color-text-muted)] font-medium mt-0.5 block">Trial gratuito de 30 dias</span>
+        <div className="p-4 rounded-[var(--radius-panel)] bg-[var(--color-bg)] border border-[var(--color-border)]/90 shadow-2xs">
+          <span className="text-[length:var(--text-xs)] font-bold text-[var(--color-text-muted)] block">Modelo de Contratação</span>
+          <p className="text-xl font-semibold text-[var(--color-text-heading)] mt-1">Recorrente & Setup</p>
+          <span className="text-[length:var(--text-2xs)] text-[var(--color-text-muted)] font-medium mt-0.5 block">Trial gratuito de 30 dias</span>
         </div>
       </div>
 
@@ -266,7 +266,7 @@ export function AddonCatalogClient({ modules }: Props) {
                 key={catKey}
                 type="button"
                 onClick={() => setSelectedCategory(catKey)}
-                className={`px-3.5 py-2 rounded-2xl text-xs font-extrabold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
+                className={`px-3.5 py-2 rounded-[var(--radius-panel)] text-xs font-semibold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
                   isSelected
                     ? "bg-[var(--color-navy)] text-white shadow-xs"
                     : "bg-[var(--color-bg)] text-[var(--color-text)] border border-[var(--color-border)]/90 hover:bg-[var(--color-bg-subtle)]"
@@ -287,7 +287,7 @@ export function AddonCatalogClient({ modules }: Props) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar add-on por nome, benefício ou tecnologia..."
-            className="w-full bg-[var(--color-bg)] border border-[var(--color-border)]/90 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-[var(--color-text-heading)] placeholder:text-[var(--color-text-subtle)] font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-border-strong)]/10 focus:border-[var(--color-border-strong)] transition-all"
+            className="w-full bg-[var(--color-bg)] border border-[var(--color-border)]/90 rounded-[var(--radius-panel)] pl-10 pr-4 py-2.5 text-xs text-[var(--color-text-heading)] placeholder:text-[var(--color-text-subtle)] font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-border-strong)]/10 focus:border-[var(--color-border-strong)] transition-all"
           />
         </div>
       </div>
@@ -305,20 +305,20 @@ export function AddonCatalogClient({ modules }: Props) {
           return (
             <div
               key={m.id}
-              className="bg-[var(--color-bg)] rounded-3xl border border-[var(--color-border)]/90 p-5 sm:p-6 space-y-4 shadow-xs card-tactile flex flex-col justify-between print:rounded-2xl print:p-4 print:border-[var(--color-border)] print:shadow-none"
+              className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)]/90 p-5 sm:p-6 space-y-4 shadow-xs card-tactile flex flex-col justify-between print:rounded-[var(--radius-panel)] print:p-4 print:border-[var(--color-border)] print:shadow-none"
             >
               <div className="space-y-3.5">
                 {/* Header do Card */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-2xl bg-[var(--color-navy)] text-white flex items-center justify-center shadow-xs shrink-0 print:bg-[var(--color-bg-subtle)] print:text-[var(--color-text-heading)] print:border print:border-[var(--color-border)]">
+                    <div className="w-11 h-11 rounded-[var(--radius-panel)] bg-[var(--color-navy)] text-white flex items-center justify-center shadow-xs shrink-0 print:bg-[var(--color-bg-subtle)] print:text-[var(--color-text-heading)] print:border print:border-[var(--color-border)]">
                       <ModuleIcon name={m.icon} className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-black text-[var(--color-text-heading)] leading-tight">
+                      <h3 className="text-sm font-semibold text-[var(--color-text-heading)] leading-tight">
                         {m.name}
                       </h3>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block mt-1 border ${cat.bg} ${cat.text} ${cat.border}`}>
+                      <span className={`text-[length:var(--text-2xs)] font-bold px-2 py-0.5 rounded-full inline-block mt-1 border ${cat.bg} ${cat.text} ${cat.border}`}>
                         {cat.label}
                       </span>
                     </div>
@@ -332,13 +332,13 @@ export function AddonCatalogClient({ modules }: Props) {
 
                 {/* Lista de Benefícios de Negócio */}
                 <div className="space-y-1.5 pt-2 border-t border-[var(--color-border)]">
-                  <span className="text-[10px] font-extrabold text-[var(--color-text-subtle)] uppercase tracking-wider block">
+                  <span className="text-[length:var(--text-2xs)] font-semibold text-[var(--color-text-subtle)] uppercase tracking-wider block">
                     Benefícios de Alto Impacto:
                   </span>
                   {benefits.map((b, idx) => (
                     <div key={idx} className="flex items-start gap-1.5 text-xs text-[var(--color-text)]">
                       <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-success)] shrink-0 mt-0.5" />
-                      <span className="text-[11px] font-medium leading-tight">{b}</span>
+                      <span className="text-[length:var(--text-xs)] font-medium leading-tight">{b}</span>
                     </div>
                   ))}
                 </div>
@@ -347,26 +347,26 @@ export function AddonCatalogClient({ modules }: Props) {
               {/* Tabela de Preço & Modelo Comercial */}
               <div className="pt-3.5 border-t border-[var(--color-border)] flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] font-bold text-[var(--color-text-subtle)] block uppercase">
+                  <span className="text-[length:var(--text-2xs)] font-bold text-[var(--color-text-subtle)] block uppercase">
                     Investimento
                   </span>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-base font-black text-[var(--color-text-heading)]">
+                    <span className="text-base font-semibold text-[var(--color-text-heading)]">
                       {m.monthlyPrice > 0 ? fmtCurrency(m.monthlyPrice) : "Sob Consulta"}
                     </span>
                     {m.monthlyPrice > 0 && (
-                      <span className="text-[10px] font-bold text-[var(--color-text-muted)]">/mês</span>
+                      <span className="text-[length:var(--text-2xs)] font-bold text-[var(--color-text-muted)]">/mês</span>
                     )}
                   </div>
                   {m.lifetimePrice > 0 && (
-                    <span className="text-[10px] text-[var(--color-text-muted)] font-medium block">
+                    <span className="text-[length:var(--text-2xs)] text-[var(--color-text-muted)] font-medium block">
                       ou {fmtCurrency(m.lifetimePrice)} vitalício
                     </span>
                   )}
                 </div>
 
                 <div className="text-right">
-                  <span className="text-[10px] font-bold text-[var(--color-success)] bg-[var(--color-success-light)] border border-[var(--color-success-border)] px-2 py-0.5 rounded-full">
+                  <span className="text-[length:var(--text-2xs)] font-bold text-[var(--color-success)] bg-[var(--color-success-light)] border border-[var(--color-success-border)] px-2 py-0.5 rounded-full">
                     30 Dias Grátis
                   </span>
                   <span className="text-[9px] text-[var(--color-text-subtle)] block mt-1 font-mono">
@@ -380,11 +380,11 @@ export function AddonCatalogClient({ modules }: Props) {
       </div>
 
       {/* ── Resumo Geral de Preços para Apresentação / Proposta PDF ── */}
-      <div className="bg-[var(--color-bg)] rounded-3xl border border-[var(--color-border)]/90 p-6 space-y-4 shadow-xs print:rounded-none print:border-t-2 print:border-[var(--color-border-strong)] print:shadow-none">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)]/90 p-6 space-y-4 shadow-xs print:rounded-none print:border-t-2 print:border-[var(--color-border-strong)] print:shadow-none">
         <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-3">
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4 text-[var(--color-text)]" />
-            <h2 className="text-sm font-black text-[var(--color-text-heading)]">
+            <h2 className="text-sm font-semibold text-[var(--color-text-heading)]">
               Tabela Resumo de Investimento em Add-ons (Proposta Comercial)
             </h2>
           </div>
@@ -396,7 +396,7 @@ export function AddonCatalogClient({ modules }: Props) {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-[var(--color-border)] text-[var(--color-text-subtle)] font-extrabold uppercase text-[10px]">
+              <tr className="border-b border-[var(--color-border)] text-[var(--color-text-subtle)] font-semibold uppercase text-[length:var(--text-2xs)]">
                 <th className="pb-2">Módulo / Add-on</th>
                 <th className="pb-2">Categoria</th>
                 <th className="pb-2">Mensalidade</th>
@@ -407,7 +407,7 @@ export function AddonCatalogClient({ modules }: Props) {
             <tbody className="divide-y divide-[var(--color-border)]">
               {modules.map((m) => (
                 <tr key={m.id} className="hover:bg-[var(--color-bg-subtle)] transition-colors">
-                  <td className="py-2.5 font-black text-[var(--color-text-heading)] flex items-center gap-2">
+                  <td className="py-2.5 font-semibold text-[var(--color-text-heading)] flex items-center gap-2">
                     <ModuleIcon name={m.icon} className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
                     <span>{m.name}</span>
                   </td>
@@ -427,11 +427,11 @@ export function AddonCatalogClient({ modules }: Props) {
               ))}
             </tbody>
             <tfoot>
-              <tr className="border-t-2 border-[var(--color-border-strong)] font-black text-[var(--color-text-heading)] text-sm">
+              <tr className="border-t-2 border-[var(--color-border-strong)] font-semibold text-[var(--color-text-heading)] text-sm">
                 <td className="pt-3" colSpan={2}>
                   Pacote Completo (All Add-ons Bundle):
                 </td>
-                <td className="pt-3 text-[var(--color-success)] font-black text-base">
+                <td className="pt-3 text-[var(--color-success)] font-semibold text-base">
                   {fmtCurrency(totalMonthlyPotential)}/mês
                 </td>
                 <td className="pt-3 text-[var(--color-text-muted)] text-xs font-medium" colSpan={2}>

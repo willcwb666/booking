@@ -6,6 +6,7 @@ import type { PlatformSettingsData } from "@/lib/platform-settings";
 import { broadcastPlatformUpdatesAction } from "@/server/actions/broadcast-updates";
 import { getPlatformAuditLogsAction, type AuditLogItem } from "@/server/actions/audit";
 import { toast } from "@/lib/toast-service";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Settings,
   DollarSign,
@@ -14,7 +15,6 @@ import {
   AlertTriangle,
   Clock,
   Mail,
-  Phone,
   Bell,
   FileText,
 } from "@/components/ui/icons";
@@ -37,8 +37,25 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
   const [broadcastChannels, setBroadcastChannels] = useState({
     systemNotification: true,
     email: true,
-    whatsapp: false,
   });
+
+  /**
+   * Os campos desta tela editam estado local e só vão para o banco quando
+   * alguém clica em salvar. Sem nenhum aviso, dava para mexer em taxa,
+   * carência e política de sessão, trocar de aba ou fechar a página e perder
+   * tudo em silêncio — e nesta tela o que se perde é configuração de cobrança.
+   */
+  const hasUnsavedChanges =
+    JSON.stringify(settings) !== JSON.stringify(initialSettings);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    function warn(e: BeforeUnloadEvent) {
+      e.preventDefault();
+    }
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [hasUnsavedChanges]);
 
   useEffect(() => {
     async function loadAuditLogs() {
@@ -88,70 +105,51 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
 
   return (
     <div className="page-content space-y-8 pb-20">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs">
-          <Settings className="w-4 h-4" />
-          <span>Plataforma Super Admin</span>
-        </div>
-        <h1 className="text-2xl font-semibold text-[var(--color-text-heading)] tracking-tight mt-1">
-          Configurações Globais do Sistema
-        </h1>
-        <p className="text-xs text-[var(--color-text-muted)] mt-1">
-          Gerencie parâmetros operacionais, janelas de manutenção, anúncios de melhorias e rastreabilidade.
-        </p>
-      </div>
+      <PageHeader
+        category="Plataforma"
+        categoryIcon={<Settings className="w-3.5 h-3.5" />}
+        title="Configurações"
+        description="Parâmetros operacionais, janela de manutenção, anúncios e trilha de auditoria."
+        action={
+          hasUnsavedChanges ? (
+            <div className="flex items-center gap-3">
+              <span className="badge badge-warning">Alterações não salvas</span>
+              <button
+                type="button"
+                onClick={handleSaveSettings}
+                disabled={isPending}
+                className="btn btn-primary btn-sm"
+              >
+                {isPending ? "Salvando…" : "Salvar"}
+              </button>
+            </div>
+          ) : undefined
+        }
+      />
 
-      {/* Navegação por Abas no Padrão Stripe Tab Bar */}
-      <div className="bg-[var(--color-bg-muted)]/80 p-1.5 rounded-[var(--radius-control)] border border-[var(--color-border)]/60 inline-flex flex-wrap gap-1">
-        <button
-          type="button"
-          onClick={() => setTab("global")}
-          className={`px-4 py-2 text-xs font-semibold rounded-[var(--radius-control)] transition-all cursor-pointer flex items-center gap-2 ${
-            tab === "global"
-              ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80 font-bold"
-              : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] hover:bg-[var(--color-bg-muted)]/50"
-          }`}
-        >
-          <Settings className="w-4 h-4" />
-          <span>Configurações Globais & Taxas</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("maintenance")}
-          className={`px-4 py-2 text-xs font-semibold rounded-[var(--radius-control)] transition-all cursor-pointer flex items-center gap-2 ${
-            tab === "maintenance"
-              ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80 font-bold"
-              : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] hover:bg-[var(--color-bg-muted)]/50"
-          }`}
-        >
-          <AlertTriangle className="w-4 h-4" />
-          <span>Manutenção Programada</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("broadcast")}
-          className={`px-4 py-2 text-xs font-semibold rounded-[var(--radius-control)] transition-all cursor-pointer flex items-center gap-2 ${
-            tab === "broadcast"
-              ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80 font-bold"
-              : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] hover:bg-[var(--color-bg-muted)]/50"
-          }`}
-        >
-          <Bell className="w-4 h-4 text-[var(--color-warning)]" />
-          <span>Disparo de Melhorias</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("audit")}
-          className={`px-4 py-2 text-xs font-semibold rounded-[var(--radius-control)] transition-all cursor-pointer flex items-center gap-2 ${
-            tab === "audit"
-              ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80 font-bold"
-              : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] hover:bg-[var(--color-bg-muted)]/50"
-          }`}
-        >
-          <FileText className="w-4 h-4" />
-          <span>Audit Logs do Sistema</span>
-        </button>
+      <div className="scroller -mx-1 px-1">
+        <div className="segmented w-max" role="tablist" aria-label="Seções">
+          {(
+            [
+              { id: "global" as const, label: "Gerais" },
+              { id: "maintenance" as const, label: "Manutenção" },
+              { id: "broadcast" as const, label: "Anúncios" },
+              { id: "audit" as const, label: "Auditoria" },
+            ]
+          ).map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={tab === t.id}
+              data-active={tab === t.id}
+              onClick={() => setTab(t.id)}
+              className="segmented-item whitespace-nowrap"
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ABA 1: CONFIGURAÇÕES GLOBAIS & TAXAS */}
@@ -560,60 +558,86 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                 />
               </div>
 
-              {/* Canais de Disparo */}
-              <div className="p-4 bg-[var(--color-bg-subtle)] border border-[var(--color-border)]/80 rounded-[var(--radius-card)] space-y-3">
-                <span className="text-xs font-bold text-[var(--color-text-heading)] block">Canais de Envio Selecionados:</span>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <label className="flex items-center gap-3 p-3 bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] cursor-pointer shadow-2xs">
+              {/*
+                O canal "WhatsApp / Texto" saiu daqui. A integração não existe
+                no projeto: marcar a caixa fazia o payload registrar o canal no
+                log de auditoria e a tela dizer "disparado com sucesso" sem que
+                nenhuma mensagem saísse. Voltará junto com o envio.
+              */}
+              <fieldset className="p-4 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-card)] space-y-3">
+                <legend className="eyebrow mb-1">Canais</legend>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className="flex items-start gap-3 p-3 bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={broadcastChannels.systemNotification}
-                      onChange={(e) => setBroadcastChannels({ ...broadcastChannels, systemNotification: e.target.checked })}
-                      className="w-4 h-4 text-[var(--color-primary)] rounded"
+                      onChange={(e) =>
+                        setBroadcastChannels({
+                          ...broadcastChannels,
+                          systemNotification: e.target.checked,
+                        })
+                      }
+                      className="w-4 h-4 mt-0.5 shrink-0"
                     />
-                    <div className="flex items-center gap-2">
-                      <Bell className="w-4 h-4 text-[var(--color-primary)] shrink-0" />
-                      <span className="text-xs font-bold text-[var(--color-text-heading)]">Sino de Notificações</span>
-                    </div>
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-1.5 font-medium text-[var(--color-text-heading)]">
+                        <Bell className="w-3.5 h-3.5 text-[var(--color-text-subtle)]" />
+                        Sino do painel
+                      </span>
+                      <span
+                        className="block text-[var(--color-text-muted)]"
+                        style={{ fontSize: "var(--text-xs)" }}
+                      >
+                        Aparece para todos dentro do sistema
+                      </span>
+                    </span>
                   </label>
 
-                  <label className="flex items-center gap-3 p-3 bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] cursor-pointer shadow-2xs">
+                  <label className="flex items-start gap-3 p-3 bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={broadcastChannels.email}
-                      onChange={(e) => setBroadcastChannels({ ...broadcastChannels, email: e.target.checked })}
-                      className="w-4 h-4 text-[var(--color-primary)] rounded"
+                      onChange={(e) =>
+                        setBroadcastChannels({ ...broadcastChannels, email: e.target.checked })
+                      }
+                      className="w-4 h-4 mt-0.5 shrink-0"
                     />
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-[var(--color-info)] shrink-0" />
-                      <span className="text-xs font-bold text-[var(--color-text-heading)]">E-mail para Admins</span>
-                    </div>
-                  </label>
-
-                  <label className="flex items-center gap-3 p-3 bg-[var(--color-bg)] rounded-[var(--radius-control)] border border-[var(--color-border)] cursor-pointer shadow-2xs">
-                    <input
-                      type="checkbox"
-                      checked={broadcastChannels.whatsapp}
-                      onChange={(e) => setBroadcastChannels({ ...broadcastChannels, whatsapp: e.target.checked })}
-                      className="w-4 h-4 text-[var(--color-success)] rounded"
-                    />
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-[var(--color-success)] shrink-0" />
-                      <span className="text-xs font-bold text-[var(--color-text-heading)]">WhatsApp / Texto</span>
-                    </div>
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-1.5 font-medium text-[var(--color-text-heading)]">
+                        <Mail className="w-3.5 h-3.5 text-[var(--color-text-subtle)]" />
+                        E-mail
+                      </span>
+                      <span
+                        className="block text-[var(--color-text-muted)]"
+                        style={{ fontSize: "var(--text-xs)" }}
+                      >
+                        Só para o responsável de cada empresa ativa
+                      </span>
+                    </span>
                   </label>
                 </div>
-              </div>
+              </fieldset>
             </div>
 
-            <div className="pt-2 flex justify-end">
+            <div className="pt-2 flex items-center justify-end gap-3">
+              {!broadcastChannels.systemNotification && !broadcastChannels.email && (
+                <span
+                  className="text-[var(--color-text-muted)]"
+                  style={{ fontSize: "var(--text-sm)" }}
+                >
+                  Escolha ao menos um canal.
+                </span>
+              )}
               <button
                 type="button"
                 onClick={handleBroadcastSubmit}
-                disabled={isPending}
-                className="px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
+                disabled={
+                  isPending ||
+                  (!broadcastChannels.systemNotification && !broadcastChannels.email)
+                }
+                className="btn btn-primary btn-sm"
               >
-                <span>Disparar Novidades para Todos os Admins de Empresas</span>
+                {isPending ? "Enviando…" : "Enviar anúncio"}
               </button>
             </div>
           </div>

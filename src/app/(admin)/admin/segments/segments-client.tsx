@@ -91,21 +91,21 @@ export function SegmentsClient({ initialSegments }: { initialSegments: SegmentIt
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[var(--color-text-heading)] tracking-tight">Cadastro Dinâmico de Segmentos de Mercado</h1>
+          <h1 className="text-2xl font-semibold text-[var(--color-text-heading)] tracking-tight">Cadastro Dinâmico de Segmentos de Mercado</h1>
           <p className="text-xs text-[var(--color-text-muted)] mt-1">
             Adicione, edite, habilite ou desabilite os nichos de negócios que estarão disponíveis para novos clientes no Onboarding.
           </p>
         </div>
         <button
           onClick={handleOpenCreate}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-[var(--radius-card)] bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
         >
           + Criar Novo Segmento
         </button>
       </div>
 
       {/* Table / List */}
-      <div className="bg-[var(--color-bg)] rounded-2xl border border-[var(--color-border)] overflow-hidden shadow-sm">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -179,7 +179,7 @@ export function SegmentsClient({ initialSegments }: { initialSegments: SegmentIt
       {/* Modal (Criar / Editar Segmento) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[var(--color-bg)] rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-[var(--color-border)] animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-[var(--color-border)] animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
               <h3 className="text-lg font-bold text-[var(--color-text-heading)]">
                 {editingSegment ? "Editar Segmento" : "Novo Segmento de Negócio"}
@@ -188,7 +188,7 @@ export function SegmentsClient({ initialSegments }: { initialSegments: SegmentIt
             </div>
 
             {errorMsg && (
-              <div className="p-3.5 rounded-xl bg-[var(--color-danger-light)] border border-[var(--color-danger-border)] text-xs font-semibold text-[var(--color-danger)]">
+              <div className="p-3.5 rounded-[var(--radius-card)] bg-[var(--color-danger-light)] border border-[var(--color-danger-border)] text-xs font-semibold text-[var(--color-danger)]">
                 {errorMsg}
               </div>
             )}
@@ -206,7 +206,7 @@ export function SegmentsClient({ initialSegments }: { initialSegments: SegmentIt
                   required
                   defaultValue={editingSegment?.code || ""}
                   placeholder="Ex: DENTIST ou MECHANIC"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border-strong)] text-sm font-semibold uppercase focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-3.5 py-2.5 rounded-[var(--radius-card)] border border-[var(--color-border-strong)] text-sm font-semibold uppercase focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
@@ -220,7 +220,7 @@ export function SegmentsClient({ initialSegments }: { initialSegments: SegmentIt
                   required
                   defaultValue={editingSegment?.label || ""}
                   placeholder="Ex: Clínica Odontológica"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-3.5 py-2.5 rounded-[var(--radius-card)] border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
@@ -233,7 +233,7 @@ export function SegmentsClient({ initialSegments }: { initialSegments: SegmentIt
                   name="description"
                   defaultValue={editingSegment?.description || ""}
                   placeholder="Ex: Para dentistas, ortodontistas e clínicas médicas"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-3.5 py-2.5 rounded-[var(--radius-card)] border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
@@ -246,7 +246,7 @@ export function SegmentsClient({ initialSegments }: { initialSegments: SegmentIt
                   name="displayOrder"
                   required
                   defaultValue={editingSegment?.displayOrder ?? 0}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-3.5 py-2.5 rounded-[var(--radius-card)] border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
@@ -254,14 +254,14 @@ export function SegmentsClient({ initialSegments }: { initialSegments: SegmentIt
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2.5 text-xs font-bold text-[var(--color-text-muted)] hover:bg-[var(--color-bg-muted)] rounded-xl"
+                  className="px-5 py-2.5 text-xs font-bold text-[var(--color-text-muted)] hover:bg-[var(--color-bg-muted)] rounded-[var(--radius-card)]"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="px-6 py-2.5 text-xs font-bold text-white bg-[var(--color-navy)] hover:bg-[var(--color-navy-hover)] rounded-xl disabled:opacity-50"
+                  className="px-6 py-2.5 text-xs font-bold text-white bg-[var(--color-navy)] hover:bg-[var(--color-navy-hover)] rounded-[var(--radius-card)] disabled:opacity-50"
                 >
                   {isPending ? "Salvando..." : editingSegment ? "Salvar Alterações" : "Criar Segmento"}
                 </button>

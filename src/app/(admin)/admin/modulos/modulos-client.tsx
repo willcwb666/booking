@@ -187,7 +187,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
             <Tag className="w-4 h-4" />
             <span>Super Admin Marketplace</span>
           </div>
-          <h1 className="text-2xl font-extrabold text-[var(--color-text-heading)] tracking-tight mt-1">
+          <h1 className="text-2xl font-semibold text-[var(--color-text-heading)] tracking-tight mt-1">
             Gestão de Módulos Extras & Licenciamento
           </h1>
           <p className="text-xs text-[var(--color-text-muted)] mt-1">
@@ -218,9 +218,9 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
       </div>
 
       {/* TABELA DE MÓDULOS ATIVOS POR EMPRESA (Com Botões Renovação e Revogação) */}
-      <div className="bg-[var(--color-bg)] rounded-3xl border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-4 shadow-xs">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-4 shadow-xs">
         <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
-          <h2 className="text-base font-extrabold text-[var(--color-text-heading)]">Módulos Ativos por Empresa</h2>
+          <h2 className="text-base font-semibold text-[var(--color-text-heading)]">Módulos Ativos por Empresa</h2>
           <span className="text-xs text-[var(--color-text-muted)] font-medium">
             Total de {licensesList.length} licença(s) concedida(s)
           </span>
@@ -252,11 +252,11 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                     <td className="px-4 py-3 font-semibold text-[var(--color-primary)]">{lic.moduleName}</td>
                     <td className="px-4 py-3 text-center">
                       {lic.status === "TRIAL" ? (
-                        <span className="bg-[var(--color-warning-light)] text-[var(--color-warning)] text-[10px] font-black uppercase px-2.5 py-1 rounded-full">
+                        <span className="bg-[var(--color-warning-light)] text-[var(--color-warning)] text-[length:var(--text-2xs)] font-semibold uppercase px-2.5 py-1 rounded-full">
                           Degustação
                         </span>
                       ) : (
-                        <span className="bg-[var(--color-success-light)] text-[var(--color-success)] text-[10px] font-black uppercase px-2.5 py-1 rounded-full">
+                        <span className="bg-[var(--color-success-light)] text-[var(--color-success)] text-[length:var(--text-2xs)] font-semibold uppercase px-2.5 py-1 rounded-full">
                           Definitivo
                         </span>
                       )}
@@ -294,14 +294,14 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
       {/* MODAL MULTI-PASSO DE LIBERAÇÃO DE MÓDULOS */}
       {isWizardOpen && (
         <div className="fixed inset-0 z-50 bg-[var(--color-navy)]/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[var(--color-bg)] rounded-3xl border border-[var(--color-border)] shadow-2xl max-w-3xl w-full p-6 sm:p-8 space-y-6 animate-fadeIn">
+          <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] shadow-2xl max-w-3xl w-full p-6 sm:p-8 space-y-6 animate-fadeIn">
             {/* Header Wizard */}
             <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
               <div>
-                <span className="text-[10px] font-extrabold text-[var(--color-primary)] uppercase tracking-wider block">
+                <span className="text-[length:var(--text-2xs)] font-semibold text-[var(--color-primary)] uppercase tracking-wider block">
                   Passo {wizardStep} de 3
                 </span>
-                <h2 className="text-lg font-extrabold text-[var(--color-text-heading)]">
+                <h2 className="text-lg font-semibold text-[var(--color-text-heading)]">
                   {wizardStep === 1
                     ? "Passo 1: Seleção de Alvo (Individual ou por Segmento)"
                     : wizardStep === 2
@@ -316,12 +316,12 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
             {wizardStep === 1 && (
               <div className="space-y-5">
                 {/* Selector de Tipo */}
-                <div className="flex gap-4 p-1.5 bg-[var(--color-bg-muted)] rounded-2xl border border-[var(--color-border)]">
+                <div className="flex gap-4 p-1.5 bg-[var(--color-bg-muted)] rounded-[var(--radius-panel)] border border-[var(--color-border)]">
                   <button
                     type="button"
                     onClick={() => setGrantType("INDIVIDUAL")}
-                    className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${
-                      grantType === "INDIVIDUAL" ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs font-extrabold" : "text-[var(--color-text-muted)]"
+                    className={`flex-1 py-2.5 text-xs font-bold rounded-[var(--radius-card)] transition-all ${
+                      grantType === "INDIVIDUAL" ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs font-semibold" : "text-[var(--color-text-muted)]"
                     }`}
                   >
                     Empresas Individuais
@@ -329,8 +329,8 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                   <button
                     type="button"
                     onClick={() => setGrantType("GROUP")}
-                    className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${
-                      grantType === "GROUP" ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs font-extrabold" : "text-[var(--color-text-muted)]"
+                    className={`flex-1 py-2.5 text-xs font-bold rounded-[var(--radius-card)] transition-all ${
+                      grantType === "GROUP" ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs font-semibold" : "text-[var(--color-text-muted)]"
                     }`}
                   >
                     Em Grupo (Por Segmento)
@@ -346,17 +346,17 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                         placeholder="Digite o nome ou pedaço do nome da empresa para buscar..."
                         value={companySearch}
                         onChange={(e) => setCompanySearch(e.target.value)}
-                        className="w-full border border-[var(--color-border)] rounded-xl pl-10 pr-4 py-2.5 text-xs font-medium focus:ring-2 focus:ring-[var(--color-primary)]"
+                        className="w-full border border-[var(--color-border)] rounded-[var(--radius-card)] pl-10 pr-4 py-2.5 text-xs font-medium focus:ring-2 focus:ring-[var(--color-primary)]"
                       />
                     </div>
 
-                    <div className="max-h-60 overflow-y-auto border border-[var(--color-border)] rounded-2xl p-2 space-y-1 divide-y divide-[var(--color-border)]">
+                    <div className="max-h-60 overflow-y-auto border border-[var(--color-border)] rounded-[var(--radius-panel)] p-2 space-y-1 divide-y divide-[var(--color-border)]">
                       {filteredCompanies.map((c) => {
                         const isChecked = selectedCompanyIds.includes(c.id);
                         return (
                           <label
                             key={c.id}
-                            className={`flex items-center justify-between p-2.5 rounded-xl text-xs font-bold cursor-pointer transition-colors ${
+                            className={`flex items-center justify-between p-2.5 rounded-[var(--radius-card)] text-xs font-bold cursor-pointer transition-colors ${
                               isChecked ? "bg-[var(--color-primary-light)] text-[var(--color-primary)]" : "hover:bg-[var(--color-bg-subtle)] text-[var(--color-text)]"
                             }`}
                           >
@@ -368,9 +368,9 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                                 className="w-4 h-4 text-[var(--color-primary)] rounded"
                               />
                               <span>{c.name}</span>
-                              <span className="text-[10px] font-mono text-[var(--color-text-subtle)]">({c.slug})</span>
+                              <span className="text-[length:var(--text-2xs)] font-mono text-[var(--color-text-subtle)]">({c.slug})</span>
                             </div>
-                            <span className="text-[10px] font-bold uppercase bg-[var(--color-bg-muted)] text-[var(--color-text-muted)] px-2 py-0.5 rounded">
+                            <span className="text-[length:var(--text-2xs)] font-bold uppercase bg-[var(--color-bg-muted)] text-[var(--color-text-muted)] px-2 py-0.5 rounded">
                               {c.businessType}
                             </span>
                           </label>
@@ -378,7 +378,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                       })}
                     </div>
 
-                    <p className="text-[11px] text-[var(--color-text-muted)] font-bold">
+                    <p className="text-[length:var(--text-xs)] text-[var(--color-text-muted)] font-bold">
                       {selectedCompanyIds.length} empresa(s) selecionada(s)
                     </p>
                   </div>
@@ -395,7 +395,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                             key={seg.code}
                             type="button"
                             onClick={() => toggleSegmentSelect(seg.code)}
-                            className={`p-3 rounded-2xl border text-xs font-bold text-left flex items-center justify-between cursor-pointer transition-all ${
+                            className={`p-3 rounded-[var(--radius-panel)] border text-xs font-bold text-left flex items-center justify-between cursor-pointer transition-all ${
                               isChecked
                                 ? "bg-[var(--color-primary-light)] border-[var(--color-primary)]/40 text-[var(--color-primary)] shadow-2xs"
                                 : "bg-[var(--color-bg-subtle)] border-[var(--color-border)]/80 text-[var(--color-text)] hover:bg-[var(--color-bg-muted)]"
@@ -425,14 +425,14 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                     return (
                       <div
                         key={m.id}
-                        className={`p-4 rounded-2xl border transition-all text-xs space-y-3 ${
+                        className={`p-4 rounded-[var(--radius-panel)] border transition-all text-xs space-y-3 ${
                           cfg.enabled
                             ? "bg-[var(--color-primary-light)]/40 border-[var(--color-primary)]/40 shadow-2xs"
                             : "bg-[var(--color-bg-subtle)]/60 border-[var(--color-border)]/80 opacity-70"
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <label className="flex items-center gap-2 cursor-pointer font-extrabold text-[var(--color-text-heading)]">
+                          <label className="flex items-center gap-2 cursor-pointer font-semibold text-[var(--color-text-heading)]">
                             <input
                               type="checkbox"
                               checked={cfg.enabled}
@@ -446,7 +446,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                         {cfg.enabled && (
                           <div className="pt-2 border-t border-[var(--color-primary)]/20 space-y-2 animate-fadeIn">
                             <div className="flex items-center gap-3">
-                              <label className="flex items-center gap-1 cursor-pointer font-bold text-[var(--color-text)] text-[11px]">
+                              <label className="flex items-center gap-1 cursor-pointer font-bold text-[var(--color-text)] text-[length:var(--text-xs)]">
                                 <input
                                   type="radio"
                                   name={`type_${m.code}`}
@@ -457,7 +457,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                                 <span>Definitivo</span>
                               </label>
 
-                              <label className="flex items-center gap-1 cursor-pointer font-bold text-[var(--color-text)] text-[11px]">
+                              <label className="flex items-center gap-1 cursor-pointer font-bold text-[var(--color-text)] text-[length:var(--text-xs)]">
                                 <input
                                   type="radio"
                                   name={`type_${m.code}`}
@@ -471,7 +471,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
 
                             {cfg.isTrial && (
                               <div className="flex items-center gap-2 pt-1">
-                                <span className="text-[11px] font-bold text-[var(--color-text-muted)]">Dias de teste:</span>
+                                <span className="text-[length:var(--text-xs)] font-bold text-[var(--color-text-muted)]">Dias de teste:</span>
                                 <input
                                   type="number"
                                   min="1"
@@ -495,10 +495,10 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
             {/* PASSO 3: RESUMO & CONFIRMAÇÃO FINAL */}
             {wizardStep === 3 && (
               <div className="space-y-4 text-xs">
-                <div className="bg-[var(--color-bg-subtle)] p-5 rounded-2xl border border-[var(--color-border)] space-y-3">
+                <div className="bg-[var(--color-bg-subtle)] p-5 rounded-[var(--radius-panel)] border border-[var(--color-border)] space-y-3">
                   <div>
-                    <span className="text-[var(--color-text-subtle)] font-bold uppercase text-[10px] block">Alvo Selecionado</span>
-                    <p className="font-extrabold text-[var(--color-text-heading)]">
+                    <span className="text-[var(--color-text-subtle)] font-bold uppercase text-[length:var(--text-2xs)] block">Alvo Selecionado</span>
+                    <p className="font-semibold text-[var(--color-text-heading)]">
                       {grantType === "INDIVIDUAL"
                         ? `${selectedCompanyIds.length} empresa(s) individual(is)`
                         : `${selectedSegmentCodes.length} segmento(s) de mercado`}
@@ -506,7 +506,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                   </div>
 
                   <div>
-                    <span className="text-[var(--color-text-subtle)] font-bold uppercase text-[10px] block">Módulos a Liberar</span>
+                    <span className="text-[var(--color-text-subtle)] font-bold uppercase text-[length:var(--text-2xs)] block">Módulos a Liberar</span>
                     <ul className="list-disc pl-4 space-y-1 font-semibold text-[var(--color-primary)] mt-1">
                       {getSelectedModulesArray().map((m) => (
                         <li key={m.moduleCode}>
@@ -517,7 +517,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                     </ul>
                   </div>
 
-                  <div className="p-3 bg-[var(--color-warning-light)] rounded-xl border border-[var(--color-warning-border)] text-[var(--color-warning)] font-medium text-[11px]">
+                  <div className="p-3 bg-[var(--color-warning-light)] rounded-[var(--radius-card)] border border-[var(--color-warning-border)] text-[var(--color-warning)] font-medium text-[length:var(--text-xs)]">
                     Ao clicar em confirmar, os módulos serão liberados e as notificações no <strong>Sistema, E-mail, SMS e WhatsApp</strong> serão enviadas automaticamente.
                   </div>
                 </div>
@@ -530,7 +530,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                 <button
                   type="button"
                   onClick={() => setWizardStep((wizardStep - 1) as any)}
-                  className="px-4 py-2 bg-[var(--color-bg-muted)] text-[var(--color-text)] font-bold text-xs rounded-xl"
+                  className="px-4 py-2 bg-[var(--color-bg-muted)] text-[var(--color-text)] font-bold text-xs rounded-[var(--radius-card)]"
                 >
                   Voltar
                 </button>
@@ -550,7 +550,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                     }
                     setWizardStep((wizardStep + 1) as any);
                   }}
-                  className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-extrabold text-xs rounded-xl shadow-xs"
+                  className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold text-xs rounded-[var(--radius-card)] shadow-xs"
                 >
                   Avançar para Passo {wizardStep + 1}
                 </button>
@@ -559,7 +559,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                   type="button"
                   onClick={handleSaveWizard}
                   disabled={isPending}
-                  className="px-6 py-2.5 bg-[var(--color-success)] hover:bg-[var(--color-success)] text-white font-extrabold text-xs rounded-xl shadow-md cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
+                  className="px-6 py-2.5 bg-[var(--color-success)] hover:bg-[var(--color-success)] text-white font-semibold text-xs rounded-[var(--radius-card)] shadow-md cursor-pointer disabled:opacity-50 inline-flex items-center gap-2"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>{isPending ? "Liberando..." : "Confirmar & Salvar Liberação"}</span>

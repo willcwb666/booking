@@ -24,11 +24,11 @@ export function GhostSlotBanner({ offers, companySlug, configId }: Props) {
     : `/book/${companySlug}?slot=${topOffer.startTime}&pro=${topOffer.professionalId}&flash=true`;
 
   return (
-    <div className="bg-gradient-to-r from-[var(--color-warning)]/10 via-[var(--color-warning)]/5 to-transparent border border-[var(--color-warning-border)] rounded-3xl p-5 sm:p-6 my-5 relative overflow-hidden shadow-2xs card-tactile animate-in fade-in">
+    <div className="bg-gradient-to-r from-[var(--color-warning)]/10 via-[var(--color-warning)]/5 to-transparent border border-[var(--color-warning-border)] rounded-[var(--radius-panel)] p-5 sm:p-6 my-5 relative overflow-hidden shadow-2xs card-tactile animate-in fade-in">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1.5 flex-1">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-[var(--color-warning)] text-white shadow-2xs">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[length:var(--text-xs)] font-semibold bg-[var(--color-warning)] text-white shadow-2xs">
               <Zap className="w-3.5 h-3.5 animate-bounce" />
               <span>DESISTÊNCIA RELÂMPAGO</span>
             </span>
@@ -37,7 +37,7 @@ export function GhostSlotBanner({ offers, companySlug, configId }: Props) {
             </span>
           </div>
 
-          <h3 className="text-base font-black text-[var(--color-text-heading)]">
+          <h3 className="text-base font-semibold text-[var(--color-text-heading)]">
             Horário Vago com {topOffer.discountPercentage}% de Desconto Exclusivo!
           </h3>
 
@@ -56,17 +56,17 @@ export function GhostSlotBanner({ offers, companySlug, configId }: Props) {
         {/* Preço & CTA */}
         <div className="flex items-center gap-3 sm:self-center">
           <div className="text-right">
-            <span className="text-[10px] line-through text-[var(--color-text-subtle)] font-bold block">
+            <span className="text-[length:var(--text-2xs)] line-through text-[var(--color-text-subtle)] font-bold block">
               {fmtCurrency(topOffer.originalPrice)}
             </span>
-            <span className="text-lg font-black text-[var(--color-warning)]">
+            <span className="text-lg font-semibold text-[var(--color-warning)]">
               {fmtCurrency(topOffer.flashPrice)}
             </span>
           </div>
 
           <Link
             href={targetHref}
-            className="btn-tactile px-4 py-2.5 bg-[var(--color-navy)] hover:bg-[var(--color-navy)] text-white rounded-xl text-xs font-black shadow-xs inline-flex items-center gap-1.5 shrink-0"
+            className="btn-tactile px-4 py-2.5 bg-[var(--color-navy)] hover:bg-[var(--color-navy)] text-white rounded-[var(--radius-card)] text-xs font-semibold shadow-xs inline-flex items-center gap-1.5 shrink-0"
           >
             <span>Garantir Vaga</span>
             <ArrowRight className="w-3.5 h-3.5" />

@@ -135,14 +135,14 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[var(--color-text-heading)] tracking-tight">Templates de Serviços por Nicho</h1>
+          <h1 className="text-2xl font-semibold text-[var(--color-text-heading)] tracking-tight">Templates de Serviços por Nicho</h1>
           <p className="text-xs text-[var(--color-text-muted)] mt-1">
             Gerencie os modelos de serviços e extras pré-configurados que os novos clientes verão no Onboarding de 1 Clique.
           </p>
         </div>
         <button
           onClick={handleOpenCreate}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-[var(--radius-card)] bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
         >
           + Novo Preset de Serviço
         </button>
@@ -152,7 +152,7 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
       <div className="flex flex-wrap items-center gap-2 pb-4 border-b border-[var(--color-border)]">
         <button
           onClick={() => setSelectedType("ALL")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`px-4 py-2 rounded-[var(--radius-card)] text-xs font-bold transition-all cursor-pointer ${
             selectedType === "ALL"
               ? "bg-[var(--color-primary)] text-white shadow-xs"
               : "bg-[var(--color-bg)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-muted)] border border-[var(--color-border)]"
@@ -179,7 +179,7 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
       </div>
 
       {/* Table / List */}
-      <div className="bg-[var(--color-bg)] rounded-2xl border border-[var(--color-border)] overflow-hidden shadow-sm">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -208,11 +208,11 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                     <td className="py-4 px-5">
                       <div className="flex items-center gap-2">
                         {preset.isExtra ? (
-                          <span className="text-[10px] bg-[var(--color-primary-light)] text-[var(--color-primary)] font-bold px-2 py-0.5 rounded uppercase">
+                          <span className="text-[length:var(--text-2xs)] bg-[var(--color-primary-light)] text-[var(--color-primary)] font-bold px-2 py-0.5 rounded uppercase">
                             EXTRA
                           </span>
                         ) : (
-                          <span className="text-[10px] bg-[var(--color-primary-light)] text-[var(--color-primary)] font-bold px-2 py-0.5 rounded uppercase">
+                          <span className="text-[length:var(--text-2xs)] bg-[var(--color-primary-light)] text-[var(--color-primary)] font-bold px-2 py-0.5 rounded uppercase">
                             PRINCIPAL
                           </span>
                         )}
@@ -222,7 +222,7 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                         <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{preset.description}</p>
                       )}
                       {preset.parentTitle && (
-                        <p className="text-[11px] text-[var(--color-primary)] font-medium mt-0.5">
+                        <p className="text-[length:var(--text-xs)] text-[var(--color-primary)] font-medium mt-0.5">
                           Vencimento a: {preset.parentTitle}
                         </p>
                       )}
@@ -272,7 +272,7 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
       {/* Modal Modal (Criar/Editar) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[var(--color-bg)] rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-[var(--color-border)] animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-[var(--color-border)] animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
               <h3 className="text-lg font-bold text-[var(--color-text-heading)]">
                 {editingPreset ? "Editar Preset de Serviço" : "Novo Preset de Serviço"}
@@ -281,7 +281,7 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
             </div>
 
             {errorMsg && (
-              <div className="p-3.5 rounded-xl bg-[var(--color-danger-light)] border border-[var(--color-danger-border)] text-xs font-semibold text-[var(--color-danger)]">
+              <div className="p-3.5 rounded-[var(--radius-card)] bg-[var(--color-danger-light)] border border-[var(--color-danger-border)] text-xs font-semibold text-[var(--color-danger)]">
                 {errorMsg}
               </div>
             )}
@@ -296,7 +296,7 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                 <select
                   name="businessType"
                   defaultValue={editingPreset?.businessType || (selectedType !== "ALL" ? selectedType : "MECHANIC")}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-3.5 py-2.5 rounded-[var(--radius-card)] border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 >
                   {Object.entries(segmentsMap).map(([code, label]) => (
                     <option key={code} value={code}>
@@ -316,7 +316,7 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                   required
                   defaultValue={editingPreset?.title || ""}
                   placeholder="Ex: Revisão Geral 10.000km"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-3.5 py-2.5 rounded-[var(--radius-card)] border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
@@ -329,7 +329,7 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                   name="description"
                   defaultValue={editingPreset?.description || ""}
                   placeholder="Ex: Verificação de 30 itens e fluidos"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-3.5 py-2.5 rounded-[var(--radius-card)] border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
@@ -344,7 +344,7 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                     name="defaultPrice"
                     required
                     defaultValue={editingPreset ? Number(editingPreset.defaultPrice) : 50}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    className="w-full px-3.5 py-2.5 rounded-[var(--radius-card)] border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   />
                 </div>
                 <div>
@@ -356,7 +356,7 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                     name="durationMin"
                     required
                     defaultValue={editingPreset?.durationMin || 30}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    className="w-full px-3.5 py-2.5 rounded-[var(--radius-card)] border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   />
                 </div>
               </div>
@@ -384,7 +384,7 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                   name="parentTitle"
                   defaultValue={editingPreset?.parentTitle || ""}
                   placeholder="Ex: Revisão Geral 10.000km"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-3.5 py-2.5 rounded-[var(--radius-card)] border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
@@ -392,14 +392,14 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2.5 text-xs font-bold text-[var(--color-text-muted)] hover:bg-[var(--color-bg-muted)] rounded-xl"
+                  className="px-5 py-2.5 text-xs font-bold text-[var(--color-text-muted)] hover:bg-[var(--color-bg-muted)] rounded-[var(--radius-card)]"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="px-6 py-2.5 text-xs font-bold text-white bg-[var(--color-navy)] hover:bg-[var(--color-navy-hover)] rounded-xl disabled:opacity-50"
+                  className="px-6 py-2.5 text-xs font-bold text-white bg-[var(--color-navy)] hover:bg-[var(--color-navy-hover)] rounded-[var(--radius-card)] disabled:opacity-50"
                 >
                   {isPending ? "Salvando..." : editingPreset ? "Salvar Alterações" : "Criar Preset"}
                 </button>

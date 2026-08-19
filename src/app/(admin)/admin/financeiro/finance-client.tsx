@@ -251,7 +251,7 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
       </div>
 
       {/* Tabela de Assinaturas */}
-      <div className="bg-[var(--color-bg)] rounded-2xl border border-[var(--color-border)] overflow-hidden shadow-sm">
+      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] overflow-hidden shadow-sm">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-[var(--color-bg-subtle)] border-b border-[var(--color-border)] text-[var(--color-text-subtle)] font-bold uppercase tracking-wider">
@@ -271,29 +271,29 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
                 <tr key={c.id} className="hover:bg-[var(--color-bg-subtle)]/50 transition-colors">
                   <td className="py-4 px-5">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-[var(--color-bg-muted)] border border-[var(--color-border)] flex items-center justify-center font-bold text-[var(--color-text)]">
+                      <div className="w-9 h-9 rounded-[var(--radius-card)] bg-[var(--color-bg-muted)] border border-[var(--color-border)] flex items-center justify-center font-bold text-[var(--color-text)]">
                         {c.logoUrl ? (
-                          <img src={c.logoUrl} alt="" className="w-full h-full object-cover rounded-xl" />
+                          <img src={c.logoUrl} alt="" className="w-full h-full object-cover rounded-[var(--radius-card)]" />
                         ) : (
                           c.name[0]?.toUpperCase()
                         )}
                       </div>
                       <div>
                         <p className="font-bold text-[var(--color-text-heading)] text-sm">{c.name}</p>
-                        <p className="text-[var(--color-text-muted)] text-[11px]">{c.ownerName} ({c.ownerEmail})</p>
+                        <p className="text-[var(--color-text-muted)] text-[length:var(--text-xs)]">{c.ownerName} ({c.ownerEmail})</p>
                       </div>
                     </div>
                   </td>
 
                   <td className="py-4 px-5">
                     <span className="font-semibold text-[var(--color-text-heading)]">{c.planName}</span>
-                    <span className="block text-[11px] text-[var(--color-text-subtle)]">
+                    <span className="block text-[length:var(--text-xs)] text-[var(--color-text-subtle)]">
                       Ciclo: {c.subscriptionInterval === "year" ? "Anual" : "Mensal"}
                     </span>
                   </td>
 
                   <td className="py-4 px-5 font-bold text-[var(--color-text-heading)]">
-                    {fmtCurrency(c.planMonthlyPrice)} <span className="text-[10px] text-[var(--color-text-subtle)] font-normal">/mês</span>
+                    {fmtCurrency(c.planMonthlyPrice)} <span className="text-[length:var(--text-2xs)] text-[var(--color-text-subtle)] font-normal">/mês</span>
                   </td>
 
                   <td className="py-4 px-5">
@@ -357,7 +357,7 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
       {/* Modal de Alteração de Assinatura */}
       {editingCompany && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[var(--color-bg)] rounded-3xl max-w-md w-full p-6 space-y-6 shadow-2xl border border-[var(--color-border)]">
+          <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] max-w-md w-full p-6 space-y-6 shadow-2xl border border-[var(--color-border)]">
             <div className="flex justify-between items-center border-b border-[var(--color-border)] pb-3">
               <h3 className="font-bold text-[var(--color-text-heading)] text-base">Gerenciar Assinatura SaaS</h3>
               <button onClick={() => setEditingCompany(null)} aria-label="Fechar" title="Fechar" className="icon-action"><X className="w-4 h-4" /></button>
@@ -374,7 +374,7 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="w-full border border-[var(--color-border)] rounded-xl px-3 py-2 text-xs bg-[var(--color-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full border border-[var(--color-border)] rounded-[var(--radius-card)] px-3 py-2 text-xs bg-[var(--color-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 >
                   <option value="active">Active (Em Dia / Ativa)</option>
                   <option value="past_due">Past Due (Inadimplente / Pagamento Pendente)</option>
@@ -388,7 +388,7 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
                 <select
                   value={selectedPlanId}
                   onChange={(e) => setSelectedPlanId(e.target.value)}
-                  className="w-full border border-[var(--color-border)] rounded-xl px-3 py-2 text-xs bg-[var(--color-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full border border-[var(--color-border)] rounded-[var(--radius-card)] px-3 py-2 text-xs bg-[var(--color-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 >
                   {availablePlans.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -409,7 +409,7 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
               <button
                 onClick={handleSaveSubscription}
                 disabled={isPending}
-                className="px-4 py-2 bg-[var(--color-navy)] hover:bg-[var(--color-navy-hover)] text-white rounded-xl text-xs font-bold shadow-md transition-colors"
+                className="px-4 py-2 bg-[var(--color-navy)] hover:bg-[var(--color-navy-hover)] text-white rounded-[var(--radius-card)] text-xs font-bold shadow-md transition-colors"
               >
                 {isPending ? "Salvando..." : "Salvar Alterações"}
               </button>

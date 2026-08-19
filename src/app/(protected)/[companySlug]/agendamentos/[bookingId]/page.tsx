@@ -343,34 +343,34 @@ export default async function BookingDetailPage({
         )}
 
         {/* ── Ficha VIP de Atendimento & Preferências ── */}
-        <div className="bg-[var(--color-bg)] rounded-3xl border border-[var(--color-border)]/90 p-5 sm:p-6 space-y-3 shadow-xs">
+        <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)]/90 p-5 sm:p-6 space-y-3 shadow-xs">
           <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-3">
-            <h2 className="text-sm font-black text-[var(--color-text-heading)] flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-[var(--color-text-heading)] flex items-center gap-2">
               <span>🌟 Ficha de Atendimento VIP</span>
             </h2>
-            <span className="text-[10px] font-bold text-[var(--color-success)] bg-[var(--color-success-light)] px-2.5 py-0.5 rounded-full border border-[var(--color-success-border)]">
+            <span className="text-[length:var(--text-2xs)] font-bold text-[var(--color-success)] bg-[var(--color-success-light)] px-2.5 py-0.5 rounded-full border border-[var(--color-success-border)]">
               Experiência VIP Ativa
             </span>
           </div>
 
           <div className="space-y-2 text-xs">
             {homeAccess?.additionalNote ? (
-              <div className="p-3 rounded-2xl bg-[var(--color-bg-subtle)] border border-[var(--color-border)] text-[var(--color-text)] font-medium">
+              <div className="p-3 rounded-[var(--radius-panel)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)] text-[var(--color-text)] font-medium">
                 {homeAccess.additionalNote}
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-2 text-[var(--color-text)]">
-                <div className="p-2.5 rounded-xl bg-[var(--color-bg-subtle)] border border-[var(--color-border)]">
-                  <span className="text-[10px] text-[var(--color-text-subtle)] block font-bold">Conversa:</span>
-                  <span className="font-extrabold text-[var(--color-text-heading)]">💬 Padrão</span>
+                <div className="p-2.5 rounded-[var(--radius-card)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)]">
+                  <span className="text-[length:var(--text-2xs)] text-[var(--color-text-subtle)] block font-bold">Conversa:</span>
+                  <span className="font-semibold text-[var(--color-text-heading)]">💬 Padrão</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-[var(--color-bg-subtle)] border border-[var(--color-border)]">
-                  <span className="text-[10px] text-[var(--color-text-subtle)] block font-bold">Boas-Vindas:</span>
-                  <span className="font-extrabold text-[var(--color-text-heading)]">☕ Café Cortesia</span>
+                <div className="p-2.5 rounded-[var(--radius-card)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)]">
+                  <span className="text-[length:var(--text-2xs)] text-[var(--color-text-subtle)] block font-bold">Boas-Vindas:</span>
+                  <span className="font-semibold text-[var(--color-text-heading)]">☕ Café Cortesia</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-[var(--color-bg-subtle)] border border-[var(--color-border)]">
-                  <span className="text-[10px] text-[var(--color-text-subtle)] block font-bold">Cuidados:</span>
-                  <span className="font-extrabold text-[var(--color-text-heading)]">✨ Normal</span>
+                <div className="p-2.5 rounded-[var(--radius-card)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)]">
+                  <span className="text-[length:var(--text-2xs)] text-[var(--color-text-subtle)] block font-bold">Cuidados:</span>
+                  <span className="font-semibold text-[var(--color-text-heading)]">✨ Normal</span>
                 </div>
               </div>
             )}
