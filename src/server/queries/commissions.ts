@@ -1,13 +1,57 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { calculateCommission } from "@/lib/pricing";
+import { resolveRates } from "@/lib/commission-rates";
+
+/**
+ * Extrato de comissão por profissional.
+ *
+ * ─── O que estava errado ─────────────────────────────────────────────────────
+ *
+ * Este relatório somava apenas `booking`. Toda venda de balcão ficava de fora:
+ * o PDV calculava a comissão de produto, gravava em `pos_sale.commissionAmount`
+ * e nada disso chegava ao extrato. O profissional que vendeu R$ 500 em produtos
+ * via zero — e o dono conferia na planilha, que é justamente o problema que o
+ * módulo promete resolver.
+ *
+ * Além disso a taxa vinha de `commissionPercentage`, enquanto o PDV usava
+ * `commissionRate`. Dois números para a mesma pergunta. Agora ambos passam por
+ * `resolveRates`.
+ *
+ * ─── De onde vem cada número ─────────────────────────────────────────────────
+ *
+ * Serviço  = agendamentos concluídos (comissão calculada com a taxa atual)
+ *          + itens SERVICE do PDV (comissão carimbada no ato da venda)
+ * Produto  = itens PRODUCT do PDV (comissão carimbada no ato da venda)
+ *
+ * A assimetria é deliberada: a venda de balcão congela a comissão em
+ * `sale_item.commissionAmount` porque o dinheiro já trocou de mão. O
+ * agendamento não guarda comissão em lugar nenhum — mudar a taxa de um
+ * profissional reescreve retroativamente o que ele ganhou. Está anotado como
+ * dívida, não resolvido aqui: exigiria carimbar comissão em `booking` e migrar
+ * o histórico.
+ *
+ * Agregação em SQL. A versão anterior carregava todos os agendamentos
+ * concluídos do período com o orçamento junto para somar em JavaScript.
+ */
+
+export type CommissionBreakdown = {
+  revenue: number;
+  commission: number;
+};
 
 export type ProfessionalCommissionSummary = {
   id: string;
   name: string;
   email: string | null;
-  commissionPercentage: number;
+  /** Taxa aplicada a serviços, já resolvida entre os campos legados. */
+  serviceRate: number;
+  /** Taxa aplicada a produtos. Zero quando não configurada. */
+  productRate: number;
+  service: CommissionBreakdown;
+  product: CommissionBreakdown;
   completedBookingsCount: number;
+  posSalesCount: number;
   totalRevenueGenerated: number;
   totalCommissionAmount: number;
   companyRetainedAmount: number;
@@ -27,62 +71,133 @@ export type CommissionReport = {
   totalCommissionsOwed: number;
   totalNetCompany: number;
   totalCompletedCount: number;
+  /** Comissão de balcão anterior à separação por item, ainda só consolidada. */
+  unsplitPosCommission: number;
 };
+
+function num(v: unknown): number {
+  const n = Number(v ?? 0);
+  return Number.isFinite(n) ? n : 0;
+}
 
 export async function getCompanyCommissionReport(
   companyId: string,
   startDate?: string,
   endDate?: string
 ): Promise<CommissionReport> {
-  // 1. Buscar profissionais da empresa
-  const professionals = await db.professional.findMany({
-    where: { companyId, isActive: true },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      commissionPercentage: true,
-    },
-    orderBy: { name: "asc" },
-  });
+  const from = startDate ?? null;
+  const to = endDate ?? null;
 
-  // 2. Buscar agendamentos concluídos no período
-  const dateFilter: Record<string, string> = {};
-  if (startDate) dateFilter.gte = startDate;
-  if (endDate) dateFilter.lte = endDate;
+  const [professionals, bookingRows, posRows, recentRows, legacyPosRow] = await Promise.all([
+    db.professional.findMany({
+      where: { companyId, isActive: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        commissionPercentage: true,
+        commissionRate: true,
+        productCommissionRate: true,
+      },
+      orderBy: { name: "asc" },
+    }),
 
-  const bookings = await db.booking.findMany({
-    where: {
+    db.$queryRawUnsafe<Array<Record<string, unknown>>>(
+      `SELECT b."professionalId" AS pid,
+              COUNT(*)::int AS bookings,
+              COALESCE(SUM(e."total"), 0)::float8 AS revenue
+         FROM "booking" b
+         LEFT JOIN "estimate" e ON e.id = b."estimateId"
+        WHERE b."companyId" = $1
+          AND b."status" = 'COMPLETED'
+          AND b."professionalId" IS NOT NULL
+          AND ($2::text IS NULL OR b."scheduledDate" >= $2)
+          AND ($3::text IS NULL OR b."scheduledDate" <= $3)
+        GROUP BY 1`,
       companyId,
-      status: "COMPLETED",
-      ...(startDate || endDate ? { scheduledDate: dateFilter } : {}),
-    },
-    include: {
-      customerDetail: { select: { firstName: true, lastName: true } },
-      estimate: {
-        select: {
-          total: true,
-          serviceTypes: {
-            include: {
-              serviceType: { select: { name: true } },
-            },
+      from,
+      to
+    ),
+
+    // Itens do PDV com comissão já carimbada, quebrados por tipo.
+    db.$queryRawUnsafe<Array<Record<string, unknown>>>(
+      `SELECT s."professionalId" AS pid,
+              i."type" AS type,
+              COALESCE(SUM(i."totalPrice"), 0)::float8      AS revenue,
+              COALESCE(SUM(i."commissionAmount"), 0)::float8 AS commission,
+              COUNT(DISTINCT s.id)::int                      AS sales
+         FROM "pos_sale" s
+         JOIN "sale_item" i ON i."saleId" = s.id
+        WHERE s."companyId" = $1
+          AND s."status" = 'COMPLETED'
+          AND s."professionalId" IS NOT NULL
+          AND ($2::text IS NULL OR s."createdAt" >= $2::date)
+          AND ($3::text IS NULL OR s."createdAt" < ($3::date + 1))
+        GROUP BY 1, 2`,
+      companyId,
+      from,
+      to
+    ),
+
+    db.booking.findMany({
+      where: {
+        companyId,
+        status: "COMPLETED",
+        professionalId: { not: null },
+        ...(from || to
+          ? { scheduledDate: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } }
+          : {}),
+      },
+      select: {
+        id: true,
+        professionalId: true,
+        scheduledDate: true,
+        customerDetail: { select: { firstName: true, lastName: true } },
+        estimate: {
+          select: {
+            total: true,
+            serviceTypes: { select: { serviceType: { select: { name: true } } }, take: 1 },
           },
         },
       },
-    },
-    orderBy: { scheduledDate: "desc" },
-  });
+      orderBy: { scheduledDate: "desc" },
+      take: 200,
+    }),
 
-  // 3. Mapear e calcular comissão por profissional
-  const profMap = new Map<string, ProfessionalCommissionSummary>();
+    // Vendas anteriores à coluna por item: o total existe, o rateio não.
+    // Exibido à parte em vez de somado numa das colunas — jogar tudo em
+    // "serviço" ou "produto" inventaria uma separação que ninguém registrou.
+    db.$queryRawUnsafe<Array<Record<string, unknown>>>(
+      `SELECT COALESCE(SUM(s."commissionAmount"), 0)::float8 AS legacy
+         FROM "pos_sale" s
+        WHERE s."companyId" = $1
+          AND s."status" = 'COMPLETED'
+          AND ($2::text IS NULL OR s."createdAt" >= $2::date)
+          AND ($3::text IS NULL OR s."createdAt" < ($3::date + 1))
+          AND NOT EXISTS (
+            SELECT 1 FROM "sale_item" i
+             WHERE i."saleId" = s.id AND i."commissionAmount" > 0
+          )
+          AND s."commissionAmount" > 0`,
+      companyId,
+      from,
+      to
+    ),
+  ]);
 
+  const summaries = new Map<string, ProfessionalCommissionSummary>();
   for (const p of professionals) {
-    profMap.set(p.id, {
+    const rates = resolveRates(p);
+    summaries.set(p.id, {
       id: p.id,
       name: p.name,
       email: p.email,
-      commissionPercentage: p.commissionPercentage ?? 0,
+      serviceRate: rates.service,
+      productRate: rates.product,
+      service: { revenue: 0, commission: 0 },
+      product: { revenue: 0, commission: 0 },
       completedBookingsCount: 0,
+      posSalesCount: 0,
       totalRevenueGenerated: 0,
       totalCommissionAmount: 0,
       companyRetainedAmount: 0,
@@ -90,57 +205,71 @@ export async function getCompanyCommissionReport(
     });
   }
 
-  // Agrupar bookings
+  // Agendamentos concluídos → coluna de serviço.
+  for (const row of bookingRows) {
+    const s = summaries.get(String(row.pid));
+    if (!s) continue;
+    const revenue = num(row.revenue);
+    const { commission } = calculateCommission(revenue, s.serviceRate);
+    s.completedBookingsCount += num(row.bookings);
+    s.service.revenue += revenue;
+    s.service.commission += commission;
+  }
+
+  // Balcão → serviço ou produto, conforme o item.
+  const salesSeen = new Map<string, Set<number>>();
+  for (const row of posRows) {
+    const s = summaries.get(String(row.pid));
+    if (!s) continue;
+    const bucket = String(row.type) === "PRODUCT" ? s.product : String(row.type) === "SERVICE" ? s.service : null;
+    if (bucket) {
+      bucket.revenue += num(row.revenue);
+      bucket.commission += num(row.commission);
+    }
+    // `COUNT(DISTINCT s.id)` vem por tipo; somar as linhas contaria duas vezes
+    // a comanda que tem produto e serviço juntos.
+    const seen = salesSeen.get(s.id) ?? new Set<number>();
+    seen.add(num(row.sales));
+    salesSeen.set(s.id, seen);
+    s.posSalesCount = Math.max(s.posSalesCount, num(row.sales));
+  }
+
+  for (const row of recentRows) {
+    const s = summaries.get(String(row.professionalId));
+    if (!s || s.recentBookings.length >= 15) continue;
+    const total = num(row.estimate?.total);
+    s.recentBookings.push({
+      id: row.id,
+      customerName: row.customerDetail
+        ? `${row.customerDetail.firstName} ${row.customerDetail.lastName}`.trim()
+        : "Cliente",
+      scheduledDate: row.scheduledDate,
+      serviceName: row.estimate?.serviceTypes?.[0]?.serviceType?.name ?? "Serviço",
+      total,
+      commission: calculateCommission(total, s.serviceRate).commission,
+    });
+  }
+
   let totalGrossRevenue = 0;
   let totalCommissionsOwed = 0;
   let totalCompletedCount = 0;
 
-  for (const b of bookings) {
-    const amount = Number(b.estimate?.total ?? 0);
-    totalGrossRevenue += amount;
-    totalCompletedCount += 1;
+  for (const s of summaries.values()) {
+    s.totalRevenueGenerated = s.service.revenue + s.product.revenue;
+    s.totalCommissionAmount = s.service.commission + s.product.commission;
+    s.companyRetainedAmount = s.totalRevenueGenerated - s.totalCommissionAmount;
 
-    const profId = b.professionalId;
-    if (profId && profMap.has(profId)) {
-      const pSummary = profMap.get(profId)!;
-      pSummary.completedBookingsCount += 1;
-      pSummary.totalRevenueGenerated += amount;
-
-      const { commission: commAmount, companyRetained } = calculateCommission(
-        amount,
-        pSummary.commissionPercentage,
-      );
-      pSummary.totalCommissionAmount += commAmount;
-      pSummary.companyRetainedAmount += companyRetained;
-      totalCommissionsOwed += commAmount;
-
-      const custName = b.customerDetail
-        ? `${b.customerDetail.firstName} ${b.customerDetail.lastName}`.trim()
-        : "Cliente";
-
-      const srvName =
-        b.estimate?.serviceTypes?.[0]?.serviceType?.name ?? "Serviço";
-
-      if (pSummary.recentBookings.length < 15) {
-        pSummary.recentBookings.push({
-          id: b.id,
-          customerName: custName,
-          scheduledDate: b.scheduledDate,
-          serviceName: srvName,
-          total: amount,
-          commission: commAmount,
-        });
-      }
-    }
+    totalGrossRevenue += s.totalRevenueGenerated;
+    totalCommissionsOwed += s.totalCommissionAmount;
+    totalCompletedCount += s.completedBookingsCount;
   }
 
-  const profList = Array.from(profMap.values());
-
   return {
-    professionals: profList,
+    professionals: Array.from(summaries.values()),
     totalGrossRevenue,
     totalCommissionsOwed,
     totalNetCompany: totalGrossRevenue - totalCommissionsOwed,
     totalCompletedCount,
+    unsplitPosCommission: num(legacyPosRow[0]?.legacy),
   };
 }

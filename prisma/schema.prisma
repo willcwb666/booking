@@ -1379,11 +1379,20 @@ model SaleItem {
   quantity   Int      @default(1)
   unitPrice  Decimal  @db.Decimal(10, 2)
   totalPrice Decimal  @db.Decimal(10, 2)
+  // Comissão deste item, com a taxa vigente NO ATO da venda.
+  // `PosSale.commissionAmount` guarda só o total somado, o que impede o extrato
+  // de separar serviço de produto — que é a dor inteira deste módulo. E
+  // recalcular a partir da taxa atual reescreveria pagamentos já combinados:
+  // mudar a comissão de um profissional alteraria o que ele recebeu no mês
+  // passado.
+  commissionAmount Decimal @default(0) @db.Decimal(10, 2)
 
   sale       PosSale  @relation(fields: [saleId], references: [id], onDelete: Cascade)
   product    Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   @@index([saleId])
+  // O extrato agrupa comissão por tipo de item.
+  @@index([type])
   @@map("sale_item")
 }
 

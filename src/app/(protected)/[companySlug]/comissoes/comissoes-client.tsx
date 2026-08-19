@@ -43,6 +43,7 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
   // Edit commission modal state
   const [editingProf, setEditingProf] = useState<ProfessionalCommissionSummary | null>(null);
   const [newPercentage, setNewPercentage] = useState<number>(0);
+  const [newProductPercentage, setNewProductPercentage] = useState<number>(0);
   const [selectedProfDetails, setSelectedProfDetails] = useState<ProfessionalCommissionSummary | null>(null);
 
   const [isPending, startTransition] = useTransition();
@@ -140,11 +141,15 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
       const res = await updateProfessionalCommissionAction(
         companySlug,
         editingProf.id,
-        newPercentage
+        newPercentage,
+        newProductPercentage
       );
 
       if (res.success) {
-        toast.success("Atualizado!", `Comissão de ${editingProf.name} alterada para ${newPercentage}%.`);
+        toast.success(
+          "Atualizado",
+          `${editingProf.name}: ${newPercentage}% em serviços, ${newProductPercentage}% em produtos.`
+        );
         setEditingProf(null);
         router.refresh();
       } else {
@@ -162,8 +167,14 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
     const headers = [
       "Profissional",
       "Email",
-      "Comissao (%)",
+      "Taxa Servico (%)",
+      "Taxa Produto (%)",
       "Atendimentos Concluidos",
+      "Vendas no Balcao",
+      "Faturamento Servico",
+      "Comissao Servico",
+      "Faturamento Produto",
+      "Comissao Produto",
       "Faturamento Bruto",
       "Valor da Comissao",
       "Retencao Empresa",
@@ -174,8 +185,14 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
     const rows = filteredProfessionals.map((p) => [
       `"${p.name}"`,
       `"${p.email || ""}"`,
-      p.commissionPercentage,
+      p.serviceRate,
+      p.productRate,
       p.completedBookingsCount,
+      p.posSalesCount,
+      p.service.revenue.toFixed(2),
+      p.service.commission.toFixed(2),
+      p.product.revenue.toFixed(2),
+      p.product.commission.toFixed(2),
       p.totalRevenueGenerated.toFixed(2),
       p.totalCommissionAmount.toFixed(2),
       p.companyRetainedAmount.toFixed(2),
@@ -274,14 +291,31 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
       {/* Tabela de Comissões */}
       <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-5 space-y-4 shadow-xs">
         <h2 className="text-sm font-semibold text-[var(--color-text-heading)]">Detalhamento por Profissional</h2>
+
+        {report.unsplitPosCommission > 0 && (
+          /* Vendas de balcão anteriores à separação por item guardam só o total.
+             Aparece à parte porque atribuí-las a serviço ou a produto seria
+             inventar um rateio que ninguém registrou na época. */
+          <p
+            className="text-[var(--color-text-muted)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2"
+            style={{ fontSize: "var(--text-2xs)" }}
+          >
+            {formatMoney(report.unsplitPosCommission, company.currency, company.locale)} de
+            comissão de balcão neste período é anterior à separação por item e não
+            aparece dividida entre serviço e produto — o valor está correto no total,
+            só não tem como saber a origem.
+          </p>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
             <thead>
               <tr className="bg-[var(--color-bg-subtle)] text-[var(--color-text-muted)] font-bold border-b border-[var(--color-border)]">
                 <th className="px-4 py-3">Profissional</th>
-                <th className="px-4 py-3 text-center">Comissão (%)</th>
-                <th className="px-4 py-3 text-center">Atendimentos</th>
-                <th className="px-4 py-3 text-right">Faturamento</th>
+                <th className="px-4 py-3 text-center">Serviço</th>
+                <th className="px-4 py-3 text-center">Produto</th>
+                <th className="px-4 py-3 text-right">Comissão serviço</th>
+                <th className="px-4 py-3 text-right">Comissão produto</th>
+                <th className="px-4 py-3 text-right">Total</th>
                 <th className="px-4 py-3 text-right">Ações</th>
               </tr>
             </thead>
@@ -289,11 +323,21 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
               {paginatedProfessionals.map((prof) => (
                 <tr key={prof.id}>
                   <td className="px-4 py-3.5 font-semibold">{prof.name}</td>
-                  <td className="px-4 py-3.5 text-center">{prof.commissionPercentage}%</td>
-                  <td className="px-4 py-3.5 text-center">{prof.completedBookingsCount}</td>
-                  <td className="px-4 py-3.5 text-right">{formatMoney(prof.totalRevenueGenerated, company.currency, company.locale)}</td>
+                  <td className="px-4 py-3.5 text-center">{prof.serviceRate}%</td>
+                  <td className="px-4 py-3.5 text-center">
+                    {prof.productRate > 0 ? (
+                      `${prof.productRate}%`
+                    ) : (
+                      /* Zero e ausencia sao coisas diferentes aqui: sem taxa de
+                         produto configurada, vender no balcao nao paga nada. */
+                      <span className="text-[var(--color-text-subtle)]">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3.5 text-right">{formatMoney(prof.service.commission, company.currency, company.locale)}</td>
+                  <td className="px-4 py-3.5 text-right">{formatMoney(prof.product.commission, company.currency, company.locale)}</td>
+                  <td className="px-4 py-3.5 text-right font-semibold text-[var(--color-text-heading)]">{formatMoney(prof.totalCommissionAmount, company.currency, company.locale)}</td>
                   <td className="px-4 py-3.5 text-right space-x-2">
-                    <button type="button" onClick={() => { setEditingProf(prof); setNewPercentage(prof.commissionPercentage); }} className="p-1.5 bg-[var(--color-bg-muted)] rounded-[var(--radius-control)]"><Settings className="w-3.5 h-3.5" /></button>
+                    <button type="button" onClick={() => { setEditingProf(prof); setNewPercentage(prof.serviceRate); setNewProductPercentage(prof.productRate); }} className="p-1.5 bg-[var(--color-bg-muted)] rounded-[var(--radius-control)]"><Settings className="w-3.5 h-3.5" /></button>
                     <button type="button" onClick={() => { setSelectedProfDetails(prof); setExtratoPage(1); }} className="px-2.5 py-1 bg-[var(--color-primary-light)] text-[var(--color-primary)] rounded-[var(--radius-control)] font-bold">Extrato</button>
                   </td>
                 </tr>
@@ -322,28 +366,56 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
         >
           <form onSubmit={handleSaveCommission} className="space-y-4">
             <p className="text-xs text-[var(--color-text-muted)]">
-              Defina a porcentagem que este profissional recebe sobre os serviços que ele realiza.
+              Serviço e produto têm taxas separadas. É o que permite fechar a
+              quinzena sem separar na planilha.
             </p>
 
-            <div>
-              <label htmlFor="commissionInput" className="block text-xs font-bold text-[var(--color-text)] mb-1">
-                Porcentagem de Comissão (%)
-              </label>
-              <div className="relative">
-                <input
-                  id="commissionInput"
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={0.5}
-                  value={newPercentage}
-                  onChange={(e) => setNewPercentage(parseFloat(e.target.value) || 0)}
-                  className="input !pr-10"
-                  required
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--color-text-subtle)]">
-                  %
-                </span>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="commissionInput" className="block text-xs font-bold text-[var(--color-text)] mb-1">
+                  Serviços (%)
+                </label>
+                <div className="relative">
+                  <input
+                    id="commissionInput"
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.5}
+                    value={newPercentage}
+                    onChange={(e) => setNewPercentage(parseFloat(e.target.value) || 0)}
+                    className="input !pr-10"
+                    required
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--color-text-subtle)]">
+                    %
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="productCommissionInput" className="block text-xs font-bold text-[var(--color-text)] mb-1">
+                  Produtos (%)
+                </label>
+                <div className="relative">
+                  <input
+                    id="productCommissionInput"
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.5}
+                    value={newProductPercentage}
+                    onChange={(e) => setNewProductPercentage(parseFloat(e.target.value) || 0)}
+                    className="input !pr-10"
+                    required
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--color-text-subtle)]">
+                    %
+                  </span>
+                </div>
+                <p className="text-[var(--color-text-subtle)] mt-1" style={{ fontSize: "var(--text-2xs)" }}>
+                  Zero significa que vender no balcão não paga comissão.
+                </p>
               </div>
             </div>
 
@@ -381,7 +453,7 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
                 <span className="font-bold text-[var(--color-text-heading)]">{selectedProfDetails.completedBookingsCount}</span>
               </div>
               <div>
-                <span className="text-[var(--color-text-subtle)] block">Comissão ({selectedProfDetails.commissionPercentage}%):</span>
+                <span className="text-[var(--color-text-subtle)] block">Comissão ({selectedProfDetails.serviceRate}% serviço{selectedProfDetails.productRate > 0 ? ` · ${selectedProfDetails.productRate}% produto` : ""}):</span>
                 <span className="font-bold text-[var(--color-warning)]">
                   {formatMoney(selectedProfDetails.totalCommissionAmount, company.currency, company.locale)}
                 </span>
@@ -448,7 +520,9 @@ export function ComissoesClient({ companySlug, report, from, to }: Props) {
                     const periodText = `${dateFrom ? dateFrom.split("-").reverse().join("/") : ""} até ${dateTo ? dateTo.split("-").reverse().join("/") : ""}`;
                     const totalComm = formatMoney(selectedProfDetails.totalCommissionAmount, company.currency, company.locale);
                     const totalRev = formatMoney(selectedProfDetails.totalRevenueGenerated, company.currency, company.locale);
-                    const text = `Olá, *${selectedProfDetails.name}*! 💈✂️\n\nSegue o fechamento das suas comissões de atendimentos na *${company.name}*:\n\n📅 *Período:* ${periodText}\n⭐ *Atendimentos Concluídos:* ${selectedProfDetails.completedBookingsCount}\n💼 *Faturamento Gerado:* ${totalRev}\n💰 *Comissão a Receber (${selectedProfDetails.commissionPercentage}%):* ${totalComm}\n\nExtrato gerado via sistema.`;
+                    const text = `Olá, *${selectedProfDetails.name}*! 💈✂️\n\nSegue o fechamento das suas comissões de atendimentos na *${company.name}*:\n\n📅 *Período:* ${periodText}\n⭐ *Atendimentos Concluídos:* ${selectedProfDetails.completedBookingsCount}\n💼 *Faturamento Gerado:* ${totalRev}\n💼 *Comissão de serviços:* ${formatMoney(selectedProfDetails.service.commission, company.currency, company.locale)}
+📦 *Comissão de produtos:* ${formatMoney(selectedProfDetails.product.commission, company.currency, company.locale)}
+💰 *Total a Receber:* ${totalComm}\n\nExtrato gerado via sistema.`;
                     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
                   }}
                   className="px-3 py-1.5 rounded-[var(--radius-control)] bg-[var(--color-success-light)] hover:bg-[var(--color-success-light)] text-[var(--color-success)] font-bold text-xs transition-colors inline-flex items-center gap-1.5 cursor-pointer"

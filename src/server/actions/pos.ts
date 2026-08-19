@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { getActiveSession } from "@/lib/session";
 import { RATE_LIMITS, enforceRateLimit } from "@/lib/rate-limit";
+import { commissionForItem, resolveRates } from "@/lib/commission-rates";
+import { roundMoney } from "@/lib/pricing";
 
 async function verifyCompanyAccess(companySlug: string) {
   const session = await getActiveSession();
@@ -108,24 +110,32 @@ export async function createPosSaleAction(companySlug: string, data: CreatePosSa
     const discount = data.discountAmount ? Math.max(0, data.discountAmount) : 0;
     const total = Math.max(0, subtotal - discount);
 
-    // Cálculo de comissão do profissional
+    // Comissão por item, com a taxa vigente agora. Carimbar item a item é o
+    // que permite ao extrato separar serviço de produto depois — e congela o
+    // valor: mudar a taxa do profissional amanhã não reescreve o que ele já
+    // ganhou hoje.
     let commissionAmount = 0;
+    const itemsWithCommission = itemsData.map((it) => ({ ...it, commissionAmount: 0 }));
+
     if (data.professionalId) {
       const prof = await db.professional.findUnique({
         where: { id: data.professionalId, companyId: company.id },
+        select: {
+          commissionPercentage: true,
+          commissionRate: true,
+          productCommissionRate: true,
+        },
       });
 
       if (prof) {
-        const prodRate = Number(prof.productCommissionRate ?? 0) / 100;
-        const servRate = Number(prof.commissionRate ?? prof.commissionPercentage ?? 0) / 100;
-
-        for (const it of itemsData) {
-          if (it.type === "PRODUCT" && prodRate > 0) {
-            commissionAmount += it.totalPrice * prodRate;
-          } else if (it.type === "SERVICE" && servRate > 0) {
-            commissionAmount += it.totalPrice * servRate;
-          }
+        const rates = resolveRates(prof);
+        for (const it of itemsWithCommission) {
+          it.commissionAmount = roundMoney(
+            commissionForItem({ type: it.type, totalPrice: it.totalPrice, rates })
+          );
+          commissionAmount += it.commissionAmount;
         }
+        commissionAmount = roundMoney(commissionAmount);
       }
     }
 
@@ -148,7 +158,7 @@ export async function createPosSaleAction(companySlug: string, data: CreatePosSa
           notes: data.notes?.trim() || null,
           createdById: user.id,
           items: {
-            create: itemsData,
+            create: itemsWithCommission,
           },
         },
         include: {
