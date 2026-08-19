@@ -1,25 +1,27 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { canAccessCompany } from "@/lib/admin-guard";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { logAuditEvent } from "./audit";
 
 /**
- * Busca todos os agendamentos em aberto (CONFIRMED / PENDING) da empresa.
+ * Agendamentos em aberto (CONFIRMED / PENDING) da empresa.
+ *
+ * A resposta inclui `customerDetail` — nome, e-mail, telefone e endereço de
+ * cada cliente. Antes bastava informar um slug: sem sessão, sem vínculo, sem
+ * nada. Qualquer pessoa despejava a carteira de clientes de qualquer empresa
+ * chamando esta action com o slug que quisesse.
  */
 export async function getCompanyOpenBookingsAction(companySlug: string) {
-  const company = await db.company.findFirst({
-    where: { slug: companySlug },
-    select: { id: true },
-  });
-
-  if (!company) return { success: false, error: "Empresa não encontrada" };
+  const access = await canAccessCompany(companySlug);
+  if (!access.ok) return { success: false, error: access.error };
 
   const openBookings = await db.booking.findMany({
     where: {
-      companyId: company.id,
+      companyId: access.companyId,
       status: { in: ["CONFIRMED", "PENDING"] },
     },
     include: {
@@ -51,20 +53,21 @@ export async function updateBookingStatusDirectAction(
   bookingId: string,
   newStatus: "COMPLETED" | "CANCELLED"
 ) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return { success: false, error: "Não autenticado" };
+  // Antes bastava estar logado em QUALQUER conta: a empresa era resolvida pelo
+  // slug mas nunca comparada com o agendamento, e o `update` usava só
+  // `where: { id: bookingId }`. Dava para concluir ou cancelar o agendamento
+  // de outra empresa a partir de um id.
+  const access = await canAccessCompany(companySlug);
+  if (!access.ok) return { success: false, error: access.error };
 
-  const company = await db.company.findFirst({
-    where: { slug: companySlug },
-    select: { id: true },
-  });
-
-  if (!company) return { success: false, error: "Empresa não encontrada" };
-
-  await db.booking.update({
-    where: { id: bookingId },
+  const updated = await db.booking.updateMany({
+    where: { id: bookingId, companyId: access.companyId },
     data: { status: newStatus },
   });
+
+  if (updated.count === 0) {
+    return { success: false, error: "Agendamento não encontrado nesta empresa" };
+  }
 
   if (newStatus === "COMPLETED") {
     const { notifyStatusChanged } = await import("@/lib/notifications");
@@ -84,8 +87,13 @@ export async function submitPresetResetRequestAction(companySlug: string, observ
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return { success: false, error: "Não autenticado" };
 
+  // Verificava só a sessão: qualquer conta logada abria um pedido de reset de
+  // catálogo em nome de outra empresa — e o reset apaga os serviços dela.
+  const access = await canAccessCompany(companySlug);
+  if (!access.ok) return { success: false, error: access.error };
+
   const company = await db.company.findFirst({
-    where: { slug: companySlug },
+    where: { id: access.companyId },
     select: { id: true, name: true, businessType: true },
   });
 

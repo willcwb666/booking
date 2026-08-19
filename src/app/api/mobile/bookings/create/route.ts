@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { encrypt } from "@/lib/encrypt";
 import { notifyBookingConfirmed, notifyCompanyNewBooking } from "@/lib/notifications";
 import { getMobileSession } from "../../_auth";
-import { rateLimit } from "@/lib/rate-limit";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { isSlotAvailable, resolveProfessionalForSlot, slotProfessionalKey } from "@/lib/agenda";
 
 export async function POST(req: NextRequest) {
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
-  const rl = await rateLimit(`booking:mobile:${session.user.id}`, 10, 60);
+  const rl = await enforceRateLimit(RATE_LIMITS.BOOKING_MOBILE, session.user.id);
   if (!rl.allowed) {
     return NextResponse.json({ error: "Muitas tentativas. Aguarde um momento." }, { status: 429 });
   }

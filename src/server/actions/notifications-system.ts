@@ -29,31 +29,16 @@ export type NotificationItem = {
   createdAt: string;
 };
 
-export async function createSystemNotificationAction(
-  title: string,
-  message: string,
-  type: string = "INFO",
-  companyId?: string,
-  senderUserId?: string
-) {
-  try {
-    const id = `snot_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-    await db.$executeRawUnsafe(
-      `INSERT INTO "system_notification" (id, "companyId", "senderUserId", title, message, type, "isRead", "isResolved", "createdAt")
-       VALUES ($1, $2, $3, $4, $5, $6, false, false, NOW())`,
-      id,
-      companyId || null,
-      senderUserId || null,
-      title,
-      message,
-      type
-    );
-    return { success: true };
-  } catch (err) {
-    console.error("Erro ao criar notificação de sistema:", err);
-    return { success: false };
-  }
-}
+// `createSystemNotificationAction` foi REMOVIDA daqui.
+//
+// Recebia título, mensagem e companyId livres e inseria a notificação sem
+// verificar nada: qualquer pessoa conseguia plantar um aviso no sino de
+// qualquer empresa, com o texto que quisesse — vetor direto de phishing, já
+// que a notificação chega com a aparência de mensagem oficial do sistema.
+//
+// Não havia nenhum chamador. As notificações reais são criadas dentro de
+// ações que já verificaram o acesso (pedido de reset de presets, anúncio de
+// novidades do super admin).
 
 /**
  * Busca as notificações separadas em Recebidas e Enviadas.
@@ -161,25 +146,48 @@ export async function getSystemNotificationsAction(): Promise<{
 }
 
 /**
- * Marcar notificação como lida.
+ * Marca uma notificação como lida ou não lida.
+ *
+ * O `UPDATE` é escopado a notificações que o chamador realmente alcança:
+ * super admin vê tudo; os demais, só as da própria empresa. Antes o `WHERE`
+ * era apenas `id = $1`, sem sessão nenhuma — dava para marcar como lida a
+ * notificação de qualquer empresa, inclusive esconder do super admin um
+ * pedido de reset de presets ainda pendente.
  */
-export async function markNotificationReadAction(notificationId: string) {
+async function setNotificationRead(notificationId: string, isRead: boolean) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { success: false as const };
+
+  if (session.user.role === "admin") {
+    await db.$executeRawUnsafe(
+      `UPDATE "system_notification" SET "isRead" = $2 WHERE id = $1`,
+      notificationId,
+      isRead
+    );
+    return { success: true as const };
+  }
+
   await db.$executeRawUnsafe(
-    `UPDATE "system_notification" SET "isRead" = true WHERE id = $1`,
-    notificationId
+    `UPDATE "system_notification" n
+        SET "isRead" = $2
+      WHERE n.id = $1
+        AND n."companyId" IN (
+          SELECT cu."companyId" FROM "company_user" cu
+           WHERE cu."userId" = $3 AND cu."isActive" = true
+        )`,
+    notificationId,
+    isRead,
+    session.user.id
   );
-  return { success: true };
+  return { success: true as const };
 }
 
-/**
- * Marcar notificação como não lida.
- */
+export async function markNotificationReadAction(notificationId: string) {
+  return setNotificationRead(notificationId, true);
+}
+
 export async function markNotificationUnreadAction(notificationId: string) {
-  await db.$executeRawUnsafe(
-    `UPDATE "system_notification" SET "isRead" = false WHERE id = $1`,
-    notificationId
-  );
-  return { success: true };
+  return setNotificationRead(notificationId, false);
 }
 
 /**

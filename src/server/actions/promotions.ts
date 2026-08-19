@@ -6,7 +6,7 @@ import { getCompanyBySlugForUser } from "@/server/queries/companies";
 import { db } from "@/lib/db";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { rateLimit } from "@/lib/rate-limit";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { sendPromotionEmail } from "@/lib/email";
 import { formatMoney } from "@/lib/format";
 import type { ActionResult } from "@/types";
@@ -174,7 +174,7 @@ export async function sendPromotionEmailAction(formData: FormData): Promise<Send
     return { success: false, errors: parsed.error.flatten().fieldErrors };
 
   // Proteção contra spam: no máximo 2 disparos por hora por empresa
-  const rl = await rateLimit(`promo:send:${company.id}`, 2, 3600);
+  const rl = await enforceRateLimit(RATE_LIMITS.PROMO_SEND, company.id);
   if (!rl.allowed)
     return { success: false, errors: { _: ["Limite de envios atingido. Tente novamente em 1 hora."] } };
 

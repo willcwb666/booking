@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { rateLimit } from "@/lib/rate-limit";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 type SubmitResult = { success: true } | { success: false; error: string };
 
@@ -21,7 +21,7 @@ export async function submitReviewAction(formData: FormData): Promise<SubmitResu
   if (!session) return { success: false, error: "Você precisa estar logado para avaliar" };
 
   // Rate limit: 5 reviews per minute per user
-  const rl = await rateLimit(`review:${session.user.id}`, 5, 60);
+  const rl = await enforceRateLimit(RATE_LIMITS.REVIEW, session.user.id);
   if (!rl.allowed) return { success: false, error: "Muitas tentativas. Aguarde um momento." };
 
   const booking = await db.booking.findFirst({

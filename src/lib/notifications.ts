@@ -311,8 +311,8 @@ export async function notifyBookingCompletedWithInvoice(
       finalTotal,
     });
 
-    const { awardLoyaltyPointsForBookingAction } = await import("@/server/actions/loyalty");
-    void awardLoyaltyPointsForBookingAction(bookingId, finalTotal);
+    const { awardLoyaltyPointsForBooking } = await import("@/lib/loyalty");
+    void awardLoyaltyPointsForBooking(bookingId, finalTotal);
   } catch (err) {
     console.error("[notifications] notifyBookingCompletedWithInvoice failed:", err);
   }

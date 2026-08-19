@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { sendWaitlistNotificationEmail } from "@/lib/email";
-import { rateLimit } from "@/lib/rate-limit";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 type Result = { success: true } | { success: false; error: string };
 
@@ -14,7 +14,7 @@ export async function joinWaitlistAction(formData: FormData): Promise<Result> {
   // Action pública — limita spam/flood de entradas por IP
   const hdrs = await headers();
   const ip = hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  const rl = await rateLimit(`waitlist:join:${ip}`, 5, 60);
+  const rl = await enforceRateLimit(RATE_LIMITS.WAITLIST_JOIN, ip);
   if (!rl.allowed) {
     return { success: false, error: "Muitas tentativas. Aguarde um momento." };
   }

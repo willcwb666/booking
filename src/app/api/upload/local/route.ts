@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getActiveSession } from "@/lib/session";
-import { rateLimit } from "@/lib/rate-limit";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import fs from "fs";
 import path from "path";
 
@@ -40,7 +40,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
-  const rl = await rateLimit(`upload:local:${session.user.id}`, 10, 60);
+  const rl = await enforceRateLimit(RATE_LIMITS.UPLOAD, session.user.id);
   if (!rl.allowed) {
     return NextResponse.json({ error: "Muitas requisições. Tente novamente em instantes." }, { status: 429 });
   }

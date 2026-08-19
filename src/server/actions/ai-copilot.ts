@@ -10,6 +10,9 @@ import {
   type NoShowRiskAnalysis,
 } from "@/lib/ai/booking-copilot";
 import { callGeminiOrGroq } from "@/lib/ai/gemini-client";
+import { canAccessCompany } from "@/lib/admin-guard";
+import { getActiveSession } from "@/lib/session";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 /**
  * Server Action: Processa texto/áudio em linguagem natural para agendamento inteligente
@@ -19,6 +22,14 @@ export async function parseAIBookingIntentAction(
   companySlug: string,
   userQuery: string
 ): Promise<{ success: boolean; data?: ParsedBookingIntent; error?: string }> {
+  // Cada chamada sai para o modelo e custa dinheiro. Sem sessão e sem limite,
+  // um laço simples num endpoint aberto vira fatura.
+  const session = await getActiveSession();
+  if (!session) return { success: false, error: "Não autenticado" };
+
+  const rl = await enforceRateLimit(RATE_LIMITS.AI_QUERY, session.user.id);
+  if (!rl.allowed) return { success: false, error: rl.message };
+
   try {
     if (!userQuery || userQuery.trim().length < 3) {
       return { success: false, error: "Digite pelo menos 3 caracteres para a IA analisar." };
@@ -114,15 +125,16 @@ export async function evaluateClientNoShowRiskAction(
   companySlug: string,
   clientEmailOrPhone: string
 ): Promise<{ success: boolean; data?: NoShowRiskAnalysis; error?: string }> {
-  try {
-    const company = await db.company.findUnique({
-      where: { slug: companySlug },
-      select: { id: true },
-    });
+  // Lê o histórico de um cliente identificado por e-mail/telefone. Sem a
+  // checagem de vínculo, bastava informar o slug de outra empresa.
+  const access = await canAccessCompany(companySlug);
+  if (!access.ok) return { success: false, error: access.error };
 
-    if (!company) {
-      return { success: false, error: "Empresa não encontrada." };
-    }
+  const rl = await enforceRateLimit(RATE_LIMITS.AI_QUERY, access.companyId);
+  if (!rl.allowed) return { success: false, error: rl.message };
+
+  try {
+    const company = { id: access.companyId };
 
     // Busca histórico real de agendamentos via relação customerDetail
     const bookings = await db.booking.findMany({
@@ -170,6 +182,12 @@ export async function generateAIRetentionCampaignAction(
   data?: { whatsappCopy: string; emailSubject: string; emailBody: string };
   error?: string;
 }> {
+  const session = await getActiveSession();
+  if (!session) return { success: false, error: "Não autenticado" };
+
+  const rl = await enforceRateLimit(RATE_LIMITS.AI_QUERY, session.user.id);
+  if (!rl.allowed) return { success: false, error: rl.message };
+
   try {
     // 1. Tentar gerar com Gemini/Groq se disponível
     const prompt = `Gere uma mensagem amigável e persuasiva de WhatsApp e um e-mail para reconquistar o cliente "${clientName}" que não realiza um agendamento há ${daysInactive} dias.${lastServiceName ? ` O último serviço realizado foi "${lastServiceName}".` : ""}

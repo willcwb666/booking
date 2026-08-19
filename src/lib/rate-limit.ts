@@ -63,8 +63,15 @@ export const RATE_LIMITS = {
   CALENDAR_SYNC: { name: "calendar:sync", limit: 6, windowSeconds: 300, failMode: "memory", message: "Sincronização já executada há pouco. Aguarde alguns minutos." },
   /** Alterar/registrar a URL do feed iCal (resolve DNS e baixa o feed). */
   CALENDAR_FEED_UPDATE: { name: "calendar:feed", limit: 10, windowSeconds: 600, failMode: "memory", message: TOO_MANY },
-  /** Teste manual de webhook de saída. Por empresa. */
-  WEBHOOK_TEST: { name: "webhook:test", limit: 10, windowSeconds: 300, failMode: "memory", message: TOO_MANY },
+  // `WEBHOOK_TEST` foi removida: não existe ação de teste manual de webhook no
+  // projeto. Política declarada sem operação correspondente dá a impressão de
+  // cobertura numa revisão de segurança e não protege nada.
+  /**
+   * Chamada a modelo de linguagem (Gemini/Groq). Cada requisição custa dinheiro
+   * de verdade, então a proteção aqui é orçamentária, não só de abuso: sem
+   * limite, um laço num endpoint aberto vira fatura.
+   */
+  AI_QUERY: { name: "ai:query", limit: 20, windowSeconds: 300, failMode: "memory", message: "Muitas consultas de IA seguidas. Aguarde alguns minutos." },
 
   // ─── Uploads e envios em massa ───
   UPLOAD: { name: "upload", limit: 10, windowSeconds: 60, failMode: "memory", message: TOO_MANY },

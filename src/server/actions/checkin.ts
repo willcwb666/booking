@@ -317,16 +317,14 @@ export async function performSmartCheckinAction(
   }
 }
 
-/**
- * Gera link assinado para envio por WhatsApp / SMS
- */
-export async function createSignedCheckinUrlAction(
-  bookingId: string,
-  companyId: string,
-  scheduledTime: Date
-): Promise<string> {
-  const expiresAtTimestamp = Math.floor(scheduledTime.getTime() / 1000) + 30 * 60;
-  const token = generateSignedCheckinToken(bookingId, companyId, expiresAtTimestamp);
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  return `${baseUrl}/checkin/${bookingId}?t=${token}&exp=${expiresAtTimestamp}`;
-}
+// `createSignedCheckinUrlAction` foi REMOVIDA daqui.
+//
+// Ela recebia um bookingId e um companyId quaisquer e devolvia uma URL de
+// check-in ASSINADA, sem verificar nada. Uma assinatura so vale enquanto a
+// emissao e controlada: com o emissor aberto ao publico, qualquer pessoa
+// conseguia um token valido para o agendamento de qualquer cliente — e a tela
+// de check-in mostra dados do cliente.
+//
+// Nao havia nenhum chamador no projeto. Quando o envio por WhatsApp/SMS
+// existir, o link deve ser gerado no servidor, dentro do fluxo que ja
+// verificou o acesso a empresa, e nunca por uma action publica.

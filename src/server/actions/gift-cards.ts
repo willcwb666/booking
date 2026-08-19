@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { rateLimit } from "@/lib/rate-limit";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { getGiftCardByCode } from "@/server/queries/gift-cards";
 
 function generateGiftCardCode(): string {
@@ -153,7 +153,7 @@ export async function validateGiftCardAction(companySlug: string, code: string) 
   try {
     const hdrs = await headers();
     const ip = hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ?? hdrs.get("x-real-ip") ?? "unknown";
-    const rl = await rateLimit(`giftcard:validate:${ip}`, 10, 60);
+    const rl = await enforceRateLimit(RATE_LIMITS.GIFTCARD_VALIDATE, ip);
     if (!rl.allowed) {
       return { success: false, error: "Muitas tentativas. Aguarde um momento." };
     }

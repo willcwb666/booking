@@ -8,7 +8,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { notifyBookingCompletedWithInvoice } from "@/lib/notifications";
-import { rateLimit } from "@/lib/rate-limit";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { createPixPayment } from "@/lib/mercadopago";
 import { triggerWebhooks } from "@/lib/webhooks";
 import { createCalendarEvent } from "@/lib/google-calendar";
@@ -32,7 +32,7 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
   // Rate limit: 10 bookings per minute per IP
   const hdrs = await headers();
   const ip = hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  const rl = await rateLimit(`booking:create:${ip}`, 10, 60);
+  const rl = await enforceRateLimit(RATE_LIMITS.BOOKING_CREATE, ip);
   if (!rl.allowed) {
     return { success: false, errors: { _: ["Muitas tentativas. Aguarde um momento."] } };
   }
@@ -639,7 +639,7 @@ export async function checkPixPaymentAction(bookingId: string): Promise<{ paid: 
   // 30/min por IP cobre o uso legítimo e barra enumeração/abuso da API do MP
   const hdrs = await headers();
   const ip = hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  const rl = await rateLimit(`pix:check:${ip}`, 30, 60);
+  const rl = await enforceRateLimit(RATE_LIMITS.PIX_CHECK, ip);
   if (!rl.allowed) return { paid: false };
 
   const booking = await db.booking.findUnique({
@@ -777,7 +777,7 @@ export async function refundBookingAction(
 
   // Estorno é irreversível e sai dinheiro pelo gateway — limita rajada por
   // usuário mesmo com permissão válida.
-  const rl = await rateLimit(`booking:refund:${session.user.id}`, 10, 300);
+  const rl = await enforceRateLimit(RATE_LIMITS.REFUND, session.user.id);
   if (!rl.allowed) {
     return { success: false, error: "Muitos estornos em sequência. Aguarde alguns minutos." };
   }

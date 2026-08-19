@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { rateLimit } from "@/lib/rate-limit";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { z } from "zod";
 
 // IDs são cuid() — não usar .uuid() aqui
@@ -160,7 +160,7 @@ function parseItems(formData: FormData) {
 export async function upsertEstimateAction(formData: FormData): Promise<UpsertResult> {
   const hdrs = await headers();
   const ip = hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  const rl = await rateLimit(`estimate:upsert:${ip}`, 30, 60);
+  const rl = await enforceRateLimit(RATE_LIMITS.ESTIMATE_UPSERT, ip);
   if (!rl.allowed) {
     return { success: false, errors: { _: ["Muitas tentativas. Aguarde um momento."] } };
   }
@@ -235,7 +235,7 @@ export async function upsertEstimateAction(formData: FormData): Promise<UpsertRe
 export async function submitEstimateAction(formData: FormData): Promise<SubmitResult> {
   const hdrs = await headers();
   const ip = hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  const rl = await rateLimit(`estimate:submit:${ip}`, 10, 60);
+  const rl = await enforceRateLimit(RATE_LIMITS.ESTIMATE_SUBMIT, ip);
   if (!rl.allowed) {
     return { success: false, errors: { _: ["Muitas tentativas. Aguarde um momento."] } };
   }

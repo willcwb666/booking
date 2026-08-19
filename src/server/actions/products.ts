@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 async function verifyCompanyAccess(companySlug: string) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -169,6 +170,12 @@ export async function adjustStockAction(
 ) {
   try {
     const { company, user } = await verifyCompanyAccess(companySlug);
+
+    // Ajuste de estoque é escrita em cascata (produto + movimento). A política
+    // `STOCK_ADJUST` existia na tabela desde o início e nunca tinha sido
+    // aplicada em lugar nenhum.
+    const rl = await enforceRateLimit(RATE_LIMITS.STOCK_ADJUST, user.id);
+    if (!rl.allowed) throw new Error(rl.message);
 
     if (data.quantity <= 0) {
       throw new Error("A quantidade deve ser maior que zero");
