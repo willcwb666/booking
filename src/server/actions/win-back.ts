@@ -75,6 +75,7 @@ export async function sendWinBackCampaignAction(
       lastName: true,
       email: true,
       lastWinBackAt: true,
+      acceptsMarketing: true,
     },
   });
 
@@ -95,9 +96,10 @@ export async function sendWinBackCampaignAction(
   const deliveredIds: string[] = [];
 
   for (const c of customers) {
-    // Recusou marketing, ou já recebeu resgate há pouco. A carência é checada
-    // no servidor porque a tela pode estar aberta desde antes do último envio.
-    if (blocked.has(c.email.toLowerCase())) {
+    // Consentimento e carência são verificados aqui, não só na tela: a lista
+    // de ids vem do navegador, e quem chamar a action direto passaria por cima
+    // da caixa que o cliente deixou desmarcada.
+    if (!c.acceptsMarketing || blocked.has(c.email.toLowerCase())) {
       skipped++;
       continue;
     }

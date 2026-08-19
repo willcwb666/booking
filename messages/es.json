@@ -92,7 +92,9 @@
     "dateTime": "Fecha y hora",
     "dateAt": "{date} a las {time}",
     "total": "Total",
-    "frequencyLabel": "Frecuencia: {value}"
+    "frequencyLabel": "Frecuencia: {value}",
+    "marketingOptIn": "Quiero recibir ofertas y novedades",
+    "marketingOptInHint": "Solo promociones de esta empresa. Puedes darte de baja cuando quieras."
   },
   "confirmed": {
     "payFailedTitle": "Pago no completado",

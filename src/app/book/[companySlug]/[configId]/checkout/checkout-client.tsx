@@ -883,6 +883,26 @@ export function CheckoutClient({
                     {t("reminders")}
                   </label>
 
+                  {/* Marketing em caixa separada e DESMARCADA.
+                      Lembrete de agendamento é serviço — o cliente pediu ao
+                      agendar. Oferta é marketing, e consentimento agregado
+                      (uma caixa para as duas coisas, já marcada) não vale
+                      como consentimento em lugar nenhum. */}
+                  <label className="flex items-start gap-2 text-sm text-[var(--color-text)] mt-2">
+                    <input
+                      type="checkbox"
+                      name="acceptsMarketing"
+                      value="true"
+                      className="rounded mt-0.5"
+                    />
+                    <span>
+                      {t("marketingOptIn")}
+                      <span className="block text-[var(--color-text-muted)]" style={{ fontSize: "var(--text-2xs)" }}>
+                        {t("marketingOptInHint")}
+                      </span>
+                    </span>
+                  </label>
+
                   {/* VALE-PRESENTE / GIFT CARD */}
                   <div className="mt-4 pt-3 border-t border-[var(--color-border)] space-y-2">
                     <label className="block text-xs font-bold text-[var(--color-text)]">

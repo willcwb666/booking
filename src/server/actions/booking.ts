@@ -53,6 +53,10 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
   const email = formData.get("email") as string;
   const phone = formData.get("phone") as string;
   const sendReminders = formData.get("sendReminders") === "true";
+  // Consentimento de marketing: separado dos lembretes de propósito. Lembrete
+  // de agendamento é serviço — o cliente pediu. Oferta é marketing, e juntar
+  // os dois numa caixa só é consentimento agregado, que não vale.
+  const acceptsMarketing = formData.get("acceptsMarketing") === "true";
   const address = formData.get("address") as string;
   const aptNo = (formData.get("aptNo") as string) || null;
   const city = formData.get("city") as string;
@@ -293,6 +297,12 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
             city,
             totalBookings: { increment: 1 },
             lastBookingDate: scheduledDate,
+            // Marcar a data só quando o consentimento é DADO. Um agendamento
+            // com a caixa desmarcada não revoga o que o cliente já autorizou
+            // antes — para revogar existe o link de descadastro.
+            ...(acceptsMarketing
+              ? { acceptsMarketing: true, marketingConsentAt: new Date() }
+              : {}),
           },
           create: {
             companyId: estimate.companyId,
@@ -303,6 +313,8 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
             city,
             totalBookings: 1,
             lastBookingDate: scheduledDate,
+            acceptsMarketing,
+            marketingConsentAt: acceptsMarketing ? new Date() : null,
           },
         });
 

@@ -887,6 +887,15 @@ model Customer {
   // da tela reofereceria o mesmo desconto a quem já recebeu ontem — que é como
   // uma ferramenta de retenção vira motivo de descadastro.
   lastWinBackAt     DateTime?
+  // Consentimento para e-mail de oferta, dado no checkout.
+  //
+  // Vive aqui e não em `UserNotificationPreference` porque a maioria dos
+  // clientes agenda SEM criar conta — não existe `user` para pendurar a
+  // preferência. Sem este campo, "quem nunca teve a chance de escolher" e
+  // "quem escolheu não receber" eram indistinguíveis, e o sistema mandava
+  // marketing para quem nunca consentiu.
+  acceptsMarketing     Boolean   @default(false)
+  marketingConsentAt   DateTime?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -895,6 +904,7 @@ model Customer {
   @@unique([companyId, email])
   @@index([companyId])
   @@index([companyId, phone])
+  @@index([companyId, acceptsMarketing])
   @@map("customer")
 }
 

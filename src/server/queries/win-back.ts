@@ -26,8 +26,16 @@ export type WinBackCustomer = WinBackAssessment & {
   totalSpent: number;
   /** Última campanha de resgate enviada, para não repetir disparo. */
   lastWinBackAt: Date | null;
-  /** `true` quando o cliente recusou e-mail de marketing. */
+  /**
+   * `true` quando o cliente NÃO pode receber oferta: nunca consentiu no
+   * checkout, ou desligou marketing na conta.
+   *
+   * Os dois casos são o mesmo para efeito de envio, mas separados na tela —
+   * "nunca consentiu" é acionável (peça na próxima visita), "recusou" não.
+   */
   optedOut: boolean;
+  /** Consentimento explícito dado no checkout. */
+  acceptsMarketing: boolean;
 };
 
 export async function getWinBackCustomers(companyId: string): Promise<WinBackCustomer[]> {
@@ -43,6 +51,7 @@ export async function getWinBackCustomers(companyId: string): Promise<WinBackCus
       days_since: number;
       totalSpent: number;
       lastWinBackAt: Date | null;
+      acceptsMarketing: boolean;
       opted_out: boolean;
     }>
   >(
@@ -78,7 +87,10 @@ export async function getWinBackCustomers(companyId: string): Promise<WinBackCus
             (CURRENT_DATE - a.last_visit)::int          AS days_since,
             c."totalSpent"::float8                      AS "totalSpent",
             c."lastWinBackAt"                           AS "lastWinBackAt",
-            COALESCE(np."enableMarketing" = false, false) AS opted_out
+            c."acceptsMarketing"                        AS "acceptsMarketing",
+            -- Sem consentimento no checkout, ou recusa explícita na conta.
+            (c."acceptsMarketing" = false
+             OR COALESCE(np."enableMarketing" = false, false)) AS opted_out
        FROM agg a
        JOIN "customer" c ON c.id = a."customerId"
        LEFT JOIN "user" u ON lower(u.email) = lower(c.email)
@@ -105,6 +117,7 @@ export async function getWinBackCustomers(companyId: string): Promise<WinBackCus
       lastVisitDate: r.last_visit,
       totalSpent: Number(r.totalSpent ?? 0),
       lastWinBackAt: r.lastWinBackAt,
+      acceptsMarketing: Boolean(r.acceptsMarketing),
       optedOut: Boolean(r.opted_out),
     };
   });

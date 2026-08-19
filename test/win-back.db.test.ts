@@ -190,6 +190,36 @@ d("consulta de resgate (integração)", () => {
     expect(row.status).toBe("LOST");
   });
 
+  it("sem consentimento no checkout, o cliente aparece mas não é selecionável", async () => {
+    // O cliente semeado nunca marcou a caixa de ofertas — `acceptsMarketing`
+    // fica no padrão `false`. Ele continua na lista (o dono precisa saber que
+    // existe, e pode pedir o aceite na próxima visita), mas o servidor recusa
+    // o envio.
+    const { getWinBackCustomers } = await import("@/server/queries/win-back");
+    const [row] = await getWinBackCustomers(IDS.company);
+
+    expect(row.acceptsMarketing).toBe(false);
+    expect(row.optedOut).toBe(true);
+  });
+
+  it("com consentimento, deixa de ser bloqueado", async () => {
+    const { getWinBackCustomers } = await import("@/server/queries/win-back");
+
+    await db.customer.update({
+      where: { id: IDS.customer },
+      data: { acceptsMarketing: true, marketingConsentAt: new Date() },
+    });
+
+    const [row] = await getWinBackCustomers(IDS.company);
+    expect(row.acceptsMarketing).toBe(true);
+    expect(row.optedOut).toBe(false);
+
+    await db.customer.update({
+      where: { id: IDS.customer },
+      data: { acceptsMarketing: false, marketingConsentAt: null },
+    });
+  });
+
   it("agendamento cancelado não conta como visita", async () => {
     // Só `COMPLETED` forma ritmo. Contar cancelamento inventaria um ciclo que
     // nunca existiu e mandaria oferta para quem nunca foi atendido.

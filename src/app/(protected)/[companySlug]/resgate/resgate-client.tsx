@@ -214,11 +214,13 @@ export function ResgateClient({ companySlug, customers }: Props) {
                         >
                           {/* O motivo do bloqueio é dito, não só desabilitado —
                               senão o dono acha que é bug da tela. */}
-                          {c.optedOut
-                            ? "Recusou e-mails de oferta"
-                            : blocked
-                              ? `Já recebeu resgate nos últimos ${WIN_BACK_COOLDOWN_DAYS} dias`
-                              : c.email}
+                          {!c.acceptsMarketing
+                            ? "Não autorizou receber ofertas — peça na próxima visita"
+                            : c.optedOut
+                              ? "Descadastrou-se das ofertas"
+                              : blocked
+                                ? `Já recebeu resgate nos últimos ${WIN_BACK_COOLDOWN_DAYS} dias`
+                                : c.email}
                         </span>
                       </td>
                       <td>
