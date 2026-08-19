@@ -4,9 +4,11 @@ Documento de decisão sobre as 15 funcionalidades propostas. Cada ficha traz o
 veredito, o que **já existe no código**, o escopo da v1 e — quando é o caso — o
 que **não** deve ser construído.
 
-Revisado em 2026-08-18 contra o schema (`prisma/schema.prisma`) e o código em
+Revisado em 2026-08-19 contra o schema (`prisma/schema.prisma`) e o código em
 `src/`. Onde o documento anterior descrevia algo como novo e a peça já estava
 pronta, o texto foi corrigido.
+
+**Estado atual: 3 itens concluídos, 12 abertos. O Bloco 1 está fechado.**
 
 ---
 
@@ -33,9 +35,9 @@ menor. As features abaixo defendem essa posição; não a substituem.
 
 | # | Ideia | Veredito | Esforço |
 |---|---|---|---|
-| 05 | Smart Dynamic Deposit | **Fazer primeiro** — sem score de IA | 3–4 d |
-| 12 | Split POS: comissão híbrida | **Fazer** — falta menos do que parecia, ver ficha | 2 d |
-| 03 | 2FA | **Fazer** — via plugin do better-auth, sem WhatsApp | 4–5 d |
+| 05 | Smart Dynamic Deposit | ✅ **Concluído** — `cc53ed2` | — |
+| 12 | Split POS: comissão híbrida | ✅ **Concluído** — `c01e462` | — |
+| 03 | 2FA | ✅ **Concluído** — `0bbdb7c` + `61695db` | — |
 | 06 | Win-back de inativos | **Fazer** — campanha aprovada, não agente autônomo | 4–5 d |
 | 08 | Review & Google Maps Booster | **Fazer** — a forma proposta é ilegal, ver ficha | 3–4 d |
 | 04 | Yield management | **Fazer metade** — só o desconto em horário ocioso | 3 d |
@@ -56,13 +58,12 @@ grosseira para ordenar, não compromisso.
 
 ## Ordem de execução
 
-### Bloco 1 — Dinheiro e confiança (2–3 semanas)
-`05 sinal dinâmico` → `12 comissão híbrida` → `03 2FA`
+### Bloco 1 — Dinheiro e confiança — ✅ concluído
+~~`05 sinal dinâmico`~~ → ~~`12 comissão híbrida`~~ → ~~`03 2FA`~~
 
-Os três atacam perda direta de receita e risco de conta. E os dois primeiros são
-majoritariamente encaixar peças que já estão no banco.
+Os três atacavam perda direta de receita e risco de conta.
 
-### Bloco 2 — Retenção (3–4 semanas)
+### Bloco 2 — Retenção (3–4 semanas) — **próximo**
 `06 win-back` → `08 review` → `04 desconto ocioso` → `13 alerta de estoque`
 
 Tudo calculado sobre dado que já existe. Nenhuma integração externa nova.
@@ -110,16 +111,57 @@ Outras peças relevantes já disponíveis:
 - **Licenciamento**: `SystemModule` + `CompanyModuleLicense`
 - **Presets**: `SystemPreset` / `SystemSegment` por tipo de negócio
 
+Construído nesta rodada (2026-08-19), disponível para os próximos itens:
+
+- **Moeda por transação**: `Estimate.currency` e `PosSale.currency`, carimbadas
+  no ato. Painel da plataforma agrega por moeda em vez de somar mercados.
+- **Faixa de confiança do cliente**: `src/lib/trust-tier.ts` +
+  `src/server/queries/customer-trust.ts`. Serve ao item 06 (win-back) e ao 04.
+- **Taxas de comissão unificadas**: `src/lib/commission-rates.ts`.
+- **2FA**: plugin ligado, `TwoFactor` migrado, `/verificacao` no ar.
+
 Não existe: PWA (nenhum manifest, nenhum service worker), tabela de regra de
-comissão por tipo de item, perfil de usuário global, 2FA.
+comissão por categoria, perfil de usuário global (`UserProfile` do item 02),
+comissão carimbada em `Booking`.
 
 ---
 
 # Bloco 1 — Dinheiro e confiança
 
-## 05. Smart Dynamic Deposit
+## 05. Smart Dynamic Deposit — ✅ CONCLUÍDO (`cc53ed2`, 2026-08-19)
 
-**Veredito: fazer primeiro.** Melhor relação valor/custo da lista inteira.
+### O que foi entregue
+- `src/lib/trust-tier.ts` — puro, sem I/O, no padrão de `pricing.ts`. 15 testes.
+- `src/server/queries/customer-trust.ts` — contadores lidos de `booking`, **não**
+  dos campos denormalizados de `customer`: divergência entre os dois custaria
+  dinheiro do cliente.
+- `CompanyPaymentSettings.dynamicDeposit` — chave por empresa, nasce desligada.
+- Aba Clientes das configurações: chave, percentual e a tabela das quatro faixas.
+
+### Três decisões que mudaram o desenho original
+- **Janela de 180 dias para a falta pesar.** Sem recorte, `noShowCount` é
+  condenação perpétua e o cliente nunca volta ao normal — some o próprio
+  incentivo de voltar.
+- **`dynamicDeposit` nasce desligado.** Ligar muda quanto os clientes pagam, e
+  essa troca é do dono, não efeito colateral de aplicar migration. Desligado, o
+  comportamento é o de `requireDeposit` bit a bit, com teste garantindo.
+- **Não existe action pública que receba e-mail e devolva a faixa.** Seria um
+  oráculo: qualquer um descobriria quem tem falta registrada em qualquer empresa
+  e varreria uma lista para mapear a carteira de um concorrente. O checkout
+  resolve a faixa pelo e-mail da **sessão**; anônimo vê a faixa neutra e o
+  servidor reavalia na criação.
+
+### Achado colateral
+A aba de clientes afirmava que passar de `maxAllowedNoShows` bloqueava o
+agendamento gratuito e exigia sinal. **Não existia** — o número era só guardado.
+Agora existe, e o texto foi reescrito para descrever o que de fato acontece.
+
+### Pendente deste item
+A faixa ainda não aparece na ficha do cliente (`/clientes`), só nas
+configurações. É a peça que faltou do escopo original.
+
+<details>
+<summary>Análise original (mantida para referência)</summary>
 
 ### A dor
 Exigir sinal de cliente fiel gera atrito e ofende. Não exigir de cliente
@@ -159,32 +201,59 @@ trabalho e são defensáveis numa discussão.
 *Hipótese a validar: redução de faltas. Instrumentar `noShowCount` antes e
 depois para ter número próprio.*
 
+</details>
+
 ---
 
-## 12. Split POS: comissão híbrida
+## 12. Split POS: comissão híbrida — ✅ CONCLUÍDO (`c01e462`, 2026-08-19)
 
-**Veredito: fazer.** É terminar algo que está 70% pronto, e o gap real não é o
-que o documento anterior dizia.
+### O achado que mudou o escopo — de novo
+A ficha anterior (corrigida em 2026-08-19 de manhã) dizia que faltavam
+"granularidade por categoria e o extrato em duas colunas". Ao abrir o relatório,
+o problema era outro e maior:
 
-### A dor
-Serviço e produto têm regras de comissão diferentes (50% no corte, 10% na
-pomada). Misturar os dois no fechamento da quinzena gera erro de planilha.
+**O extrato somava apenas `booking`. Toda venda de balcão ficava de fora.** O PDV
+calculava a comissão de produto, gravava em `pos_sale.commissionAmount`, e nada
+disso chegava ao relatório. O profissional que vendeu R$ 500 em produtos via
+zero, e o dono conferia na planilha. Era o "inferno de planilha" do roadmap
+acontecendo **dentro do próprio módulo que promete resolvê-lo**.
 
-### O gap real (corrigido em 2026-08-19)
-A avaliação anterior deste item estava errada. `Professional` **já tem**
-`commissionRate` e `productCommissionRate` separados, e `pos.ts` já aplica cada
-uma ao seu tipo de item no cálculo da venda. A divisão serviço vs. produto
-existe.
+### O que foi entregue
+- `src/lib/commission-rates.ts` — puro, 11 testes. Uma resposta só para "quanto
+  este profissional ganha".
+- `SaleItem.commissionAmount` — comissão carimbada **no ato da venda**. Ficou no
+  item, e não em duas colunas na venda, para qualquer agrupamento futuro (por
+  categoria, por serviço) sair do mesmo dado sem nova migration.
+- `getCompanyCommissionReport` reescrito: inclui o PDV, separa serviço de
+  produto, e agrega em SQL — antes carregava todos os agendamentos concluídos do
+  período com o orçamento junto para somar em JavaScript.
+- Taxa de produto editável na tela de comissões; CSV com as duas colunas.
 
-O que falta é mais estreito:
+### Três fontes de verdade viraram uma
+`Professional` acumulou três campos para duas ideias, e cada lugar resolvia a
+ambiguidade do seu jeito:
 
-- **Granularidade por categoria ou serviço.** Hoje é uma taxa de produto e uma
-  de serviço por profissional. Não dá para "10% em cosmético, 5% em bebida".
-- **O extrato separado.** `PosSale.commissionAmount` guarda o total já somado —
-  o fechamento da quinzena não consegue mostrar as duas colunas, que é a dor
-  original descrita neste item.
+| Onde | O que usava |
+|---|---|
+| PDV | `commissionRate ?? commissionPercentage` |
+| Relatório | só `commissionPercentage` |
+| Listagem de profissionais | os dois se cobrindo em ordem inversa |
 
-Se a granularidade por categoria for necessária, a forma é uma **tabela de
+Dois comportamentos que os testes agora fixam:
+- **Zero explícito é respeitado.** Um `??` ingênuo faria `commissionRate = 0`
+  cair no legado — zerar a comissão de alguém ressuscitaria a taxa antiga.
+- **Sem taxa de produto, produto paga zero** — não a taxa de serviço. Vender uma
+  pomada não pode pagar como cortar cabelo por omissão.
+
+### Por que não houve backfill
+`pos_sale` guarda só o total e a taxa vigente naquele dia nunca foi registrada.
+Ratear por regra de três com a taxa de hoje produziria números plausíveis e
+falsos num relatório de pagamento. O período antigo aparece à parte, com o total
+íntegro e a origem declarada como desconhecida.
+
+### Não entrou (e continua valendo se a dor aparecer)
+Granularidade por categoria — "10% em cosmético, 5% em bebida". Hoje é uma taxa
+de produto e uma de serviço por profissional. A forma seria uma **tabela de
 regra**:
 
 ```
@@ -197,12 +266,15 @@ CommissionRule
   value
 ```
 Resolução por especificidade: profissional+categoria → profissional+tipo →
-empresa+tipo → `commissionPercentage` legado como fallback. Manter o fallback
-evita migração de dados e não quebra quem já configurou.
+empresa+tipo → `resolveRates()` como fallback. Manter o fallback evita migração
+de dados e não quebra quem já configurou.
 
-O extrato passa a separar as duas colunas; `PosSale.commissionAmount` continua
-guardando o total calculado **no momento da venda** (não recalcular depois — se
-a regra mudar, o histórico não pode mudar junto).
+### Dívida anotada no código, não resolvida
+**`Booking` não guarda comissão.** Ela é recalculada com a taxa atual, então
+mudar a comissão de um profissional **reescreve retroativamente** o que ele
+ganhou em serviços no mês passado. O balcão já está imune desde este commit; o
+agendamento precisaria da mesma coluna e de migrar o histórico. Está comentado
+em `src/server/queries/commissions.ts`.
 
 ### Sobre o leitor de código de barras
 `Product.barcode` já existe. A API `BarcodeDetector` funciona no Chrome Android
@@ -212,9 +284,52 @@ landing page.
 
 ---
 
-## 03. 2FA multi-canal
+## 03. 2FA multi-canal — ✅ CONCLUÍDO (`0bbdb7c` + `61695db`, 2026-08-19)
 
-**Veredito: fazer — ativando o plugin, não construindo do zero.**
+### O que já funciona
+- Plugin `twoFactor` do better-auth ligado, `appName: "Kreator"` como issuer do
+  TOTP. Model `TwoFactor` + `User.twoFactorEnabled` migrados.
+- Canais: **TOTP** (principal), **OTP por e-mail** via Resend, **8 códigos de
+  recuperação** de uso único.
+- `/verificacao` — segunda etapa do login, com as três alternativas sempre
+  visíveis.
+- Painel de ativação em Perfil → Segurança (`src/components/ui/two-factor-panel.tsx`).
+- Obrigatório para `OWNER`, `MANAGER` e super admin.
+
+### Decisões de fluxo que valem registro
+- **Ativação em duas etapas.** O segredo é gerado mas só passa a valer depois que
+  o usuário confirma um código. Sem isso, quem cadastrasse errado no app ficaria
+  trancado fora da própria conta na hora seguinte.
+- **Códigos de recuperação aparecem ANTES do cadastro no app**, com o aviso de
+  que é a única vez. Quem perde o celular precisa já ter salvado.
+- **Senha exigida para ativar E para desativar.** É o que impede uma sessão
+  roubada — o cenário contra o qual o 2FA existe — de ligar o segundo fator no
+  aparelho do atacante ou desligar o da vítima.
+- **Erro de código é sempre a mesma mensagem** para inválido, expirado e já
+  usado: distinguir diria a quem tenta adivinhar qual parte ele acertou.
+- **Alternativas sempre visíveis na tela de verificação.** Quem perdeu o celular
+  chega ali em pânico; esconder a saída atrás de um link discreto gera chamado de
+  suporte que o produto consegue evitar.
+
+### O reset auditado do super admin — entregue em `61695db`
+Os três freios, todos verificados no servidor:
+
+1. **Carência de 24h** (`executeAfter`). Verificada na action, não escondendo o
+   botão — quem chama a action direto não passa pela interface.
+2. **Aviso ao dono no PEDIDO**, não na execução. Avisar só na hora de executar
+   eliminaria a janela inteira de reação, que é o ponto do atraso.
+3. **A própria vítima cancela**, por um banner em Perfil → Segurança. Exigir
+   sessão para cancelar é correto e não é obstáculo: quem consegue entrar não
+   precisa de reset.
+
+Motivo obrigatório (mín. 10 caracteres) que vai para o `AuditLog` e para o
+e-mail do dono. Executar derruba as sessões do alvo — se o reset foi pedido
+porque a conta pode estar comprometida, manter as sessões de pé anularia o
+efeito.
+
+**Falta a UI no painel `/admin`**: hoje as actions existem e estão testadas, mas
+não há tela para o super admin abrir o pedido. Na prática o backdoor está
+fechado até isso existir, o que é o lado seguro de ficar incompleto.
 
 ### Por que agora
 O sistema guarda token do Stripe e do Mercado Pago das empresas
@@ -672,12 +787,24 @@ age sobre a conversão do trial, que é onde o funil vaza mais.
 
 ## Histórico
 
-- **2026-08-19** — Moeda por transação e painel da plataforma segmentado por
-  mercado (`68fd608`). Pré-requisito do item 01 que não estava mapeado: sem
-  carimbar a moeda no registro, a inferência por DDI reinterpretaria o histórico
-  de qualquer empresa que trocasse de mercado. Corrigida a ficha do item 12 — a
-  separação serviço/produto já existia em `Professional.productCommissionRate`;
-  o que falta é granularidade por categoria e o extrato em duas colunas.
+- **2026-08-19 (tarde)** — Bloco 1 executado. **Item 05** concluído (`cc53ed2`):
+  quatro faixas explicáveis no lugar do score de IA, janela de 180 dias, chave
+  desligada por padrão, e nenhuma consulta pública de faixa por e-mail. **Item
+  12** concluído (`c01e462`): o extrato ignorava o PDV inteiro — escopo bem maior
+  que o mapeado de manhã; três fontes de verdade da taxa viraram uma. **Item 03**
+  concluído (`0bbdb7c` + `61695db`): plugin do better-auth, TOTP + OTP por
+  e-mail + códigos de recuperação, sem WhatsApp; e o reset do super admin com
+  carência de 24h, aviso ao dono no pedido e cancelamento pela própria vítima.
+  O build do Next pegou um `export const` em arquivo `use server` que o teste
+  estático deixava passar — asserção nova fecha a lacuna.
+  Registradas duas dívidas novas: comissão não carimbada em `Booking`, e vendas
+  de PDV anteriores sem rateio.
+- **2026-08-19 (manhã)** — Moeda por transação e painel da plataforma segmentado
+  por mercado (`68fd608`, `4f20885`). Pré-requisito do item 01 que não estava
+  mapeado: sem carimbar a moeda no registro, a inferência por DDI reinterpretaria
+  o histórico de qualquer empresa que trocasse de mercado. Corrigida a ficha do
+  item 12 — a separação serviço/produto já existia em
+  `Professional.productCommissionRate`.
 - **2026-08-18** — Revisão completa. Vereditos, escopos corrigidos e ordem de
   execução incorporados. Removidos os números de resultado sem base. Corrigidos
   os cinco itens descritos como novos que já estavam parcialmente construídos.
