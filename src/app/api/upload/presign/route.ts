@@ -22,7 +22,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "type e contentType são obrigatórios" }, { status: 400 });
   }
 
-  if (!["logo", "avatar"].includes(type)) {
+  if (!["logo", "avatar", "client-photo"].includes(type)) {
     return NextResponse.json({ error: "type inválido" }, { status: 400 });
   }
 

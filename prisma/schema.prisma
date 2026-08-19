@@ -163,6 +163,7 @@ model User {
   twoFactors               TwoFactor[]
   twoFactorResetsAsTarget  TwoFactorResetRequest[]     @relation("TwoFactorResetTarget")
   twoFactorResetsRequested TwoFactorResetRequest[]     @relation("TwoFactorResetRequester")
+  photoConsentsCollected   ClientPhoto[]               @relation("ClientPhotoConsentBy")
 
   @@unique([email])
   @@map("user")
@@ -444,6 +445,10 @@ model Company {
   // apagaria o dia inteiro da grade. O teto transforma erro de dado em erro
   // limitado.
   driveTimeMaxMinutes        Int                     @default(120)
+  // Meses de guarda das fotos de cliente antes do expurgo automático. Guardar
+  // rosto de pessoa identificada sem prazo não se defende em auditoria — e o
+  // custo de armazenamento de dado sensível cresce para sempre.
+  photoRetentionMonths       Int                     @default(24)
   // Notificações e Canais
   notifyEmailEnabled         Boolean                 @default(true)
   notifyTextEnabled          Boolean                 @default(true)
@@ -491,6 +496,8 @@ model Company {
   offPeakWindows             OffPeakWindow[]
   createdAt                  DateTime                @default(now())
   updatedAt                  DateTime                @updatedAt
+  clientPhotos               ClientPhoto[]
+  serviceRecords             ServiceRecord[]
 
   @@map("company")
 }
@@ -605,6 +612,8 @@ model Professional {
   agendas        AgendaProfessional[]
   scheduleEvents ScheduleEvent[]
   bookings       Booking[]
+  clientPhotos   ClientPhoto[]
+  serviceRecords ServiceRecord[]
 
   @@index([companyId])
   @@index([companyId, isActive])
@@ -881,6 +890,8 @@ model Booking {
   review                 Review?
   createdAt              DateTime               @default(now())
   updatedAt              DateTime               @updatedAt
+  clientPhotos           ClientPhoto[]
+  serviceRecord          ServiceRecord?
 
   @@index([companyId, scheduledDate])
   @@index([companyId, customerId])
@@ -982,13 +993,103 @@ model Customer {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
-  bookings Booking[]
+  bookings       Booking[]
+  photos         ClientPhoto[]
+  serviceRecords ServiceRecord[]
 
   @@unique([companyId, email])
   @@index([companyId])
   @@index([companyId, phone])
   @@index([companyId, acceptsMarketing])
   @@map("customer")
+}
+
+/// Foto de antes/depois de um atendimento.
+///
+/// ─── O que NÃO existe aqui, de propósito ─────────────────────────────────────
+///
+/// Não há campo de "autorização para uso público", e não há galeria pública.
+/// Rosto de pessoa identificada é dado pessoal sensível nas duas jurisdições em
+/// que o produto opera, e a forma de garantir que uma foto dessas nunca apareça
+/// numa landing page é não construir o caminho até lá. Um portfólio público,
+/// se um dia existir, precisa de um consentimento próprio, colhido em separado
+/// e para essa finalidade — não do reaproveitamento deste.
+///
+/// ─── Chave, não URL ──────────────────────────────────────────────────────────
+///
+/// Guarda-se a chave do objeto no R2, nunca uma URL pública. A leitura passa
+/// por URL assinada de vida curta, gerada no servidor para quem tem acesso à
+/// empresa. Uma URL pública com nome aleatório é segredo por obscuridade: basta
+/// ela vazar em um print, um log ou o histórico do navegador para a foto ficar
+/// acessível a qualquer um, para sempre.
+model ClientPhoto {
+  id             String        @id @default(cuid())
+  companyId      String
+  company        Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customerId     String
+  customer       Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  bookingId      String?
+  booking        Booking?      @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  professionalId String?
+  professional   Professional? @relation(fields: [professionalId], references: [id], onDelete: SetNull)
+  /// Chave do objeto no armazenamento. NUNCA uma URL pública.
+  storageKey     String        @unique
+  /// BEFORE | AFTER
+  kind           String
+  caption        String?
+  /// Consentimento desta foto, com data e com quem o colheu. Sem os dois a
+  /// foto não é gravada: consentimento sem registro é o mesmo que nenhum.
+  consentAt      DateTime
+  consentById    String
+  consentBy      User          @relation("ClientPhotoConsentBy", fields: [consentById], references: [id])
+  /// A partir daqui a foto é elegível a expurgo automático. Sem prazo, o custo
+  /// de armazenamento de dado sensível cresce para sempre — e guardar rosto de
+  /// cliente indefinidamente não se defende em auditoria nenhuma.
+  retainUntil    DateTime
+  createdAt      DateTime      @default(now())
+
+  @@index([companyId, customerId])
+  @@index([retainUntil])
+  @@map("client_photo")
+}
+
+/// Ficha técnica do atendimento — o que foi feito, em números.
+///
+/// A proposta original era uma IA que "anotasse a ficha a partir da foto". Ela
+/// não consegue: a fórmula da tintura não está na imagem, está na cabeça de
+/// quem aplicou. O que funciona é campo estruturado com sugestão do que aquele
+/// profissional já usou antes — mais rápido de preencher que ditar, e correto
+/// por construção.
+model ServiceRecord {
+  id                String        @id @default(cuid())
+  companyId         String
+  company           Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  customerId        String
+  customer          Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  /// Um registro por atendimento. Dois seriam duas verdades sobre a mesma
+  /// sessão, e no retorno ninguém saberia qual das duas foi aplicada.
+  bookingId         String?       @unique
+  booking           Booking?      @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  professionalId    String?
+  professional      Professional? @relation(fields: [professionalId], references: [id], onDelete: SetNull)
+  /// Fórmula da coloração (ex.: "7.1 + 9.3, 40g").
+  formula           String?
+  /// Oxidante / volume (ex.: "20 vol").
+  developer         String?
+  /// Tempo de pausa, em minutos.
+  processingMinutes Int?
+  /// Número da lâmina / pente (ex.: "2 nas laterais, 4 no topo").
+  clipperGuard      String?
+  /// Produtos usados, texto livre.
+  productsUsed      String?
+  notes             String?
+  performedAt       DateTime      @default(now())
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([companyId, customerId])
+  @@index([companyId, professionalId])
+  @@map("service_record")
 }
 
 // ─── Reviews ──────────────────────────────────────────────────────────────────

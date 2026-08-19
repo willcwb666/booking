@@ -30,6 +30,9 @@ const GUARD_HINTS = [
   "requireSuperAdmin",
   "assertSuperAdmin",
   "canAccessCompany",
+  // Envelopa `canAccessCompany` e ainda exige a licença do módulo — é uma
+  // porta mais estreita, não mais larga.
+  "canAccessModule",
   "requireAdmin",
   "verifyCompanyAccess",
   "resolveCompanyForManage",

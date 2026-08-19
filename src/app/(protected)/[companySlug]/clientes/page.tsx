@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { getCompanyBySlug } from "@/server/queries/companies";
 import { getCompanyCustomers } from "@/server/queries/customers";
+import { canAccessModule } from "@/lib/module-guard";
+import { VAULT_MODULE } from "@/lib/client-vault";
 import { ClientesClient } from "./clientes-client";
 
 type Props = {
@@ -15,7 +17,16 @@ export default async function ClientesPage({ params }: Props) {
     notFound();
   }
 
-  const customers = await getCompanyCustomers(company.id);
+  const [customers, vaultAccess] = await Promise.all([
+    getCompanyCustomers(company.id),
+    canAccessModule(companySlug, VAULT_MODULE),
+  ]);
 
-  return <ClientesClient companySlug={companySlug} customers={customers} />;
+  return (
+    <ClientesClient
+      companySlug={companySlug}
+      customers={customers}
+      hasVault={vaultAccess.ok}
+    />
+  );
 }

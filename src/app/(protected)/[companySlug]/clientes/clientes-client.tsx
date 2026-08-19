@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useCompany } from "@/lib/company-context";
 import { formatMoney } from "@/lib/format";
 import type { CustomerSummary } from "@/server/queries/customers";
@@ -23,6 +24,7 @@ import {
   MessageSquare,
   Copy,
   Check,
+  Lock,
 } from "@/components/ui/icons";
 import { generateAIRetentionCampaignAction } from "@/server/actions/ai-copilot";
 import { Pagination } from "@/components/ui/pagination";
@@ -30,6 +32,8 @@ import { Pagination } from "@/components/ui/pagination";
 type Props = {
   companySlug: string;
   customers: CustomerSummary[];
+  /** Empresa com o módulo do cofre contratado. */
+  hasVault?: boolean;
 };
 
 type RiskFilter = "ALL" | "AT_RISK";
@@ -45,7 +49,11 @@ function csvField(value: unknown): string {
   return `"${s.replace(/"/g, '""')}"`;
 }
 
-export function ClientesClient({ companySlug, customers: initialCustomers }: Props) {
+export function ClientesClient({
+  companySlug,
+  customers: initialCustomers,
+  hasVault = false,
+}: Props) {
   const company = useCompany();
   const [searchTerm, setSearchTerm] = useState("");
   const [riskFilter, setRiskFilter] = useState<RiskFilter>("ALL");
@@ -508,6 +516,19 @@ export function ClientesClient({ companySlug, customers: initialCustomers }: Pro
                 ))}
               </div>
             </div>
+
+            {hasVault && (
+              /* O cofre é uma página inteira, não mais um bloco no modal: são
+                 fotos e fichas de várias sessões, e espremê-las aqui faria o
+                 profissional desistir de abrir no meio do atendimento. */
+              <Link
+                href={`/${companySlug}/clientes/${selectedCustomer.id}/cofre`}
+                className="btn btn-secondary btn-sm w-full"
+              >
+                <Lock className="w-3.5 h-3.5" />
+                Abrir cofre — fotos e ficha técnica
+              </Link>
+            )}
 
             {/* Gerador de mensagem de reativação */}
             <div className="card">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import { db } from "@/lib/db";
 import { enqueueNotification, processOutbox } from "@/lib/notification-outbox";
+import { purgeExpiredClientPhotos } from "@/lib/vault-purge";
 
 const DEFAULT_TZ = "America/Sao_Paulo";
 
@@ -105,10 +106,28 @@ export async function GET(req: NextRequest) {
   // Drena a fila na mesma execução — inclui o que ficou de rodadas anteriores.
   const outbox = await processOutbox(100);
 
+  /**
+   * Expurgo das fotos de cliente com prazo vencido.
+   *
+   * Pega carona neste cron em vez de ganhar um agendador próprio. Retenção não
+   * é urgente — uma passada por dia cumpre a promessa —, e um segundo
+   * agendador seria mais uma coisa para configurar em cada ambiente e mais uma
+   * para descobrir que nunca foi ligada.
+   *
+   * Falha aqui não pode derrubar os lembretes, que são a razão desta rota.
+   */
+  let vault = { deleted: 0, failed: 0 };
+  try {
+    vault = await purgeExpiredClientPhotos(100);
+  } catch (err) {
+    console.error("[cron/reminders] expurgo do cofre falhou:", err);
+  }
+
   return NextResponse.json({
     queued24h,
     queued2h,
     timezones: timezones.length,
     outbox,
+    vault,
   });
 }
