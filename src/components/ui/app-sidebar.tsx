@@ -24,6 +24,7 @@ import {
   PlusCircle,
   Scale,
   Scissors,
+  ShoppingCart,
   Settings,
   Star,
   Tag,
@@ -137,6 +138,14 @@ export function AppSidebar({
           label: "Produtos e estoque",
           icon: <Package className={ICON} />,
           keywords: "inventário inventario",
+        },
+        {
+          href: `${base}/reposicao`,
+          label: "Reposição",
+          // ShoppingCart, não Package: Package já é Produtos e estoque, e o
+          // ponto desta tela é a COMPRA, não o inventário.
+          icon: <ShoppingCart className={ICON} />,
+          keywords: "comprar fornecedor pedido estoque baixo giro",
         },
         {
           href: `${base}/agendas`,
