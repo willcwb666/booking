@@ -2,7 +2,7 @@ import "server-only";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = process.env.RESEND_FROM_EMAIL ?? "Agendei <noreply@agendei.app>";
+const FROM = process.env.RESEND_FROM_EMAIL ?? "Kreator <noreply@kreator.com.br>";
 
 /** Escapes user-controlled values interpolated into email HTML. */
 function escapeHtml(value: string): string {
@@ -27,7 +27,7 @@ export async function sendVerificationEmail({
     await resend.emails.send({
       from: FROM,
       to,
-      subject: "Confirme seu e-mail — Agendei",
+      subject: "Confirme seu e-mail — Kreator",
       html: `
         <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
           <h2 style="color:#1d4ed8;margin-bottom:4px">Confirme seu e-mail</h2>
@@ -41,8 +41,8 @@ export async function sendVerificationEmail({
               Confirmar e-mail
             </a>
           </p>
-          <p style="color:#9ca3af;font-size:12px">Se você não criou uma conta no Agendei, ignore este e-mail.</p>
-          <p style="color:#9ca3af;font-size:12px;margin-top:32px">Agendei · Agendamentos online</p>
+          <p style="color:#9ca3af;font-size:12px">Se você não criou uma conta no Kreator, ignore este e-mail.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:32px">Kreator · Agendamentos online</p>
         </div>
       `,
     });
@@ -64,7 +64,7 @@ export async function sendPasswordResetEmail({
     await resend.emails.send({
       from: FROM,
       to,
-      subject: "Redefinir sua senha — Agendei",
+      subject: "Redefinir sua senha — Kreator",
       html: `
         <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
           <h2 style="color:#1d4ed8;margin-bottom:4px">Redefinir sua senha</h2>
@@ -81,7 +81,7 @@ export async function sendPasswordResetEmail({
           <p style="color:#9ca3af;font-size:12px">
             Se você não pediu isso, ignore este e-mail — sua senha atual continua valendo.
           </p>
-          <p style="color:#9ca3af;font-size:12px;margin-top:32px">Agendei · Agendamentos online</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:32px">Kreator · Agendamentos online</p>
         </div>
       `,
     });
@@ -132,7 +132,7 @@ export async function sendBookingConfirmationEmail(data: BookingEmailData) {
           </div>
 
           <p style="color:#374151">Você receberá um lembrete no dia anterior. Em caso de dúvidas, entre em contato com a empresa.</p>
-          <p style="color:#9ca3af;font-size:12px;margin-top:32px">Agendei · Agendamentos online</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:32px">Kreator · Agendamentos online</p>
         </div>
       `,
     });
@@ -161,7 +161,7 @@ export async function sendBookingReminderEmail(data: BookingEmailData) {
           </div>
 
           <p style="color:#374151">Esteja pronto! Em caso de imprevisto, cancele com antecedência.</p>
-          <p style="color:#9ca3af;font-size:12px;margin-top:32px">Agendei · Agendamentos online</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:32px">Kreator · Agendamentos online</p>
         </div>
       `,
     });
@@ -191,7 +191,7 @@ export async function sendWaitlistNotificationEmail({
             <strong>${formatDate(date, locale)}</strong>.
           </p>
           <p style="color:#374151">Acesse o link de agendamento para reservar o horário antes que outra pessoa pegue!</p>
-          <p style="color:#9ca3af;font-size:12px;margin-top:32px">Agendei · Agendamentos online</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:32px">Kreator · Agendamentos online</p>
         </div>
       `,
     });
@@ -292,7 +292,7 @@ export async function sendPromotionEmail(data: PromotionEmailData) {
           Você recebeu este e-mail porque aceitou receber ofertas.
           Para não receber mais, desative "Ofertas e promoções" nas preferências do seu perfil.
         </p>
-        <p style="color:#9ca3af;font-size:12px;margin-top:32px">Agendei · Agendamentos online</p>
+        <p style="color:#9ca3af;font-size:12px;margin-top:32px">Kreator · Agendamentos online</p>
       </div>
     `,
   });
@@ -320,7 +320,7 @@ export async function sendBookingCancelledEmail({
             <strong>${formatDate(date, locale)}</strong> às <strong>${startTime}</strong> foi cancelado.
           </p>
           <p style="color:#374151">Se precisar reagendar, acesse o app ou o link de agendamento.</p>
-          <p style="color:#9ca3af;font-size:12px;margin-top:32px">Agendei · Agendamentos online</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:32px">Kreator · Agendamentos online</p>
         </div>
       `,
     });
@@ -492,7 +492,7 @@ ${escapeHtml(data.description)}
         <p style="color:#9ca3af;font-size:12px;margin:0">
           Enviado para a conta responsável por ${escapeHtml(data.companyName)}.
         </p>
-        <p style="color:#9ca3af;font-size:12px;margin-top:24px">Agendei · Agendamentos online</p>
+        <p style="color:#9ca3af;font-size:12px;margin-top:24px">Kreator · Agendamentos online</p>
       </div>
     `,
   });

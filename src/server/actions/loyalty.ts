@@ -5,10 +5,18 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 /**
  * Busca as configurações do Programa de Fidelidade da empresa.
  */
 export async function getCompanyLoyaltyProgramAction(companySlug: string) {
+  // Endpoint público: sem sessão para responsabilizar, o limite de taxa é a
+  // única barreira contra abuso e enumeração por slug.
+  const rlIp =
+    (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const rl = await enforceRateLimit(RATE_LIMITS.PUBLIC_COMPANY_INFO, rlIp);
+  if (!rl.allowed) return { success: false, program: null };
+
   const company = await db.company.findFirst({
     where: { slug: companySlug },
     select: { id: true, currency: true },

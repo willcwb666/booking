@@ -49,6 +49,19 @@ export const RATE_LIMITS = {
   MEMBERSHIP_COVERAGE: { name: "membership:coverage", limit: 20, windowSeconds: 60, failMode: "memory", message: TOO_MANY },
   /** Feed .ics protegido por token: impede varredura do token por empresa. */
   ICS_FEED: { name: "ics:feed", limit: 30, windowSeconds: 60, failMode: "memory", message: TOO_MANY },
+  /**
+   * Check-in do cliente, autorizado por token assinado na URL. O token e o
+   * unico segredo em jogo: sem limite, da para varrer bookingId ate acertar.
+   */
+  CHECKIN: { name: "checkin", limit: 20, windowSeconds: 60, failMode: "memory", message: TOO_MANY },
+
+  // ─── Leitura publica de dados da empresa ───
+  /**
+   * Configuracao exibida na pagina publica (aparencia, meios de pagamento,
+   * regras de fidelidade). Nao e segredo, mas e consulta ao banco por slug:
+   * sem limite, vira ferramenta de enumeracao e de carga.
+   */
+  PUBLIC_COMPANY_INFO: { name: "public:company", limit: 60, windowSeconds: 60, failMode: "open", message: TOO_MANY },
 
   // ─── Operações financeiras do painel ───
   /** Venda no PDV: escrita financeira + baixa de estoque. Por usuário. */

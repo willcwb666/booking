@@ -5,7 +5,7 @@ import { canAccessCompany } from "@/lib/admin-guard";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { logAuditEvent } from "./audit";
+import { logAuditEvent } from "@/lib/audit-log";
 
 /**
  * Agendamentos em aberto (CONFIRMED / PENDING) da empresa.

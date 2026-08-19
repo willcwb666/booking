@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { logAuditEvent } from "./audit";
+import { logAuditEvent } from "@/lib/audit-log";
 
 export async function updateCompanyLandingSettingsAction(
   companySlug: string,

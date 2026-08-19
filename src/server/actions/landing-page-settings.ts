@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 export type CompanyLandingPageConfig = {
   heroTitle: string;
   heroSubtitle: string;
@@ -19,6 +20,26 @@ export async function getCompanyLandingPageConfigAction(companySlug: string): Pr
   success: boolean;
   config: CompanyLandingPageConfig;
 }> {
+  // Endpoint público: sem sessão para responsabilizar, o limite de taxa é a
+  // única barreira contra abuso e enumeração por slug.
+  const rlIp =
+    (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const rl = await enforceRateLimit(RATE_LIMITS.PUBLIC_COMPANY_INFO, rlIp);
+  if (!rl.allowed) {
+    return {
+      success: false,
+      config: {
+        heroTitle: "Bem-vindo!",
+        heroSubtitle: "Agende seus serviços com facilidade e praticidade.",
+        bannerUrl: "",
+        accentColor: "#635bff",
+        featuredServiceIds: [],
+        showTestimonials: true,
+        customWelcomeMessage: "",
+      },
+    };
+  }
+
   try {
     const company = await db.company.findFirst({
       where: { slug: companySlug },

@@ -16,36 +16,11 @@ export type AuditLogItem = {
   createdAt: string;
 };
 
-export async function logAuditEvent(params: {
-  companyId?: string | null;
-  action: string;
-  entity: string;
-  details?: Record<string, any> | string;
-}) {
-  try {
-    const reqHeaders = await headers();
-    const session = await auth.api.getSession({ headers: reqHeaders });
-    const ip =
-      reqHeaders.get("x-forwarded-for")?.split(",")[0] ||
-      reqHeaders.get("x-real-ip") ||
-      "unknown";
-
-    // Prisma, não SQL bruto. A versão anterior rodava um
-    // `CREATE TABLE IF NOT EXISTS` a CADA evento auditado — DDL em caminho
-    // quente, pegando lock de tabela, para criar algo que já existe desde a
-    // migration. `audit_log` é o model AuditLog do schema.
-    await writeAuditRow({
-      companyId: params.companyId ?? null,
-      userId: session?.user?.id ?? null,
-      action: params.action,
-      entity: params.entity,
-      details: params.details,
-      ipAddress: ip,
-    });
-  } catch (err) {
-    console.error("[audit-log] Failed to write audit log:", err);
-  }
-}
+// `logAuditEvent` saiu daqui para `src/lib/audit-log.ts`.
+//
+// Exportada de um arquivo `"use server"` ela era um endpoint HTTP: qualquer
+// pessoa escrevia entradas arbitrarias na trilha de auditoria. Forjar log e
+// sujar exatamente o registro que se consulta quando algo da errado.
 
 export async function getPlatformAuditLogsAction(): Promise<{
   success: boolean;

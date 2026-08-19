@@ -4,12 +4,21 @@ import "server-only";
 import { db } from "@/lib/db";
 import { calculateGhostSlotDiscount, type GhostSlotOffer } from "@/lib/agenda/ghost-slot-buster";
 
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { headers } from "next/headers";
 /**
  * Busca ofertas relâmpago de última hora ativas para preenchimento de desistências
  */
 export async function getActiveGhostSlotsAction(
   companySlug: string
 ): Promise<{ success: boolean; data: GhostSlotOffer[] }> {
+  // Endpoint público: sem sessão para responsabilizar, o limite de taxa é a
+  // única barreira contra abuso e enumeração.
+  const rlIp =
+    (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const rl = await enforceRateLimit(RATE_LIMITS.PUBLIC_COMPANY_INFO, rlIp);
+  if (!rl.allowed) return { success: false, data: [] };
+
   try {
     const company = await db.company.findUnique({
       where: { slug: companySlug },

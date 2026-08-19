@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { APIError } from "better-auth/api";
 import { getUserCompanies } from "@/server/queries/companies";
 
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 async function redirectAfterAuth(userId: string): Promise<never> {
   const companies = await getUserCompanies(userId);
   if (companies.length > 0) {
@@ -19,6 +20,14 @@ async function redirectAfterAuth(userId: string): Promise<never> {
 export async function registerAction(
   formData: FormData
 ): Promise<ActionResult> {
+  // O limite de brute-force do projeto está no handler HTTP `/api/auth`.
+  // Esta action chama a API do better-auth em processo e não passa por lá,
+  // então precisa do próprio limite — senão é uma porta paralela aberta.
+  const rlIp =
+    (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const rl = await enforceRateLimit(RATE_LIMITS.AUTH, rlIp);
+  if (!rl.allowed) return { success: false, errors: { _: [rl.message] } };
+
   const raw = {
     name: formData.get("name"),
     email: formData.get("email"),
@@ -43,6 +52,14 @@ export async function registerAction(
 }
 
 export async function loginAction(formData: FormData): Promise<ActionResult> {
+  // Mesmo motivo do cadastro: esta action chama `auth.api.signInEmail` em
+  // processo e nunca passa pelo handler HTTP onde o limite de brute-force
+  // está aplicado.
+  const rlIp =
+    (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const rl = await enforceRateLimit(RATE_LIMITS.AUTH, rlIp);
+  if (!rl.allowed) return { success: false, errors: { _: [rl.message] } };
+
   const raw = {
     email: formData.get("email"),
     password: formData.get("password"),

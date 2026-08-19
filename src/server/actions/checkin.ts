@@ -6,6 +6,8 @@ import { revalidatePath } from "next/cache";
 import { calculateDistanceMeters, formatDistance } from "@/lib/geo/haversine";
 import { verifySignedCheckinToken, generateSignedCheckinToken } from "@/lib/security/signed-token";
 
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { headers } from "next/headers";
 /** Antecedência máxima para abrir o check-in. */
 const CHECKIN_EARLY_WINDOW_MINUTES = 15;
 /** Atraso máximo tolerado antes de mandar o cliente à recepção. */
@@ -44,6 +46,13 @@ export async function getBookingCheckinInfoAction(
   token?: string,
   expTimestamp?: number
 ): Promise<{ success: boolean; data?: CheckinBookingData; error?: string }> {
+  // Endpoint público: sem sessão para responsabilizar, o limite de taxa é a
+  // única barreira contra abuso e enumeração por slug.
+  const rlIp =
+    (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const rl = await enforceRateLimit(RATE_LIMITS.CHECKIN, rlIp);
+  if (!rl.allowed) return { success: false, error: rl.message };
+
   try {
     // Token OBRIGATÓRIO. Antes a verificação era `if (token && expTimestamp)`:
     // bastava omitir os parâmetros para ler nome, telefone e e-mail do cliente
@@ -162,6 +171,13 @@ export async function performSmartCheckinAction(
   token?: string,
   expTimestamp?: number
 ): Promise<CheckinStatusResult> {
+  // Endpoint público: sem sessão para responsabilizar, o limite de taxa é a
+  // única barreira contra abuso e enumeração por slug.
+  const rlIp =
+    (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const rl = await enforceRateLimit(RATE_LIMITS.CHECKIN, rlIp);
+  if (!rl.allowed) return { success: false, error: rl.message, code: "ERROR" };
+
   try {
     // Mesma regra da leitura: sem token válido não há check-in. A action é
     // alcançável por qualquer um, então o link assinado é a credencial.

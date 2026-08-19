@@ -14,7 +14,7 @@ import { triggerWebhooks } from "@/lib/webhooks";
 import { createCalendarEvent } from "@/lib/google-calendar";
 import { isSlotAvailable, resolveProfessionalForSlot, slotProfessionalKey } from "@/lib/agenda";
 import { calculateCancellationRefund, computeBookingCharge, roundMoney, toStripeCents } from "@/lib/pricing";
-import { notifyWaitlistForDate } from "./waitlist";
+import { notifyWaitlistForDate } from "@/lib/waitlist-notify";
 import { randomUUID } from "crypto";
 import { enqueueNotification } from "@/lib/notification-outbox";
 
