@@ -12,6 +12,7 @@ import {
   BarChart2,
   Calendar,
   CalendarRange,
+  Car,
   Clock,
   CreditCard,
   Gift,
@@ -158,6 +159,15 @@ export function AppSidebar({
           label: "Página de agendamento",
           icon: <Globe className={ICON} />,
           keywords: "booking link público publico site",
+        },
+        {
+          href: `${base}/tempo-de-deslocamento`,
+          label: "Tempo de deslocamento",
+          // Car: nenhum outro item usa. Clock, o candidato óbvio, já é Grades
+          // de horário E Lista de espera — ícone repetido não ajuda ninguém a
+          // achar nada.
+          icon: <Car className={ICON} />,
+          keywords: "deslocamento trânsito transito viagem domicílio domicilio rota buffer",
         },
       ],
     },

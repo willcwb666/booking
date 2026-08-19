@@ -64,6 +64,8 @@ type Props = {
   currency: string;
   locale: string;
   businessType?: string;
+  /** Empresa que reserva tempo de viagem — ver `isHomeService` abaixo. */
+  driveTimeEnabled?: boolean;
   offPeakWindows?: OffPeakWindow[];
   /** Dados do perfil do usuário logado, para preencher o formulário. */
   prefill?: {
@@ -294,6 +296,7 @@ export function CheckoutClient({
   currency,
   locale,
   businessType,
+  driveTimeEnabled = false,
   offPeakWindows = [],
   prefill = null,
   requireDeposit,
@@ -304,7 +307,20 @@ export function CheckoutClient({
   const tb = useTranslations("booking");
   const uiLocale = useLocale();
 
+  /**
+   * Pedir o endereço do atendimento.
+   *
+   * A lista fixa de ramos deixava de fora justamente os exemplos que motivaram
+   * a reserva de viagem: mecânico móvel e banho e tosa móvel são MECHANIC e
+   * PET_GROOMER, e nenhum dos dois pedia endereço. Sem endereço não há
+   * coordenada, e sem coordenada não há o que reservar.
+   *
+   * Ligar a reserva de viagem é a empresa dizendo, com todas as letras, que
+   * vai até o cliente — então a chave também abre o campo de endereço. A lista
+   * antiga continua valendo para quem nunca abriu essa tela.
+   */
   const isHomeService =
+    driveTimeEnabled ||
     businessType === "HOME_CLEANING" ||
     businessType === "LAWN_CARE" ||
     businessType === "POOL_CLEANING";

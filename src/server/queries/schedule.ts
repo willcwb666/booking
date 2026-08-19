@@ -71,6 +71,10 @@ export async function getScheduleEvents(
   const combined = [
     ...manualEvents.map((e) => ({
       ...e,
+      // Bloqueio de deslocamento não tem autor humano. A tela sempre mostrou
+      // "criado por", então o rótulo diz o que de fato aconteceu em vez de
+      // deixar um campo vazio que parece defeito.
+      createdBy: e.createdBy ?? { id: "system", name: "Cálculo automático" },
       bookingId: undefined as string | undefined,
       status: undefined as string | undefined,
     })),

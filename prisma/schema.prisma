@@ -22,7 +22,6 @@ enum BusinessType {
   OTHER
 }
 
-
 enum CompanyUserRole {
   OWNER
   MANAGER
@@ -122,48 +121,48 @@ enum PaymentStatus {
 // ─── Auth (better-auth) ───────────────────────────────────────────────────────
 
 model User {
-  id            String    @id
+  id            String   @id
   name          String
   email         String
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean  @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // better-auth admin plugin
-  role          String?
-  banned        Boolean?  @default(false)
+  role             String?
+  banned           Boolean?  @default(false)
   // better-auth twoFactor plugin
-  twoFactorEnabled Boolean? @default(false)
-  banReason     String?
-  banExpires    DateTime?
+  twoFactorEnabled Boolean?  @default(false)
+  banReason        String?
+  banExpires       DateTime?
 
   // perfil customizado
-  bio           String?
-  location      String?
+  bio      String?
+  location String?
 
   // Multiempresas: permite cadastrar mais de uma empresa (cada uma com
   // assinatura de plano cobrada individualmente)
   allowMultiCompany Boolean @default(false)
 
-  sessions              Session[]
-  accounts              Account[]
-  companyUsers          CompanyUser[]
-  professionals         Professional[]
-  createdAgendas        Agenda[]         @relation("AgendaCreatedBy")
-  cancelledAgendas      Agenda[]         @relation("AgendaCancelledBy")
-  createdBookingConfigs  BookingConfig[]   @relation("BookingConfigCreatedBy")
-  createdScheduleEvents ScheduleEvent[]  @relation("ScheduleEventCreatedBy")
-  estimatesAsCustomer   Estimate[]       @relation("EstimateCustomer")
-  cancelledBookings     Booking[]        @relation("BookingCancelledBy")
-  confirmedPayments     Booking[]        @relation("BookingPaymentConfirmedBy")
-  pushTokens            PushToken[]
-  notificationPrefs     UserNotificationPreference?
-  profile               UserProfile?
-  calendarIntegrations  CalendarIntegration[]
-  twoFactors            TwoFactor[]
-  twoFactorResetsAsTarget    TwoFactorResetRequest[] @relation("TwoFactorResetTarget")
-  twoFactorResetsRequested   TwoFactorResetRequest[] @relation("TwoFactorResetRequester")
+  sessions                 Session[]
+  accounts                 Account[]
+  companyUsers             CompanyUser[]
+  professionals            Professional[]
+  createdAgendas           Agenda[]                    @relation("AgendaCreatedBy")
+  cancelledAgendas         Agenda[]                    @relation("AgendaCancelledBy")
+  createdBookingConfigs    BookingConfig[]             @relation("BookingConfigCreatedBy")
+  createdScheduleEvents    ScheduleEvent[]             @relation("ScheduleEventCreatedBy")
+  estimatesAsCustomer      Estimate[]                  @relation("EstimateCustomer")
+  cancelledBookings        Booking[]                   @relation("BookingCancelledBy")
+  confirmedPayments        Booking[]                   @relation("BookingPaymentConfirmedBy")
+  pushTokens               PushToken[]
+  notificationPrefs        UserNotificationPreference?
+  profile                  UserProfile?
+  calendarIntegrations     CalendarIntegration[]
+  twoFactors               TwoFactor[]
+  twoFactorResetsAsTarget  TwoFactorResetRequest[]     @relation("TwoFactorResetTarget")
+  twoFactorResetsRequested TwoFactorResetRequest[]     @relation("TwoFactorResetRequester")
 
   @@unique([email])
   @@map("user")
@@ -171,19 +170,15 @@ model User {
 
 /**
  * Dados pessoais do usuário — o "Kreator Pass".
- *
  * ─── Por que aqui e não copiando de outra empresa ────────────────────────────
- *
  * O desenho original preenchia o formulário do Pet Shop com os dados que a
  * cliente havia informado ao Salão. Isso é transferência de dado pessoal entre
  * dois controladores distintos: o Salão coletou aqueles dados para a própria
  * finalidade e não autorizou repasse. Modal de consentimento não resolve —
  * quem precisaria consentir é o Salão, não só a cliente.
- *
  * Com o perfil pertencendo ao USUÁRIO, nada atravessa empresas. A pessoa
  * preenche o formulário com os próprios dados, que é exatamente o que o
  * autofill do navegador faz. Some o problema jurídico e some o modal junto.
- *
  * O `Customer` de cada empresa continua sendo criado no primeiro agendamento,
  * com os dados copiados naquele momento. Editar a ficha no Salão não altera
  * este perfil nem a ficha do Pet Shop.
@@ -298,17 +293,16 @@ model Account {
 
 /**
  * Segredo TOTP e códigos de recuperação — tabela do plugin `twoFactor`.
- *
  * O nome das colunas é ditado pelo plugin, não por nós: `backupCodes` guarda a
  * lista serializada e criptografada, e o better-auth queima cada código no uso.
  * Escrever isso à mão seria reimplementar o que já veio no pacote.
  */
 model TwoFactor {
-  id          String  @id
+  id          String @id
   secret      String
   backupCodes String
   userId      String
-  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([secret])
   @@index([userId])
@@ -317,12 +311,10 @@ model TwoFactor {
 
 /**
  * Pedido de reset da verificação em duas etapas pelo super admin.
- *
  * É um backdoor legítimo — o dono que perdeu o celular E o acesso ao e-mail
  * precisa de alguém que destranque a conta. Mas sem freio ele significa que a
  * segurança de TODOS os tenants vale exatamente a segurança de uma conta
  * pessoal: quem tomar o super admin toma qualquer empresa em silêncio.
- *
  * Os três freios estão aqui: o pedido não executa na hora (`executeAfter`), o
  * dono é avisado no momento do PEDIDO e não da execução, e ele mesmo pode
  * cancelar enquanto ainda conseguir entrar. Um super admin sequestrado passa a
@@ -365,25 +357,25 @@ model Verification {
 // ─── Plans ────────────────────────────────────────────────────────────────────
 
 model Plan {
-  id           String        @id @default(cuid())
+  id                   String        @id @default(cuid())
   // Código único do plano (livre); antes era enum PlanTier, agora String para
   // permitir o cadastro de planos arbitrários pelo super admin
-  tier         String        @unique
-  displayName  String
-  description  String?
-  priceMonthly Decimal       @db.Decimal(10, 2)
-  priceYearly  Decimal       @db.Decimal(10, 2)
-  isActive     Boolean       @default(true)
-  order        Int           @default(0)
+  tier                 String        @unique
+  displayName          String
+  description          String?
+  priceMonthly         Decimal       @db.Decimal(10, 2)
+  priceYearly          Decimal       @db.Decimal(10, 2)
+  isActive             Boolean       @default(true)
+  order                Int           @default(0)
   // Stripe Billing — sincronizado ao salvar o plano no admin
   stripeProductId      String?
   stripePriceMonthlyId String?
   stripePriceYearlyId  String?
   isPopular            Boolean?      @default(false)
-  features     PlanFeature[]
-  companies    Company[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  features             PlanFeature[]
+  companies            Company[]
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
 
   @@map("plan")
 }
@@ -405,49 +397,62 @@ model PlanFeature {
 // ─── Tenant ───────────────────────────────────────────────────────────────────
 
 model Company {
-  id            String          @id @default(cuid())
-  name          String
-  slug          String          @unique
-  businessType  String
-  planId        String
-  plan          Plan            @relation(fields: [planId], references: [id])
-  logoUrl       String?
-  phone         String?
-  address       String?
-  isActive      Boolean         @default(true)
+  id                         String                  @id @default(cuid())
+  name                       String
+  slug                       String                  @unique
+  businessType               String
+  planId                     String
+  plan                       Plan                    @relation(fields: [planId], references: [id])
+  logoUrl                    String?
+  phone                      String?
+  address                    String?
+  isActive                   Boolean                 @default(true)
   // Token secreto para o feed público de calendário (.ics) — sem ele o feed
   // exporia PII (nomes/telefones) só com o slug da empresa
-  calendarFeedToken String?     @unique
+  calendarFeedToken          String?                 @unique
   // Internacionalização — cada empresa opera em um mercado
-  currency      String          @default("BRL")               // ISO 4217 (BRL, USD, …)
-  timezone      String          @default("America/Sao_Paulo") // IANA
-  locale        String          @default("pt-BR")             // BCP 47
+  currency                   String                  @default("BRL") // ISO 4217 (BRL, USD, …)
+  timezone                   String                  @default("America/Sao_Paulo") // IANA
+  locale                     String                  @default("pt-BR") // BCP 47
   // Assinatura do plano (Stripe Billing) — cobrança individual por empresa
-  stripeCustomerId      String?
-  stripeSubscriptionId  String?
-  subscriptionStatus    String?   // active | trialing | past_due | canceled | …
-  subscriptionInterval  String?   // month | year
-  subscriptionPeriodEnd DateTime? // fim do período pago atual (base do dunning)
+  stripeCustomerId           String?
+  stripeSubscriptionId       String?
+  subscriptionStatus         String? // active | trialing | past_due | canceled | …
+  subscriptionInterval       String? // month | year
+  subscriptionPeriodEnd      DateTime? // fim do período pago atual (base do dunning)
   // Política de cancelamento (configurável por empresa)
-  minCancellationNoticeHours Int     @default(24)
-  cancellationFee            Decimal @default(0) @db.Decimal(10, 2)
-  lateToleranceMinutes       Int     @default(15)
-  maxAllowedNoShows          Int     @default(2)
+  minCancellationNoticeHours Int                     @default(24)
+  cancellationFee            Decimal                 @default(0) @db.Decimal(10, 2)
+  lateToleranceMinutes       Int                     @default(15)
+  maxAllowedNoShows          Int                     @default(2)
   // Check-in por proximidade. Sem coordenadas o geofence é PULADO — antes o
   // código comparava a posição do cliente com um ponto fixo em Curitiba,
   // então qualquer empresa fora de lá reprovava todo mundo.
   latitude                   Float?
   longitude                  Float?
-  checkinRadiusMeters        Int     @default(250)
+  checkinRadiusMeters        Int                     @default(250)
+  // Buffer de deslocamento entre atendimentos a domicílio. Desligado por
+  // padrão: para quem atende no balcão, reservar tempo de viagem só apagaria
+  // horários vendáveis da grade.
+  driveTimeEnabled           Boolean                 @default(false)
+  // Minutos por quilômetro EM LINHA RETA — não por quilômetro de rua. O
+  // padrão de 3 (20 km/h) já absorve o desvio das ruas em relação à reta,
+  // que é justamente o erro que a haversine comete.
+  driveTimeMinutesPerKm      Float                   @default(3)
+  // Teto do buffer. Um endereço mal geocodificado — o serviço devolve o
+  // centroide da cidade errada — produziria uma reta de centenas de km e
+  // apagaria o dia inteiro da grade. O teto transforma erro de dado em erro
+  // limitado.
+  driveTimeMaxMinutes        Int                     @default(120)
   // Notificações e Canais
-  notifyEmailEnabled         Boolean @default(true)
-  notifyTextEnabled          Boolean @default(true)
-  notifySmsEnabled           Boolean @default(false)
-  notifyWhatsappEnabled      Boolean @default(true)
+  notifyEmailEnabled         Boolean                 @default(true)
+  notifyTextEnabled          Boolean                 @default(true)
+  notifySmsEnabled           Boolean                 @default(false)
+  notifyWhatsappEnabled      Boolean                 @default(true)
   // Customização da Landing Page Pública
   heroTitle                  String?
   heroSubtitle               String?
-  brandColor                 String?   @default("#0f172a")
+  brandColor                 String?                 @default("#0f172a")
   coverImageUrl              String?
   // Link "escrever avaliação" do Google Meu Negócio.
   //
@@ -459,33 +464,33 @@ model Company {
   socialInstagram            String?
   socialWhatsapp             String?
   socialFacebook             String?
-  members         CompanyUser[]
-  services        Service[]
-  serviceTypes    ServiceType[]
-  extraServices   ExtraService[]
-  professionals   Professional[]
-  agendas         Agenda[]
-  bookingConfigs  BookingConfig[]
-  scheduleEvents  ScheduleEvent[]
-  estimates       Estimate[]
-  bookings        Booking[]
-  reviews         Review[]
-  paymentSettings CompanyPaymentSettings?
-  paymentMethods  CompanyPaymentMethod[]
-  waitlistEntries WaitlistEntry[]
-  webhooks        CompanyWebhook[]
-  promotions      Promotion[]
-  loyaltyProgram  LoyaltyProgram?
-  loyaltyAccounts LoyaltyAccount[]
-  customers       Customer[]
-  membershipPlans     MembershipPlan[]
-  customerMemberships CustomerMembership[]
-  giftCards           GiftCard[]
-  products            Product[]
-  posSales            PosSale[]
-  offPeakWindows      OffPeakWindow[]
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  members                    CompanyUser[]
+  services                   Service[]
+  serviceTypes               ServiceType[]
+  extraServices              ExtraService[]
+  professionals              Professional[]
+  agendas                    Agenda[]
+  bookingConfigs             BookingConfig[]
+  scheduleEvents             ScheduleEvent[]
+  estimates                  Estimate[]
+  bookings                   Booking[]
+  reviews                    Review[]
+  paymentSettings            CompanyPaymentSettings?
+  paymentMethods             CompanyPaymentMethod[]
+  waitlistEntries            WaitlistEntry[]
+  webhooks                   CompanyWebhook[]
+  promotions                 Promotion[]
+  loyaltyProgram             LoyaltyProgram?
+  loyaltyAccounts            LoyaltyAccount[]
+  customers                  Customer[]
+  membershipPlans            MembershipPlan[]
+  customerMemberships        CustomerMembership[]
+  giftCards                  GiftCard[]
+  products                   Product[]
+  posSales                   PosSale[]
+  offPeakWindows             OffPeakWindow[]
+  createdAt                  DateTime                @default(now())
+  updatedAt                  DateTime                @updatedAt
 
   @@map("company")
 }
@@ -527,24 +532,24 @@ model Service {
 }
 
 model ServiceType {
-  id               String   @id @default(cuid())
+  id               String                     @id @default(cuid())
   companyId        String
-  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company          Company                    @relation(fields: [companyId], references: [id], onDelete: Cascade)
   serviceId        String
-  service          Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  service          Service                    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   name             String
   description      String?
-  price            Decimal  @db.Decimal(10, 2)
+  price            Decimal                    @db.Decimal(10, 2)
   estimatedMinutes Int
   // Quando true, o cliente informa a quantidade ao selecionar (ex.: nº de pneus)
-  allowQuantity    Boolean  @default(false)
-  isActive         Boolean  @default(true)
-  order            Int      @default(0)
+  allowQuantity    Boolean                    @default(false)
+  isActive         Boolean                    @default(true)
+  order            Int                        @default(0)
   bookingConfigs   BookingConfigServiceType[]
   estimateItems    EstimateServiceType[]
   promotions       Promotion[]
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
 
   @@index([companyId])
   @@index([serviceId])
@@ -553,21 +558,21 @@ model ServiceType {
 }
 
 model ExtraService {
-  id               String   @id @default(cuid())
+  id               String                      @id @default(cuid())
   companyId        String
-  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company          Company                     @relation(fields: [companyId], references: [id], onDelete: Cascade)
   name             String
   description      String?
-  price            Decimal  @db.Decimal(10, 2)
+  price            Decimal                     @db.Decimal(10, 2)
   estimatedMinutes Int
-  icon             String   @default("sparkles")
-  allowQuantity    Boolean  @default(false)
-  isActive         Boolean  @default(true)
-  order            Int      @default(0)
+  icon             String                      @default("sparkles")
+  allowQuantity    Boolean                     @default(false)
+  isActive         Boolean                     @default(true)
+  order            Int                         @default(0)
   bookingConfigs   BookingConfigExtraService[]
   estimateItems    EstimateExtraService[]
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime                    @default(now())
+  updatedAt        DateTime                    @updatedAt
 
   @@index([companyId])
   @@index([companyId, isActive])
@@ -575,27 +580,27 @@ model ExtraService {
 }
 
 model Professional {
-  id        String   @id @default(cuid())
-  companyId String
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  name      String
-  email     String?
-  phone     String?
-  bio       String?
-  avatarUrl String?
-  commissionPercentage Float @default(0)
-  commissionRate       Decimal? @default(0) @db.Decimal(5, 2)
+  id                    String   @id @default(cuid())
+  companyId             String
+  company               Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId                String?
+  user                  User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name                  String
+  email                 String?
+  phone                 String?
+  bio                   String?
+  avatarUrl             String?
+  commissionPercentage  Float    @default(0)
+  commissionRate        Decimal? @default(0) @db.Decimal(5, 2)
   productCommissionRate Decimal? @default(0) @db.Decimal(5, 2)
-  pixKey               String?
-  pixKeyType           String?
-  roleTitle            String?
-  servicesJson         String?
-  showOnLanding        Boolean? @default(true)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  pixKey                String?
+  pixKeyType            String?
+  roleTitle             String?
+  servicesJson          String?
+  showOnLanding         Boolean? @default(true)
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   agendas        AgendaProfessional[]
   scheduleEvents ScheduleEvent[]
@@ -614,11 +619,11 @@ model Agenda {
   company            Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
   name               String
   status             AgendaStatus         @default(DRAFT)
-  startDate          String               // "YYYY-MM-DD"
-  endDate            String?              // "YYYY-MM-DD"
+  startDate          String // "YYYY-MM-DD"
+  endDate            String? // "YYYY-MM-DD"
   workingDays        Int[]
-  startTime          String               // "HH:MM"
-  endTime            String               // "HH:MM"
+  startTime          String // "HH:MM"
+  endTime            String // "HH:MM"
   intervalMinutes    Int
   cancelledAt        DateTime?
   cancelledById      String?
@@ -626,14 +631,14 @@ model Agenda {
   cancellationReason String?
   createdById        String
   createdBy          User                 @relation("AgendaCreatedBy", fields: [createdById], references: [id])
-  professionals  AgendaProfessional[]
-  bookingConfigs BookingConfig[]
-  bookings       Booking[]
-  bookingSlots   BookingSlot[]
-  exceptions     AgendaException[]
-  waitlistEntries WaitlistEntry[]
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  professionals      AgendaProfessional[]
+  bookingConfigs     BookingConfig[]
+  bookings           Booking[]
+  bookingSlots       BookingSlot[]
+  exceptions         AgendaException[]
+  waitlistEntries    WaitlistEntry[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
 
   @@index([companyId, status])
   @@index([companyId, startDate])
@@ -712,14 +717,17 @@ model ScheduleEvent {
   professional    Professional?     @relation(fields: [professionalId], references: [id], onDelete: SetNull)
   title           String
   type            ScheduleEventType @default(EVENT)
-  date            String            // "YYYY-MM-DD"
-  startTime       String            // "HH:MM"
-  endTime         String            // "HH:MM"
+  date            String // "YYYY-MM-DD"
+  startTime       String // "HH:MM"
+  endTime         String // "HH:MM"
   notes           String?
-  externalEventId String?           // ID do evento no Google Calendar ou UID do iCal
-  source          String?           @default("MANUAL") // MANUAL | GOOGLE_CALENDAR | ICAL_FEED
-  createdById     String
-  createdBy       User              @relation("ScheduleEventCreatedBy", fields: [createdById], references: [id])
+  externalEventId String? // ID do evento no Google Calendar ou UID do iCal
+  source          String?           @default("MANUAL") // MANUAL | GOOGLE_CALENDAR | ICAL_FEED | DRIVE_TIME
+  // Opcional porque o bloqueio de deslocamento não tem autor: ninguém o
+  // criou. Carimbar o dono da empresa como criador de um bloco que o sistema
+  // gerou sozinho seria mentira no rastro de auditoria.
+  createdById     String?
+  createdBy       User?             @relation("ScheduleEventCreatedBy", fields: [createdById], references: [id])
   createdAt       DateTime          @default(now())
 
   @@index([companyId, date])
@@ -728,33 +736,55 @@ model ScheduleEvent {
   @@map("schedule_event")
 }
 
+/// Endereço já resolvido em coordenadas.
+///
+/// O geocodificador é um serviço público, gratuito e mantido por voluntários:
+/// consultar o mesmo endereço a cada agendamento de um cliente recorrente é
+/// desperdiçar a cota de todo mundo e um convite a ser bloqueado. Aqui cada
+/// endereço distinto custa uma consulta na vida.
+///
+/// Falha também é cacheada, com `latitude`/`longitude` nulas: sem isso, um
+/// endereço que o serviço não reconhece seria reconsultado a cada agendamento
+/// para sempre. `resolvedAt` permite reexpirar a falha — endereço novo pode
+/// entrar na base do provedor depois.
+model GeocodeCache {
+  /// Endereço normalizado (minúsculas, espaços colapsados) — a chave.
+  query      String   @id
+  latitude   Float?
+  longitude  Float?
+  provider   String
+  resolvedAt DateTime @default(now())
+
+  @@map("geocode_cache")
+}
+
 // ─── Estimate ─────────────────────────────────────────────────────────────────
 
 model Estimate {
-  id              String              @id @default(cuid())
+  id              String                 @id @default(cuid())
   companyId       String
-  company         Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company         Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
   bookingConfigId String
-  bookingConfig   BookingConfig       @relation(fields: [bookingConfigId], references: [id])
+  bookingConfig   BookingConfig          @relation(fields: [bookingConfigId], references: [id])
   customerId      String?
-  customer        User?               @relation("EstimateCustomer", fields: [customerId], references: [id], onDelete: SetNull)
+  customer        User?                  @relation("EstimateCustomer", fields: [customerId], references: [id], onDelete: SetNull)
   customerEmail   String?
   customerName    String?
-  status          EstimateStatus      @default(DRAFT)
-  frequency       EstimateFrequency   @default(ONCE)
-  subtotal        Decimal             @db.Decimal(10, 2)
-  total           Decimal             @db.Decimal(10, 2)
+  status          EstimateStatus         @default(DRAFT)
+  frequency       EstimateFrequency      @default(ONCE)
+  subtotal        Decimal                @db.Decimal(10, 2)
+  total           Decimal                @db.Decimal(10, 2)
   // Moeda cobrada NO ATO. Sem esta coluna o valor herdava a moeda atual da
   // empresa na hora da leitura: trocar `Company.currency` reinterpretava todo
   // o histórico em silêncio (R$ 4.000 viravam $4.000 no relatório).
   // Nulo = registro anterior à coluna; a leitura cai em `Company.currency`.
-  currency        String?             // ISO 4217
+  currency        String? // ISO 4217
   notes           String?
   serviceTypes    EstimateServiceType[]
   extraServices   EstimateExtraService[]
   bookings        Booking[]
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
 
   @@index([bookingConfigId, status])
   @@index([customerId, status])
@@ -794,63 +824,63 @@ model EstimateExtraService {
 // ─── Booking ──────────────────────────────────────────────────────────────────
 
 model Booking {
-  id                    String          @id @default(cuid())
-  companyId             String
-  company               Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  estimateId            String?         @unique
-  estimate              Estimate?       @relation(fields: [estimateId], references: [id])
-  bookingConfigId       String
-  bookingConfig         BookingConfig   @relation(fields: [bookingConfigId], references: [id])
-  agendaId              String
-  agenda                Agenda          @relation(fields: [agendaId], references: [id])
-  professionalId        String?
-  professional          Professional?   @relation(fields: [professionalId], references: [id], onDelete: SetNull)
-  scheduledDate         String          // "YYYY-MM-DD"
-  scheduledStartTime    String          // "HH:MM"
-  scheduledEndTime      String          // "HH:MM"
-  status                BookingStatus   @default(PENDING)
-  paymentMethod         PaymentMethod
-  paymentStatus         PaymentStatus   @default(PENDING)
+  id                     String                 @id @default(cuid())
+  companyId              String
+  company                Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  estimateId             String?                @unique
+  estimate               Estimate?              @relation(fields: [estimateId], references: [id])
+  bookingConfigId        String
+  bookingConfig          BookingConfig          @relation(fields: [bookingConfigId], references: [id])
+  agendaId               String
+  agenda                 Agenda                 @relation(fields: [agendaId], references: [id])
+  professionalId         String?
+  professional           Professional?          @relation(fields: [professionalId], references: [id], onDelete: SetNull)
+  scheduledDate          String // "YYYY-MM-DD"
+  scheduledStartTime     String // "HH:MM"
+  scheduledEndTime       String // "HH:MM"
+  status                 BookingStatus          @default(PENDING)
+  paymentMethod          PaymentMethod
+  paymentStatus          PaymentStatus          @default(PENDING)
   // Forma de pagamento configurada escolhida no checkout (label/handle/kind).
   // O enum paymentMethod permanece como discriminador de fluxo legado.
   companyPaymentMethodId String?
-  companyPaymentMethod   CompanyPaymentMethod? @relation(fields: [companyPaymentMethodId], references: [id], onDelete: SetNull)
+  companyPaymentMethod   CompanyPaymentMethod?  @relation(fields: [companyPaymentMethodId], references: [id], onDelete: SetNull)
   // Confirmação manual de recebimento (métodos MANUAL)
   paidAt                 DateTime?
   paymentConfirmedById   String?
-  paymentConfirmedBy     User?           @relation("BookingPaymentConfirmedBy", fields: [paymentConfirmedById], references: [id])
+  paymentConfirmedBy     User?                  @relation("BookingPaymentConfirmedBy", fields: [paymentConfirmedById], references: [id])
   stripePaymentIntentId  String?
   mercadoPagoPaymentId   String?
   cancelledAt            DateTime?
-  cancelledById         String?
-  cancelledBy           User?           @relation("BookingCancelledBy", fields: [cancelledById], references: [id])
-  cancellationReason    String?
-  refundAmount          Decimal?        @db.Decimal(10, 2)
-  refundedAt            DateTime?
+  cancelledById          String?
+  cancelledBy            User?                  @relation("BookingCancelledBy", fields: [cancelledById], references: [id])
+  cancellationReason     String?
+  refundAmount           Decimal?               @db.Decimal(10, 2)
+  refundedAt             DateTime?
   // Chegada confirmada pelo cliente. Sem este campo o check-in não deixava
   // rastro: o estado "já fez check-in" era inalcançável e o operador não
   // tinha como saber quem chegou.
-  checkedInAt           DateTime?
+  checkedInAt            DateTime?
   // Pedido de avaliação já enviado — impede reenvio a cada reprocessamento.
-  reviewRequestedAt     DateTime?
+  reviewRequestedAt      DateTime?
   // Rescheduling
-  rescheduledFromId     String?
-  rescheduledFrom       Booking?        @relation("RescheduledFrom", fields: [rescheduledFromId], references: [id], onDelete: SetNull)
-  rescheduledTo         Booking[]       @relation("RescheduledFrom")
-  rescheduledAt         DateTime?
+  rescheduledFromId      String?
+  rescheduledFrom        Booking?               @relation("RescheduledFrom", fields: [rescheduledFromId], references: [id], onDelete: SetNull)
+  rescheduledTo          Booking[]              @relation("RescheduledFrom")
+  rescheduledAt          DateTime?
   // Customer link
-  customerId            String?
-  customer              Customer?       @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerId             String?
+  customer               Customer?              @relation(fields: [customerId], references: [id], onDelete: SetNull)
   // Recurrence
-  recurrenceGroupId     String?
-  recurrenceFrequency   EstimateFrequency?
-  recurrenceEndDate     String?
-  slot                  BookingSlot?
-  customerDetail        BookingCustomerDetail?
-  homeAccess            BookingHomeAccess?
-  review                Review?
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
+  recurrenceGroupId      String?
+  recurrenceFrequency    EstimateFrequency?
+  recurrenceEndDate      String?
+  slot                   BookingSlot?
+  customerDetail         BookingCustomerDetail?
+  homeAccess             BookingHomeAccess?
+  review                 Review?
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
 
   @@index([companyId, scheduledDate])
   @@index([companyId, customerId])
@@ -863,18 +893,18 @@ model Booking {
 }
 
 model BookingSlot {
-  id        String   @id @default(cuid())
-  bookingId String   @unique
-  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  agendaId  String
-  agenda    Agenda   @relation(fields: [agendaId], references: [id])
-  date      String   // "YYYY-MM-DD"
-  startTime String   // "HH:MM"
-  endTime   String   // "HH:MM"
+  id             String  @id @default(cuid())
+  bookingId      String  @unique
+  booking        Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  agendaId       String
+  agenda         Agenda  @relation(fields: [agendaId], references: [id])
+  date           String // "YYYY-MM-DD"
+  startTime      String // "HH:MM"
+  endTime        String // "HH:MM"
   // Profissional que ocupa o slot. String vazia = agenda sem equipe (recurso
   // único). NUNCA null: em Postgres dois NULLs são distintos num índice único,
   // o que anularia a trava de duplo agendamento.
-  professionalId String @default("")
+  professionalId String  @default("")
 
   // A trava de duplo agendamento é POR PROFISSIONAL — sem isso uma barbearia
   // com 3 barbeiros só conseguiria vender um horário das 10:00.
@@ -884,29 +914,35 @@ model BookingSlot {
 }
 
 model BookingCustomerDetail {
-  id            String   @id @default(cuid())
-  bookingId     String   @unique
-  booking       Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  id            String  @id @default(cuid())
+  bookingId     String  @unique
+  booking       Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   firstName     String
   lastName      String
   email         String
   phone         String
-  sendReminders Boolean  @default(true)
+  sendReminders Boolean @default(true)
   address       String
   aptNo         String?
   city          String
   zip           String
+  // Coordenadas resolvidas do endereço acima, uma vez, na criação. Nulas
+  // quando o endereço não foi geocodificado (empresa sem buffer ligado,
+  // serviço fora do ar, endereço que o geocodificador não reconheceu) — e
+  // nesse caso o atendimento simplesmente não gera bloqueio de viagem.
+  latitude      Float?
+  longitude     Float?
 
   @@map("booking_customer_detail")
 }
 
 model BookingHomeAccess {
-  id                  String   @id @default(cuid())
-  bookingId           String   @unique
-  booking             Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  accessType          String   // "someone_home" | "hide_keys"
-  keepKeyWithProvider Boolean  @default(false)
-  accessNote          String?  // AES-256-GCM encrypted
+  id                  String  @id @default(cuid())
+  bookingId           String  @unique
+  booking             Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  accessType          String // "someone_home" | "hide_keys"
+  keepKeyWithProvider Boolean @default(false)
+  accessNote          String? // AES-256-GCM encrypted
   additionalNote      String?
 
   @@map("booking_home_access")
@@ -915,25 +951,25 @@ model BookingHomeAccess {
 // ─── Customer ─────────────────────────────────────────────────────────────────
 
 model Customer {
-  id                String    @id @default(cuid())
-  companyId         String
-  company           Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  firstName         String
-  lastName          String
-  email             String
-  phone             String
-  city              String?
-  notes             String?
-  totalBookings     Int       @default(0)
-  completedBookings Int       @default(0)
-  cancelledBookings Int       @default(0)
-  noShowCount       Int       @default(0)
-  totalSpent        Decimal   @default(0) @db.Decimal(10, 2)
-  lastBookingDate   String?
+  id                 String    @id @default(cuid())
+  companyId          String
+  company            Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  firstName          String
+  lastName           String
+  email              String
+  phone              String
+  city               String?
+  notes              String?
+  totalBookings      Int       @default(0)
+  completedBookings  Int       @default(0)
+  cancelledBookings  Int       @default(0)
+  noShowCount        Int       @default(0)
+  totalSpent         Decimal   @default(0) @db.Decimal(10, 2)
+  lastBookingDate    String?
   // Última campanha de resgate enviada a este cliente. Sem isso, cada abertura
   // da tela reofereceria o mesmo desconto a quem já recebeu ontem — que é como
   // uma ferramenta de retenção vira motivo de descadastro.
-  lastWinBackAt     DateTime?
+  lastWinBackAt      DateTime?
   // Consentimento para e-mail de oferta, dado no checkout.
   //
   // Vive aqui e não em `UserNotificationPreference` porque a maioria dos
@@ -941,12 +977,12 @@ model Customer {
   // preferência. Sem este campo, "quem nunca teve a chance de escolher" e
   // "quem escolheu não receber" eram indistinguíveis, e o sistema mandava
   // marketing para quem nunca consentiu.
-  acceptsMarketing     Boolean   @default(false)
-  marketingConsentAt   DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  acceptsMarketing   Boolean   @default(false)
+  marketingConsentAt DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
-  bookings          Booking[]
+  bookings Booking[]
 
   @@unique([companyId, email])
   @@index([companyId])
@@ -958,20 +994,20 @@ model Customer {
 // ─── Reviews ──────────────────────────────────────────────────────────────────
 
 model Review {
-  id          String   @id @default(cuid())
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  bookingId   String   @unique
-  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  rating      Int      // 1–5
-  comment     String?
+  id           String    @id @default(cuid())
+  companyId    String
+  company      Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  bookingId    String    @unique
+  booking      Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  rating       Int // 1–5
+  comment      String?
   reviewerName String? // customer name snapshot
   // Nota baixa vira alerta imediato ao gerente. O carimbo evita disparo
   // duplicado se a avaliação for reprocessada.
-  alertSentAt DateTime?
+  alertSentAt  DateTime?
   // Origem: LINK (token assinado no e-mail) ou ACCOUNT (cliente logado).
-  source      String   @default("ACCOUNT")
-  createdAt   DateTime @default(now())
+  source       String    @default("ACCOUNT")
+  createdAt    DateTime  @default(now())
 
   @@index([companyId])
   @@index([companyId, rating])
@@ -985,7 +1021,7 @@ model PushToken {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   token     String
-  platform  String   // "ios" | "android"
+  platform  String // "ios" | "android"
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -997,18 +1033,18 @@ model PushToken {
 // ─── User Notification Preferences ───────────────────────────────────────────
 
 model UserNotificationPreference {
-  id             String   @id @default(cuid())
-  userId         String   @unique
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  enableEmail    Boolean  @default(true)
-  enablePush     Boolean  @default(true)
-  enableWhatsApp Boolean  @default(false)
-  enableSms      Boolean  @default(false)
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enableEmail     Boolean  @default(true)
+  enablePush      Boolean  @default(true)
+  enableWhatsApp  Boolean  @default(false)
+  enableSms       Boolean  @default(false)
   // Opt-in para e-mails de ofertas/promoções (padrão desligado — LGPD)
-  enableMarketing Boolean @default(false)
-  whatsappPhone  String?
-  smsPhone       String?
-  updatedAt      DateTime @updatedAt
+  enableMarketing Boolean  @default(false)
+  whatsappPhone   String?
+  smsPhone        String?
+  updatedAt       DateTime @updatedAt
 
   @@map("user_notification_preference")
 }
@@ -1023,10 +1059,10 @@ model Promotion {
   serviceType   ServiceType @relation(fields: [serviceTypeId], references: [id], onDelete: Cascade)
   description   String
   promoPrice    Decimal     @db.Decimal(10, 2)
-  startDate     String      // "YYYY-MM-DD"
-  endDate       String      // "YYYY-MM-DD"
+  startDate     String // "YYYY-MM-DD"
+  endDate       String // "YYYY-MM-DD"
   isActive      Boolean     @default(true)
-  lastSentAt    DateTime?   // último envio de e-mail marketing
+  lastSentAt    DateTime? // último envio de e-mail marketing
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
@@ -1045,9 +1081,9 @@ model CompanyPaymentMethod {
   companyId    String
   company      Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
   kind         PaymentKind
-  label        String      // "Cartão", "PIX", "Zelle", "Venmo", "Dinheiro"…
-  handle       String?     // chave PIX, e-mail/telefone Zelle, @username Venmo
-  instructions String?     // instruções exibidas no checkout para métodos manuais
+  label        String // "Cartão", "PIX", "Zelle", "Venmo", "Dinheiro"…
+  handle       String? // chave PIX, e-mail/telefone Zelle, @username Venmo
+  instructions String? // instruções exibidas no checkout para métodos manuais
   isActive     Boolean     @default(true)
   displayOrder Int         @default(0)
   bookings     Booking[]
@@ -1059,35 +1095,33 @@ model CompanyPaymentMethod {
 }
 
 model CompanyPaymentSettings {
-  id              String   @id @default(cuid())
-  companyId       String   @unique
-  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  enableCard      Boolean  @default(true)
-  enableCashCheck Boolean  @default(true)
-  enablePix       Boolean  @default(false)
-  pixKey          String?
-  pixKeyType      String?  // "cpf" | "cnpj" | "email" | "phone" | "random"
-  requireDeposit  Boolean  @default(false)
-  depositPercentage Float  @default(30)
+  id                     String   @id @default(cuid())
+  companyId              String   @unique
+  company                Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  enableCard             Boolean  @default(true)
+  enableCashCheck        Boolean  @default(true)
+  enablePix              Boolean  @default(false)
+  pixKey                 String?
+  pixKeyType             String? // "cpf" | "cnpj" | "email" | "phone" | "random"
+  requireDeposit         Boolean  @default(false)
+  depositPercentage      Float    @default(30)
   // Sinal por faixa de confiança do cliente em vez de chave global.
   // Padrão desligado de propósito: ligar muda quanto os clientes pagam, e essa
   // troca é do dono — não pode ser efeito colateral de atualizar o sistema.
   // Ver `src/lib/trust-tier.ts`.
-  dynamicDeposit  Boolean  @default(false)
+  dynamicDeposit         Boolean  @default(false)
   mercadoPagoAccessToken String? // encrypted
-  updatedAt       DateTime @updatedAt
+  updatedAt              DateTime @updatedAt
 
   @@map("company_payment_settings")
 }
 
 /**
  * Janela de horário ocioso com desconto ("Happy Hour").
- *
  * A metade do yield management que vale a pena. O acréscimo no pico NÃO existe
  * e não deve ser adicionado — ver a nota em `src/lib/off-peak.ts`: desconto é
  * enquadrado como presente, acréscimo como punição, e em relação recorrente e
  * nominal a segunda leitura custa o cliente.
- *
  * Diferente do ghost slot buster, que cobre a vaga que abriu agora: aqui é o
  * horário estruturalmente vazio, que se repete toda semana.
  */
@@ -1098,8 +1132,8 @@ model OffPeakWindow {
   label              String
   /// 0 = domingo … 6 = sábado
   weekday            Int
-  startTime          String   // "HH:MM" inclusivo
-  endTime            String   // "HH:MM" exclusivo
+  startTime          String // "HH:MM" inclusivo
+  endTime            String // "HH:MM" exclusivo
   discountPercentage Float
   isActive           Boolean  @default(true)
   createdAt          DateTime @default(now())
@@ -1116,11 +1150,11 @@ model AgendaException {
   id        String              @id @default(cuid())
   agendaId  String
   agenda    Agenda              @relation(fields: [agendaId], references: [id], onDelete: Cascade)
-  date      String              // "YYYY-MM-DD"
+  date      String // "YYYY-MM-DD"
   type      AgendaExceptionType @default(BLOCKED_DAY)
   reason    String?
-  startTime String?             // only for CUSTOM_HOURS
-  endTime   String?             // only for CUSTOM_HOURS
+  startTime String? // only for CUSTOM_HOURS
+  endTime   String? // only for CUSTOM_HOURS
   createdAt DateTime            @default(now())
 
   @@unique([agendaId, date])
@@ -1131,22 +1165,22 @@ model AgendaException {
 // ─── Waitlist ─────────────────────────────────────────────────────────────────
 
 model WaitlistEntry {
-  id              String         @id @default(cuid())
-  companyId       String
-  company         Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  agendaId        String
-  agenda          Agenda         @relation(fields: [agendaId], references: [id], onDelete: Cascade)
-  bookingConfigId String
-  bookingConfig   BookingConfig  @relation(fields: [bookingConfigId], references: [id], onDelete: Cascade)
-  preferredDate   String         // "YYYY-MM-DD"
-  preferredStartTime String?     // "HH:MM"
-  customerName    String
-  customerEmail   String
-  customerPhone   String?
-  status          WaitlistStatus @default(WAITING)
-  notifiedAt      DateTime?
-  expiresAt       DateTime?
-  createdAt       DateTime       @default(now())
+  id                 String         @id @default(cuid())
+  companyId          String
+  company            Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  agendaId           String
+  agenda             Agenda         @relation(fields: [agendaId], references: [id], onDelete: Cascade)
+  bookingConfigId    String
+  bookingConfig      BookingConfig  @relation(fields: [bookingConfigId], references: [id], onDelete: Cascade)
+  preferredDate      String // "YYYY-MM-DD"
+  preferredStartTime String? // "HH:MM"
+  customerName       String
+  customerEmail      String
+  customerPhone      String?
+  status             WaitlistStatus @default(WAITING)
+  notifiedAt         DateTime?
+  expiresAt          DateTime?
+  createdAt          DateTime       @default(now())
 
   @@index([companyId, status])
   @@index([agendaId, preferredDate])
@@ -1160,7 +1194,7 @@ model CompanyWebhook {
   companyId       String
   company         Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
   url             String
-  secret          String         // HMAC-SHA256 signing secret
+  secret          String // HMAC-SHA256 signing secret
   events          WebhookEvent[]
   isActive        Boolean        @default(true)
   lastTriggeredAt DateTime?
@@ -1180,11 +1214,11 @@ model CalendarIntegration {
   user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   professionalId     String?
   provider           CalendarProvider
-  accessToken        String?          // AES-256-GCM encrypted (opcional para feeds ical)
-  refreshToken       String?          // AES-256-GCM encrypted
+  accessToken        String? // AES-256-GCM encrypted (opcional para feeds ical)
+  refreshToken       String? // AES-256-GCM encrypted
   expiresAt          DateTime?
   calendarId         String?
-  externalIcalUrl    String?          // URL de feed .ics / webcal externo
+  externalIcalUrl    String? // URL de feed .ics / webcal externo
   syncExternalEvents Boolean          @default(true) // Bloquear horários ocupados no booking
   lastSyncedAt       DateTime?
   isActive           Boolean          @default(true)
@@ -1204,14 +1238,14 @@ model SystemPreset {
   businessType String
   title        String
   description  String?
-  defaultPrice Decimal      @db.Decimal(10, 2)
-  durationMin  Int          @default(30)
-  isExtra      Boolean      @default(false)
-  parentTitle  String?      // Título do serviço pai se for um serviço extra
-  displayOrder Int          @default(0)
-  isActive     Boolean      @default(true)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  defaultPrice Decimal  @db.Decimal(10, 2)
+  durationMin  Int      @default(30)
+  isExtra      Boolean  @default(false)
+  parentTitle  String? // Título do serviço pai se for um serviço extra
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([businessType, isActive])
   @@map("system_preset")
@@ -1222,8 +1256,8 @@ model SystemPreset {
 model SystemSegment {
   id           String   @id @default(cuid())
   code         String   @unique // ex: "MECHANIC", "BARBER", "DENTIST"
-  label        String   // ex: "🛠️ Oficina Mecânica & Auto"
-  description  String?  // ex: "Para oficinas, autocenters e funilarias"
+  label        String // ex: "🛠️ Oficina Mecânica & Auto"
+  description  String? // ex: "Para oficinas, autocenters e funilarias"
   displayOrder Int      @default(0)
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
@@ -1240,12 +1274,12 @@ model LoyaltyProgram {
   companyId         String   @unique
   isEnabled         Boolean  @default(true)
   pointsPerCurrency Decimal  @default(1.0) @db.Decimal(10, 2) // ex: 1 ponto por R$ 1,00
-  rewardThreshold   Int      @default(100)                    // ex: 100 pontos = 1 voucher
+  rewardThreshold   Int      @default(100) // ex: 100 pontos = 1 voucher
   discountAmount    Decimal  @default(20.00) @db.Decimal(10, 2) // R$ 20,00 de desconto
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  company           Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@map("loyalty_program")
 }
@@ -1258,7 +1292,7 @@ model LoyaltyAccount {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@unique([companyId, customerEmail])
   @@index([companyId, customerEmail])
@@ -1271,9 +1305,9 @@ model AuditLog {
   id        String   @id @default(cuid())
   companyId String?
   userId    String?
-  action    String   // ex: "COMPANY_UPDATE", "SERVICE_RESET", "PLAN_CHANGE"
-  entity    String   // ex: "Company", "Service", "Subscription"
-  details   String?  // JSON string contendo detalhes da alteração
+  action    String // ex: "COMPANY_UPDATE", "SERVICE_RESET", "PLAN_CHANGE"
+  entity    String // ex: "Company", "Service", "Subscription"
+  details   String? // JSON string contendo detalhes da alteração
   ipAddress String?
   createdAt DateTime @default(now())
 
@@ -1287,11 +1321,11 @@ model AuditLog {
 model SystemNotification {
   id              String   @id @default(cuid())
   companyId       String?
-  recipientUserId String?  // Null para broadcast de Super Admin global
+  recipientUserId String? // Null para broadcast de Super Admin global
   title           String
   message         String
   type            String   @default("INFO") // PRESET_RESET_REQUEST | INFO | ALERT
-  payload         String?  // JSON string contendo companySlug, observation, etc.
+  payload         String? // JSON string contendo companySlug, observation, etc.
   isRead          Boolean  @default(false)
   isResolved      Boolean  @default(false)
   createdAt       DateTime @default(now())
@@ -1345,46 +1379,46 @@ model CompanyRole {
 // ─── Clube de Assinaturas & Pacotes de Sessões ──────────────────────────────────
 
 model MembershipPlan {
-  id                    String               @id @default(cuid())
+  id                    String   @id @default(cuid())
   companyId             String
   name                  String
   description           String?
-  price                 Decimal              @db.Decimal(10, 2)
-  interval              String               @default("month") // month | quarter | year | one_time_package
-  includedSessionsCount Int?                 // null = sessões ilimitadas no período, ou número fixo (ex: 4)
-  discountPercent       Decimal?             @default(0) @db.Decimal(5, 2)
-  serviceIdsJson        String?              // Array JSON de IDs de serviços cobertos ou null (todos)
+  price                 Decimal  @db.Decimal(10, 2)
+  interval              String   @default("month") // month | quarter | year | one_time_package
+  includedSessionsCount Int? // null = sessões ilimitadas no período, ou número fixo (ex: 4)
+  discountPercent       Decimal? @default(0) @db.Decimal(5, 2)
+  serviceIdsJson        String? // Array JSON de IDs de serviços cobertos ou null (todos)
   stripePriceId         String?
-  isActive              Boolean              @default(true)
-  createdAt             DateTime             @default(now())
-  updatedAt             DateTime             @updatedAt
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
-  company               Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  memberships           CustomerMembership[]
+  company     Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  memberships CustomerMembership[]
 
   @@index([companyId, isActive])
   @@map("membership_plan")
 }
 
 model CustomerMembership {
-  id                   String            @id @default(cuid())
+  id                   String    @id @default(cuid())
   companyId            String
   planId               String
   customerEmail        String
   customerName         String
   customerPhone        String?
-  status               String            @default("ACTIVE") // ACTIVE | PAUSED | CANCELLED | EXPIRED
-  startDate            DateTime          @default(now())
+  status               String    @default("ACTIVE") // ACTIVE | PAUSED | CANCELLED | EXPIRED
+  startDate            DateTime  @default(now())
   renewsAt             DateTime?
-  remainingSessions    Int?              // Saldo de sessões restantes (decrementado a cada agendamento)
+  remainingSessions    Int? // Saldo de sessões restantes (decrementado a cada agendamento)
   stripeSubscriptionId String?
   notes                String?
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
-  company              Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  plan                 MembershipPlan    @relation(fields: [planId], references: [id], onDelete: Cascade)
-  usages               MembershipUsage[]
+  company Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  plan    MembershipPlan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  usages  MembershipUsage[]
 
   @@index([companyId, customerEmail])
   @@index([companyId, status])
@@ -1392,14 +1426,14 @@ model CustomerMembership {
 }
 
 model MembershipUsage {
-  id                   String             @id @default(cuid())
+  id                   String   @id @default(cuid())
   customerMembershipId String
   bookingId            String?
   serviceName          String
-  usedAt               DateTime           @default(now())
+  usedAt               DateTime @default(now())
   notes                String?
 
-  customerMembership   CustomerMembership @relation(fields: [customerMembershipId], references: [id], onDelete: Cascade)
+  customerMembership CustomerMembership @relation(fields: [customerMembershipId], references: [id], onDelete: Cascade)
 
   @@index([customerMembershipId])
   @@map("membership_usage")
@@ -1408,25 +1442,25 @@ model MembershipUsage {
 // ─── Gift Cards & Vales-Presente Digitais ─────────────────────────────────────
 
 model GiftCard {
-  id             String               @id @default(cuid())
+  id             String    @id @default(cuid())
   companyId      String
-  code           String               @unique // ex: GIFT-8X9K-42M1
-  initialBalance Decimal              @db.Decimal(10, 2)
-  currentBalance Decimal              @db.Decimal(10, 2)
-  currency       String               @default("BRL") // BRL, USD
+  code           String    @unique // ex: GIFT-8X9K-42M1
+  initialBalance Decimal   @db.Decimal(10, 2)
+  currentBalance Decimal   @db.Decimal(10, 2)
+  currency       String    @default("BRL") // BRL, USD
   buyerName      String?
   buyerEmail     String?
   recipientName  String?
   recipientEmail String?
   recipientPhone String?
   message        String?
-  status         String               @default("ACTIVE") // ACTIVE | EXHAUSTED | EXPIRED | CANCELLED
+  status         String    @default("ACTIVE") // ACTIVE | EXHAUSTED | EXPIRED | CANCELLED
   expiresAt      DateTime?
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  company        Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  redemptions    GiftCardRedemption[]
+  company     Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  redemptions GiftCardRedemption[]
 
   @@index([companyId, status])
   @@index([companyId, code])
@@ -1441,7 +1475,7 @@ model GiftCardRedemption {
   redeemedAt DateTime @default(now())
   notes      String?
 
-  giftCard   GiftCard @relation(fields: [giftCardId], references: [id], onDelete: Cascade)
+  giftCard GiftCard @relation(fields: [giftCardId], references: [id], onDelete: Cascade)
 
   @@index([giftCardId])
   @@map("gift_card_redemption")
@@ -1450,25 +1484,25 @@ model GiftCardRedemption {
 // ─── Produtos Físicos & Controle de Estoque ────────────────────────────────────
 
 model Product {
-  id                String          @id @default(cuid())
+  id                String   @id @default(cuid())
   companyId         String
   name              String
-  sku               String?         // Código de referência interno
-  barcode           String?         // Código de barras EAN/UPC
-  costPrice         Decimal         @default(0) @db.Decimal(10, 2)
-  salePrice         Decimal         @db.Decimal(10, 2)
-  stockQuantity     Int             @default(0)
-  minStockThreshold Int             @default(3) // Alerta de estoque baixo
-  category          String?         // Cabelo, Barba, Pele, Limpeza, etc.
+  sku               String? // Código de referência interno
+  barcode           String? // Código de barras EAN/UPC
+  costPrice         Decimal  @default(0) @db.Decimal(10, 2)
+  salePrice         Decimal  @db.Decimal(10, 2)
+  stockQuantity     Int      @default(0)
+  minStockThreshold Int      @default(3) // Alerta de estoque baixo
+  category          String? // Cabelo, Barba, Pele, Limpeza, etc.
   description       String?
   imageUrl          String?
-  isActive          Boolean         @default(true)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  company           Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  stockMovements    StockMovement[]
-  saleItems         SaleItem[]
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  stockMovements StockMovement[]
+  saleItems      SaleItem[]
 
   @@index([companyId, isActive])
   @@index([companyId, category])
@@ -1478,15 +1512,15 @@ model Product {
 model StockMovement {
   id            String   @id @default(cuid())
   productId     String
-  type          String   // IN (Entrada/Compra), OUT (Saída/Ajuste), SALE (Venda POS), RETURN (Devolução)
-  quantity      Int      // Quantidade movimentada (positiva para IN/RETURN, negativa para OUT/SALE)
+  type          String // IN (Entrada/Compra), OUT (Saída/Ajuste), SALE (Venda POS), RETURN (Devolução)
+  quantity      Int // Quantidade movimentada (positiva para IN/RETURN, negativa para OUT/SALE)
   previousStock Int
   newStock      Int
-  reason        String?  // Motivo da movimentação
-  userId        String?  // Usuário que registrou a movimentação
+  reason        String? // Motivo da movimentação
+  userId        String? // Usuário que registrou a movimentação
   createdAt     DateTime @default(now())
 
-  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
   @@map("stock_movement")
@@ -1495,28 +1529,28 @@ model StockMovement {
 // ─── Frente de Caixa / Comanda Rápida POS ─────────────────────────────────────
 
 model PosSale {
-  id               String     @id @default(cuid())
+  id               String   @id @default(cuid())
   companyId        String
-  bookingId        String?    // Agendamento vinculado
-  professionalId   String?    // Profissional vinculado para cálculo de comissão
+  bookingId        String? // Agendamento vinculado
+  professionalId   String? // Profissional vinculado para cálculo de comissão
   customerName     String?
   customerEmail    String?
   customerPhone    String?
-  subtotal         Decimal    @db.Decimal(10, 2)
-  discountAmount   Decimal    @default(0) @db.Decimal(10, 2)
-  total            Decimal    @db.Decimal(10, 2)
+  subtotal         Decimal  @db.Decimal(10, 2)
+  discountAmount   Decimal  @default(0) @db.Decimal(10, 2)
+  total            Decimal  @db.Decimal(10, 2)
   // Ver a nota em `Estimate.currency`: moeda cobrada no ato da venda.
-  currency         String?    // ISO 4217
-  paymentMethod    String     @default("CASH") // CASH | CARD_CREDIT | CARD_DEBIT | PIX | GIFT_CARD | MEMBERSHIP | MIXED
-  status           String     @default("COMPLETED") // COMPLETED | REFUNDED | CANCELLED
-  commissionAmount Decimal    @default(0) @db.Decimal(10, 2)
+  currency         String? // ISO 4217
+  paymentMethod    String   @default("CASH") // CASH | CARD_CREDIT | CARD_DEBIT | PIX | GIFT_CARD | MEMBERSHIP | MIXED
+  status           String   @default("COMPLETED") // COMPLETED | REFUNDED | CANCELLED
+  commissionAmount Decimal  @default(0) @db.Decimal(10, 2)
   notes            String?
   createdById      String?
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  company          Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  items            SaleItem[]
+  company Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  items   SaleItem[]
 
   @@index([companyId, createdAt])
   @@index([companyId, status])
@@ -1525,15 +1559,15 @@ model PosSale {
 }
 
 model SaleItem {
-  id         String   @id @default(cuid())
-  saleId     String
-  type       String   @default("PRODUCT") // PRODUCT | SERVICE | FEE
-  productId  String?
-  serviceId  String?
-  name       String
-  quantity   Int      @default(1)
-  unitPrice  Decimal  @db.Decimal(10, 2)
-  totalPrice Decimal  @db.Decimal(10, 2)
+  id               String  @id @default(cuid())
+  saleId           String
+  type             String  @default("PRODUCT") // PRODUCT | SERVICE | FEE
+  productId        String?
+  serviceId        String?
+  name             String
+  quantity         Int     @default(1)
+  unitPrice        Decimal @db.Decimal(10, 2)
+  totalPrice       Decimal @db.Decimal(10, 2)
   // Comissão deste item, com a taxa vigente NO ATO da venda.
   // `PosSale.commissionAmount` guarda só o total somado, o que impede o extrato
   // de separar serviço de produto — que é a dor inteira deste módulo. E
@@ -1542,14 +1576,11 @@ model SaleItem {
   // passado.
   commissionAmount Decimal @default(0) @db.Decimal(10, 2)
 
-  sale       PosSale  @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  product    Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  sale    PosSale  @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   @@index([saleId])
   // O extrato agrupa comissão por tipo de item.
   @@index([type])
   @@map("sale_item")
 }
-
-
-

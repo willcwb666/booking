@@ -27,7 +27,16 @@ export default async function CheckoutPage({
     include: {
       bookingConfig: {
         include: {
-          company: { select: { name: true, logoUrl: true, currency: true, locale: true, businessType: true } },
+          company: {
+            select: {
+              name: true,
+              logoUrl: true,
+              currency: true,
+              locale: true,
+              businessType: true,
+              driveTimeEnabled: true,
+            },
+          },
           agenda: true,
         },
       },
@@ -195,6 +204,7 @@ export default async function CheckoutPage({
       currency={config.company.currency}
       locale={config.company.locale}
       businessType={config.company.businessType}
+      driveTimeEnabled={config.company.driveTimeEnabled}
       offPeakWindows={offPeakWindows}
       prefill={prefill}
       requireDeposit={depositPolicy.percentage > 0}

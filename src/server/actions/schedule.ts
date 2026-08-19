@@ -102,11 +102,25 @@ export async function deleteScheduleEventAction(
     return { success: false, errors: { _: ["Evento não encontrado"] } };
 
   // EMPLOYEE can only delete their own events
-  if (ctx.role === "EMPLOYEE" && event.createdById !== ctx.userId)
-    return {
-      success: false,
-      errors: { _: ["Sem permissão para excluir este evento"] },
-    };
+  if (ctx.role === "EMPLOYEE" && event.createdById !== ctx.userId) {
+    // Exceção: o bloqueio de deslocamento não tem autor, então a regra de
+    // "só o seu" o tornaria intocável para quem mais precisa mexer nele — o
+    // profissional que vai dirigir. Ele apaga o da PRÓPRIA agenda; a de
+    // outro profissional continua fora do alcance.
+    const isOwnDriveTimeBlock =
+      event.source === "DRIVE_TIME" &&
+      event.professionalId !== null &&
+      (await db.professional.findFirst({
+        where: { id: event.professionalId, companyId: ctx.company.id, userId: ctx.userId },
+        select: { id: true },
+      })) !== null;
+
+    if (!isOwnDriveTimeBlock)
+      return {
+        success: false,
+        errors: { _: ["Sem permissão para excluir este evento"] },
+      };
+  }
 
   await db.scheduleEvent.delete({ where: { id } });
 

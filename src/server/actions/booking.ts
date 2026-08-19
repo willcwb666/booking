@@ -21,6 +21,10 @@ import { getCustomerTrust } from "@/server/queries/customer-trust";
 import { randomUUID } from "crypto";
 import { enqueueNotification } from "@/lib/notification-outbox";
 import { enqueueReviewRequest } from "@/lib/review-request";
+import {
+  syncTravelBlocksForBooking,
+  safeRefreshTravelBlocks,
+} from "@/lib/geo/travel-blocks";
 
 type CreateResult =
   | { success: true; bookingId: string; paymentMethod: "CASH_CHECK" }
@@ -493,6 +497,7 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
     const booking = newBooking;
 
     // Create recurring series (additional slots for WEEKLY/BIWEEKLY/MONTHLY)
+    const seriesBookingIds: string[] = [];
     if (recurrenceGroupId && recurrenceFrequency) {
       const COUNTS: Record<string, number> = { WEEKLY: 11, BIWEEKLY: 11, MONTHLY: 5 };
       const DAYS: Record<string, number> = { WEEKLY: 7, BIWEEKLY: 14, MONTHLY: 30 };
@@ -547,6 +552,7 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
               professionalId: slotProfessionalKey(finalProfessionalId),
             },
           });
+          seriesBookingIds.push(recBooking.id);
           // Copy customer detail and home access from primary booking
           await db.bookingCustomerDetail.create({
             data: {
@@ -575,6 +581,24 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
           // Slot taken for this date — skip
         }
       }
+    }
+
+    /**
+     * Bloqueio de deslocamento — o tempo de viagem até o próximo atendimento.
+     *
+     * Só faz alguma coisa para empresa que ligou o recurso; para as demais é
+     * uma leitura e nada mais. Corre DEPOIS do agendamento gravado e engole os
+     * próprios erros: geocodificador fora do ar não pode virar erro na tela de
+     * quem acabou de agendar.
+     *
+     * É `await` e não disparo solto de propósito. O bloqueio deste agendamento
+     * é o que impede o PRÓXIMO cliente de comprar um horário sem tempo de
+     * chegada; deixá-lo para um trabalho em segundo plano numa função que pode
+     * ser congelada logo após a resposta abriria exatamente a janela que o
+     * recurso existe para fechar.
+     */
+    for (const id of [booking.id, ...seriesBookingIds]) {
+      await syncTravelBlocksForBooking(id);
     }
 
     // Valor devido após cobertura de plano/pacote, desconto de membro e gift card;
@@ -835,6 +859,13 @@ export async function cancelBookingAction(formData: FormData): Promise<CancelRes
 
   void enqueueNotification({ kind: "BOOKING_CANCELLED", bookingId: bookingId });
   void triggerWebhooks(booking.companyId, "BOOKING_CANCELLED", { bookingId });
+
+  // A parada saiu da rota, e o bloqueio de viagem que existia por causa dela
+  // perde o motivo. Vem ANTES de avisar a lista de espera de propósito: de
+  // nada adianta oferecer a vaga com um bloco de deslocamento fantasma na
+  // frente dela.
+  await safeRefreshTravelBlocks(booking.companyId, booking.professionalId, booking.scheduledDate);
+
   // Notify waitlist entries for this date
   void notifyWaitlistForDate(booking.agendaId, booking.scheduledDate, booking.companyId);
   return { success: true };
@@ -1032,7 +1063,16 @@ export async function rescheduleBookingAction(
     throw e;
   }
 
-  return { success: true };
+  // Remarcar mexe em DOIS dias: o antigo perde uma parada e o novo ganha uma.
+  // Recalcular só o destino deixaria no dia de origem um bloqueio de viagem
+  // para um atendimento que não está mais lá — horário vendável apagado da
+  // grade por um motivo que já não existe.
+  await safeRefreshTravelBlocks(booking.companyId, booking.professionalId, booking.scheduledDate);
+  if (newDate !== booking.scheduledDate) {
+    await safeRefreshTravelBlocks(booking.companyId, booking.professionalId, newDate);
+  }
+
+  return { success: true, warning };
 }
 
 // ─── Status lifecycle ─────────────────────────────────────────────────────────
