@@ -30,6 +30,7 @@ import {
   UserCheck,
   UserCog,
   Users,
+  RotateCcw,
   Zap,
 } from "./icons";
 
@@ -219,6 +220,14 @@ export function AppSidebar({
                 label: "Promoções",
                 icon: <Tag className={ICON} />,
                 keywords: "campanha desconto oferta",
+              },
+              {
+                href: `${base}/resgate`,
+                label: "Resgate de clientes",
+                // RotateCcw = voltar. Users ja e Clientes, e o proprio arquivo
+                // diz que icone repetido nao ajuda ninguem.
+                icon: <RotateCcw className={ICON} />,
+                keywords: "win-back inativo retorno ciclo sumiu",
               },
             ]
           : []),

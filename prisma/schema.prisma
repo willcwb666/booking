@@ -883,6 +883,10 @@ model Customer {
   noShowCount       Int       @default(0)
   totalSpent        Decimal   @default(0) @db.Decimal(10, 2)
   lastBookingDate   String?
+  // Última campanha de resgate enviada a este cliente. Sem isso, cada abertura
+  // da tela reofereceria o mesmo desconto a quem já recebeu ontem — que é como
+  // uma ferramenta de retenção vira motivo de descadastro.
+  lastWinBackAt     DateTime?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 

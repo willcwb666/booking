@@ -598,3 +598,64 @@ ${escapeHtml(data.description)}
     `,
   });
 }
+
+/**
+ * E-mail de resgate de cliente inativo.
+ *
+ * O texto é do dono, não do sistema: assunto, corpo e incentivo chegam prontos.
+ * O template só dá a moldura e o botão de agendar. Gerar a mensagem
+ * automaticamente produziria e-mail de robô para o cliente mais valioso da
+ * empresa — o que já frequentava e parou.
+ */
+export async function sendWinBackEmail({
+  to,
+  customerName,
+  companyName,
+  companySlug,
+  companyLogoUrl,
+  subject,
+  message,
+  offer,
+}: {
+  to: string;
+  customerName: string;
+  companyName: string;
+  companySlug: string;
+  companyLogoUrl: string | null;
+  subject: string;
+  message: string;
+  offer: string | null;
+}) {
+  const appUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+  const bookUrl = `${appUrl}/${companySlug}`;
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
+        ${
+          companyLogoUrl
+            ? `<img src="${escapeHtml(companyLogoUrl)}" alt="${escapeHtml(companyName)}" style="max-height:48px;margin-bottom:16px">`
+            : `<h3 style="color:#111827;margin:0 0 16px 0">${escapeHtml(companyName)}</h3>`
+        }
+        <p style="color:#6b7280;margin-top:0">Olá, ${escapeHtml(customerName)}.</p>
+        <div style="color:#374151;line-height:1.6;white-space:pre-line">${escapeHtml(message)}</div>
+        ${
+          offer
+            ? `<p style="margin:20px 0;padding:14px 18px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;color:#065f46;font-weight:bold">${escapeHtml(offer)}</p>`
+            : ""
+        }
+        <p style="margin:24px 0">
+          <a href="${bookUrl}" style="display:inline-block;background:#1d4ed8;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">
+            Agendar horário
+          </a>
+        </p>
+        <p style="color:#9ca3af;font-size:12px;margin-top:32px">
+          Você recebeu este e-mail porque já foi atendido na ${escapeHtml(companyName)}.
+        </p>
+      </div>
+    `,
+  });
+}
