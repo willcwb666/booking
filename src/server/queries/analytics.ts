@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { PLATFORM_BILLING_CURRENCY } from "@/lib/stripe-billing";
 import {
   enumerateBuckets,
   percentDelta,
@@ -108,9 +109,12 @@ export type PlatformOverview = {
   arr: number;
   arpu: number;
   /**
-   * Moeda em que os planos são cobrados. `Plan.priceMonthly` é um número só,
-   * sem moeda: o MRR não é segmentável enquanto o preço do plano não for por
-   * mercado. Rotular é o mínimo honesto até essa decisão de produto existir.
+   * Moeda em que os planos são cobrados.
+   *
+   * Diferente da receita das empresas, o MRR *não* precisa ser segmentado: a
+   * plataforma cobra assinatura numa moeda só, por decisão de produto já tomada
+   * (ver `PLATFORM_BILLING_CURRENCY` em `stripe-billing.ts`). Falta apenas o
+   * rótulo, para o número não ser lido como se fosse a moeda de quem olha.
    */
   billingCurrency: string;
   activeSubscriptions: number;
@@ -307,7 +311,9 @@ export async function getPlatformOverview(
     mrr,
     arr: mrr * 12,
     arpu: activeSubscriptions > 0 ? mrr / activeSubscriptions : 0,
-    billingCurrency: process.env.PLATFORM_BILLING_CURRENCY ?? "BRL",
+    // `PLATFORM_BILLING_CURRENCY` é normalizada em minúsculas na origem porque
+    // a API do Stripe exige assim; para exibição o código ISO vai em maiúsculas.
+    billingCurrency: PLATFORM_BILLING_CURRENCY.toUpperCase(),
     activeSubscriptions,
     overdueSubscriptions,
     planBreakdown: planRows.map((r) => ({

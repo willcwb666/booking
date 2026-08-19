@@ -35,6 +35,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# O template precisa ser versionado — é ele que diz a quem clona o repositório
+# quais variáveis o projeto espera. Sem esta exceção o `.env*` acima o engolia
+# junto com os arquivos de segredo.
+!.env.example
 
 # vercel
 .vercel

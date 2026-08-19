@@ -250,9 +250,9 @@ export function AdminOverviewClient({
         <div className="card-body grid grid-cols-2 lg:grid-cols-5 gap-4">
           {(
             [
-              // O preço do plano é um número único, sem moeda — o MRR não é
-              // segmentável por mercado enquanto isso não mudar. Rotular com a
-              // moeda de cobrança é o mínimo honesto até lá.
+              // Ao contrário da receita das empresas, o MRR não é segmentado:
+              // a plataforma cobra assinatura numa moeda só. O rótulo existe
+              // para o número não ser lido na moeda errada.
               ["MRR", formatMoney(overview.mrr, overview.billingCurrency)],
               ["ARR", formatMoney(overview.arr, overview.billingCurrency)],
               ["ARPU", formatMoney(overview.arpu, overview.billingCurrency)],
