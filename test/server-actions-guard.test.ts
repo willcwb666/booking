@@ -169,6 +169,31 @@ describe("superfície de server actions", () => {
     expect(stale, "Entrada de PUBLIC_ACTIONS sem action correspondente").toEqual([]);
   });
 
+  it("nenhum arquivo de action exporta algo que não seja função async", () => {
+    // O coletor acima só enxerga `export async function`, então um
+    // `export const` passava despercebido por este arquivo inteiro. Quem pegava
+    // era o Turbopack, no fim de um build de 30 segundos, com uma mensagem
+    // sobre Ecmascript. Aqui a falha vem em um segundo e diz o que fazer.
+    //
+    // `export type` e `export interface` são permitidos: somem na compilação e
+    // não viram endpoint.
+    const offenders: string[] = [];
+    for (const [file, src] of sources) {
+      for (const m of src.matchAll(/^export\s+(const|let|var|class|enum)\s+(\w+)/gm)) {
+        offenders.push(`${file}:${m[2]} (export ${m[1]})`);
+      }
+      for (const m of src.matchAll(/^export\s+function\s+(\w+)/gm)) {
+        offenders.push(`${file}:${m[1]} (função não-async)`);
+      }
+    }
+
+    expect(
+      offenders,
+      "Arquivo `use server` só pode exportar função async — o Next recusa o build.\n" +
+        "Constante ou tipo compartilhado vai para src/lib."
+    ).toEqual([]);
+  });
+
   it("nenhum arquivo de action exporta função utilitária sem sufixo Action", () => {
     // Foi assim que `awardLoyaltyPointsForBooking` e `notifyWaitlistForDate`
     // viraram endpoints públicos sem ninguém perceber: eram utilitários

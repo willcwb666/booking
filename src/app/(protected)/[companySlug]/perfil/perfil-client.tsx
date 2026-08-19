@@ -26,6 +26,7 @@ type Props = {
   notifPrefs: NotifPrefs;
   twoFactorEnabled: boolean;
   twoFactorRequired: boolean;
+  pendingReset: { id: string; reason: string; executeAfter: string } | null;
 };
 
 type Tab = "perfil" | "seguranca" | "notificacoes";
@@ -277,6 +278,7 @@ export function PerfilClient({
   notifPrefs,
   twoFactorEnabled,
   twoFactorRequired,
+  pendingReset,
 }: Props) {
   const [tab, setTab] = useState<Tab>("perfil");
 
@@ -331,7 +333,11 @@ export function PerfilClient({
               <p className="text-xs text-[var(--color-text-muted)] mb-4">
                 Uma segunda prova de identidade no login, além da senha.
               </p>
-              <TwoFactorPanel enabled={twoFactorEnabled} required={twoFactorRequired} />
+              <TwoFactorPanel
+                enabled={twoFactorEnabled}
+                required={twoFactorRequired}
+                pendingReset={pendingReset}
+              />
             </div>
 
             <div className="card card-body">

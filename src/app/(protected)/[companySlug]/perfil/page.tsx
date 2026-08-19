@@ -23,6 +23,15 @@ export default async function PerfilPage() {
 
   const prefs = user.notificationPrefs;
 
+  // Pedido de reset em curso contra esta conta. Carregado sempre, não só quando
+  // o 2FA está ligado: o aviso precisa aparecer justamente no intervalo em que
+  // a remoção ainda não aconteceu.
+  const pendingReset = await db.twoFactorResetRequest.findFirst({
+    where: { targetUserId: session!.user.id, status: "PENDING" },
+    select: { id: true, reason: true, executeAfter: true },
+    orderBy: { createdAt: "desc" },
+  });
+
   /**
    * Quem administra empresa não escolhe se usa verificação em duas etapas.
    *
@@ -43,6 +52,15 @@ export default async function PerfilPage() {
       location={user.location ?? ""}
       twoFactorEnabled={user.twoFactorEnabled ?? false}
       twoFactorRequired={twoFactorRequired}
+      pendingReset={
+        pendingReset
+          ? {
+              id: pendingReset.id,
+              reason: pendingReset.reason,
+              executeAfter: pendingReset.executeAfter.toISOString(),
+            }
+          : null
+      }
       notifPrefs={{
         enableEmail:     prefs?.enableEmail     ?? true,
         enablePush:      prefs?.enablePush      ?? true,

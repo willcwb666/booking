@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 /**
  * Autorização das server actions, contra o Postgres de desenvolvimento.
@@ -36,6 +36,15 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/session", () => ({
   getActiveSession: async () => (currentUser ? { user: currentUser, session: {} } : null),
   getSessionTimeoutConfig: async () => ({}),
+}));
+
+// `revalidatePath` exige o contexto de requisição do Next, que não existe fora
+// do servidor. Só os casos de SUCESSO chegam nele — os de negação retornam
+// antes —, então sem este mock o arquivo passaria a testar apenas as recusas.
+vi.mock("next/cache", () => ({
+  revalidatePath: () => {},
+  revalidateTag: () => {},
+  unstable_cache: (fn: unknown) => fn,
 }));
 
 // Rate limit fora do caminho: aqui interessa autorização, não throttling.
@@ -308,6 +317,120 @@ d("autorização das server actions (integração)", () => {
       const m = await import("@/server/actions/admin-modules");
       currentUser = { id: B.user, email: "b@vitest.local", name: "B" };
       expect(await m.getCompanyLicensedModuleCodesAction(A.slug)).toEqual([]);
+    });
+  });
+
+  /**
+   * Reset da verificação em duas etapas.
+   *
+   * É o backdoor da plataforma: quem consegue executá-lo à vontade toma
+   * qualquer conta. Os freios (super admin, carência de 24h, cancelamento pela
+   * vítima) só valem se estiverem no servidor — esconder o botão não protege
+   * quem chama a action direto.
+   */
+  describe("reset de 2FA do super admin", () => {
+    const load = () => import("@/server/actions/two-factor-reset");
+
+    afterEach(async () => {
+      await db.twoFactorResetRequest.deleteMany({
+        where: { targetUserId: { in: [A.user, B.user] } },
+      });
+    });
+
+    it("usuário comum não consegue pedir reset de outra conta", async () => {
+      const m = await load();
+      currentUser = { id: B.user, email: "b@vitest.local", name: "B" };
+      const res = await m.requestTwoFactorResetAction(A.user, "quero entrar na conta dele");
+      expect(res.success).toBe(false);
+    });
+
+    it("sem sessão não consegue pedir reset", async () => {
+      const m = await load();
+      currentUser = null;
+      expect((await m.requestTwoFactorResetAction(A.user, "motivo qualquer")).success).toBe(false);
+    });
+
+    it("super admin não consegue executar antes da carência", async () => {
+      // O coração da proteção. Se este teste passar a falhar, o atraso virou
+      // decoração e uma conta de super admin comprometida toma tenant na hora.
+      const m = await load();
+
+      const request = await db.twoFactorResetRequest.create({
+        data: {
+          targetUserId: A.user,
+          requestedById: B.user,
+          reason: "pedido de teste dentro da carência",
+          executeAfter: new Date(Date.now() + 60 * 60 * 1000),
+        },
+        select: { id: true },
+      });
+
+      currentUser = { id: B.user, email: "b@vitest.local", name: "B", role: "admin" };
+      const res = await m.executeTwoFactorResetAction(request.id);
+      expect(res.success).toBe(false);
+
+      const after = await db.twoFactorResetRequest.findUnique({
+        where: { id: request.id },
+        select: { status: true },
+      });
+      expect(after?.status).toBe("PENDING");
+    });
+
+    it("usuário comum não executa nem depois de vencida a carência", async () => {
+      const m = await load();
+
+      const request = await db.twoFactorResetRequest.create({
+        data: {
+          targetUserId: A.user,
+          requestedById: B.user,
+          reason: "pedido de teste ja vencido",
+          executeAfter: new Date(Date.now() - 60 * 1000),
+        },
+        select: { id: true },
+      });
+
+      currentUser = { id: B.user, email: "b@vitest.local", name: "B" };
+      expect((await m.executeTwoFactorResetAction(request.id)).success).toBe(false);
+    });
+
+    it("o alvo cancela o próprio pedido — é a saída da vítima", async () => {
+      const m = await load();
+
+      const request = await db.twoFactorResetRequest.create({
+        data: {
+          targetUserId: A.user,
+          requestedById: B.user,
+          reason: "pedido que o dono nao reconhece",
+          executeAfter: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+        select: { id: true },
+      });
+
+      currentUser = { id: A.user, email: "a@vitest.local", name: "A" };
+      expect((await m.cancelTwoFactorResetAction(request.id)).success).toBe(true);
+
+      const after = await db.twoFactorResetRequest.findUnique({
+        where: { id: request.id },
+        select: { status: true },
+      });
+      expect(after?.status).toBe("CANCELLED");
+    });
+
+    it("um terceiro não cancela pedido alheio", async () => {
+      const m = await load();
+
+      const request = await db.twoFactorResetRequest.create({
+        data: {
+          targetUserId: A.user,
+          requestedById: A.user,
+          reason: "pedido legitimo do proprio dono",
+          executeAfter: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+        select: { id: true },
+      });
+
+      currentUser = { id: B.user, email: "b@vitest.local", name: "B" };
+      expect((await m.cancelTwoFactorResetAction(request.id)).success).toBe(false);
     });
   });
 });

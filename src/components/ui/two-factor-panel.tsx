@@ -3,12 +3,21 @@
 import React, { useState } from "react";
 import { twoFactor } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import { cancelTwoFactorResetAction } from "@/server/actions/two-factor-reset";
 import { ShieldCheck, AlertTriangle, Copy, Check } from "@/components/ui/icons";
+
+type PendingReset = {
+  id: string;
+  reason: string;
+  executeAfter: string;
+};
 
 type Props = {
   enabled: boolean;
   /** Papéis para os quais a verificação é obrigatória mostram outro aviso. */
   required?: boolean;
+  /** Pedido de reset em curso contra esta conta, se houver. */
+  pendingReset?: PendingReset | null;
 };
 
 /**
@@ -18,11 +27,12 @@ type Props = {
  * roubada — justamente o cenário contra o qual o 2FA existe — ligue o segundo
  * fator num aparelho do atacante, ou desligue o da vítima.
  */
-export function TwoFactorPanel({ enabled, required = false }: Props) {
+export function TwoFactorPanel({ enabled, required = false, pendingReset = null }: Props) {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   // Etapa intermediária da ativação: o segredo já existe no banco, mas só vale
   // depois que o usuário prova que conseguiu ler o código no app.
@@ -97,6 +107,58 @@ export function TwoFactorPanel({ enabled, required = false }: Props) {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const cancelReset = async () => {
+    if (!pendingReset) return;
+    setCancelling(true);
+    const res = await cancelTwoFactorResetAction(pendingReset.id);
+    setCancelling(false);
+    if (!res.success) {
+      setError(res.error);
+      return;
+    }
+    router.refresh();
+  };
+
+  /**
+   * Aviso de reset pendente.
+   *
+   * Fica acima de tudo e não pode ser dispensado: é a única chance da vítima de
+   * barrar a remoção do próprio segundo fator, e ela tem 24 horas para ver.
+   */
+  const resetBanner = pendingReset ? (
+    <div className="p-4 rounded-[var(--radius-card)] bg-[var(--color-danger-light)] border border-[var(--color-danger-border)] space-y-3 mb-5">
+      <p className="flex items-start gap-2 text-xs font-bold text-[var(--color-danger)]">
+        <AlertTriangle className="w-4 h-4 shrink-0 mt-px" />
+        <span>
+          Um administrador pediu para remover a verificação em duas etapas da sua
+          conta. Isso acontece em{" "}
+          {new Date(pendingReset.executeAfter).toLocaleString("pt-BR", {
+            dateStyle: "short",
+            timeStyle: "short",
+          })}
+          .
+        </span>
+      </p>
+      <p className="text-xs text-[var(--color-danger)] pl-6">
+        Motivo informado: &ldquo;{pendingReset.reason}&rdquo;
+      </p>
+      <p className="text-xs text-[var(--color-text-muted)] pl-6">
+        Se não foi você que pediu, cancele agora — você está conseguindo entrar,
+        então não precisa de reset.
+      </p>
+      <div className="pl-6">
+        <button
+          type="button"
+          onClick={cancelReset}
+          disabled={cancelling}
+          className="btn btn-primary btn-sm"
+        >
+          {cancelling ? "Cancelando…" : "Cancelar este pedido"}
+        </button>
+      </div>
+    </div>
+  ) : null;
 
   // ── Segredo gerado, aguardando confirmação ──────────────────────────────
   if (totpUri) {
@@ -182,6 +244,7 @@ export function TwoFactorPanel({ enabled, required = false }: Props) {
   if (enabled) {
     return (
       <div className="space-y-4">
+        {resetBanner}
         <p className="flex items-center gap-2 text-xs font-semibold text-[var(--color-success)]">
           <ShieldCheck className="w-4 h-4" />
           Verificação em duas etapas ativa
@@ -225,6 +288,7 @@ export function TwoFactorPanel({ enabled, required = false }: Props) {
   // ── Desligada ───────────────────────────────────────────────────────────
   return (
     <form onSubmit={start} className="space-y-3">
+      {resetBanner}
       {required && (
         <p className="flex items-start gap-2 text-xs text-[var(--color-warning)] bg-[var(--color-warning-light)] border border-[var(--color-warning-border)] rounded-[var(--radius-control)] p-3">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-px" />

@@ -161,6 +161,8 @@ model User {
   notificationPrefs     UserNotificationPreference?
   calendarIntegrations  CalendarIntegration[]
   twoFactors            TwoFactor[]
+  twoFactorResetsAsTarget    TwoFactorResetRequest[] @relation("TwoFactorResetTarget")
+  twoFactorResetsRequested   TwoFactorResetRequest[] @relation("TwoFactorResetRequester")
 
   @@unique([email])
   @@map("user")
@@ -274,6 +276,41 @@ model TwoFactor {
   @@index([secret])
   @@index([userId])
   @@map("two_factor")
+}
+
+/**
+ * Pedido de reset da verificação em duas etapas pelo super admin.
+ *
+ * É um backdoor legítimo — o dono que perdeu o celular E o acesso ao e-mail
+ * precisa de alguém que destranque a conta. Mas sem freio ele significa que a
+ * segurança de TODOS os tenants vale exatamente a segurança de uma conta
+ * pessoal: quem tomar o super admin toma qualquer empresa em silêncio.
+ *
+ * Os três freios estão aqui: o pedido não executa na hora (`executeAfter`), o
+ * dono é avisado no momento do PEDIDO e não da execução, e ele mesmo pode
+ * cancelar enquanto ainda conseguir entrar. Um super admin sequestrado passa a
+ * ter 24 horas de janela visível em vez de acesso imediato e mudo.
+ */
+model TwoFactorResetRequest {
+  id            String    @id @default(cuid())
+  targetUserId  String
+  targetUser    User      @relation("TwoFactorResetTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  requestedById String
+  requestedBy   User      @relation("TwoFactorResetRequester", fields: [requestedById], references: [id], onDelete: Cascade)
+  reason        String
+  /// PENDING | EXECUTED | CANCELLED
+  status        String    @default("PENDING")
+  /// Não pode ser executado antes deste instante.
+  executeAfter  DateTime
+  executedAt    DateTime?
+  cancelledAt   DateTime?
+  /// Quem cancelou — o próprio dono, ou outro super admin que revisou o pedido.
+  cancelledById String?
+  createdAt     DateTime  @default(now())
+
+  @@index([targetUserId, status])
+  @@index([status, executeAfter])
+  @@map("two_factor_reset_request")
 }
 
 model Verification {

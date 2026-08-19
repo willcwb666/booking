@@ -138,6 +138,59 @@ export async function sendTwoFactorOtpEmail({
   }
 }
 
+/**
+ * Aviso de que alguém pediu a remoção da verificação em duas etapas da conta.
+ *
+ * Este e-mail é o freio inteiro da funcionalidade: é ele que transforma um
+ * reset silencioso em algo que o dono tem 24 horas para barrar. Por isso o
+ * texto assume que o destinatário pode ser a vítima, e não o solicitante.
+ */
+export async function sendTwoFactorResetNoticeEmail({
+  to,
+  userName,
+  reason,
+  executeAfter,
+}: {
+  to: string;
+  userName: string;
+  reason: string;
+  executeAfter: Date;
+}) {
+  const when = executeAfter.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  try {
+    await resend.emails.send({
+      from: FROM,
+      to,
+      subject: "Pediram para remover a verificação em duas etapas da sua conta",
+      html: `
+        <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
+          <h2 style="color:#b45309;margin-bottom:4px">Pedido de remoção da verificação em duas etapas</h2>
+          <p style="color:#6b7280;margin-top:0">Olá, ${escapeHtml(userName)}.</p>
+          <p style="color:#374151">
+            Um administrador da plataforma pediu para remover a verificação em
+            duas etapas da sua conta. O motivo informado foi:
+          </p>
+          <blockquote style="margin:16px 0;padding:12px 16px;border-left:3px solid #d1d5db;color:#374151;background:#f9fafb">
+            ${escapeHtml(reason)}
+          </blockquote>
+          <p style="color:#374151">
+            <strong>Nada acontece antes de ${escapeHtml(when)}.</strong>
+            Se foi você que pediu, não precisa fazer nada.
+          </p>
+          <p style="color:#b45309;font-weight:bold">
+            Se não foi você, entre na sua conta e cancele o pedido em
+            Perfil → Segurança. Enquanto você conseguir entrar, o reset não
+            deveria acontecer.
+          </p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:32px">Kreator · Agendamentos online</p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("[email] 2fa reset notice failed:", err);
+  }
+}
+
 type BookingEmailData = {
   to: string;
   customerName: string;
