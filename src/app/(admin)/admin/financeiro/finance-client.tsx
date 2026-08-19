@@ -7,7 +7,14 @@ import { updateCompanySubscriptionAction, cancelDuplicateSubscriptionsAction } f
 import { toast } from "@/lib/toast-service";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { CreditCard, Settings, X } from "@/components/ui/icons";
+import {
+  CreditCard,
+  Settings,
+  X,
+  DollarSign,
+  RefreshCw,
+  Search,
+} from "@/components/ui/icons";
 
 type PlanOption = {
   id: string;
@@ -25,6 +32,8 @@ type Props = {
 import { SubscriptionsModal } from "./_components/subscriptions-modal";
 import { Pagination } from "@/components/ui/pagination";
 
+import { IconAction, RowActions } from "@/components/ui/icon-action";
+import { PageHeader } from "@/components/ui/page-header";
 export function FinanceClient({ initialCompanies, stats, availablePlans }: Props) {
   const [companies, setCompanies] = useState<AdminFinanceCompanyItem[]>(initialCompanies);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
@@ -162,79 +171,63 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
 
   return (
     <div className="page-content space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold text-[var(--color-text-heading)] tracking-tight">Gestão Financeira & Assinaturas SaaS</h1>
-          <p className="text-xs text-[var(--color-text-muted)] mt-1">
-            Acompanhe o faturamento mensal recorrente (MRR), inadimplência e gerencie os planos de cada empresa.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={handleSyncAllWithStripe}
-          disabled={isPending}
-          className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-xl font-bold text-xs shadow-xs transition-all shrink-0 disabled:opacity-50 inline-flex items-center gap-2 cursor-pointer"
-        >
-          <span>Sincronizar Todos os Planos com o Stripe</span>
-        </button>
+      <PageHeader
+        category="Plataforma"
+        categoryIcon={<DollarSign className="w-3.5 h-3.5" />}
+        title="Financeiro"
+        description="Receita recorrente, inadimplência e o plano contratado por cada empresa."
+        action={
+          <button
+            type="button"
+            onClick={handleSyncAllWithStripe}
+            disabled={isPending}
+            className="btn btn-outline btn-sm inline-flex items-center gap-1.5"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isPending ? "animate-spin" : ""}`} />
+            <span>{isPending ? "Sincronizando…" : "Sincronizar com Stripe"}</span>
+          </button>
+        }
+      />
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: "MRR", value: fmtCurrency(liveStats.mrr), hint: "receita mensal recorrente" },
+          { label: "ARR", value: fmtCurrency(liveStats.arr), hint: "projeção anual (MRR × 12)" },
+          {
+            label: "Assinaturas ativas",
+            value: String(liveStats.activeSubscriptionsCount),
+            hint: "empresas em dia",
+          },
+          {
+            label: "Inadimplentes",
+            value: String(liveStats.overdueSubscriptionsCount),
+            hint: "fatura pendente ou vencida",
+          },
+        ].map((s) => (
+          <div key={s.label} className="stat-card">
+            <span className="stat-card-label">{s.label}</span>
+            <span className="stat-card-value">{s.value}</span>
+            <span className="stat-card-delta">{s.hint}</span>
+          </div>
+        ))}
       </div>
 
-      {/* Cards Financeiros Recalculados Dinamicamente */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5 shadow-sm">
-          <span className="text-xs font-bold text-[var(--color-text-subtle)] uppercase tracking-wider block mb-1">MRR Total</span>
-          <p className="text-2xl font-black text-emerald-600">{fmtCurrency(liveStats.mrr)}</p>
-          <p className="text-xs text-[var(--color-text-muted)] mt-1">Faturamento mensal recorrente</p>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5 shadow-sm">
-          <span className="text-xs font-bold text-[var(--color-text-subtle)] uppercase tracking-wider block mb-1">ARR Projetado</span>
-          <p className="text-2xl font-black text-blue-600">{fmtCurrency(liveStats.arr)}</p>
-          <p className="text-xs text-[var(--color-text-muted)] mt-1">Projeção de faturamento anual</p>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5 shadow-sm">
-          <span className="text-xs font-bold text-[var(--color-text-subtle)] uppercase tracking-wider block mb-1">Assinaturas Ativas</span>
-          <p className="text-2xl font-black text-[var(--color-text-heading)]">{liveStats.activeSubscriptionsCount}</p>
-          <p className="text-xs text-[var(--color-text-muted)] mt-1">Empresas adimplentes</p>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5 shadow-sm">
-          <span className="text-xs font-bold text-[var(--color-text-subtle)] uppercase tracking-wider block mb-1">Inadimplência</span>
-          <p className={`text-2xl font-black ${liveStats.overdueSubscriptionsCount > 0 ? "text-red-600" : "text-emerald-600"}`}>
-            {liveStats.overdueSubscriptionsCount}
-          </p>
-          <p className="text-xs text-[var(--color-text-muted)] mt-1">Pagamentos pendentes/vencidos</p>
-        </div>
-      </div>
-
-      {/* Controles de Busca e Filtro */}
-      <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="w-full sm:w-96">
-          <input
-            placeholder="Buscar por empresa ou e-mail do dono..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-          />
-        </div>
-
-        <div className="flex gap-2 w-full sm:w-auto overflow-x-auto">
+      <div className="scroller -mx-1 px-1">
+        <div className="segmented w-max" role="tablist" aria-label="Filtrar assinaturas">
           {[
             { id: "ALL", label: "Todas" },
-            { id: "ACTIVE", label: "Ativas / Em Dia" },
-            { id: "OVERDUE", label: "Inadimplentes (Pendentes)" },
+            { id: "ACTIVE", label: "Em dia" },
+            { id: "OVERDUE", label: "Inadimplentes" },
             { id: "CANCELED", label: "Canceladas" },
           ].map((f) => (
             <button
               key={f.id}
+              type="button"
+              role="tab"
+              aria-selected={statusFilter === f.id}
+              data-active={statusFilter === f.id}
               onClick={() => setStatusFilter(f.id)}
-              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-                statusFilter === f.id
-                  ? "bg-[var(--color-navy)] text-white shadow-md"
-                  : "bg-[var(--color-bg-muted)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-muted)]"
-              }`}
+              className="segmented-item whitespace-nowrap"
             >
               {f.label}
             </button>
@@ -242,8 +235,23 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
         </div>
       </div>
 
+      <div className="toolbar">
+        <div className="relative max-w-xs w-full">
+          <Search className="w-4 h-4 text-[var(--color-text-subtle)] absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="search"
+            placeholder="Empresa ou e-mail do dono"
+            aria-label="Buscar empresa"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="input pl-9"
+          />
+        </div>
+        <span className="toolbar-spacer" />
+      </div>
+
       {/* Tabela de Assinaturas */}
-      <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden shadow-sm">
+      <div className="bg-[var(--color-bg)] rounded-2xl border border-[var(--color-border)] overflow-hidden shadow-sm">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-[var(--color-bg-subtle)] border-b border-[var(--color-border)] text-[var(--color-text-subtle)] font-bold uppercase tracking-wider">
@@ -304,25 +312,20 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
                     )}
                   </td>
 
-                  <td className="py-4 px-5 text-right space-x-2">
-                    <ActionTooltip label="Ver Assinatura Stripe & Reembolsos">
-                      <button
-                        type="button"
+                  <td className="py-4 px-5">
+                    <RowActions>
+                      <IconAction
+                        intent="view"
+                        icon={<CreditCard />}
+                        label={`Ver assinatura e reembolsos de ${c.name}`}
                         onClick={() => setInspectingCompany(c)}
-                        className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
-                      >
-                        <CreditCard className="w-4 h-4" />
-                      </button>
-                    </ActionTooltip>
-                    <ActionTooltip label="Gerenciar Plano & Assinatura">
-                      <button
-                        type="button"
+                      />
+                      <IconAction
+                        intent="settings"
+                        label={`Gerenciar plano de ${c.name}`}
                         onClick={() => handleOpenEdit(c)}
-                        className="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
-                      >
-                        <Settings className="w-4 h-4" />
-                      </button>
-                    </ActionTooltip>
+                      />
+                    </RowActions>
                   </td>
                 </tr>
               );
@@ -354,7 +357,7 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
       {/* Modal de Alteração de Assinatura */}
       {editingCompany && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-6 shadow-2xl border border-[var(--color-border)]">
+          <div className="bg-[var(--color-bg)] rounded-3xl max-w-md w-full p-6 space-y-6 shadow-2xl border border-[var(--color-border)]">
             <div className="flex justify-between items-center border-b border-[var(--color-border)] pb-3">
               <h3 className="font-bold text-[var(--color-text-heading)] text-base">Gerenciar Assinatura SaaS</h3>
               <button onClick={() => setEditingCompany(null)} aria-label="Fechar" title="Fechar" className="icon-action"><X className="w-4 h-4" /></button>
@@ -371,7 +374,7 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="w-full border border-[var(--color-border)] rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full border border-[var(--color-border)] rounded-xl px-3 py-2 text-xs bg-[var(--color-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 >
                   <option value="active">Active (Em Dia / Ativa)</option>
                   <option value="past_due">Past Due (Inadimplente / Pagamento Pendente)</option>
@@ -385,7 +388,7 @@ export function FinanceClient({ initialCompanies, stats, availablePlans }: Props
                 <select
                   value={selectedPlanId}
                   onChange={(e) => setSelectedPlanId(e.target.value)}
-                  className="w-full border border-[var(--color-border)] rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full border border-[var(--color-border)] rounded-xl px-3 py-2 text-xs bg-[var(--color-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 >
                   {availablePlans.map((p) => (
                     <option key={p.id} value={p.id}>

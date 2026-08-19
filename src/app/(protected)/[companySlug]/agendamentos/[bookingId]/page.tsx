@@ -343,7 +343,7 @@ export default async function BookingDetailPage({
         )}
 
         {/* ── Ficha VIP de Atendimento & Preferências ── */}
-        <div className="bg-white rounded-3xl border border-[var(--color-border)]/90 p-5 sm:p-6 space-y-3 shadow-xs">
+        <div className="bg-[var(--color-bg)] rounded-3xl border border-[var(--color-border)]/90 p-5 sm:p-6 space-y-3 shadow-xs">
           <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-3">
             <h2 className="text-sm font-black text-[var(--color-text-heading)] flex items-center gap-2">
               <span>🌟 Ficha de Atendimento VIP</span>

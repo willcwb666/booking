@@ -191,7 +191,7 @@ export function AddonCatalogClient({ modules }: Props) {
         <div className="flex items-center gap-2.5 self-stretch sm:self-auto">
           <Link
             href="/admin/modulos"
-            className="btn-tactile flex-1 sm:flex-none px-4 py-2.5 rounded-2xl bg-white border border-[var(--color-border)] hover:bg-[var(--color-bg-subtle)] text-[var(--color-text)] text-xs font-extrabold shadow-2xs flex items-center justify-center gap-2"
+            className="btn-tactile flex-1 sm:flex-none px-4 py-2.5 rounded-2xl bg-[var(--color-bg)] border border-[var(--color-border)] hover:bg-[var(--color-bg-subtle)] text-[var(--color-text)] text-xs font-extrabold shadow-2xs flex items-center justify-center gap-2"
           >
             <Zap className="w-3.5 h-3.5 text-[var(--color-warning)]" />
             <span>Liberar Licenças</span>
@@ -228,25 +228,25 @@ export function AddonCatalogClient({ modules }: Props) {
 
       {/* ── Cards de Indicadores Executivos ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 print:grid-cols-4">
-        <div className="p-4 rounded-3xl bg-white border border-[var(--color-border)]/90 shadow-2xs">
+        <div className="p-4 rounded-3xl bg-[var(--color-bg)] border border-[var(--color-border)]/90 shadow-2xs">
           <span className="text-[11px] font-bold text-[var(--color-text-muted)] block">Total de Add-ons</span>
           <p className="text-xl font-black text-[var(--color-text-heading)] mt-1">{modules.length} Módulos</p>
           <span className="text-[10px] text-[var(--color-success)] font-bold mt-0.5 block">100% Modulares & Plugáveis</span>
         </div>
 
-        <div className="p-4 rounded-3xl bg-white border border-[var(--color-border)]/90 shadow-2xs">
+        <div className="p-4 rounded-3xl bg-[var(--color-bg)] border border-[var(--color-border)]/90 shadow-2xs">
           <span className="text-[11px] font-bold text-[var(--color-text-muted)] block">Categorias Comerciais</span>
           <p className="text-xl font-black text-[var(--color-text-heading)] mt-1">4 Pilares</p>
           <span className="text-[10px] text-[var(--color-text-muted)] font-medium mt-0.5 block">Vendas, Ops, Fin, IA</span>
         </div>
 
-        <div className="p-4 rounded-3xl bg-white border border-[var(--color-border)]/90 shadow-2xs">
+        <div className="p-4 rounded-3xl bg-[var(--color-bg)] border border-[var(--color-border)]/90 shadow-2xs">
           <span className="text-[11px] font-bold text-[var(--color-text-muted)] block">Potencial por Estabelecimento</span>
           <p className="text-xl font-black text-[var(--color-success)] mt-1">{fmtCurrency(totalMonthlyPotential)}<span className="text-xs text-[var(--color-text-muted)] font-normal">/mês</span></p>
           <span className="text-[10px] text-[var(--color-text-muted)] font-medium mt-0.5 block">Se contratado pacote full</span>
         </div>
 
-        <div className="p-4 rounded-3xl bg-white border border-[var(--color-border)]/90 shadow-2xs">
+        <div className="p-4 rounded-3xl bg-[var(--color-bg)] border border-[var(--color-border)]/90 shadow-2xs">
           <span className="text-[11px] font-bold text-[var(--color-text-muted)] block">Modelo de Contratação</span>
           <p className="text-xl font-black text-[var(--color-text-heading)] mt-1">Recorrente & Setup</p>
           <span className="text-[10px] text-[var(--color-text-muted)] font-medium mt-0.5 block">Trial gratuito de 30 dias</span>
@@ -269,7 +269,7 @@ export function AddonCatalogClient({ modules }: Props) {
                 className={`px-3.5 py-2 rounded-2xl text-xs font-extrabold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
                   isSelected
                     ? "bg-[var(--color-navy)] text-white shadow-xs"
-                    : "bg-white text-[var(--color-text)] border border-[var(--color-border)]/90 hover:bg-[var(--color-bg-subtle)]"
+                    : "bg-[var(--color-bg)] text-[var(--color-text)] border border-[var(--color-border)]/90 hover:bg-[var(--color-bg-subtle)]"
                 }`}
               >
                 <CatIcon className="w-3.5 h-3.5" />
@@ -287,7 +287,7 @@ export function AddonCatalogClient({ modules }: Props) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar add-on por nome, benefício ou tecnologia..."
-            className="w-full bg-white border border-[var(--color-border)]/90 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-[var(--color-text-heading)] placeholder:text-[var(--color-text-subtle)] font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-border-strong)]/10 focus:border-[var(--color-border-strong)] transition-all"
+            className="w-full bg-[var(--color-bg)] border border-[var(--color-border)]/90 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-[var(--color-text-heading)] placeholder:text-[var(--color-text-subtle)] font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-border-strong)]/10 focus:border-[var(--color-border-strong)] transition-all"
           />
         </div>
       </div>
@@ -305,7 +305,7 @@ export function AddonCatalogClient({ modules }: Props) {
           return (
             <div
               key={m.id}
-              className="bg-white rounded-3xl border border-[var(--color-border)]/90 p-5 sm:p-6 space-y-4 shadow-xs card-tactile flex flex-col justify-between print:rounded-2xl print:p-4 print:border-[var(--color-border)] print:shadow-none"
+              className="bg-[var(--color-bg)] rounded-3xl border border-[var(--color-border)]/90 p-5 sm:p-6 space-y-4 shadow-xs card-tactile flex flex-col justify-between print:rounded-2xl print:p-4 print:border-[var(--color-border)] print:shadow-none"
             >
               <div className="space-y-3.5">
                 {/* Header do Card */}
@@ -380,7 +380,7 @@ export function AddonCatalogClient({ modules }: Props) {
       </div>
 
       {/* ── Resumo Geral de Preços para Apresentação / Proposta PDF ── */}
-      <div className="bg-white rounded-3xl border border-[var(--color-border)]/90 p-6 space-y-4 shadow-xs print:rounded-none print:border-t-2 print:border-[var(--color-border-strong)] print:shadow-none">
+      <div className="bg-[var(--color-bg)] rounded-3xl border border-[var(--color-border)]/90 p-6 space-y-4 shadow-xs print:rounded-none print:border-t-2 print:border-[var(--color-border-strong)] print:shadow-none">
         <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-3">
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4 text-[var(--color-text)]" />

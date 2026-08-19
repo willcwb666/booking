@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
+import Link from "next/link";
 import {
   type SystemServiceHealth,
   type TenantHealthSummary,
@@ -8,17 +9,13 @@ import {
 } from "@/server/actions/admin-infra";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { repairCompanyTenantAction } from "@/server/actions/admin-ai";
 import {
   Shield,
   RefreshCw,
   CheckCircle2,
   AlertTriangle,
   XCircle,
-  Building2,
   Clock,
-  Server,
-  Sparkles,
 } from "@/components/ui/icons";
 import { toast } from "@/lib/toast-service";
 
@@ -28,13 +25,13 @@ type Props = {
   initialCheckTimeMs: number;
 };
 
-const CATEGORY_LABELS = {
-  DATABASE: "Banco de Dados",
-  CACHE: "Memória & Cache",
-  PAYMENTS: "Gateways de Pagamento",
-  EMAIL: "Serviço de E-mail",
-  STORAGE: "Armazenamento de Arquivos",
-  PUSH: "Notificações Push App",
+const CATEGORY_LABELS: Record<string, string> = {
+  DATABASE: "Banco de dados",
+  CACHE: "Cache",
+  PAYMENTS: "Pagamentos",
+  EMAIL: "E-mail",
+  STORAGE: "Armazenamento",
+  PUSH: "Push",
 };
 
 export function InfraClient({
@@ -43,8 +40,10 @@ export function InfraClient({
   initialCheckTimeMs,
 }: Props) {
   const [services, setServices] = useState<SystemServiceHealth[]>(initialServices);
-  const [tenantSummary, setTenantSummary] = useState<TenantHealthSummary>(initialTenantSummary);
+  const [tenantSummary, setTenantSummary] =
+    useState<TenantHealthSummary>(initialTenantSummary);
   const [checkTimeMs, setCheckTimeMs] = useState(initialCheckTimeMs);
+  const [checkedAt, setCheckedAt] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleRefreshStatus() {
@@ -54,9 +53,9 @@ export function InfraClient({
         setServices(res.services);
         setTenantSummary(res.tenantSummary);
         setCheckTimeMs(res.totalCheckTimeMs);
-        toast.success("Diagnóstico atualizado!", "Todos os microsserviços e bancos foram verificados.");
+        setCheckedAt(new Date().toLocaleTimeString("pt-BR"));
       } else {
-        toast.error("Erro na verificação", "Falha ao consultar status dos serviços.");
+        toast.error("Falha na verificação", "Não foi possível consultar os serviços.");
       }
     });
   }
@@ -65,178 +64,160 @@ export function InfraClient({
   const degradedCount = services.filter((s) => s.status === "DEGRADED").length;
   const downCount = services.filter((s) => s.status === "DOWN").length;
 
-  const isGlobalSystemHealthy = downCount === 0;
+  /**
+   * "Tudo certo" só quando nada está degradado E nada está fora do ar.
+   *
+   * Antes a condição era `downCount === 0`, então um serviço degradado —
+   * banco lento, gateway respondendo com aviso — ainda pintava o banner de
+   * verde e escrevia "Todos os Sistemas Operacionais". Falso "tudo bem" em
+   * tela de monitoramento é pior que não ter a tela.
+   */
+  const overall: "healthy" | "degraded" | "down" =
+    downCount > 0 ? "down" : degradedCount > 0 ? "degraded" : "healthy";
+
+  const OVERALL = {
+    healthy: {
+      title: "Todos os serviços operacionais",
+      detail: "Nenhuma degradação nem falha detectada na última verificação.",
+      tone: "success" as const,
+      icon: <CheckCircle2 className="w-5 h-5" />,
+    },
+    degraded: {
+      title: `${degradedCount} serviço(s) degradado(s)`,
+      detail:
+        "O sistema responde, mas com lentidão ou em modo alternativo. Confira o diagnóstico abaixo.",
+      tone: "warning" as const,
+      icon: <AlertTriangle className="w-5 h-5" />,
+    },
+    down: {
+      title: `${downCount} serviço(s) fora do ar`,
+      detail:
+        "Há componente sem resposta. Verifique conexões e chaves de API no diagnóstico abaixo.",
+      tone: "danger" as const,
+      icon: <XCircle className="w-5 h-5" />,
+    },
+  }[overall];
 
   return (
-    <div className="w-full max-w-7xl px-6 sm:px-10 py-8 text-left space-y-8 pb-32">
-      {/* Header Estilo Stripe */}
+    <div className="page-content space-y-6">
       <PageHeader
-        category="Super Admin — Monitoramento de Infraestrutura"
-        categoryIcon={<Shield className="w-4 h-4 text-[var(--color-primary)]" />}
-        title="Saúde do Sistema & Empresas"
-        description="Acompanhe a conectividade em tempo real dos microsserviços do SaaS (PostgreSQL, Redis, Stripe, Mercado Pago, Resend) e o estado das empresas."
+        category="Plataforma"
+        categoryIcon={<Shield className="w-3.5 h-3.5" />}
+        title="Infraestrutura"
+        description="Conectividade dos serviços de que a aplicação depende: banco, cache, pagamentos, e-mail e armazenamento."
         action={
           <button
             type="button"
             onClick={handleRefreshStatus}
             disabled={isPending}
-            className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-xs transition-all cursor-pointer inline-flex items-center gap-2 shrink-0 disabled:opacity-50"
+            className="btn btn-primary btn-sm inline-flex items-center gap-1.5"
           >
-            <RefreshCw className={`w-4 h-4 ${isPending ? "animate-spin" : ""}`} />
-            <span>{isPending ? "Verificando..." : "Executar Teste Completo"}</span>
+            <RefreshCw className={`w-3.5 h-3.5 ${isPending ? "animate-spin" : ""}`} />
+            <span>{isPending ? "Verificando…" : "Verificar agora"}</span>
           </button>
         }
       />
 
-      {/* Banner Global de Alerta Estilo Stripe Dashboard */}
       <div
-        className={`p-6 rounded-[var(--radius-panel)] border shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-          isGlobalSystemHealthy
-            ? "bg-[var(--color-success-light)] border-[var(--color-success-border)] text-[var(--color-success)]"
-            : "bg-[var(--color-danger-light)] border-[var(--color-danger-border)] text-[var(--color-danger)]"
-        }`}
+        className="rounded-[var(--radius-panel)] border p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        style={{
+          background: `var(--color-${OVERALL.tone}-light)`,
+          borderColor: `var(--color-${OVERALL.tone}-border)`,
+          color: `var(--color-${OVERALL.tone})`,
+        }}
+        role="status"
       >
-        <div className="flex items-center gap-4">
-          <div
-            className={`w-12 h-12 rounded-[var(--radius-card)] flex items-center justify-center shrink-0 shadow-xs ${
-              isGlobalSystemHealthy ? "bg-[var(--color-success)] text-white" : "bg-[var(--color-danger)] text-white"
-            }`}
-          >
-            {isGlobalSystemHealthy ? (
-              <CheckCircle2 className="w-6 h-6" />
-            ) : (
-              <AlertTriangle className="w-6 h-6" />
-            )}
-          </div>
-          <div>
-            <h3 className="text-base font-semibold tracking-tight">
-              {isGlobalSystemHealthy
-                ? "Todos os Sistemas Operacionais"
-                : "Atenção: Degradação ou Falha Detectada"}
-            </h3>
-            <p className="text-xs opacity-80 mt-0.5">
-              {isGlobalSystemHealthy
-                ? "A infraestrutura global do Agendei está operando com alta estabilidade e resposta rápida."
-                : "Alguns microsserviços exigem verificação das chaves ou conexões."}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 text-xs font-mono font-bold shrink-0 bg-[var(--color-bg)] px-3 py-1.5 rounded-[var(--radius-control)] border border-black/5">
-          <Clock className="w-3.5 h-3.5" />
-          <span>Checado em {checkTimeMs}ms</span>
-        </div>
-      </div>
-
-      {/* KPI Cards de Status de Serviços */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-6 shadow-xs space-y-1">
-          <span className="text-[var(--text-2xs)] font-bold uppercase tracking-wider text-[var(--color-text-subtle)]">
-            Serviços Operacionais
-          </span>
-          <p className="text-2xl font-semibold text-[var(--color-success)] tracking-tight">
-            {operationalCount} / {services.length}
-          </p>
-          <p className="text-xs text-[var(--color-text-muted)]">Funcionando normalmente</p>
-        </div>
-
-        <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-6 shadow-xs space-y-1">
-          <span className="text-[var(--text-2xs)] font-bold uppercase tracking-wider text-[var(--color-text-subtle)]">
-            Serviços Degradados
-          </span>
-          <p className="text-2xl font-semibold text-[var(--color-warning)] tracking-tight">
-            {degradedCount}
-          </p>
-          <p className="text-xs text-[var(--color-text-muted)]">Operando com avisos ou fallback</p>
-        </div>
-
-        <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-6 shadow-xs space-y-1">
-          <span className="text-[var(--text-2xs)] font-bold uppercase tracking-wider text-[var(--color-text-subtle)]">
-            Serviços Fora do Ar (Down)
-          </span>
-          <p className="text-2xl font-semibold text-[var(--color-danger)] tracking-tight">
-            {downCount}
-          </p>
-          <p className="text-xs text-[var(--color-text-muted)]">Inoperantes ou sem resposta</p>
-        </div>
-
-        <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-6 shadow-xs space-y-1">
-          <span className="text-[var(--text-2xs)] font-bold uppercase tracking-wider text-[var(--color-text-subtle)]">
-            Empresas Ativas no SaaS
-          </span>
-          <p className="text-2xl font-semibold text-[var(--color-primary)] tracking-tight">
-            {tenantSummary.activeCompanies} / {tenantSummary.totalCompanies}
-          </p>
-          <p className="text-xs text-[var(--color-text-muted)]">Instâncias de empresas operacionais</p>
-        </div>
-      </div>
-
-      {/* Tabela de Serviços de Infraestrutura */}
-      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-6 sm:p-8 space-y-6 shadow-xs">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-semibold text-[var(--color-text-heading)] tracking-tight">
-              Microsserviços & Conexões Externas
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="shrink-0">{OVERALL.icon}</span>
+          <div className="min-w-0">
+            <h2 className="font-semibold tracking-tight" style={{ fontSize: "var(--text-md)" }}>
+              {OVERALL.title}
             </h2>
-            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-              Estado de saúde, latência de rede e diagnósticos dos componentes.
-            </p>
+            <p style={{ fontSize: "var(--text-sm)", opacity: 0.85 }}>{OVERALL.detail}</p>
           </div>
-          <StatusBadge variant="primary" icon={<Server className="w-3 h-3" />}>
-            Status Realtime
-          </StatusBadge>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
+        {/*
+          Antes havia um selo "Status Realtime" aqui. Não é tempo real: é uma
+          fotografia tirada quando a página carregou ou quando alguém clicou em
+          verificar. O rótulo agora diz exatamente isso.
+        */}
+        <span className="eyebrow flex items-center gap-1.5 shrink-0" style={{ color: "inherit" }}>
+          <Clock className="w-3.5 h-3.5" />
+          {checkedAt ? `verificado ${checkedAt}` : "verificado ao abrir"} · {checkTimeMs}ms
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: "Operacionais", value: `${operationalCount}/${services.length}`, hint: "respondendo normalmente" },
+          { label: "Degradados", value: String(degradedCount), hint: "lentos ou em fallback" },
+          { label: "Fora do ar", value: String(downCount), hint: "sem resposta" },
+          {
+            label: "Empresas ativas",
+            value: `${tenantSummary.activeCompanies}/${tenantSummary.totalCompanies}`,
+            hint: "com acesso liberado",
+          },
+        ].map((s) => (
+          <div key={s.label} className="stat-card">
+            <span className="stat-card-label">{s.label}</span>
+            <span className="stat-card-value">{s.value}</span>
+            <span className="stat-card-delta">{s.hint}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="card overflow-hidden">
+        <div className="card-header">
+          <div className="min-w-0">
+            <h2 className="card-title" style={{ fontSize: "var(--text-md)" }}>
+              Serviços
+            </h2>
+            <p className="text-[var(--color-text-muted)]" style={{ fontSize: "var(--text-xs)" }}>
+              Latência medida no momento da verificação
+            </p>
+          </div>
+        </div>
+
+        <div
+          className="table-container"
+          style={{ border: 0, borderRadius: 0, boxShadow: "none" }}
+        >
+          <table className="table">
             <thead>
-              <tr className="bg-[var(--color-bg-subtle)] text-[var(--color-text-muted)] font-bold border-b border-[var(--color-border)]">
-                <th className="px-4 py-3">Componente / Serviço</th>
-                <th className="px-4 py-3 text-center">Categoria</th>
-                <th className="px-4 py-3 text-center">Status</th>
-                <th className="px-4 py-3 text-center">Latência</th>
-                <th className="px-4 py-3">Diagnóstico / Detalhes</th>
+              <tr>
+                <th scope="col">Componente</th>
+                <th scope="col">Categoria</th>
+                <th scope="col">Status</th>
+                <th scope="col" className="text-right">
+                  Latência
+                </th>
+                <th scope="col">Diagnóstico</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--color-border)] font-medium">
-              {services.map((srv, idx) => (
-                <tr key={idx} className="hover:bg-[var(--color-bg-subtle)] transition-colors">
-                  <td className="px-4 py-3.5">
-                    <p className="font-semibold text-[var(--color-text-heading)] text-sm">{srv.name}</p>
-                    <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)]">Verificado às {srv.lastChecked}</span>
+            <tbody>
+              {services.map((srv) => (
+                <tr key={srv.name}>
+                  <td>
+                    <p className="font-medium text-[var(--color-text-heading)]">{srv.name}</p>
+                    <span className="eyebrow">{srv.lastChecked}</span>
                   </td>
-
-                  <td className="px-4 py-3.5 text-center">
-                    <StatusBadge variant="neutral">
-                      {CATEGORY_LABELS[srv.category] ?? srv.category}
-                    </StatusBadge>
+                  <td className="text-[var(--color-text-muted)]">
+                    {CATEGORY_LABELS[srv.category] ?? srv.category}
                   </td>
-
-                  <td className="px-4 py-3.5 text-center">
+                  <td>
                     {srv.status === "OPERATIONAL" && (
-                      <StatusBadge variant="success" icon={<CheckCircle2 className="w-3 h-3" />}>
-                        Operacional
-                      </StatusBadge>
+                      <StatusBadge variant="success">Operacional</StatusBadge>
                     )}
                     {srv.status === "DEGRADED" && (
-                      <StatusBadge variant="warning" icon={<AlertTriangle className="w-3 h-3" />}>
-                        Degradado
-                      </StatusBadge>
+                      <StatusBadge variant="warning">Degradado</StatusBadge>
                     )}
                     {srv.status === "DOWN" && (
-                      <StatusBadge variant="danger" icon={<XCircle className="w-3 h-3" />}>
-                        Fora do Ar
-                      </StatusBadge>
+                      <StatusBadge variant="danger">Fora do ar</StatusBadge>
                     )}
                   </td>
-
-                  <td className="px-4 py-3.5 text-center font-mono font-bold text-[var(--color-text)]">
-                    {srv.latencyMs}ms
-                  </td>
-
-                  <td className="px-4 py-3.5 text-[var(--color-text-muted)] leading-relaxed max-w-md">
-                    {srv.message}
-                  </td>
+                  <td data-type="number">{srv.latencyMs}ms</td>
+                  <td className="text-[var(--color-text-muted)] max-w-md">{srv.message}</td>
                 </tr>
               ))}
             </tbody>
@@ -244,62 +225,48 @@ export function InfraClient({
         </div>
       </div>
 
-      {/* Monitor de Estado das Empresas (Tenants) */}
-      <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] border border-[var(--color-border)] p-6 sm:p-8 space-y-4 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[var(--radius-card)] bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center shrink-0">
-            <Building2 className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-[var(--color-text-heading)]">
-              Monitor de Instâncias de Empresas (Tenants)
-            </h3>
-            <p className="text-xs text-[var(--color-text-muted)]">
-              Se qualquer empresa cadastrada apresentar falhas ou for desativada, seu status será listado aqui.
-            </p>
-          </div>
+      {/*
+        Aqui existia um botão "Auto-Recuperar Tenants" cujo onClick era apenas
+        `toast.success("...reparo automático de tenants concluído com sucesso!")`.
+        Nenhuma rotina rodava — a tela afirmava ter consertado webhooks do
+        Stripe e validado chaves de API sem tocar em nada. A action de reparo
+        que existe de verdade age em UMA empresa por vez e é acionada na tela
+        de empresas, então esta seção volta a ser o que é: um resumo com o
+        caminho para agir.
+      */}
+      <div className="card">
+        <div className="card-header">
+          <h2 className="card-title" style={{ fontSize: "var(--text-md)" }}>
+            Empresas
+          </h2>
+          <Link href="/admin/companies" className="btn btn-ghost btn-sm">
+            Gerenciar
+          </Link>
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-          <div className="p-4 rounded-[var(--radius-card)] bg-[var(--color-success-light)] border border-[var(--color-success-border)] flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold text-[var(--color-success)]">Empresas Operando Normal</p>
-              <p className="text-xs text-[var(--color-success)]">{tenantSummary.activeCompanies} instâncias ativas com agendamentos liberados.</p>
+        <div className="card-body grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex items-center justify-between gap-3 p-4 rounded-[var(--radius-card)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)]">
+            <div className="min-w-0">
+              <p className="font-medium text-[var(--color-text-heading)]">Com acesso liberado</p>
+              <p className="text-[var(--color-text-muted)]" style={{ fontSize: "var(--text-sm)" }}>
+                Podem receber agendamentos
+              </p>
             </div>
-            <StatusBadge variant="success">{tenantSummary.activeCompanies} Ativas</StatusBadge>
+            <span className="stat-card-value" style={{ fontSize: "var(--text-2xl)" }}>
+              {tenantSummary.activeCompanies}
+            </span>
           </div>
 
-          <div className="p-4 rounded-[var(--radius-card)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)] flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold text-[var(--color-text)]">Empresas Suspensas / Inativas</p>
-              <p className="text-xs text-[var(--color-text-muted)]">{tenantSummary.inactiveCompanies} empresas inativas no sistema.</p>
+          <div className="flex items-center justify-between gap-3 p-4 rounded-[var(--radius-card)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)]">
+            <div className="min-w-0">
+              <p className="font-medium text-[var(--color-text-heading)]">Desativadas</p>
+              <p className="text-[var(--color-text-muted)]" style={{ fontSize: "var(--text-sm)" }}>
+                Sem acesso ao sistema
+              </p>
             </div>
-            <StatusBadge variant="neutral">{tenantSummary.inactiveCompanies} Inativas</StatusBadge>
+            <span className="stat-card-value" style={{ fontSize: "var(--text-2xl)" }}>
+              {tenantSummary.inactiveCompanies}
+            </span>
           </div>
-        </div>
-
-        {/* MÓDULO AUTO-HEALING DE TENANTS COM IA */}
-        <div className="bg-[var(--color-bg)] p-5 rounded-[var(--radius-card)] text-[var(--color-text)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-[var(--color-border)] shadow-xs">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs">
-              <Sparkles className="w-4 h-4 text-[var(--color-warning)]" />
-              <span>Auto-Healing & Reparo Inteligente de Instâncias</span>
-            </div>
-            <p className="text-xs text-[var(--color-text-muted)]">
-              Executa rotinas automáticas de reparo de presets, reconexão de webhooks Stripe e validação de chaves de API.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              toast.success("Diagnóstico e reparo automático de tenants concluído com sucesso!");
-            }}
-            className="px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] active:scale-[0.98] text-white font-semibold text-xs rounded-[var(--radius-control)] shadow-[var(--shadow-primary)] transition-all cursor-pointer inline-flex items-center justify-center gap-2 shrink-0"
-          >
-            <Sparkles className="w-4 h-4" />
-            <span>Auto-Recuperar Tenants</span>
-          </button>
         </div>
       </div>
     </div>

@@ -105,7 +105,7 @@ export function SegmentsClient({ initialSegments }: { initialSegments: SegmentIt
       </div>
 
       {/* Table / List */}
-      <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden shadow-sm">
+      <div className="bg-[var(--color-bg)] rounded-2xl border border-[var(--color-border)] overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -179,7 +179,7 @@ export function SegmentsClient({ initialSegments }: { initialSegments: SegmentIt
       {/* Modal (Criar / Editar Segmento) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-[var(--color-border)] animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-[var(--color-bg)] rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-[var(--color-border)] animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
               <h3 className="text-lg font-bold text-[var(--color-text-heading)]">
                 {editingSegment ? "Editar Segmento" : "Novo Segmento de Negócio"}
@@ -188,7 +188,7 @@ export function SegmentsClient({ initialSegments }: { initialSegments: SegmentIt
             </div>
 
             {errorMsg && (
-              <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs font-semibold text-red-700">
+              <div className="p-3.5 rounded-xl bg-[var(--color-danger-light)] border border-[var(--color-danger-border)] text-xs font-semibold text-[var(--color-danger)]">
                 {errorMsg}
               </div>
             )}

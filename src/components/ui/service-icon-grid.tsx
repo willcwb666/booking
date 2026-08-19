@@ -37,7 +37,7 @@ export default function ServiceIconGrid({ selectedIcon, onSelect, onClose }: Pro
   const visible = filtered.slice(0, MAX_RENDER);
 
   return (
-    <div className="p-4 bg-white border border-[var(--color-border)] rounded-[var(--radius-panel)] space-y-3 shadow-xl animate-in fade-in duration-200 mt-2">
+    <div className="p-4 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-[var(--radius-panel)] space-y-3 shadow-xl animate-in fade-in duration-200 mt-2">
       <div className="flex items-center justify-between">
         <span className="text-[var(--text-2xs)] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">
           CATÁLOGO LUCIDE ({ALL_ICONS.length} ÍCONES)
@@ -93,7 +93,7 @@ export default function ServiceIconGrid({ selectedIcon, onSelect, onClose }: Pro
                   className={`p-2 rounded-[var(--radius-control)] border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer text-center aspect-square ${
                     isSelected
                       ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-sm font-semibold scale-105"
-                      : "bg-white border-[var(--color-border)] hover:bg-[var(--color-primary-light)] hover:border-[var(--color-primary)] text-[var(--color-text)]"
+                      : "bg-[var(--color-bg)] border-[var(--color-border)] hover:bg-[var(--color-primary-light)] hover:border-[var(--color-primary)] text-[var(--color-text)]"
                   }`}
                 >
                   <Comp className="w-4 h-4 shrink-0" />

@@ -23,7 +23,7 @@ export function ReturnAnchorCard({
   const suggestion = calculateNextReturnDate(serviceName, currentDate, habitualTime);
 
   return (
-    <div className="bg-white border border-[var(--color-border)]/90 rounded-3xl p-6 space-y-4 shadow-xs card-tactile text-left">
+    <div className="bg-[var(--color-bg)] border border-[var(--color-border)]/90 rounded-3xl p-6 space-y-4 shadow-xs card-tactile text-left">
       <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-3">
         <div className="flex items-center gap-2">
           <RotateCcw className="w-4 h-4 text-[var(--color-primary)]" />

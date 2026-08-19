@@ -12,6 +12,8 @@ import { toast } from "@/lib/toast-service";
 import { ActionTooltip } from "@/components/ui/action-tooltip";
 import { Bell, RotateCcw, CheckCircle2, MessageSquare, Building2, Clock } from "@/components/ui/icons";
 
+import { IconAction, RowActions } from "@/components/ui/icon-action";
+import { PageHeader } from "@/components/ui/page-header";
 type Props = {
   initialNotifications: NotificationItem[];
 };
@@ -74,90 +76,81 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
 
   return (
     <div className="page-content space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-[var(--color-primary)] font-bold text-xs">
-            <Bell className="w-4 h-4" />
-            <span>Notificações & Central de Pedidos</span>
-          </div>
-          <h1 className="text-xl font-semibold text-[var(--color-text-heading)] tracking-tight mt-1">
-            Solicitações do Sistema e Alertas
-          </h1>
-          <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-            Gerencie os pedidos enviados pelas empresas da plataforma e veja as notificações disparadas.
-          </p>
-        </div>
+      <PageHeader
+        category="Plataforma"
+        categoryIcon={<Bell className="w-3.5 h-3.5" />}
+        title="Notificações"
+        description="Pedidos enviados pelas empresas e alertas disparados pelo sistema."
+        action={
+          pendingCount > 0 ? (
+            // O selo de pendências não pulsa mais: era um `animate-pulse`
+            // permanente no canto da tela, movimento infinito que o operador
+            // vê o dia inteiro e para de registrar.
+            <span className="badge badge-warning">
+              {pendingCount} não lida{pendingCount === 1 ? "" : "s"}
+            </span>
+          ) : undefined
+        }
+      />
 
-        {pendingCount > 0 && (
-          <span className="px-3.5 py-1.5 bg-[var(--color-warning-light)] border border-[var(--color-warning-border)] rounded-full text-xs font-bold text-[var(--color-warning)] animate-pulse">
-            {pendingCount} notificação(ões) não lida(s)
-          </span>
-        )}
-      </div>
-
-      {/* Abas Superiores: Recebidas vs Enviadas */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-border)]/80 pb-4">
-        <div className="bg-[var(--color-bg-muted)]/80 p-1.5 rounded-[var(--radius-control)] border border-[var(--color-border)]/60 inline-flex gap-1">
+      <div className="toolbar">
+        <div className="segmented" role="tablist" aria-label="Direção da notificação">
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === "received"}
+            data-active={activeTab === "received"}
             onClick={() => setActiveTab("received")}
-            className={`px-4 py-2 text-xs font-bold rounded-[var(--radius-control)] transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === "received"
-                ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80"
-                : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
-            }`}
+            className="segmented-item inline-flex items-center gap-1.5"
           >
-            <span>Notificações Recebidas</span>
+            <span>Recebidas</span>
             {pendingCount > 0 && (
-              <span className="bg-[var(--color-danger)] text-white text-[var(--text-2xs)] font-semibold px-2 py-0.5 rounded-full">
-                {pendingCount}
-              </span>
+              <span className="badge badge-count badge-danger">{pendingCount}</span>
             )}
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === "sent"}
+            data-active={activeTab === "sent"}
             onClick={() => setActiveTab("sent")}
-            className={`px-4 py-2 text-xs font-bold rounded-[var(--radius-control)] transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === "sent"
-                ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs border border-[var(--color-border)]/80"
-                : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
-            }`}
+            className="segmented-item inline-flex items-center gap-1.5"
           >
-            <span>Notificações Enviadas</span>
-            <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] font-semibold">({sentList.length})</span>
+            <span>Enviadas</span>
+            <span className="badge badge-count badge-neutral">{sentList.length}</span>
           </button>
         </div>
 
-        {/* Sub-filtros: Todas / Não Lidas / Concluídas */}
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setFilter("all")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-[var(--radius-control)] ${
-              filter === "all" ? "bg-[var(--color-bg-muted)] text-[var(--color-text-heading)] font-bold" : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
-            }`}
-          >
-            Todas ({targetList.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter("pending")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-[var(--radius-control)] ${
-              filter === "pending" ? "bg-[var(--color-bg-muted)] text-[var(--color-text-heading)] font-bold" : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
-            }`}
-          >
-            Não Lidas ({targetList.filter((n) => !n.isRead).length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter("resolved")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-[var(--radius-control)] ${
-              filter === "resolved" ? "bg-[var(--color-bg-muted)] text-[var(--color-text-heading)] font-bold" : "text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
-            }`}
-          >
-            Lidas / Concluídas ({targetList.filter((n) => n.isRead || n.isResolved).length})
-          </button>
+        <span className="toolbar-spacer" />
+
+        <div className="segmented" role="tablist" aria-label="Filtrar por situação">
+          {(
+            [
+              { id: "all" as const, label: "Todas", count: targetList.length },
+              {
+                id: "pending" as const,
+                label: "Não lidas",
+                count: targetList.filter((n) => !n.isRead).length,
+              },
+              {
+                id: "resolved" as const,
+                label: "Concluídas",
+                count: targetList.filter((n) => n.isRead || n.isResolved).length,
+              },
+            ]
+          ).map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              role="tab"
+              aria-selected={filter === f.id}
+              data-active={filter === f.id}
+              onClick={() => setFilter(f.id)}
+              className="segmented-item whitespace-nowrap"
+            >
+              {f.label} ({f.count})
+            </button>
+          ))}
         </div>
       </div>
 
@@ -179,7 +172,7 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-[var(--radius-card)] bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-[var(--color-primary)]/30/60 font-bold">
+                  <div className="w-10 h-10 rounded-[var(--radius-card)] bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center shrink-0 border border-[var(--color-primary-muted)] font-bold">
                     <Bell className="w-5 h-5 text-[var(--color-primary)]" />
                   </div>
                   <div>
@@ -240,20 +233,20 @@ export function AdminNotificacoesClient({ initialNotifications }: Props) {
                 )}
 
                 {activeTab === "received" && (
-                  <ActionTooltip label={notif.isRead ? "Marcar como não lida" : "Marcar como Lida"}>
-                    <button
-                      type="button"
-                      onClick={() => handleToggleReadStatus(notif)}
-                      disabled={isPending}
-                      className={`p-2 rounded-[var(--radius-control)] transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs ${
+                  <RowActions>
+                    <IconAction
+                      intent="activate"
+                      icon={<CheckCircle2 />}
+                      label={
                         notif.isRead
-                          ? "bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text-muted)]"
-                          : "bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-white"
-                      }`}
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                    </button>
-                  </ActionTooltip>
+                          ? "Marcar como não lida"
+                          : "Marcar como lida"
+                      }
+                      pressed={notif.isRead}
+                      onClick={() => handleToggleReadStatus(notif)}
+                      pending={isPending}
+                    />
+                  </RowActions>
                 )}
               </div>
             </div>

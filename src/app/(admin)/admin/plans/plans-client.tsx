@@ -12,14 +12,15 @@ import {
   deletePlanAction,
 } from "@/server/actions/plans";
 import { toast } from "@/lib/toast-service";
+import { IconAction, RowActions } from "@/components/ui/icon-action";
 import {
   CreditCard,
   CheckCircle2,
   Plus,
   Star,
-  Pencil,
-  Trash2,
   GripVertical,
+  Check,
+  X,
 } from "@/components/ui/icons";
 
 type Feature = { id: string; featureKey: string; featureLabel: string; enabled: boolean };
@@ -202,20 +203,18 @@ export function PlansClient({ plans: initialPlans, stripeConfigured }: { plans: 
                 <span>{p.displayName}</span>
                 {p.isPopular && (
                   <span className="bg-[var(--color-warning)] text-[var(--color-text-heading)] text-[var(--text-2xs)] font-semibold uppercase px-1.5 py-0.5 rounded-full shadow-2xs">
-                    ★ Destaque
+                    <Star className="w-2.5 h-2.5" aria-hidden="true" />
+                    Destaque
                   </span>
                 )}
               </button>
 
-              {/* Botão de Excluir em Ícone Lixeira SVG */}
-              <button
-                type="button"
+              <IconAction
+                intent="delete"
+                label={`Excluir plano ${p.displayName}`}
                 onClick={() => handleDeletePlan(p.id)}
-                title="Excluir Plano"
-                className="p-1 text-[var(--color-text-subtle)] hover:text-[var(--color-danger)] transition-colors ml-1"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+                className="ml-1"
+              />
             </div>
           );
         })}
@@ -564,29 +563,41 @@ function FeaturesEditor({ planId, features, onSaved }: { planId: string; feature
               </div>
             ) : (
               <>
-                <span className={`font-semibold ${f.enabled ? "text-[var(--color-text-heading)]" : "text-[var(--color-text-subtle)] line-through"}`}>
-                  {f.enabled ? "✓" : "✗"} {f.featureLabel}
+                {/* Glifos `✓`/`✗` viravam ícone de fato aqui: dependiam da
+                    fonte instalada, não herdavam tamanho e ficavam colados no
+                    rótulo. Trocados pelos ícones do conjunto. */}
+                <span
+                  className={`font-medium inline-flex items-center gap-2 ${
+                    f.enabled
+                      ? "text-[var(--color-text-heading)]"
+                      : "text-[var(--color-text-subtle)] line-through"
+                  }`}
+                >
+                  <span aria-hidden="true" className="shrink-0">
+                    {f.enabled ? (
+                      <Check className="w-3.5 h-3.5" />
+                    ) : (
+                      <X className="w-3.5 h-3.5" />
+                    )}
+                  </span>
+                  <span>{f.featureLabel}</span>
+                  <span className="sr-only">
+                    {f.enabled ? "incluído no plano" : "não incluído"}
+                  </span>
                 </span>
 
-                {/* Ícones Caneta e Lixeira */}
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
+                <RowActions>
+                  <IconAction
+                    intent="edit"
+                    label={`Editar recurso ${f.featureLabel}`}
                     onClick={() => startEdit(f)}
-                    title="Editar Recurso"
-                    className="p-1 text-[var(--color-text-subtle)] hover:text-[var(--color-primary)] transition-colors"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
+                  />
+                  <IconAction
+                    intent="delete"
+                    label={`Excluir recurso ${f.featureLabel}`}
                     onClick={() => removeFeature(f.id)}
-                    title="Excluir Recurso"
-                    className="p-1 text-[var(--color-text-subtle)] hover:text-[var(--color-danger)] transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                  />
+                </RowActions>
               </>
             )}
           </li>

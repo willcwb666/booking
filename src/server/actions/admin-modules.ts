@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { requireSuperAdmin, canAccessCompany } from "@/lib/admin-guard";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -66,6 +67,10 @@ async function ensureTablesExist() {
 }
 
 export async function getSystemModulesAction() {
+  // Catálogo com preços dos add-ons: dado de administração.
+  const admin = await requireSuperAdmin();
+  if (!admin.ok) return { success: false, modules: [] as SystemModule[], error: admin.error };
+
   try {
     await ensureTablesExist();
 
@@ -127,6 +132,11 @@ export async function getAllActiveCompanyLicensesAction(): Promise<{
   success: boolean;
   licenses: ActiveCompanyLicenseRow[];
 }> {
+  // Sem esta trava, qualquer um listava o nome de todas as empresas da
+  // plataforma junto com os módulos pagos que cada uma contratou.
+  const admin = await requireSuperAdmin();
+  if (!admin.ok) return { success: false, licenses: [] };
+
   try {
     await ensureTablesExist();
     const rows = await db.$queryRawUnsafe<Array<any>>(`
@@ -168,29 +178,29 @@ export async function getAllActiveCompanyLicensesAction(): Promise<{
   }
 }
 
+/**
+ * Módulos licenciados de UMA empresa.
+ *
+ * Esta é chamada pelo layout da empresa em nome de um usuário comum, então
+ * não pode exigir super admin. Mas também não pode aceitar qualquer slug: sem
+ * a checagem de vínculo, qualquer pessoa logada enumerava os módulos pagos de
+ * qualquer empresa da plataforma só trocando o slug.
+ */
 export async function getCompanyLicensedModuleCodesAction(
   companySlugOrId: string
 ): Promise<string[]> {
   try {
+    const access = await canAccessCompany(companySlugOrId);
+    if (!access.ok) return [];
+
     await ensureTablesExist();
 
-    const company = await db.company.findFirst({
-      where: {
-        OR: [{ slug: companySlugOrId }, { id: companySlugOrId }],
-      },
-      select: { id: true },
-    });
-
-    if (!company) {
-      return [];
-    }
-
     const rows = await db.$queryRawUnsafe<Array<{ moduleCode: string }>>(
-      `SELECT "moduleCode" 
-       FROM "company_module_license" 
-       WHERE "companyId" = $1 
+      `SELECT "moduleCode"
+       FROM "company_module_license"
+       WHERE "companyId" = $1
          AND ("expiresAt" IS NULL OR "expiresAt" > NOW())`,
-      company.id
+      access.companyId
     );
 
     return rows.map((r) => r.moduleCode);

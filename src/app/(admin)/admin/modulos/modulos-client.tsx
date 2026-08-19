@@ -218,7 +218,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
       </div>
 
       {/* TABELA DE MÓDULOS ATIVOS POR EMPRESA (Com Botões Renovação e Revogação) */}
-      <div className="bg-white rounded-3xl border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-4 shadow-xs">
+      <div className="bg-[var(--color-bg)] rounded-3xl border border-[var(--color-border)]/80 p-6 sm:p-8 space-y-4 shadow-xs">
         <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
           <h2 className="text-base font-extrabold text-[var(--color-text-heading)]">Módulos Ativos por Empresa</h2>
           <span className="text-xs text-[var(--color-text-muted)] font-medium">
@@ -294,7 +294,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
       {/* MODAL MULTI-PASSO DE LIBERAÇÃO DE MÓDULOS */}
       {isWizardOpen && (
         <div className="fixed inset-0 z-50 bg-[var(--color-navy)]/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-[var(--color-border)] shadow-2xl max-w-3xl w-full p-6 sm:p-8 space-y-6 animate-fadeIn">
+          <div className="bg-[var(--color-bg)] rounded-3xl border border-[var(--color-border)] shadow-2xl max-w-3xl w-full p-6 sm:p-8 space-y-6 animate-fadeIn">
             {/* Header Wizard */}
             <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
               <div>
@@ -321,7 +321,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                     type="button"
                     onClick={() => setGrantType("INDIVIDUAL")}
                     className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${
-                      grantType === "INDIVIDUAL" ? "bg-white text-[var(--color-primary)] shadow-2xs font-extrabold" : "text-[var(--color-text-muted)]"
+                      grantType === "INDIVIDUAL" ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs font-extrabold" : "text-[var(--color-text-muted)]"
                     }`}
                   >
                     Empresas Individuais
@@ -330,7 +330,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                     type="button"
                     onClick={() => setGrantType("GROUP")}
                     className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${
-                      grantType === "GROUP" ? "bg-white text-[var(--color-primary)] shadow-2xs font-extrabold" : "text-[var(--color-text-muted)]"
+                      grantType === "GROUP" ? "bg-[var(--color-bg)] text-[var(--color-primary)] shadow-2xs font-extrabold" : "text-[var(--color-text-muted)]"
                     }`}
                   >
                     Em Grupo (Por Segmento)
@@ -479,7 +479,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                                   onChange={(e) =>
                                     updateModuleTrial(m.code, true, parseInt(e.target.value) || 30)
                                   }
-                                  className="w-20 border border-[var(--color-border)] bg-white rounded-lg px-2 py-1 text-xs font-bold text-[var(--color-text-heading)]"
+                                  className="w-20 border border-[var(--color-border)] bg-[var(--color-bg)] rounded-lg px-2 py-1 text-xs font-bold text-[var(--color-text-heading)]"
                                 />
                               </div>
                             )}

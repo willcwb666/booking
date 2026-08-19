@@ -2,6 +2,7 @@
 
 import "server-only";
 import { db } from "@/lib/db";
+import { requireSuperAdmin } from "@/lib/admin-guard";
 import { redis } from "@/lib/redis";
 
 export type SystemServiceHealth = {
@@ -22,6 +23,24 @@ export type TenantHealthSummary = {
 };
 
 export async function getInfrastructureStatusAction() {
+  // Diagnóstico de infraestrutura expõe quais serviços existem, se estão
+  // configurados e mensagens de erro de conexão. Não é dado público.
+  const admin = await requireSuperAdmin();
+  if (!admin.ok) {
+    return {
+      success: false as const,
+      services: [] as SystemServiceHealth[],
+      tenantSummary: {
+        totalCompanies: 0,
+        activeCompanies: 0,
+        inactiveCompanies: 0,
+        healthyTenantsCount: 0,
+        degradedTenantsCount: 0,
+      } satisfies TenantHealthSummary,
+      totalCheckTimeMs: 0,
+    };
+  }
+
   const startTime = Date.now();
   const nowStr = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 

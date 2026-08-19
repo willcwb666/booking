@@ -2,6 +2,7 @@
 
 import "server-only";
 import { db } from "@/lib/db";
+import { requireSuperAdmin } from "@/lib/admin-guard";
 import {
   processAdminAIQuery,
   calculateCompanyChurnRisk,
@@ -15,6 +16,11 @@ import {
 export async function queryAdminAICopilotAction(
   query: string
 ): Promise<{ success: boolean; data?: AdminAIQueryResult; error?: string }> {
+  // Consulta de IA custa dinheiro e responde com dados agregados da
+  // plataforma inteira. Era chamável por qualquer um.
+  const admin = await requireSuperAdmin();
+  if (!admin.ok) return { success: false, error: admin.error };
+
   try {
     if (!query || query.trim().length < 3) {
       return { success: false, error: "Digite pelo menos 3 caracteres para o Copilot." };
@@ -50,6 +56,10 @@ export async function queryAdminAICopilotAction(
 export async function repairCompanyTenantAction(
   companyId: string
 ): Promise<{ success: boolean; message: string }> {
+  // Esta action ESCREVE no banco de uma empresa arbitrária.
+  const admin = await requireSuperAdmin();
+  if (!admin.ok) return { success: false, message: admin.error };
+
   try {
     const company = await db.company.findUnique({
       where: { id: companyId },

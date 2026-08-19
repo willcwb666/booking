@@ -11,7 +11,7 @@ import { SEARCH_ALIASES, normalizeStr } from "@/components/ui/service-icon-share
 const ServiceIconGrid = nextDynamic(() => import("@/components/ui/service-icon-grid"), {
   ssr: false,
   loading: () => (
-    <div className="p-6 mt-2 bg-white border border-[var(--color-border)] rounded-[var(--radius-panel)] text-center text-xs text-[var(--color-text-subtle)]">
+    <div className="p-6 mt-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-[var(--radius-panel)] text-center text-xs text-[var(--color-text-subtle)]">
       Carregando catálogo de ícones…
     </div>
   ),
