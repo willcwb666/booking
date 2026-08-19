@@ -159,6 +159,7 @@ model User {
   confirmedPayments     Booking[]        @relation("BookingPaymentConfirmedBy")
   pushTokens            PushToken[]
   notificationPrefs     UserNotificationPreference?
+  profile               UserProfile?
   calendarIntegrations  CalendarIntegration[]
   twoFactors            TwoFactor[]
   twoFactorResetsAsTarget    TwoFactorResetRequest[] @relation("TwoFactorResetTarget")
@@ -166,6 +167,42 @@ model User {
 
   @@unique([email])
   @@map("user")
+}
+
+/**
+ * Dados pessoais do usuário — o "Kreator Pass".
+ *
+ * ─── Por que aqui e não copiando de outra empresa ────────────────────────────
+ *
+ * O desenho original preenchia o formulário do Pet Shop com os dados que a
+ * cliente havia informado ao Salão. Isso é transferência de dado pessoal entre
+ * dois controladores distintos: o Salão coletou aqueles dados para a própria
+ * finalidade e não autorizou repasse. Modal de consentimento não resolve —
+ * quem precisaria consentir é o Salão, não só a cliente.
+ *
+ * Com o perfil pertencendo ao USUÁRIO, nada atravessa empresas. A pessoa
+ * preenche o formulário com os próprios dados, que é exatamente o que o
+ * autofill do navegador faz. Some o problema jurídico e some o modal junto.
+ *
+ * O `Customer` de cada empresa continua sendo criado no primeiro agendamento,
+ * com os dados copiados naquele momento. Editar a ficha no Salão não altera
+ * este perfil nem a ficha do Pet Shop.
+ */
+model UserProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName String?
+  lastName  String?
+  phone     String?
+  address   String?
+  aptNo     String?
+  city      String?
+  zip       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_profile")
 }
 
 model Session {

@@ -279,3 +279,68 @@ export async function getCustomerPortalBookings(input: {
     total: Number(b.estimate?.total ?? 0),
   }));
 }
+
+export type CrossCompanyBooking = CustomerPortalBooking & {
+  companyName: string;
+  companySlug: string;
+  currency: string;
+  locale: string;
+};
+
+/**
+ * Agendamentos do usuário em TODAS as empresas — o "modo cliente".
+ *
+ * A pessoa que corta cabelo numa barbearia, leva o carro na oficina e o
+ * cachorro no pet shop tinha que lembrar de três endereços diferentes para ver
+ * três agendamentos. Aqui é uma lista só.
+ *
+ * ─── A trava ─────────────────────────────────────────────────────────────────
+ *
+ * Recebe `userId` e `email` da SESSÃO, nunca de parâmetro do navegador. E o
+ * casamento por e-mail só vale com o endereço verificado — sem isso, bastaria
+ * cadastrar uma conta com o e-mail de outra pessoa para ver a agenda dela em
+ * todas as empresas de uma vez. É a mesma trava que já protege a versão por
+ * empresa, e aqui ela vale mais: o alcance é a plataforma inteira.
+ */
+export async function getCrossCompanyBookings(input: {
+  userId: string;
+  email: string;
+  emailVerified: boolean;
+}): Promise<CrossCompanyBooking[]> {
+  const estimates = await db.estimate.findMany({
+    where: { customerId: input.userId },
+    select: { id: true },
+  });
+
+  const ownership: object[] = [{ estimateId: { in: estimates.map((e) => e.id) } }];
+  if (input.emailVerified) {
+    ownership.push({ customerDetail: { email: input.email } });
+  }
+
+  const bookings = await db.booking.findMany({
+    where: { OR: ownership },
+    orderBy: [{ scheduledDate: "desc" }, { scheduledStartTime: "desc" }],
+    take: 100,
+    include: {
+      bookingConfig: { select: { name: true } },
+      professional: { select: { name: true } },
+      estimate: { select: { total: true } },
+      company: { select: { name: true, slug: true, currency: true, locale: true } },
+    },
+  });
+
+  return bookings.map((b) => ({
+    id: b.id,
+    serviceName: b.bookingConfig.name,
+    professionalName: b.professional?.name ?? null,
+    scheduledDate: b.scheduledDate,
+    scheduledStartTime: b.scheduledStartTime,
+    status: b.status,
+    paymentStatus: b.paymentStatus,
+    total: Number(b.estimate?.total ?? 0),
+    companyName: b.company.name,
+    companySlug: b.company.slug,
+    currency: b.company.currency,
+    locale: b.company.locale,
+  }));
+}

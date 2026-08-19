@@ -65,6 +65,17 @@ type Props = {
   locale: string;
   businessType?: string;
   offPeakWindows?: OffPeakWindow[];
+  /** Dados do perfil do usuário logado, para preencher o formulário. */
+  prefill?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    address: string;
+    aptNo: string;
+    city: string;
+    zip: string;
+  } | null;
   requireDeposit?: boolean;
   depositPercentage?: number;
 };
@@ -284,6 +295,7 @@ export function CheckoutClient({
   locale,
   businessType,
   offPeakWindows = [],
+  prefill = null,
   requireDeposit,
   depositPercentage,
 }: Props) {
@@ -828,6 +840,7 @@ export function CheckoutClient({
                       <input
                         id="firstName"
                         name="firstName"
+                        defaultValue={prefill?.firstName ?? ""}
                         required
                         className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
                       />
@@ -839,6 +852,7 @@ export function CheckoutClient({
                       <input
                         id="lastName"
                         name="lastName"
+                        defaultValue={prefill?.lastName ?? ""}
                         required
                         className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
                       />
@@ -852,6 +866,7 @@ export function CheckoutClient({
                       <input
                         id="email"
                         name="email"
+                        defaultValue={prefill?.email ?? ""}
                         type="email"
                         required
                         onBlur={(e) => handleEmailCheck(e.target.value)}
@@ -865,6 +880,7 @@ export function CheckoutClient({
                       <input
                         id="phone"
                         name="phone"
+                        defaultValue={prefill?.phone ?? ""}
                         type="tel"
                         required
                         className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
@@ -911,6 +927,29 @@ export function CheckoutClient({
                     />
                     {t("reminders")}
                   </label>
+
+                  {prefill && (
+                    /* Só aparece para quem está logado: sem conta não há onde
+                       guardar. Marcada por padrão porque é o dado da própria
+                       pessoa indo para a conta dela — mesma lógica do autofill
+                       do navegador —, mas dita em voz alta em vez de
+                       acontecer em silêncio. */
+                    <label className="flex items-start gap-2 text-sm text-[var(--color-text)] mt-2">
+                      <input
+                        type="checkbox"
+                        name="saveProfile"
+                        value="true"
+                        defaultChecked
+                        className="rounded mt-0.5"
+                      />
+                      <span>
+                        Guardar meus dados para agendar mais rápido
+                        <span className="block text-[var(--color-text-muted)]" style={{ fontSize: "var(--text-2xs)" }}>
+                          Ficam na sua conta, não com esta empresa. Dá para apagar quando quiser.
+                        </span>
+                      </span>
+                    </label>
+                  )}
 
                   {/* Marketing em caixa separada e DESMARCADA.
                       Lembrete de agendamento é serviço — o cliente pediu ao
@@ -1002,6 +1041,7 @@ export function CheckoutClient({
                           <input
                             id="address"
                             name="address"
+                            defaultValue={prefill?.address ?? ""}
                             required
                             className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
                           />
@@ -1014,6 +1054,7 @@ export function CheckoutClient({
                             <input
                               id="aptNo"
                               name="aptNo"
+                              defaultValue={prefill?.aptNo ?? ""}
                               className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
                             />
                           </div>
@@ -1024,6 +1065,7 @@ export function CheckoutClient({
                             <input
                               id="zip"
                               name="zip"
+                              defaultValue={prefill?.zip ?? ""}
                               required
                               className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
                             />
@@ -1036,6 +1078,7 @@ export function CheckoutClient({
                           <input
                             id="city"
                             name="city"
+                            defaultValue={prefill?.city ?? ""}
                             required
                             className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-info)]"
                           />

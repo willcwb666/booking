@@ -59,6 +59,7 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
   // de agendamento é serviço — o cliente pediu. Oferta é marketing, e juntar
   // os dois numa caixa só é consentimento agregado, que não vale.
   const acceptsMarketing = formData.get("acceptsMarketing") === "true";
+  const saveProfile = formData.get("saveProfile") === "true";
   const address = formData.get("address") as string;
   const aptNo = (formData.get("aptNo") as string) || null;
   const city = formData.get("city") as string;
@@ -177,6 +178,40 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
   const paymentSettings = await db.companyPaymentSettings.findUnique({
     where: { companyId: estimate.companyId },
   });
+
+  /**
+   * Perfil pessoal — grava o que a pessoa acabou de digitar na conta DELA.
+   *
+   * Só com sessão e só com a caixa marcada. É o dado do próprio usuário indo
+   * para o próprio perfil, como o autofill do navegador; a diferença é que
+   * aqui foi pedido em voz alta no formulário.
+   *
+   * Fora da transação e sem `await` bloqueante no caminho de erro: falhar em
+   * guardar uma conveniência não pode impedir um agendamento.
+   */
+  if (saveProfile) {
+    const profileSession = await auth.api.getSession({ headers: hdrs });
+    if (profileSession) {
+      try {
+        const profileData = {
+          firstName,
+          lastName,
+          phone,
+          address,
+          aptNo,
+          city,
+          zip,
+        };
+        await db.userProfile.upsert({
+          where: { userId: profileSession.user.id },
+          update: profileData,
+          create: { userId: profileSession.user.id, ...profileData },
+        });
+      } catch (err) {
+        console.error("[createBookingAction] falha ao salvar perfil:", err);
+      }
+    }
+  }
 
   // Faixa de confiança do cliente — decide o sinal quando a empresa liga a
   // regra dinâmica. Fica fora da transação de propósito: é leitura pura e não

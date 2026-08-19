@@ -321,6 +321,75 @@ d("autorização das server actions (integração)", () => {
   });
 
   /**
+   * Perfil pessoal ("Kreator Pass").
+   *
+   * O perfil guarda nome, telefone e endereço. Se alguma action aceitasse
+   * `userId` por parâmetro, ela viraria leitor e escritor do perfil alheio —
+   * a mesma classe de falha que esta base já teve em oito lugares.
+   */
+  describe("perfil pessoal", () => {
+    afterEach(async () => {
+      await db.userProfile.deleteMany({ where: { userId: { in: [A.user, B.user] } } });
+    });
+
+    it("sem sessão não salva", async () => {
+      const m = await import("@/server/actions/user-profile");
+      currentUser = null;
+      expect((await m.saveUserProfileAction({ phone: "11999999999" })).success).toBe(false);
+      expect(await db.userProfile.count()).toBe(0);
+    });
+
+    it("salva no próprio perfil, identificado pela sessão", async () => {
+      const m = await import("@/server/actions/user-profile");
+      currentUser = { id: A.user, email: "a@vitest.local", name: "A" };
+
+      expect((await m.saveUserProfileAction({ firstName: "Ana", phone: "41999999999" })).success).toBe(
+        true
+      );
+
+      const saved = await db.userProfile.findUnique({ where: { userId: A.user } });
+      expect(saved?.firstName).toBe("Ana");
+      // E nada foi escrito no perfil de ninguém mais.
+      expect(await db.userProfile.findUnique({ where: { userId: B.user } })).toBeNull();
+    });
+
+    it("campo vazio grava nulo, não string vazia", async () => {
+      // "Não informei" e "informei nada" precisam ser distinguíveis: só o
+      // primeiro deve deixar o campo em branco no próximo checkout.
+      const m = await import("@/server/actions/user-profile");
+      currentUser = { id: A.user, email: "a@vitest.local", name: "A" };
+
+      await m.saveUserProfileAction({ firstName: "Ana", phone: "" });
+      const saved = await db.userProfile.findUnique({ where: { userId: A.user } });
+      expect(saved?.phone).toBeNull();
+    });
+
+    it("apagar remove só o próprio perfil", async () => {
+      const m = await import("@/server/actions/user-profile");
+
+      currentUser = { id: A.user, email: "a@vitest.local", name: "A" };
+      await m.saveUserProfileAction({ firstName: "Ana" });
+      currentUser = { id: B.user, email: "b@vitest.local", name: "B" };
+      await m.saveUserProfileAction({ firstName: "Bruno" });
+
+      expect((await m.deleteUserProfileAction()).success).toBe(true);
+
+      expect(await db.userProfile.findUnique({ where: { userId: B.user } })).toBeNull();
+      expect(await db.userProfile.findUnique({ where: { userId: A.user } })).not.toBeNull();
+    });
+
+    it("sem sessão não apaga nada", async () => {
+      const m = await import("@/server/actions/user-profile");
+      currentUser = { id: A.user, email: "a@vitest.local", name: "A" };
+      await m.saveUserProfileAction({ firstName: "Ana" });
+
+      currentUser = null;
+      expect((await m.deleteUserProfileAction()).success).toBe(false);
+      expect(await db.userProfile.findUnique({ where: { userId: A.user } })).not.toBeNull();
+    });
+  });
+
+  /**
    * Reset da verificação em duas etapas.
    *
    * É o backdoor da plataforma: quem consegue executá-lo à vontade toma

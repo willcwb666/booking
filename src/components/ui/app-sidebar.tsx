@@ -308,6 +308,15 @@ export function AppSidebar({
           keywords: "senha notificações notificacoes",
         },
         {
+          // Sem `base`: a rota é da pessoa, não da empresa. É a fronteira do
+          // modo pessoal — os agendamentos dela em TODAS as empresas ficam
+          // aqui, e nenhum deles pertence à empresa que está aberta agora.
+          href: `/minha-conta`,
+          label: "Minha conta",
+          icon: <ArrowRightLeft className={ICON} />,
+          keywords: "meus agendamentos dados pessoais outras empresas cliente",
+        },
+        {
           href: `${base}/changelog`,
           label: "Novidades",
           icon: <Star className={ICON} />,

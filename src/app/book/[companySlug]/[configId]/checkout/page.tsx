@@ -109,6 +109,33 @@ export default async function CheckoutPage({
    * faixa pelo e-mail informado e cobra o que for devido.
    */
   const session = await auth.api.getSession({ headers: await headers() });
+
+  /**
+   * Preenchimento em um toque — o "Kreator Pass".
+   *
+   * Os dados vêm do perfil do PRÓPRIO usuário logado, nunca da ficha que ele
+   * tem em outra empresa. A diferença não é cosmética: copiar de outra empresa
+   * seria transferir dado pessoal entre controladores distintos, e quem
+   * precisaria autorizar é a empresa de origem, não só o cliente. Assim, a
+   * pessoa preenche o formulário com os próprios dados — como o autofill do
+   * navegador faz.
+   */
+  const profile = session
+    ? await db.userProfile.findUnique({ where: { userId: session.user.id } })
+    : null;
+
+  const prefill = session
+    ? {
+        firstName: profile?.firstName ?? session.user.name?.split(" ")[0] ?? "",
+        lastName: profile?.lastName ?? session.user.name?.split(" ").slice(1).join(" ") ?? "",
+        email: session.user.email,
+        phone: profile?.phone ?? "",
+        address: profile?.address ?? "",
+        aptNo: profile?.aptNo ?? "",
+        city: profile?.city ?? "",
+        zip: profile?.zip ?? "",
+      }
+    : null;
   const trust = await getCustomerTrust({
     companyId: estimate.companyId,
     customerEmail: session?.user.email ?? null,
@@ -169,6 +196,7 @@ export default async function CheckoutPage({
       locale={config.company.locale}
       businessType={config.company.businessType}
       offPeakWindows={offPeakWindows}
+      prefill={prefill}
       requireDeposit={depositPolicy.percentage > 0}
       depositPercentage={depositPolicy.percentage}
       agendaConfig={{
