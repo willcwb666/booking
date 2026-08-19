@@ -1,234 +1,661 @@
-# 🚀 Roadmap de Upgrades Futuros & Inovações Estratégicas (Kreator SaaS)
+# Roadmap de Upgrades — Kreator SaaS
 
-Este documento é a **Bíblia de Inovação de Produto do Kreator SaaS**. Ele centraliza a arquitetura, conceitos, oportunidades de mercado e especificações técnicas de **14 funcionalidades de altíssimo valor comercial** que superam os concorrentes globais (*Fresha, Mindbody, Booksy, Boulevard, Vagaro, Avec/Trinks*).
+Documento de decisão sobre as 15 funcionalidades propostas. Cada ficha traz o
+veredito, o que **já existe no código**, o escopo da v1 e — quando é o caso — o
+que **não** deve ser construído.
 
----
-
-## 📑 Índice de Inovações Estratégicas
-
-### 🌐 Pilar I: Identidade Global & Multi-Tenant
-- [01. Internacionalização Autônoma (IA Translation Memory + DDI Engine)](#01-internacionalização-autônoma)
-- [02. Kreator Pass (Identidade Unificada, 1-Click & Modo Dono vs Cliente)](#02-kreator-pass)
-
-### 💰 Pilar II: Motor de Receita, Yield Management & Prevenção de Perdas
-- [03. Dynamic Surge Pricing & Yield Management (Preço Dinâmico por Demanda)](#03-dynamic-surge-pricing--yield-management)
-- [04. Smart Dynamic Deposit (Sinal Anti-Calote Inteligente por Score)](#04-smart-dynamic-deposit)
-- [05. Win-Back Inactive Client AI Radar (Radar de Resgate de Clientes Perdidos)](#05-win-back-inactive-client-ai-radar)
-
-### 🤖 Pilar III: Inteligência Artificial & Atendimento Autônomo
-- [06. AI WhatsApp Receptionist & Audio Booking (Secretária Autônoma por Voz)](#06-ai-whatsapp-receptionist--audio-booking)
-- [07. AI Review Interceptor & Google Maps Booster (Alavanca de Reputação)](#07-ai-review-interceptor)
-- [08. AI Visual Consultation & Before/After Vault (Dossiê Visual e Fórmulas)](#08-ai-visual-consultation--beforeafter-vault)
-
-### 👨‍👩‍👧 Pilar IV: Experiência do Cliente, Famílias & Rotas
-- [09. Family & Group Multi-Chair Booking (Agendamento em Grupo e Família)](#09-family--group-multi-chair-booking)
-- [10. Drive-Time & Traffic Buffer (Rotas Inteligentes para Serviços a Domicílio)](#10-drive-time--traffic-buffer)
-
-### ⚙️ Pilar V: Operações de Balcão, Estoque, Equipe & Resiliência
-- [11. Split POS: Venda de Balcão com Comissionamento Híbrido](#11-split-pos-híbrido)
-- [12. Auto-Restock Trigger (Reposição Automática de Estoque por Consumo)](#12-auto-restock-trigger)
-- [13. Gamification & Staff Leaderboard (Painel de Metas da Equipe em Tempo Real)](#13-gamification--staff-leaderboard)
-- [14. Offline-First PWA Mode (Operação Ininterrupta Sem Queda de Internet)](#14-offline-first-pwa-mode)
+Revisado em 2026-08-18 contra o schema (`prisma/schema.prisma`) e o código em
+`src/`. Onde o documento anterior descrevia algo como novo e a peça já estava
+pronta, o texto foi corrigido.
 
 ---
 
-## 🌐 01. Internacionalização Autônoma
+## Duas regras que valem para o documento inteiro
 
-### 🎯 O Desafio de Mercado
-Traduções estáticas em arquivos `.json` cobrem apenas menus e botões, mas **não traduzem o conteúdo dinâmico cadastrado pelos estabelecimentos** (nomes de serviços, combos, descrições). Além disso, conversão cambial direta gera valores quebrados (ex: `$ 7.18`), quebrando a psicologia de vendas.
+**1. Nenhum número de resultado sem fonte.** A versão anterior prometia "+18% a
+25% de faturamento" e "no-show de 22% para menos de 3%". Não há base para isso.
+Enquanto ficam num documento interno, são hipótese. Se forem para material de
+venda nos EUA, a FTC trata claim de resultado sem substanciação como propaganda
+enganosa, e é acionável. Números de projeção neste arquivo aparecem marcados
+como *hipótese a validar*.
 
-### 🏗️ Arquitetura em 2 Frentes
-- **1.1. Memória de Tradução por IA com Cache Permanente (`translation_cache`)**:
-  - Para cada serviço ou texto dinâmico, o sistema gera um hash SHA-256 e consulta o banco:
-    ```sql
-    SELECT "translatedText" FROM "translation_cache" 
-    WHERE "sourceHash" = $1 AND "targetLocale" = $2;
-    ```
-  - Se existir, responde em **0ms** com custo zero. No primeiro acesso estrangeiro, aciona o Google Gemini Flash, grava no banco e nunca mais consome tokens (*Write-Once, Read-Forever*).
-- **1.2. Inferência Determinística por DDI Telefônico (+55, +1, +351, +34)**:
-  - Ao digitar o telefone, o sistema infere e pré-configura automaticamente moeda (BRL, USD, EUR), idioma base, máscara telefônica e fuso horário.
+**2. Parar de posicionar por "o que os concorrentes não têm".** Fresha tem sinal
+e proteção de no-show. Boulevard tem precificação por demanda e lista de espera.
+Booksy tem agendamento em grupo. Vender uma feature que o concorrente tem é o
+pior lugar para se colocar: o comprador testa e perde a confiança no resto do
+pitch. A vantagem real do Kreator é outra — **um motor multi-segmento**
+(barbearia, oficina, pet shop, clínica na mesma base) com preço de entrada
+menor. As features abaixo defendem essa posição; não a substituem.
 
 ---
 
-## 👤 02. Kreator Pass
+## Resumo executivo
 
-### 🎯 O Desafio de Cadastro Multi-Tenant
-A Dona Maria se cadastra no **Salão 1** e depois vai agendar no **Pet Shop 1** ou na **Oficina 1**. Ela não quer digitar tudo de novo, mas também não pode ver o nome de uma empresa concorrente no checkout.
+| # | Ideia | Veredito | Esforço |
+|---|---|---|---|
+| 05 | Smart Dynamic Deposit | **Fazer primeiro** — sem score de IA | 3–4 d |
+| 12 | Split POS: comissão híbrida | **Fazer** — é terminar o que existe | 3–4 d |
+| 03 | 2FA | **Fazer** — via plugin do better-auth, sem WhatsApp | 4–5 d |
+| 06 | Win-back de inativos | **Fazer** — campanha aprovada, não agente autônomo | 4–5 d |
+| 08 | Review & Google Maps Booster | **Fazer** — a forma proposta é ilegal, ver ficha | 3–4 d |
+| 04 | Yield management | **Fazer metade** — só o desconto em horário ocioso | 3 d |
+| 13 | Estoque | **Fazer só o alerta** — sem dedução por ficha técnica | 2 d |
+| 02 | Kreator Pass | **Fazer** — com uma correção estrutural, ver ficha | 5–7 d |
+| 11 | Drive-time & buffer de trânsito | **Fazer a versão barata** (haversine, sem Google) | 2–3 d |
+| 09 | Before/After Vault | **Fazer o cofre, não a IA** | 5–6 d |
+| 14 | Metas da equipe | **Fazer só o painel individual** | 3 d |
+| 01 | i18n autônoma | **Fazer depois** — DDI agora, cache de tradução depois | 4–6 d |
+| 10 | Family & Group Booking | **Reduzir escopo drasticamente** | 10–15 d |
+| 07 | AI WhatsApp Receptionist | **Por último**, como add-on licenciado | 20–30 d |
+| 15 | Offline-first PWA | **Só leitura** — não fazer sync bidirecional | 1 d / — |
 
-### 🛡️ A Solução Integrada em 3 Etapas
+Esforço em dias de trabalho de um desenvolvedor, incluindo teste. É estimativa
+grosseira para ordenar, não compromisso.
 
-#### 2.1. Modal de Consentimento Seguro (Branding Neutro)
+---
+
+## Ordem de execução
+
+### Bloco 1 — Dinheiro e confiança (2–3 semanas)
+`05 sinal dinâmico` → `12 comissão híbrida` → `03 2FA`
+
+Os três atacam perda direta de receita e risco de conta. E os dois primeiros são
+majoritariamente encaixar peças que já estão no banco.
+
+### Bloco 2 — Retenção (3–4 semanas)
+`06 win-back` → `08 review` → `04 desconto ocioso` → `13 alerta de estoque`
+
+Tudo calculado sobre dado que já existe. Nenhuma integração externa nova.
+
+### Bloco 3 — Diferenciação (4–6 semanas)
+`02 Kreator Pass` → `11 drive-time` → `09 vault` → `14 painel individual`
+
+### Bloco 4 — A aposta
+`07 AI Receptionist`, como módulo licenciado (`SystemModule` +
+`CompanyModuleLicense` já existem exatamente para isso).
+
+### Fora do roadmap
+- `15` sync bidirecional offline
+- `13` dedução de insumo por ficha técnica
+- `04` acréscimo de preço no pico
+- `08` na forma de *review gating*
+
+Os motivos estão nas fichas.
+
+---
+
+## Inventário: o que já está construído
+
+Cinco itens da lista original foram descritos como novos e já estão 60–80%
+prontos. Ignorar isso distorce a priorização inteira.
+
+| Item | Peça pronta |
+|---|---|
+| 01 DDI Engine | `src/lib/markets.ts` mapeia DDI → moeda, locale, timezone e máscara telefônica. `Company.currency/timezone/locale` existem. `messages/` tem pt-BR, pt-PT, en, es |
+| 04 Yield | `src/lib/agenda/ghost-slot-buster.ts` já calcula desconto de última hora para slot vago |
+| 05 Sinal | `CompanyPaymentSettings.requireDeposit` / `depositPercentage`; `Customer.noShowCount`, `completedBookings`, `cancelledBookings`, `totalSpent`, `lastBookingDate`; `Company.maxAllowedNoShows`, `minCancellationNoticeHours`, `cancellationFee` |
+| 12 Split POS | `PosSale.professionalId` e `commissionAmount`; `SaleItem.type` (PRODUCT/SERVICE/FEE); `Product.barcode`; `src/server/actions/commissions.ts` |
+| 13 Estoque | `Product.minStockThreshold`, `StockMovement` com tipos IN/OUT/SALE/RETURN |
+
+Outras peças relevantes já disponíveis:
+
+- **IA**: `src/lib/ai/gemini-client.ts` (Gemini 2.0 Flash + fallback Groq + fallback determinístico local), `booking-copilot.ts`, `admin-copilot.ts`
+- **WhatsApp**: `src/lib/whatsapp.ts` — gateway local (Evolution/Baileys) e Meta Cloud API
+- **Geo**: `src/lib/geo/haversine.ts`; `Company.latitude/longitude/checkinRadiusMeters`
+- **Armazenamento**: `src/lib/r2.ts` (Cloudflare R2 com presigned URL)
+- **E-mail**: Resend via `src/lib/email.ts`; `Promotion.lastSentAt` já registra envio de campanha
+- **Fidelidade**: `LoyaltyProgram` / `LoyaltyAccount`
+- **Avaliação**: `Review` (1–5, um por booking)
+- **Multiempresa**: `/selecionar-empresa`, `Customer` isolado por `@@unique([companyId, email])`
+- **Licenciamento**: `SystemModule` + `CompanyModuleLicense`
+- **Presets**: `SystemPreset` / `SystemSegment` por tipo de negócio
+
+Não existe: PWA (nenhum manifest, nenhum service worker), tabela de regra de
+comissão por tipo de item, perfil de usuário global, 2FA.
+
+---
+
+# Bloco 1 — Dinheiro e confiança
+
+## 05. Smart Dynamic Deposit
+
+**Veredito: fazer primeiro.** Melhor relação valor/custo da lista inteira.
+
+### A dor
+Exigir sinal de cliente fiel gera atrito e ofende. Não exigir de cliente
+desconhecido em horário nobre gera falta. Hoje o sinal é uma chave liga/desliga
+global da empresa — ou cobra de todo mundo, ou de ninguém.
+
+### Já existe
+Quase tudo. `requireDeposit` e `depositPercentage` em `CompanyPaymentSettings`;
+`noShowCount`, `completedBookings`, `cancelledBookings` em `Customer`;
+`maxAllowedNoShows` em `Company`. Falta a regra que liga uma coisa na outra.
+
+### Escopo v1 — quatro faixas, não um score
 ```
-┌──────────────────────────────────────────────────────────┐
-│  🔐 Kreator Pass · Agendamento Inteligente em 1 Toque   │
-├──────────────────────────────────────────────────────────┤
-│  Olá, Dona Maria! Identificamos sua conta unificada.     │
-│  Deseja autorizar o Pet Shop Peludo a preencher         │
-│  automaticamente seu nome, telefone e endereço?          │
-│   [ ✨ Sim, Preencher em 1 Toque ]  [ Preencher Manual ] │
-│  🔒 Seus dados e históricos continuam 100% isolados.    │
-└──────────────────────────────────────────────────────────┘
+Confiável   → 3+ atendimentos concluídos, 0 no-show      → sem sinal
+Neutro      → histórico curto ou 1 falta antiga          → sem sinal fora de pico
+Risco       → no-show recente, ou cliente novo em pico   → sinal de X%
+Bloqueado   → acima de maxAllowedNoShows                 → só com pagamento integral
 ```
 
-#### 2.2. Separação de Dados no Banco de Dados
-- A conta de autenticação `User` é global.
-- As fichas de atendimento `Customer` permanecem **100% isoladas por empresa** (`@@unique([companyId, email])`).
+A faixa é exibida ao dono na ficha do cliente, com o motivo em texto.
 
-#### 2.3. Alternador de Papéis: Modo Dono vs Modo Cliente (Estilo Airbnb / Shopify)
-O Paulinho é dono da **Barbearia do Paulinho** (`CompanyUser` com role `OWNER`), mas também leva o carro na **Oficina do Seu Zé** como cliente (`Customer`).
-- No topo do perfil, ele possui um menu que alterna em 1 toque:
+### O que não fazer
+**Não construir um "score de IA de 0 a 100".** Um número opaco que decide cobrar
+dinheiro de alguém é um pesadelo de atendimento — o dono não consegue explicar
+ao cliente por que ele caiu de 71 para 64, e nos EUA um critério automatizado
+não explicável que restringe acesso a serviço é exposição regulatória
+desnecessária. Quatro faixas derivadas de contadores visíveis fazem o mesmo
+trabalho e são defensáveis numa discussão.
+
+### Riscos e detalhes
+- **Caução vs. sinal**: pré-autorização de cartão é suportada pelo Stripe, mas é
+  complicada no Mercado Pago. A v1 cobra um sinal real que **vira crédito** no
+  atendimento — mesma proteção, sem depender de pré-auth.
+- O estorno já está implementado (`refundAmount`/`refundedAt` + `booking-reversal.ts`);
+  a política de devolução do sinal precisa respeitar `minCancellationNoticeHours`.
+
+*Hipótese a validar: redução de faltas. Instrumentar `noShowCount` antes e
+depois para ter número próprio.*
+
+---
+
+## 12. Split POS: comissão híbrida
+
+**Veredito: fazer.** É terminar algo que está 70% pronto, e o gap real não é o
+que o documento anterior dizia.
+
+### A dor
+Serviço e produto têm regras de comissão diferentes (50% no corte, 10% na
+pomada). Misturar os dois no fechamento da quinzena gera erro de planilha.
+
+### O gap real
+`Professional.commissionPercentage` é **um número só**. Não existe taxa separada
+por tipo de item. A feature não é o leitor de código de barras — é uma **tabela
+de regra de comissão**:
+
 ```
-┌────────────────────────────────────────────────────────┐
-│  👤 Paulinho (paulinho@gmail.com)                      │
-├────────────────────────────────────────────────────────┤
-│  🏢 MODO EMPRESA / GESTÃO                             │
-│  ➔ Barbearia do Paulinho (Acessar Painel de Dono)     │
-│                                                        │
-│  ────────────────────────────────────────────────────  │
-│  👤 MODO PESSOAL / MEUS AGENDAMENTOS                   │
-│  ➔ Ver meus agendamentos (Oficina, Pet Shop, etc.)     │
-│                                                        │
-│  🚪 Sair da conta                                      │
-└────────────────────────────────────────────────────────┘
+CommissionRule
+  professionalId?   (null = regra padrão da empresa)
+  itemType          SERVICE | PRODUCT
+  serviceTypeId?    (null = todos os serviços)
+  productCategory?  (null = todas as categorias)
+  mode              PERCENT | FIXED
+  value
 ```
+Resolução por especificidade: profissional+categoria → profissional+tipo →
+empresa+tipo → `commissionPercentage` legado como fallback. Manter o fallback
+evita migração de dados e não quebra quem já configurou.
+
+O extrato passa a separar as duas colunas; `PosSale.commissionAmount` continua
+guardando o total calculado **no momento da venda** (não recalcular depois — se
+a regra mudar, o histórico não pode mudar junto).
+
+### Sobre o leitor de código de barras
+`Product.barcode` já existe. A API `BarcodeDetector` funciona no Chrome Android
+e **não funciona no Safari iOS** — é preciso fallback via `zxing-js`, ou o
+recurso não existe para metade dos aparelhos. Saber disso antes de prometer na
+landing page.
 
 ---
 
-## ⚡ 03. Dynamic Surge Pricing & Yield Management
+## 03. 2FA multi-canal
 
-### 🎯 O que os concorrentes não têm:
-Na maioria dos sistemas (*Fresha, Booksy*), o corte no sábado às 11h (pico absoluto) custa os mesmos R$ 50 que na terça às 14h (cadeira vazia).
+**Veredito: fazer — ativando o plugin, não construindo do zero.**
 
-### 🚀 A Inovação:
-- **Preço Dinâmico Estilo Uber/Companhias Aéreas**:
-  - **Pico de Demanda (Sexta/Sábado)**: Aplica acréscimo inteligente de +10% a +20% automaticamente.
-  - **Vale de Ociosidade (Segunda/Terça de manhã)**: Aplica "Early Bird / Happy Hour 15% OFF" para preencher horários vazios.
-- **Resultado Comercial**: Aumento imediato de **18% a 25% no faturamento bruto** com a mesma estrutura física.
+### Por que agora
+O sistema guarda token do Stripe e do Mercado Pago das empresas
+(`CompanyPaymentSettings.mercadoPagoAccessToken`), a agenda inteira do negócio e
+PII de clientes. Antes de ir ao ar, senha sozinha não é postura defensável.
 
----
+### Correção ao desenho original
+**Use o plugin `twoFactor` do better-auth 1.6.9, que já está instalado.** Ele
+traz TOTP, OTP e códigos de backup prontos. Escrever os 8 códigos de recuperação
+à mão é reimplementar o que já está no `package.json`.
 
-## 🛡️ 04. Smart Dynamic Deposit
+**Não usar WhatsApp como canal de 2FA.** É o canal mais fraco disponível: SIM
+swap é ataque corrente no Brasil, e a Meta restringe template de OTP. Ordem
+correta:
 
-### 🎯 O que os concorrentes não têm:
-Exigir sinal de clientes fiéis gera atrito; não cobrar sinal de clientes desconhecidos gera 25% de faltas (*no-shows*).
+1. **TOTP** (Google Authenticator, 1Password, etc.) — mais forte, grátis, offline
+2. **E-mail via Resend** — alternativa para quem não usa app autenticador
+3. **8 códigos de backup** de uso único, queimados no banco após o uso
 
-### 🚀 A Inovação:
-- **Score de Confiabilidade de 0 a 100**:
-  - 🟢 **Cliente Recorrente / VIP**: 0 sinal, agendamento em 1 clique.
-  - 🟡 **Cliente Novo em Horário Nobre**: O checkout exige automaticamente 30% de sinal via PIX/Cartão ou cartão caução.
-- **Resultado Comercial**: No-show cai de 22% para **menos de 3%**.
+### O ponto mais perigoso do documento inteiro: o override do Super Admin
 
----
+Se o super admin pode zerar o 2FA de qualquer empresa, a segurança de todos os
+tenants vale exatamente a segurança de uma conta pessoal. É um backdoor
+legítimo, mas precisa de freio:
 
-## 🎯 05. Win-Back Inactive Client AI Radar
+- **2FA obrigatório na conta de super admin** — sem exceção
+- **Atraso de 24h** entre o pedido de reset e a execução
+- **Notificação imediata** ao dono em todos os canais cadastrados, no momento do
+  pedido, não da execução
+- Registro em `AuditLog` com o operador e o motivo
 
-### 🎯 O que os concorrentes não têm:
-Clientes inativos são esquecidos. Quando o dono percebe, o cliente já migrou para o concorrente.
+Assim uma conta de admin sequestrada não consegue tomar um tenant em silêncio —
+o dono tem 24 horas e um alerta para reagir.
 
-### 🚀 A Inovação:
-- O motor calcula o ciclo médio de consumo de cada cliente (ex: João corta a cada 18 dias).
-- Se o João chegar no dia 35 sem agendar, a IA dispara uma mensagem com oferta cirúrgica no WhatsApp:
-  - *"Olá João! Notamos que já faz 35 dias do seu último corte. Liberamos R$ 15 de bônus para você renovar seu visual essa semana!"*
-
----
-
-## 🤖 06. AI WhatsApp Receptionist & Audio Booking
-
-### 🎯 O que os concorrentes não têm:
-70% dos clientes brasileiros e latinos mandam áudio no WhatsApp: *"Opa, tem como marcar uma barba com o Rafa hoje umas 4 da tarde?"*. A recepção humana demora até 1 hora para responder e o cliente desiste.
-
-### 🚀 A Inovação:
-- A IA do Kreator recebe o áudio, transcreve, consulta a disponibilidade real da agenda e responde em áudio ou texto humanizado em **3 segundos**:
-  - *"Fala Rodrigo! O Rafa tem horário livre às 16h30 hoje. Posso confirmar para você?"*
-- O cliente responde *"Pode fechar"*, a IA cria o agendamento no banco e envia o link de confirmação.
+### Escopo v1
+Obrigatório para `OWNER` e super admin. Opcional para os demais papéis. Campo de
+e-mail de resgate (*rescue email*) é opcional e barato — pode entrar junto.
 
 ---
 
-## ⭐ 07. AI Review Interceptor & Google Maps Booster
+# Bloco 2 — Retenção
 
-### 🎯 O que os concorrentes não têm:
-Avaliações públicas no Google Maps são a maior fonte de novos clientes orgânicos, mas quem teve experiência boa esquece de avaliar e quem teve problema vai direto no Google reclamar.
+## 06. Win-back de clientes inativos
 
-### 🚀 A Inovação:
-- 20 minutos após o checkout, o cliente recebe 1 pergunta no WhatsApp de 1 a 5 estrelas:
-  - ⭐ **5 Estrelas**: A IA gera uma sugestão de elogio e redireciona direto para o **Google Meu Negócio** da empresa para postar com 1 toque.
-  - ⚠️ **1 a 3 Estrelas**: O feedback **NÃO vai para o Google**. É canalizado como alerta privado para o WhatsApp do gerente resolver antes de virar nota pública negativa.
+**Veredito: fazer, como campanha que o dono aprova.**
 
----
+### A ideia que se sustenta
+Calcular o ciclo médio de retorno de cada cliente e sinalizar quem passou dele.
+`Customer.lastBookingDate` e o histórico de `Booking` já dão tudo.
 
-## 📸 08. AI Visual Consultation & Before/After Vault
+**Não precisa de IA para isso** — é a mediana dos intervalos entre atendimentos.
+Mediana, não média, porque um único intervalo longo (viagem, mudança) distorce a
+média e some com o sinal.
 
-### 🎯 O que os concorrentes não têm:
-Fichas de clientes em papel ou campos de texto genéricos onde ninguém anota a fórmula exata da tintura, estilo de degradê ou histórico de fotos.
+### Correções ao desenho original
+A versão autônoma proposta quebra em dois lugares:
 
-### 🚀 A Inovação:
-- Galeria fotográfica privada no perfil do cliente.
-- O profissional tira uma foto do resultado no celular e a IA anota a ficha técnica (ex: *"Tonalizante Wella 7.1 + Ox 20 vol / Lâmina 1.5 no topo"*).
-- No próximo retorno, o profissional abre o app e vê exatamente o que fez na última sessão.
+- **Bônus automático sangra margem sem ninguém decidir.** R$ 15 vezes 200
+  clientes é uma conta que o dono não aprovou.
+- **Disparo promocional não solicitado em WhatsApp queima o número.** A Meta
+  bane por taxa de bloqueio, e comunicação promocional exige consentimento
+  (LGPD art. 7º; nos EUA, TCPA para SMS). Marketing por WhatsApp precisa de
+  opt-in registrado.
 
----
+### Escopo v1
+O motor entrega uma lista ao dono: *"14 clientes passaram do ciclo de retorno.
+Enviar campanha?"* — com o desconto configurado por ele e um teto de gasto.
+Um clique dispara.
 
-## 👨‍👩‍👧 09. Family & Group Multi-Chair Booking
+Canal inicial: **e-mail**, onde o Resend já está ligado e `Promotion.lastSentAt`
+já registra envio. WhatsApp só para quem deu opt-in explícito.
 
-### 🎯 O que os concorrentes não têm:
-Pai e filho querem cortar cabelo no mesmo horário com barbeiros diferentes. No *Fresha* e *Booksy*, o pai precisa fazer 2 agendamentos separados, 2 logins e 2 pagamentos.
-
-### 🚀 A Inovação:
-- Botão *"+ Adicionar Filho / Acompanhante"* no checkout.
-- O algoritmo aloca automaticamente 2 profissionais livres no mesmo slot de tempo e consolida em 1 único carrinho e 1 pagamento.
-
----
-
-## 🚗 10. Drive-Time & Traffic Buffer
-
-### 🎯 O que os concorrentes não têm:
-Para serviços a domicílio (mecânicos móveis, diaristas, banho & tosa móvel, estética), marcar cliente às 14h no Bairro A e às 15h no Bairro B gera atraso garantido por causa do trânsito.
-
-### 🚀 A Inovação:
-- Integração com Google Maps Distance Matrix.
-- O sistema calcula o tempo real de deslocamento entre os endereços e bloqueia a agenda com a margem exata de trânsito.
+Se a IA entrar, escreve o texto da mensagem. Não decide o desconto nem o
+disparo.
 
 ---
 
-## 📦 11. Split POS: Venda de Balcão com Comissionamento Híbrido
+## 08. Review & Google Maps Booster
 
-### 🎯 O que os concorrentes não têm:
-Misturam venda de serviço (comissão de 50%) com produto de estoque (comissão de 10% ou fixa). O fechamento financeiro do mês vira um inferno de erros na planilha.
+**Veredito: fazer — mas a forma proposta viola a política do Google e a lei
+americana.** É a melhor relação valor/hora do documento na forma correta.
 
-### 🚀 A Inovação:
-- Comanda rápida onde o profissional escaneia o produto pelo celular (câmera como leitor de código de barras).
-- Baixa instantânea no estoque e cálculo do split líquido separando a regra de serviço vs produto no extrato da quinzena.
+### O problema com a versão original
+Dois pontos, ambos com consequência real:
+
+- **Review gating** — filtrar quem avaliou mal antes do Google — é violação
+  explícita da política do Google Business Profile, e a **FTC tem regra
+  específica contra isso desde 2024**, com multa. Punição possível do lado do
+  Google: remoção do perfil da empresa do Maps. Seria vender, como feature paga,
+  algo capaz de apagar a presença do cliente no Google.
+- **Gerar o texto do elogio para o cliente postar** também é proibido
+  (avaliação não-autêntica).
+
+O usuário opera no mercado americano. Este item não é teórico.
+
+### A versão legal preserva quase todo o valor
+1. 20 minutos após o atendimento, uma pergunta de 1 a 5 estrelas (WhatsApp ou
+   e-mail), gravada em `Review`
+2. **Convite ao Google para todo mundo**, independente da nota
+3. **Em paralelo**, nota 1–3 dispara alerta privado imediato ao gerente
+
+O ganho comercial real nunca foi esconder crítica. Era (a) lembrar de avaliar
+quem estava satisfeito — a maioria silenciosa que esquece — e (b) o gerente
+saber do problema em 20 minutos em vez de descobrir na nota pública. Os dois
+continuam de pé.
+
+Em vez do texto pronto, um gatilho: *"o que você mais gostou?"*. Ajuda o cliente
+a escrever sem escrever por ele.
 
 ---
 
-## 💬 12. Auto-Restock Trigger
+## 04. Yield management — só a metade de baixo
 
-### 🎯 O que os concorrentes não têm:
-O salão marca 20 mechas e 30 barbas na semana e o estoque de produtos químicos e toalhas acaba no sábado à tarde.
+**Veredito: fazer o desconto em horário ocioso. Não fazer o acréscimo no pico.**
 
-### 🚀 A Inovação:
-- Cada serviço agendado debita a dosagem teórica de insumos (ex: 50ml de shampoo, 1 lâmina descartável).
-- Ao atingir o nível crítico, o sistema monta a lista de reposição e gera o pedido automático para o fornecedor via WhatsApp ou e-mail.
+### Por que o acréscimo no pico não deve existir
+A Uber consegue cobrar mais no pico porque a relação é anônima e descartável.
+Barbearia é o oposto: relação nominal, recorrente, e os clientes **conversam
+entre si**. No dia em que o João descobre que pagou R$ 60 no sábado e o Pedro
+pagou R$ 50 na terça pelo mesmo corte com o mesmo profissional, você não perdeu
+R$ 10 — perdeu o João.
+
+Fresha e Booksy não deixaram isso de fora por limitação técnica. Deixaram porque
+donos de salão recusam.
+
+### O que fazer
+A metade de baixo produz **o mesmo efeito de yield management com risco zero**,
+porque é enquadrada como presente e não como punição:
+
+- Faixas de horário configuráveis com desconto ("Happy Hour — terça 9h às 12h,
+  15% OFF")
+- Sugestão automática de faixa baseada na ocupação real que o sistema já mede
+- Exibição no checkout público como oferta, com o preço cheio riscado
+
+O `ghost-slot-buster` já faz exatamente isso para desistência de última hora.
+Aqui é generalizar para o horário estruturalmente vago.
 
 ---
 
-## 🏆 13. Gamification & Staff Leaderboard
+## 13. Estoque — alerta sim, ficha técnica não
 
-### 🎯 O que os concorrentes não têm:
-Profissionais desmotivados que não oferecem serviços adicionais porque não sabem quanto falta para bater a meta.
+**Veredito: fazer o alerta de reposição. Não fazer a dedução teórica por
+serviço.**
 
-### 🚀 A Inovação:
-- Telão / Painel da equipe com ranking diário em tempo real:
-  - Quem fez mais upsells (ex: barba + hidratação).
-  - Faturamento acumulado no dia e comissão em tempo real (*"Você já ganhou R$ 240,00 hoje"*).
+### Por que a dedução por consumo morre
+Exige que o dono cadastre a ficha técnica de cada serviço: 50ml de shampoo, 1
+lâmina, 30g de pó descolorante. Ninguém preenche. É a mesma razão pela qual o
+módulo de estoque de ERP fica vazio em 90% das pequenas empresas.
+
+E há um efeito pior que não ter: se a ficha estiver errada — e vai estar, porque
+o consumo real varia com o comprimento do cabelo — o estoque teórico diverge do
+real, o alerta dispara errado, e o usuário aprende a ignorar a feature inteira.
+
+### O que fazer
+`Product.minStockThreshold` já existe e `StockMovement` já registra `SALE` a
+partir do POS. A v1 é:
+
+- Alerta quando `stockQuantity <= minStockThreshold`
+- Lista de reposição gerada do **histórico real de venda do POS** (giro dos
+  últimos 30/60 dias), não de consumo teórico
+- Exportação da lista por e-mail ou WhatsApp para o fornecedor
+
+Zero cadastro novo. Dado real.
 
 ---
 
-## 📱 14. Offline-First PWA Mode
+# Bloco 3 — Diferenciação
 
-### 🎯 O que os concorrentes não têm:
-A internet da barbearia ou clínica caiu no sábado; os sistemas baseados 100% em nuvem travam e o estabelecimento não sabe quem é o próximo cliente da fila.
+## 02. Kreator Pass
 
-### 🚀 A Inovação:
-- Arquitetura PWA com banco local (IndexedDB/SQLite) e sincronização bidirecional.
-- Se a internet cair, a agenda continua abrindo, registrando presença e fechando comandas, sincronizando automaticamente assim que a conexão retornar.
+**Veredito: fazer — com uma correção estrutural que também simplifica a
+construção.**
+
+### O modelo de dados já está certo
+`User` é global (autenticação). `Customer` é isolado por empresa
+(`@@unique([companyId, email])`). A parte difícil está feita: o histórico da Dona
+Maria no Salão 1 nunca vaza para o Pet Shop.
+
+### O problema do preenchimento automático
+Pegar os dados que a Dona Maria deu ao Salão 1 e injetar no formulário do Pet
+Shop é **transferência de dado pessoal entre dois controladores distintos**. O
+modal de consentimento proposto ajuda, mas não resolve o ponto central: o Salão
+1 não autorizou o repasse da carteira dele.
+
+### A correção
+Criar um **`UserProfile`** (nome, telefone, endereço) que pertence **ao
+usuário**, não à empresa. O preenchimento lê dali.
+
+Nenhum dado atravessa empresas. A Dona Maria preenche o formulário com os dados
+dela mesma — exatamente o que o autofill do navegador faz. Some o problema
+jurídico, e some a necessidade do modal de consentimento junto: não há nada a
+consentir.
+
+O `Customer` de cada empresa continua sendo criado no primeiro agendamento, com
+os dados copiados naquele momento. Editar a ficha no Salão 1 não altera o perfil
+global nem a ficha do Pet Shop.
+
+### Alternador Dono / Cliente
+`/selecionar-empresa` já existe. `meus-agendamentos` já existe por empresa.
+Falta a visão cross-company — "meus agendamentos em todas as empresas".
+
+**Cuidado**: é exatamente o formato de IDOR que foi fechado em 2026-08-18. A
+consulta tem de partir de `getActiveSession()` e nunca aceitar e-mail ou id de
+cliente por parâmetro. Ver `test/authorization.db.test.ts` para o padrão.
+
+---
+
+## 11. Drive-time & buffer de trânsito
+
+**Veredito: fazer a versão barata.** Fica quase de graça porque a base já existe.
+
+### A dor
+Serviço a domicílio (mecânico móvel, diarista, banho e tosa móvel, estética):
+cliente às 14h no bairro A e às 15h no bairro B garante atraso.
+
+### Escopo v1 — sem Google, sem custo
+`src/lib/geo/haversine.ts` já calcula distância em linha reta. A v1 é:
+
+- Endereço do atendimento → coordenadas (uma vez, no cadastro)
+- Distância haversine entre atendimentos consecutivos do mesmo profissional
+- Buffer = distância × `minutosPorKm` configurável por empresa (default sugerido:
+  3 min/km urbano)
+- O buffer entra como bloqueio na agenda, visível e editável
+
+Isso entrega ~80% do valor com zero dependência externa.
+
+### Google Distance Matrix — depois, e só no plano superior
+Custa por requisição e exige conta de faturamento. E tem uma limitação que o
+documento anterior não menciona: **o trânsito no momento do agendamento não é o
+trânsito no momento do atendimento**. Consultar a API na hora de marcar dá uma
+falsa precisão. Faz sentido como refinamento para quem paga, não como base.
+
+---
+
+## 09. Before/After Vault
+
+**Veredito: fazer o cofre. Não fazer a IA que "anota a fórmula".**
+
+### O valor
+Galeria privada por cliente + ficha técnica do que foi feito (fórmula da
+tintura, número da lâmina, produto usado). No retorno, o profissional abre e vê
+exatamente a última sessão. É real e é caro de conseguir em outro lugar.
+
+Nicho: beleza, cabelo, estética. **Vale zero para oficina, pet shop e a maior
+parte dos segmentos** — deve nascer como módulo licenciado
+(`CompanyModuleLicense`), não como feature de todo mundo.
+
+### Por que a IA está invertida
+O documento propõe que a IA "anote a ficha técnica a partir da foto". Ela não
+consegue: a fórmula da tintura não está na imagem, está na cabeça do
+profissional. O que funciona é um **campo estruturado com autocomplete das
+entradas anteriores daquele profissional** — mais rápido de preencher que ditar
+para uma IA, e correto por construção.
+
+### O que precisa de cuidado
+Foto de rosto de pessoa identificada é **dado pessoal sensível** em ambas as
+jurisdições. Requisitos mínimos:
+
+- Consentimento por foto, registrado com data
+- Exclusão sob pedido, propagando para o R2 (não só o registro no banco)
+- Política de retenção — o custo de armazenamento cresce para sempre se nada
+  expira
+- Nunca exibir na landing pública sem autorização separada e explícita
+
+`src/lib/r2.ts` com presigned URL já está pronto, então a parte técnica é curta.
+
+---
+
+## 14. Metas da equipe
+
+**Veredito: fazer o painel individual. Ranking público, opcional e desligado por
+padrão.**
+
+### O que fazer
+Painel do profissional com progresso contra a **meta dele**: *"você já gerou
+$240 hoje, meta $300"*, comissão acumulada em tempo real, serviços do dia. Todo
+o dado já existe em `Booking`, `PosSale` e nas regras de comissão do item 12.
+
+Barato de construir e mexe com a motivação certa: comparação com a própria meta.
+
+### Por que o ranking público entra desligado
+Ranking de faturamento exposto para a equipe inteira é decisão de gestão, não de
+software — desmotiva a metade de baixo e pressiona upsell, o que degrada a
+experiência do cliente justamente onde a recorrência é o ativo. Nos EUA, ainda
+cria exposição em ambiente com comissionados.
+
+Deixar como chave por empresa, default off, e o dono decide.
+
+---
+
+## 01. i18n autônoma
+
+**Veredito: DDI agora (quase pronto), cache de tradução depois.**
+
+### 1.1 — Inferência por DDI: 80% feito
+`src/lib/markets.ts` já mapeia +55/+1/+351/+34 para moeda, locale, timezone e
+máscara telefônica. `Company.currency/timezone/locale` já existem. Falta ligar
+no campo de telefone do onboarding e pré-selecionar. É uma tarde.
+
+### Correção importante sobre moeda
+O documento anterior trata conversão cambial como problema a resolver
+("valores quebrados como $ 7.18"). **A conclusão certa é não converter nada.**
+
+Um salão americano precifica em USD. Um brasileiro em BRL. `Company.currency`
+já reflete isso. Converter o preço do serviço para a moeda do visitante cria um
+valor que o estabelecimento nunca definiu, que muda sozinho com o câmbio, e pelo
+qual ele será cobrado a honrar. Exibir o preço na moeda da empresa é correto e é
+o que Fresha faz.
+
+### 1.2 — Cache de tradução: boa arquitetura, fazer depois
+Hash SHA-256 do texto de origem + locale destino, consulta ao banco, geração via
+Gemini Flash apenas no *miss*, gravação permanente. Custo tende a zero.
+`gemini-client.ts` já existe.
+
+Dois ajustes:
+
+- **Não traduzir automaticamente sem deixar editar.** "Escova progressiva"
+  traduzida por máquina vira algo que o dono não reconhece e não pode corrigir.
+  A tradução automática entra como sugestão marcada, com override do dono
+  vencendo sempre.
+- **Precisa de coleta de lixo.** Se o nome do serviço muda, o hash muda e a
+  linha antiga fica órfã para sempre. Uma limpeza por `updatedAt` resolve.
+
+Escopo: apenas conteúdo público (nome e descrição de serviço, landing page).
+Nunca dado de cliente.
+
+---
+
+## 10. Family & Group Multi-Chair Booking
+
+**Veredito: fazer, com escopo drasticamente menor que o proposto.**
+
+### Por que é caro
+Alocar N profissionais no mesmo intervalo, atomicamente, é a parte fácil. O
+custo está a jusante: cancelamento parcial (o pai cancela só o slot do filho),
+estorno parcial, reagendamento de um membro do grupo, sinal de quem, comissão de
+quem, ponto de fidelidade para qual conta, e o que o POS mostra. **Cada feature
+existente ganha um caso "grupo"** para tratar.
+
+### Escopo v1 — carrinho sequencial
+Mesmo cliente, múltiplos serviços em sequência, um pagamento. Cobre
+"corte + barba" e boa parte de "pai e filho" na prática, porque na maioria dos
+casos não é preciso ser simultâneo. Reaproveita o `recurrenceGroupId` como
+padrão de agrupamento.
+
+### v2 — multi-cadeira simultâneo
+Só depois de o v1 estar em produção e o comportamento das operações derivadas
+estar entendido. Não começar por aqui.
+
+---
+
+# Bloco 4 — A aposta
+
+## 07. AI WhatsApp Receptionist & Audio Booking
+
+**Veredito: fazer por último, como módulo licenciado.** Maior teto da lista e o
+único item que realmente separa do Fresha. Também o de maior risco operacional.
+
+### A regra que torna isso seguro
+**A IA nunca escreve no banco.** Ela interpreta o áudio, consulta a
+disponibilidade, propõe horário e envia um **link de confirmação**. O cliente
+toca, e a criação passa pela `createBookingAction` que já existe, já valida
+slot, já tem rate limit e já está testada.
+
+Isso muda a natureza da falha: de "alucinação corrompe a agenda e uma pessoa
+real aparece num horário inexistente" para "alucinação manda link errado e o
+cliente não clica". Um caminho de escrita só, o mesmo do site.
+
+### O que a infraestrutura já cobre
+`gemini-client.ts` (Gemini + Groq + fallback determinístico), `booking-copilot.ts`,
+`whatsapp.ts`. Transcrição de áudio via Whisper na Groq. A parte de IA é a menor
+do problema.
+
+### Os obstáculos reais são de plataforma, não de modelo
+- **O gateway Evolution/Baileys viola os termos do WhatsApp.** O número é banido
+  eventualmente. Serve para demonstração; não serve para vender como feature.
+- **A Cloud API oficial exige verificação de negócio** (semanas) e só permite
+  resposta em texto livre **dentro de 24h da última mensagem do cliente** — o
+  que, aliás, encaixa perfeitamente neste fluxo, já que é sempre o cliente que
+  inicia.
+- Cada empresa precisa do próprio número verificado, ou de um número
+  compartilhado com identificação clara — decisão de produto ainda em aberto.
+
+### Modelo comercial
+Add-on cobrado à parte via `CompanyModuleLicense`. Tem custo variável real
+(tokens, número, transcrição) e não pode entrar no preço base.
+
+---
+
+# Fora do roadmap
+
+## 15. Offline-first PWA — construir só a leitura
+
+**Veredito: fazer o cache de leitura da agenda do dia. Não fazer sync
+bidirecional.**
+
+### Por que o sync bidirecional não deve ser construído
+Duas razões independentes, cada uma suficiente:
+
+1. **É um problema de sistemas distribuídos.** Dois atendentes offline marcam o
+   mesmo slot. Quem ganha? Resolução de conflito em agenda não tem resposta
+   automática boa — a resposta certa quase sempre exige um humano.
+2. **Contradiz o modelo de segurança inteiro.** Server action + sessão + rate
+   limit + `canAccessCompany` pressupõem servidor. Offline-first significa
+   reescrever a camada de autorização que acabou de ser blindada e coberta por
+   teste (`test/authorization.db.test.ts`, 2026-08-18).
+
+### O que resolve a dor descrita
+Reler a dor do documento original: *"o estabelecimento não sabe quem é o próximo
+cliente da fila"*. Isso é **leitura**, não escrita.
+
+Um service worker cacheando a agenda do dia em JSON resolve, é uma tarde de
+trabalho, e não toca em nada crítico. A tela fica em modo somente-leitura com
+aviso visível de "sem conexão — dados de HH:MM". Escrita continua exigindo rede.
+
+Não existe manifest nem service worker no projeto hoje, então isso também
+entrega o instalável de brinde.
+
+---
+
+# Lacunas: o que falta neste documento
+
+Três itens que pesam mais para fechar contrato do que a maioria das 15 features
+acima, e que não estavam na lista.
+
+### 1. Exportação e portabilidade de dados
+"E se eu quiser sair?" é pergunta de compra, não de suporte. Não ter resposta
+trava venda com o cliente mais organizado — justamente o que paga em dia. LGPD
+(art. 18) e CCPA obrigam. Já existe export CSV de agendamentos; falta o pacote
+completo (clientes, serviços, histórico financeiro) em um clique.
+
+### 2. Backup e recuperação declarados
+O sistema guarda a agenda inteira de um negócio. "O que acontece se vocês
+perderem meus dados" não é respondida por nenhuma das 15 features. Precisa de
+política escrita, backup testado (restaurado de verdade ao menos uma vez), e a
+resposta pronta na página de vendas.
+
+### 3. Tempo até o primeiro agendamento
+Hoje o dono configura serviços, agendas, profissionais e formas de pagamento
+antes de existir um único cliente. `SystemPreset` e `SystemSegment` são
+exatamente o ativo para resolver isso — falta um onboarding que os use para
+deixar a empresa agendável em cinco minutos.
+
+**Isso provavelmente move mais receita que qualquer item da lista de 15**, porque
+age sobre a conversão do trial, que é onde o funil vaza mais.
+
+---
+
+## Histórico
+
+- **2026-08-18** — Revisão completa. Vereditos, escopos corrigidos e ordem de
+  execução incorporados. Removidos os números de resultado sem base. Corrigidos
+  os cinco itens descritos como novos que já estavam parcialmente construídos.
+  Marcados como fora do roadmap: sync offline bidirecional, dedução de estoque
+  por ficha técnica, acréscimo de preço no pico e review gating.
+- **Versão anterior** — catálogo original de 15 inovações.
