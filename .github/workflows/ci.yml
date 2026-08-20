@@ -72,6 +72,11 @@ jobs:
       - name: Aplicar migrations
         run: pnpm exec prisma migrate deploy
 
+      # Antes do resto: é a verificação mais barata do arquivo, e falhar aqui
+      # poupa os minutos de banco, testes e build.
+      - name: Lint
+        run: pnpm exec eslint src test
+
       - name: Typecheck
         run: pnpm exec tsc --noEmit
 
@@ -85,10 +90,3 @@ jobs:
 
       - name: Build de produção
         run: pnpm exec next build
-
-      # O lint ainda tem dívida herdada (any, imports não usados). Roda para dar
-      # visibilidade sem travar o merge; quando o número zerar, remover o
-      # `continue-on-error` e ele vira obrigatório.
-      - name: Lint (informativo)
-        run: pnpm exec eslint src
-        continue-on-error: true

@@ -1,0 +1,8 @@
+#!/bin/sh
+# Lint dos arquivos em stage. Ver scripts/lint-staged.mjs para o porquê de ser
+# só o que está em stage, e para o que este hook não garante.
+#
+# O hook chega em quem clona pelo `prepare` do package.json, que aponta
+# `core.hooksPath` para esta pasta depois do install — sem husky, sem passo
+# manual no README.
+node scripts/lint-staged.mjs
