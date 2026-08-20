@@ -8,6 +8,7 @@ import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { LocalBusinessJsonLd } from "@/components/seo/json-ld";
 import { CustomLinkShare } from "@/components/ui/custom-link-share";
 import { CompanyMapRoutes } from "@/components/ui/company-map-routes";
+import { getRequestOrigin } from "@/lib/site-url";
 
 export async function generateMetadata({
   params,
@@ -54,6 +55,7 @@ export default async function TenantLandingPage({
   params: Promise<{ companySlug: string }>;
 }) {
   const { companySlug: slug } = await params;
+  const origin = await getRequestOrigin();
 
   const company = await db.company.findUnique({
     where: { slug, isActive: true },
@@ -229,6 +231,7 @@ export default async function TenantLandingPage({
           slug={company.slug}
           companyName={company.name}
           brandColor={brandColor}
+          origin={origin}
         />
 
         {/* ── Catálogo de Serviços ── */}

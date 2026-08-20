@@ -179,5 +179,25 @@
     "googleRegisterError": "Erro ao registar com o Google. Tente novamente.",
     "registerError": "Erro ao criar a conta. Verifique os dados.",
     "unexpectedError": "Erro inesperado. Tente novamente mais tarde."
+  },
+  "aiCopilot": {
+    "title": "Secretária & Marcações por IA",
+    "badge": "IA Ativa 2.0",
+    "heading": "Fale ou escreva o que pretende e a IA encontra os melhores horários:",
+    "placeholder": "Ex: 'Quero corte e barba no sábado de manhã com o Carlos'",
+    "voiceStart": "Falar por microfone",
+    "voiceStop": "Parar gravação",
+    "voiceUnsupported": "O seu navegador não suporta reconhecimento de voz. Escreva o seu pedido no campo de texto.",
+    "processing": "A processar com IA...",
+    "submit": "Analisar Pedido",
+    "suggestionsLabel": "Sugestões:",
+    "prompt1": "Corte e barba amanhã às 16h",
+    "prompt2": "Manicure no sábado de manhã",
+    "prompt3": "Limpeza de pele na sexta-feira",
+    "confidence": "A IA identificou com {score}% de confiança",
+    "serviceLabel": "Serviço:",
+    "professionalLabel": "Especialista:",
+    "timeLabel": "Horário Sugerido:",
+    "atTime": "Às {time}"
   }
 }

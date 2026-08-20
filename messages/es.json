@@ -179,5 +179,25 @@
     "googleRegisterError": "Error al registrarse con Google. Inténtalo de nuevo.",
     "registerError": "Error al crear la cuenta. Comprueba los datos.",
     "unexpectedError": "Error inesperado. Inténtalo más tarde."
+  },
+  "aiCopilot": {
+    "title": "Secretaria y Reservas con IA",
+    "badge": "IA Activa 2.0",
+    "heading": "Habla o escribe lo que necesitas y la IA encuentra los mejores horarios:",
+    "placeholder": "Ej: 'Quiero corte y barba el sábado por la mañana con Carlos'",
+    "voiceStart": "Hablar por micrófono",
+    "voiceStop": "Detener grabación",
+    "voiceUnsupported": "Tu navegador no admite reconocimiento de voz. Escribe tu solicitud en el campo de texto.",
+    "processing": "Procesando con IA...",
+    "submit": "Analizar solicitud",
+    "suggestionsLabel": "Sugerencias:",
+    "prompt1": "Corte y barba mañana a las 16h",
+    "prompt2": "Manicura el sábado por la mañana",
+    "prompt3": "Limpieza facial el viernes",
+    "confidence": "La IA identificó con {score}% de confianza",
+    "serviceLabel": "Servicio:",
+    "professionalLabel": "Especialista:",
+    "timeLabel": "Horario sugerido:",
+    "atTime": "A las {time}"
   }
 }

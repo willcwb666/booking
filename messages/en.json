@@ -179,5 +179,25 @@
     "googleRegisterError": "Could not sign up with Google. Try again.",
     "registerError": "Could not create the account. Check your details.",
     "unexpectedError": "Unexpected error. Please try again later."
+  },
+  "aiCopilot": {
+    "title": "AI Booking Assistant",
+    "badge": "AI Active 2.0",
+    "heading": "Say or type what you need and the AI finds the best times:",
+    "placeholder": "e.g. 'I want a haircut and beard trim Saturday morning with Carlos'",
+    "voiceStart": "Speak into the microphone",
+    "voiceStop": "Stop recording",
+    "voiceUnsupported": "Your browser does not support voice recognition. Please type your request in the text field.",
+    "processing": "Processing with AI...",
+    "submit": "Analyze Request",
+    "suggestionsLabel": "Suggestions:",
+    "prompt1": "Haircut and beard trim tomorrow at 4pm",
+    "prompt2": "Manicure Saturday morning",
+    "prompt3": "Facial on Friday",
+    "confidence": "AI matched with {score}% confidence",
+    "serviceLabel": "Service:",
+    "professionalLabel": "Specialist:",
+    "timeLabel": "Suggested time:",
+    "atTime": "At {time}"
   }
 }

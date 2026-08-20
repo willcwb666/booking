@@ -8,6 +8,12 @@ interface CustomLinkShareProps {
   className?: string;
   brandColor?: string;
   bookingUrl?: string;
+  /**
+   * Origem resolvida no servidor (ver `@/lib/site-url`). Obrigatoria de
+   * proposito: com valor padrao, quem esquecesse de passar voltaria a exibir um
+   * dominio chumbado sem nenhum aviso.
+   */
+  origin: string;
 }
 
 export function CustomLinkShare({
@@ -16,16 +22,13 @@ export function CustomLinkShare({
   className = "",
   brandColor = "#0f172a",
   bookingUrl,
+  origin,
 }: CustomLinkShareProps) {
   const [copied, setCopied] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
 
-  // Full URL resolution
-  const origin =
-    typeof window !== "undefined" && window.location.origin
-      ? window.location.origin
-      : "https://kreator.com.br";
-  
+  // A origem chega pronta do servidor. Ler `window.location` aqui fazia o HTML
+  // do servidor e o do cliente divergirem — ver `@/lib/site-url`.
   const customUrl = bookingUrl ? `${origin}${bookingUrl}` : `${origin}/book/${slug}`;
 
   const handleCopy = async () => {

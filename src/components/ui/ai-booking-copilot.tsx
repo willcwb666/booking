@@ -3,6 +3,7 @@
 import React, { useState, useTransition, useEffect } from "react";
 import { Sparkles, ArrowUpRight, CheckCircle2, Clock, User, Scissors } from "@/components/ui/icons";
 import { Mic, MicOff } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { parseAIBookingIntentAction } from "@/server/actions/ai-copilot";
 import type { ParsedBookingIntent } from "@/lib/ai/booking-copilot";
 
@@ -12,6 +13,13 @@ type Props = {
 };
 
 export function AIBookingCopilot({ companySlug, onApplyIntent }: Props) {
+  /**
+   * Este bloco ficou fora do i18n quando o resto da tela de agendamento foi
+   * traduzido. O efeito so aparece no navegador: com o navegador em ingles, a
+   * pagina publica vinha toda em ingles e ESTE cartao, no topo dela, em
+   * portugues. E o produto atende os dois mercados.
+   */
+  const t = useTranslations("aiCopilot");
   const [query, setQuery] = useState("");
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<ParsedBookingIntent | null>(null);
@@ -38,7 +46,7 @@ export function AIBookingCopilot({ companySlug, onApplyIntent }: Props) {
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      alert("Seu navegador não suporta reconhecimento de voz direto. Digite seu pedido no campo de texto.");
+      alert(t("voiceUnsupported"));
       return;
     }
 
@@ -92,11 +100,7 @@ export function AIBookingCopilot({ companySlug, onApplyIntent }: Props) {
     triggerAnalysis(query);
   };
 
-  const quickPrompts = [
-    "Corte e barba amanhã às 16h",
-    "Manicure no sábado de manhã",
-    "Limpeza de pele na sexta-feira",
-  ];
+  const quickPrompts = [t("prompt1"), t("prompt2"), t("prompt3")];
 
   return (
     <div className="bg-[var(--color-bg)] rounded-[var(--radius-panel)] p-5 sm:p-7 text-[var(--color-text-heading)] shadow-xs border border-[var(--color-border)] relative overflow-hidden my-6 card-tactile">
@@ -104,16 +108,16 @@ export function AIBookingCopilot({ companySlug, onApplyIntent }: Props) {
       <div className="flex items-center justify-between gap-3 mb-3 relative z-10">
         <div className="flex items-center gap-2 text-[var(--color-text-heading)] font-semibold text-xs uppercase tracking-wider">
           <Sparkles className="w-4 h-4 text-[var(--color-success)] animate-pulse" />
-          <span>Secretária & Agendamento por IA</span>
+          <span>{t("title")}</span>
         </div>
         <span className="text-[var(--text-2xs)] bg-[var(--color-success-light)] text-[var(--color-success)] border border-[var(--color-success-border)] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)] animate-ping"></span>
-          <span>IA Ativa 2.0</span>
+          <span>{t("badge")}</span>
         </span>
       </div>
 
       <h3 className="text-base sm:text-lg font-semibold text-[var(--color-text-heading)] tracking-tight mb-2 relative z-10">
-        Fale ou digite o que deseja e a IA encontra os melhores horários:
+        {t("heading")}
       </h3>
 
       {/* Form Input + Voice Button */}
@@ -123,7 +127,7 @@ export function AIBookingCopilot({ companySlug, onApplyIntent }: Props) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ex: 'Quero corte e barba no sábado de manhã com o Carlos'"
+            placeholder={t("placeholder")}
             className="w-full bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-card)] pl-4 pr-12 py-3 text-xs sm:text-sm text-[var(--color-text-heading)] placeholder-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)] font-medium transition-all"
           />
 
@@ -132,7 +136,7 @@ export function AIBookingCopilot({ companySlug, onApplyIntent }: Props) {
             <button
               type="button"
               onClick={handleToggleVoice}
-              title={isListening ? "Parar gravação" : "Falar por microfone"}
+              title={isListening ? t("voiceStop") : t("voiceStart")}
               className={`absolute right-2.5 p-2 rounded-[var(--radius-control)] border transition-all ${
                 isListening
                   ? "bg-[var(--color-danger)] text-white border-[var(--color-danger-border)] animate-pulse"
@@ -150,10 +154,10 @@ export function AIBookingCopilot({ companySlug, onApplyIntent }: Props) {
           className="btn-tactile px-6 py-3 bg-[var(--color-navy)] hover:bg-[var(--color-navy)] active:scale-[0.98] text-white font-semibold text-xs sm:text-sm rounded-[var(--radius-card)] shadow-xs transition-all cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-2 shrink-0"
         >
           {isPending ? (
-            <span>Processando com IA...</span>
+            <span>{t("processing")}</span>
           ) : (
             <>
-              <span>Analisar Pedido</span>
+              <span>{t("submit")}</span>
               <ArrowUpRight className="w-4 h-4" />
             </>
           )}
@@ -162,7 +166,7 @@ export function AIBookingCopilot({ companySlug, onApplyIntent }: Props) {
 
       {/* Quick Prompts Chips */}
       <div className="flex flex-wrap items-center gap-2 pt-3">
-        <span className="text-[var(--text-2xs)] font-bold text-[var(--color-text-subtle)]">Sugestões:</span>
+        <span className="text-[var(--text-2xs)] font-bold text-[var(--color-text-subtle)]">{t("suggestionsLabel")}</span>
         {quickPrompts.map((p, idx) => (
           <button
             key={idx}
@@ -189,7 +193,7 @@ export function AIBookingCopilot({ companySlug, onApplyIntent }: Props) {
         <div className="mt-4 p-4 rounded-[var(--radius-card)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)] space-y-3 animate-in fade-in relative z-10 shadow-2xs">
           <div className="flex items-center justify-between text-xs font-bold text-[var(--color-success)] border-b border-[var(--color-border)] pb-2">
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-[var(--color-success)]" /> IA identificou com {result.confidenceScore}% de confiança
+              <CheckCircle2 className="w-4 h-4 text-[var(--color-success)]" /> {t("confidence", { score: result.confidenceScore })}
             </span>
             <span className="text-[var(--text-2xs)] font-mono text-[var(--color-text-subtle)]">Google Gemini Flash Engine</span>
           </div>
@@ -199,7 +203,7 @@ export function AIBookingCopilot({ companySlug, onApplyIntent }: Props) {
               <div className="bg-[var(--color-bg)] p-3 rounded-[var(--radius-control)] border border-[var(--color-border)] flex items-center gap-2.5 shadow-2xs">
                 <Scissors className="w-4 h-4 text-[var(--color-text)]" />
                 <div>
-                  <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] font-bold block">Serviço:</span>
+                  <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] font-bold block">{t("serviceLabel")}</span>
                   <strong className="text-[var(--color-text-heading)] font-semibold">{result.matchedServiceName}</strong>
                 </div>
               </div>
@@ -209,7 +213,7 @@ export function AIBookingCopilot({ companySlug, onApplyIntent }: Props) {
               <div className="bg-[var(--color-bg)] p-3 rounded-[var(--radius-control)] border border-[var(--color-border)] flex items-center gap-2.5 shadow-2xs">
                 <User className="w-4 h-4 text-[var(--color-text)]" />
                 <div>
-                  <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] font-bold block">Especialista:</span>
+                  <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] font-bold block">{t("professionalLabel")}</span>
                   <strong className="text-[var(--color-text-heading)] font-semibold">{result.matchedProfessionalName}</strong>
                 </div>
               </div>
@@ -218,9 +222,9 @@ export function AIBookingCopilot({ companySlug, onApplyIntent }: Props) {
             <div className="bg-[var(--color-bg)] p-3 rounded-[var(--radius-control)] border border-[var(--color-border)] flex items-center gap-2.5 shadow-2xs">
               <Clock className="w-4 h-4 text-[var(--color-text)]" />
               <div>
-                <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] font-bold block">Horário Sugerido:</span>
+                <span className="text-[var(--text-2xs)] text-[var(--color-text-subtle)] font-bold block">{t("timeLabel")}</span>
                 <strong className="text-[var(--color-text-heading)] font-semibold">
-                  {result.exactTime ? `Às ${result.exactTime}` : result.timePreference} {result.targetDateStr ? `(${result.targetDateStr})` : ""}
+                  {result.exactTime ? t("atTime", { time: result.exactTime }) : result.timePreference} {result.targetDateStr ? `(${result.targetDateStr})` : ""}
                 </strong>
               </div>
             </div>

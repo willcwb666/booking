@@ -112,8 +112,33 @@ async function seed() {
 }
 
 async function cleanup() {
-  await db.companyUser.deleteMany({ where: { companyId: { in: [A.company, B.company] } } });
-  await db.company.deleteMany({ where: { id: { in: [A.company, B.company] } } });
+  const ids = [A.company, B.company];
+
+  /**
+   * A ordem importa, e a lista precisa ser completa.
+   *
+   * Este `cleanup` apagava empresa e usuario e mais nada. Enquanto nenhum caso
+   * chegava a criar orcamento, funcionava. No primeiro caso que criou — e que
+   * falhou no meio — sobrou um `estimate_service_type` apontando para um tipo
+   * de servico da empresa, e a partir dali TODA execucao seguinte da suite
+   * morria na chave estrangeira, antes mesmo do primeiro `it`.
+   *
+   * O sintoma nao aponta para a causa: a falha aparece no `deleteMany` da
+   * empresa, num arquivo que passou a quebrar sozinho sem ninguem ter mexido
+   * nele.
+   */
+  await db.bookingCustomerDetail.deleteMany({ where: { booking: { companyId: { in: ids } } } });
+  await db.bookingHomeAccess.deleteMany({ where: { booking: { companyId: { in: ids } } } });
+  await db.bookingSlot.deleteMany({ where: { agenda: { companyId: { in: ids } } } });
+  await db.booking.deleteMany({ where: { companyId: { in: ids } } });
+  await db.estimateServiceType.deleteMany({ where: { estimate: { companyId: { in: ids } } } });
+  await db.estimate.deleteMany({ where: { companyId: { in: ids } } });
+  await db.serviceType.deleteMany({ where: { service: { companyId: { in: ids } } } });
+  await db.service.deleteMany({ where: { companyId: { in: ids } } });
+  await db.bookingConfig.deleteMany({ where: { companyId: { in: ids } } });
+  await db.agenda.deleteMany({ where: { companyId: { in: ids } } });
+  await db.companyUser.deleteMany({ where: { companyId: { in: ids } } });
+  await db.company.deleteMany({ where: { id: { in: ids } } });
   await db.user.deleteMany({ where: { id: { in: [A.user, B.user] } } });
 }
 
