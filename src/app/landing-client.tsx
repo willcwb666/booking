@@ -79,7 +79,13 @@ const LANGUAGES: Array<{ code: LangCode; label: string; flag: string; countryNam
 ];
 
 // ─── Multi-Language Dictionary ─────────────────────────────────────────────
-const DICTIONARY: Record<LangCode, any> = {
+/**
+ * Sem anotação de tipo: o TypeScript infere a forma a partir das próprias
+ * traduções. Era `Record<LangCode, any>`, que calava o compilador sobre TODO
+ * acesso a `t.` — um `t.hero.titulo` inexistente compilava e renderizava
+ * `undefined` na página inicial.
+ */
+const DICTIONARY = {
   pt: {
     nav: { howItWorks: "Como Funciona", features: "Recursos", industries: "Segmentos", pricing: "Preços", faq: "FAQ", signIn: "Entrar", createBusiness: "Criar Empresa" },
     highlights: [
@@ -709,10 +715,10 @@ const langMenuRef = useRef<HTMLDivElement>(null);
 
   const t = DICTIONARY[lang] || DICTIONARY.pt;
   const currentLangObj = LANGUAGES.find((l) => l.code === lang) || LANGUAGES[0];
-  const currentPreset = t.industries.presets.find((b: any) => b.id === selectedTab) || t.industries.presets[0];
+  const currentPreset = t.industries.presets.find((b) => b.id === selectedTab) || t.industries.presets[0];
 
   // FAQ Items formatted for JSON-LD schema
-  const faqSchemaItems = t.faq.items.map((item: any) => ({
+  const faqSchemaItems = t.faq.items.map((item) => ({
     question: item.q,
     answer: item.a,
   }));
@@ -887,12 +893,12 @@ const langMenuRef = useRef<HTMLDivElement>(null);
 
                 {/* Segment Selector Chips */}
                 <div className="flex flex-wrap items-center gap-1.5 mb-5 pb-3 border-b border-[var(--color-border)]">
-                  {t.industries.presets.map((b: any) => (
+                  {t.industries.presets.map((b) => (
                     <button
                       key={b.id}
                       type="button"
                       onClick={() => {
-                        setSelectedTab(b.id as any);
+                        setSelectedTab(b.id as typeof selectedTab);
                         setDemoConfirmed(false);
                       }}
                       className={`px-3 py-1 rounded-[var(--radius-control)] text-xs font-bold transition-all ${
@@ -1077,7 +1083,7 @@ const langMenuRef = useRef<HTMLDivElement>(null);
             </div>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {t.sla.items.map((item: any, idx: number) => (
+              {t.sla.items.map((item, idx: number) => (
                 <div
                   key={idx}
                   className="card-tactile p-7 rounded-[var(--radius-panel)] bg-[var(--color-bg-subtle)] border border-[var(--color-border)] space-y-3 flex flex-col justify-between hover:bg-[var(--color-bg)] hover:border-[var(--color-border-strong)] transition-all shadow-2xs"
@@ -1115,7 +1121,7 @@ const langMenuRef = useRef<HTMLDivElement>(null);
             </div>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {t.workflow.steps.map((item: any, idx: number) => (
+              {t.workflow.steps.map((item, idx: number) => (
                 <div key={idx} className="card-tactile p-8 rounded-[var(--radius-panel)] bg-[var(--color-bg)] border border-[var(--color-border)] space-y-4 hover:border-[var(--color-border-strong)] transition-all shadow-xs relative">
                   <span className="text-2xl font-mono text-[var(--color-text-heading)] font-semibold">{item.num}</span>
                   <h3 className="font-semibold text-[var(--color-text-heading)] text-lg">{item.title}</h3>
@@ -1181,11 +1187,11 @@ const langMenuRef = useRef<HTMLDivElement>(null);
 
               {/* Segment Tabs with Tactile Interactive Chips */}
               <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
-                {t.industries.presets.map((b: any) => (
+                {t.industries.presets.map((b) => (
                   <button
                     key={b.id}
                     type="button"
-                    onClick={() => setSelectedTab(b.id as any)}
+                    onClick={() => setSelectedTab(b.id as typeof selectedTab)}
                     className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all ${
                       selectedTab === b.id
                         ? "bg-[var(--color-navy)] text-white font-semibold shadow-xs scale-105"
@@ -1352,7 +1358,7 @@ const langMenuRef = useRef<HTMLDivElement>(null);
             </div>
 
             <div className="space-y-3.5">
-              {t.faq.items.map((faq: any, idx: number) => (
+              {t.faq.items.map((faq, idx: number) => (
                 <div key={idx} className="border border-[var(--color-border)] rounded-[var(--radius-card)] overflow-hidden bg-[var(--color-bg)] shadow-2xs card-tactile">
                   <button
                     onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}

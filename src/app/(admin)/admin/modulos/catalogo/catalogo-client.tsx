@@ -30,7 +30,7 @@ type Props = {
 
 const CATEGORY_MAP: Record<
   string,
-  { label: string; bg: string; text: string; border: string; icon: any }
+  { label: string; bg: string; text: string; border: string; icon: React.ComponentType<{ className?: string }> }
 > = {
   ALL: {
     label: "Todos os Add-ons",

@@ -146,7 +146,7 @@ export function SettingsClient({
   // Botão Salvar Global Habilita apenas se houver mudanças (isDirty)
   const isDirty = JSON.stringify(formState) !== JSON.stringify(initialFormState);
 
-  function handleChange(field: string, value: any) {
+  function handleChange(field: string, value: string | number | boolean | null) {
     setFormState((prev) => ({ ...prev, [field]: value }));
   }
 

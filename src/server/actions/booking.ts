@@ -1123,7 +1123,7 @@ export async function rescheduleBookingAction(
   }
 
   // Verificação dinâmica de antecedência mínima configurada na empresa
-  const minNoticeHours = (booking.company as any).minCancellationNoticeHours ?? 24;
+  const minNoticeHours = booking.company.minCancellationNoticeHours ?? 24;
   const [sYear, sMonth, sDay] = booking.scheduledDate.split("-").map(Number);
   const [sHour, sMin] = booking.scheduledStartTime.split(":").map(Number);
   const appointmentTime = new Date(sYear, sMonth - 1, sDay, sHour, sMin);

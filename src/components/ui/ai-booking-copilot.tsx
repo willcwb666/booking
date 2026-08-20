@@ -53,7 +53,7 @@ export function AIBookingCopilot({ companySlug, onApplyIntent }: Props) {
       recognition.onend = () => setIsListening(false);
       recognition.onerror = () => setIsListening(false);
 
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => {
         const transcript = event.results[0][0].transcript;
         if (transcript) {
           setQuery(transcript);

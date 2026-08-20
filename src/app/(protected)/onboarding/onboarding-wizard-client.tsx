@@ -12,6 +12,17 @@ import {
 import { createCompanyWizardAction, type WizardPayload } from "@/server/actions/company";
 import { toast } from "@/lib/toast-service";
 
+/** Forma de um preset como a rota `/api/presets` o devolve. */
+type PresetApiRow = {
+  id: string;
+  title: string;
+  description?: string | null;
+  defaultPrice: number | string;
+  durationMin: number;
+  isExtra?: boolean;
+  parentTitle?: string | null;
+};
+
 type PlanItem = {
   id: string;
   tier: string;
@@ -150,12 +161,12 @@ export function OnboardingWizardClient({
         if (res.ok) {
           const data = await res.json();
           if (data.segments && data.segments.length > 0) {
-            const mapped = data.segments.map((s: any) => ({
+            const mapped = data.segments.map((s: { code: string; label: string }) => ({
               value: s.code,
               label: s.label,
             }));
             setSegmentsList(mapped);
-            setBusinessType((prev) => mapped.some((m: any) => m.value === prev) ? prev : mapped[0].value);
+            setBusinessType((prev) => mapped.some((m: { value: string }) => m.value === prev) ? prev : mapped[0].value);
           }
         }
       } catch {
@@ -175,7 +186,7 @@ export function OnboardingWizardClient({
         const res = await fetch(`/api/presets?businessType=${businessType}`);
         if (res.ok) {
           const data = await res.json();
-          const items: PresetService[] = (data.presets || []).map((p: any) => ({
+          const items: PresetService[] = (data.presets || []).map((p: PresetApiRow) => ({
             id: p.id,
             title: p.title,
             description: p.description,
@@ -260,7 +271,7 @@ export function OnboardingWizardClient({
         const res = await fetch(`/api/presets?businessType=${businessType}`);
         if (res.ok) {
           const data = await res.json();
-          activePresets = (data.presets || []).map((p: any) => ({
+          activePresets = (data.presets || []).map((p: PresetApiRow) => ({
             id: p.id,
             title: p.title,
             description: p.description,

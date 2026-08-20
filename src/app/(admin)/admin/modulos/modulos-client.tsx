@@ -529,7 +529,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
               {wizardStep > 1 ? (
                 <button
                   type="button"
-                  onClick={() => setWizardStep((wizardStep - 1) as any)}
+                  onClick={() => setWizardStep((wizardStep - 1) as typeof wizardStep)}
                   className="px-4 py-2 bg-[var(--color-bg-muted)] text-[var(--color-text)] font-bold text-xs rounded-[var(--radius-card)]"
                 >
                   Voltar
@@ -548,7 +548,7 @@ export function AdminModulosClient({ modules, companies, segments, activeLicense
                       toast.error("Atenção", "Selecione ao menos 1 módulo.");
                       return;
                     }
-                    setWizardStep((wizardStep + 1) as any);
+                    setWizardStep((wizardStep + 1) as typeof wizardStep);
                   }}
                   className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold text-xs rounded-[var(--radius-card)] shadow-xs"
                 >

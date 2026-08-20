@@ -9,8 +9,8 @@ import { SEARCH_ALIASES, kebabToPascal, normalizeStr } from "@/components/ui/ser
 // Canonical kebab-case names (from dynamicIconImports) that also have a static
 // component in the `icons` map — guarantees the stored value renders both here
 // (static grid) and on public pages (via DynamicIcon).
-const ALL_ICONS: Array<{ name: string; Comp: React.ComponentType<any> }> = Object.keys(dynamicIconImports)
-  .map((name) => ({ name, Comp: (icons as any)[kebabToPascal(name)] as React.ComponentType<any> }))
+const ALL_ICONS: Array<{ name: string; Comp: React.ComponentType<{ className?: string }> }> = Object.keys(dynamicIconImports)
+  .map((name) => ({ name, Comp: (icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[kebabToPascal(name)] as React.ComponentType<{ className?: string }> }))
   .filter((i) => Boolean(i.Comp))
   .sort((a, b) => a.name.localeCompare(b.name));
 

@@ -13,7 +13,7 @@ declare global {
           "error-callback"?: () => void;
           "expired-callback"?: () => void;
           theme?: "light" | "dark" | "auto";
-          size?: "normal" | "compact" | "invisible";
+          size?: "normal" | "compact" | "invisible" | "flexible";
         }
       ) => string;
       reset: (widgetId?: string) => void;
@@ -25,14 +25,14 @@ type TurnstileProps = {
   onVerify: (token: string) => void;
   siteKey?: string;
   theme?: "light" | "dark" | "auto";
-  size?: "normal" | "compact" | "invisible";
+  size?: "normal" | "compact" | "invisible" | "flexible";
 };
 
 export function CloudflareTurnstile({
   onVerify,
   siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
   theme = "auto",
-  size = "flexible" as any,
+  size = "flexible",
 }: TurnstileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);

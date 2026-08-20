@@ -79,7 +79,7 @@ export async function getCompanyStripeSubscriptionsAction(companySlug: string): 
       const price = lineItem?.price;
       // `payment_intent`/`current_period_end` saíram dos tipos na API dahlia,
       // mas seguem no payload — acesso via any
-      const latestInvoice = typeof s.latest_invoice === "object" ? (s.latest_invoice as any) : null;
+      const latestInvoice = typeof s.latest_invoice === "object" ? (s.latest_invoice as unknown as { id?: string; payment_intent?: string | { id?: string } | null }) : null;
       const piId =
         latestInvoice && typeof latestInvoice.payment_intent === "string"
           ? latestInvoice.payment_intent
@@ -90,7 +90,7 @@ export async function getCompanyStripeSubscriptionsAction(companySlug: string): 
       return {
         id: s.id,
         status: s.status,
-        planName: (price?.product as any)?.name || price?.nickname || "Plano SaaS",
+        planName: (price?.product as { name?: string } | undefined)?.name || price?.nickname || "Plano SaaS",
         amount: (price?.unit_amount ?? 0) / 100,
         currency: (price?.currency ?? "BRL").toUpperCase(),
         interval: price?.recurring?.interval ?? "month",
@@ -138,7 +138,7 @@ export async function cancelSpecificSubscriptionWithRefundAction({
 
     let refundMsg = "";
     if (issueRefund) {
-      const invoice = typeof sub.latest_invoice === "object" ? (sub.latest_invoice as any) : null;
+      const invoice = typeof sub.latest_invoice === "object" ? (sub.latest_invoice as unknown as { id?: string; payment_intent?: string | { id?: string } | null }) : null;
       const piId =
         invoice && typeof invoice.payment_intent === "string"
           ? invoice.payment_intent

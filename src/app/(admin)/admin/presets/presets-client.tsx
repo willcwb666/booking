@@ -18,7 +18,7 @@ type PresetItem = {
   businessType: string;
   title: string;
   description: string | null;
-  defaultPrice: any;
+  defaultPrice: number | string;
   durationMin: number;
   isExtra: boolean;
   parentTitle: string | null;
@@ -55,7 +55,7 @@ export function PresetsClient({ initialPresets }: { initialPresets: PresetItem[]
           const data = await res.json();
           if (data.segments && data.segments.length > 0) {
             const map: Record<string, string> = {};
-            data.segments.forEach((s: any) => {
+            data.segments.forEach((s: { code: string; label: string }) => {
               map[s.code] = s.label;
             });
             setSegmentsMap(map);
