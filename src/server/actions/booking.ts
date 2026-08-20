@@ -13,8 +13,15 @@ import { createPixPayment } from "@/lib/mercadopago";
 import { triggerWebhooks } from "@/lib/webhooks";
 import { createCalendarEvent } from "@/lib/google-calendar";
 import { isSlotAvailable, resolveProfessionalForSlot, slotProfessionalKey } from "@/lib/agenda";
-import { calculateCancellationRefund, computeBookingCharge, roundMoney, toStripeCents } from "@/lib/pricing";
+import {
+  calculateCancellationRefund,
+  computeBookingCharge,
+  giftCardChargeableAmount,
+  roundMoney,
+  toStripeCents,
+} from "@/lib/pricing";
 import { notifyWaitlistForDate } from "@/lib/waitlist-notify";
+import { restoreBookingCredits } from "@/lib/booking-reversal";
 import { resolveDeposit } from "@/lib/trust-tier";
 import { findOffPeakDiscount } from "@/lib/off-peak";
 import { getCustomerTrust } from "@/server/queries/customer-trust";
@@ -451,7 +458,14 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
       // ── Gift Card / Vale-Presente: débito atômico sobre o valor após desconto ──
       let giftCardDebit = 0;
       if (giftCardCode && !membershipCovered) {
-        const amountBeforeGift = roundMoney(Math.max(0, Number(estimate.total) - membershipDiscount));
+        // O teto sai do motor de preço, com o desconto de horário ocioso
+        // incluído. Calculá-lo aqui de novo foi como o desconto ficou de fora e
+        // o saldo do cliente virou fumaça.
+        const amountBeforeGift = giftCardChargeableAmount({
+          total: Number(estimate.total),
+          offPeakDiscount: offPeak?.discountAmount ?? 0,
+          membershipDiscount,
+        });
         if (amountBeforeGift > 0) {
           const card = await tx.giftCard.findFirst({
             where: {
@@ -831,29 +845,75 @@ export async function cancelBookingAction(formData: FormData): Promise<CancelRes
       },
     });
     await tx.bookingSlot.deleteMany({ where: { bookingId } });
+
+    /**
+     * Devolve o que o cliente gastou e não é dinheiro.
+     *
+     * Isto só rodava quando o PAGAMENTO FALHAVA. No cancelamento comum — o
+     * cliente ligando para desmarcar — o saldo do vale-presente e o crédito de
+     * sessão do plano simplesmente sumiam: serviço de 100 pago com 40 de vale e
+     * 60 no cartão devolvia 60 e engolia 40.
+     */
+    await restoreBookingCredits(tx, bookingId);
   });
 
   // Issue refund if paid by card
   if (booking.stripePaymentIntentId && booking.paymentStatus === "PAID") {
-    const originalTotal = Number(booking.estimate?.total ?? 0);
+    /**
+     * A base do estorno é o que foi COBRADO, não o total do orçamento.
+     *
+     * Os dois divergem sempre que a empresa cobra sinal, o cliente usa vale ou
+     * pega desconto de horário ocioso. Com sinal de 30% sobre 100, o cartão viu
+     * 30 — e o cálculo antigo pedia ao Stripe um estorno de 100 menos a taxa.
+     * O Stripe recusa estorno maior que a cobrança, então a action explodia com
+     * o agendamento JÁ cancelado no banco e o dinheiro parado: nem estornado,
+     * nem marcado como estornado.
+     *
+     * `amount_received` é a autoridade sobre quanto entrou.
+     */
+    let chargedAmount = 0;
+    try {
+      const pi = await stripe.paymentIntents.retrieve(booking.stripePaymentIntentId);
+      chargedAmount = (pi.amount_received ?? 0) / 100;
+    } catch (err) {
+      console.error("[cancelBookingAction] não foi possível ler o pagamento:", err);
+      return {
+        success: false,
+        errors: {
+          _: ["Não foi possível consultar o pagamento para estornar. Tente novamente."],
+        },
+      };
+    }
+
     const { refundAmount, isFullRefund } = calculateCancellationRefund({
-      total: originalTotal,
+      total: chargedAmount,
       cancellationFee: cancelFeeAmount,
       isLateCancellation,
     });
 
-    if (isFullRefund) {
-      await stripe.refunds.create({ payment_intent: booking.stripePaymentIntentId });
-    } else if (refundAmount > 0) {
-      await stripe.refunds.create({
-        payment_intent: booking.stripePaymentIntentId,
-        amount: toStripeCents(refundAmount),
-      });
+    let refundedAmount = 0;
+    if (chargedAmount > 0) {
+      if (isFullRefund) {
+        const r = await stripe.refunds.create({ payment_intent: booking.stripePaymentIntentId });
+        refundedAmount = (r.amount ?? 0) / 100;
+      } else if (refundAmount > 0) {
+        const r = await stripe.refunds.create({
+          payment_intent: booking.stripePaymentIntentId,
+          amount: toStripeCents(refundAmount),
+        });
+        refundedAmount = (r.amount ?? 0) / 100;
+      }
     }
 
     await db.booking.update({
       where: { id: bookingId },
-      data: { paymentStatus: "REFUNDED" },
+      data: {
+        paymentStatus: "REFUNDED",
+        // O quanto e o quando ficavam sem registro neste caminho, ao contrário
+        // do estorno manual. Sem isso o extrato não fecha com o do gateway.
+        refundAmount: refundedAmount,
+        refundedAt: new Date(),
+      },
     });
   }
 
@@ -1171,6 +1231,17 @@ export async function completeBookingWithAdjustmentsAction(
     include: { estimate: true },
   });
   if (!booking) return { success: false, error: "Agendamento não encontrado" };
+
+  /**
+   * Concluir duas vezes não é um clique a mais — é dinheiro a mais.
+   *
+   * Este caminho credita pontos de fidelidade, dispara a fatura ao cliente e
+   * reescreve o total do orçamento. Sem esta guarda, dois cliques no botão de
+   * concluir faziam tudo isso duas vezes.
+   */
+  if (booking.status === "COMPLETED") {
+    return { success: false, error: "Este atendimento já foi concluído." };
+  }
 
   // Validação de integridade de data: Agendamentos futuros NÃO podem ser concluídos
   const todayStr = new Date().toISOString().split("T")[0];

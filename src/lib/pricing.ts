@@ -92,6 +92,34 @@ export function calculateCancellationRefund(params: {
   return { refundAmount: total, feeApplied: 0, isFullRefund: true };
 }
 
+/**
+ * Teto do que um gift card pode abater neste agendamento.
+ *
+ * ─── Por que esta função existe ──────────────────────────────────────────────
+ *
+ * A ordem da cascata estava certa em `computeBookingCharge`, mas o débito de
+ * verdade — o que sai do saldo do cliente, dentro da transação — era calculado
+ * à parte, e usava só `total - membershipDiscount`. O desconto de horário
+ * ocioso ficava de fora.
+ *
+ * O resultado: com serviço de 100, desconto ocioso de 20 e vale de 100, o
+ * cliente era debitado em 100 por um atendimento de 80. `computeBookingCharge`
+ * depois prendia o valor devido em zero, e os 20 de saldo evaporavam — o
+ * cliente perdia dinheiro pelo crime de agendar num horário que a empresa
+ * queria preencher.
+ *
+ * A regra passa a morar ao lado da cascata que ela precisa respeitar. Duas
+ * contas separadas para a mesma pergunta é como a divergência nasce.
+ */
+export function giftCardChargeableAmount(params: {
+  total: number;
+  offPeakDiscount?: number;
+  membershipDiscount?: number;
+}): number {
+  const afterOffPeak = roundMoney(Math.max(0, params.total - (params.offPeakDiscount ?? 0)));
+  return roundMoney(Math.max(0, afterOffPeak - (params.membershipDiscount ?? 0)));
+}
+
 export type BookingChargeBreakdown = {
   /** Valor devido pelo cliente após cobertura de plano, desconto e gift card. */
   amountDue: number;
@@ -128,8 +156,9 @@ export function computeBookingCharge(params: {
     return { amountDue: 0, onlineCharge: 0 };
   }
 
-  const afterOffPeak = roundMoney(Math.max(0, params.total - (params.offPeakDiscount ?? 0)));
-  const afterDiscount = roundMoney(Math.max(0, afterOffPeak - params.membershipDiscount));
+  // A MESMA conta que define o teto do gift card. Enquanto eram duas, uma
+  // esqueceu o desconto de horário ocioso e o saldo do cliente evaporava.
+  const afterDiscount = giftCardChargeableAmount(params);
   const amountDue = roundMoney(Math.max(0, afterDiscount - params.giftCardDebit));
 
   const onlineCharge =

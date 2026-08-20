@@ -873,6 +873,10 @@ model Booking {
   cancelledBy            User?                  @relation("BookingCancelledBy", fields: [cancelledById], references: [id])
   cancellationReason     String?
   refundAmount           Decimal?               @db.Decimal(10, 2)
+  /// Marca de que os pontos de fidelidade deste atendimento já foram creditados.
+  /// Ponto é moeda: sem esta marca, concluir o mesmo atendimento duas vezes
+  /// creditava duas vezes.
+  loyaltyAwardedAt       DateTime?
   refundedAt             DateTime?
   // Chegada confirmada pelo cliente. Sem este campo o check-in não deixava
   // rastro: o estado "já fez check-in" era inalcançável e o operador não

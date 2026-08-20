@@ -18,6 +18,21 @@ export async function awardLoyaltyPointsForBooking(bookingId: string, amountPaid
 
     if (!booking || !booking.customerDetail?.email) return;
 
+    /**
+     * Credita UMA vez por atendimento.
+     *
+     * A marca é gravada antes de somar, com `updateMany` condicional: duas
+     * chamadas simultâneas disputam a mesma linha e só uma vê `count === 1`.
+     * Sem isso, concluir o atendimento duas vezes — dois cliques, ou reabrir e
+     * concluir de novo — creditava os pontos duas vezes. Ponto vira desconto e
+     * vira serviço: creditar em dobro é emitir dinheiro.
+     */
+    const claim = await db.booking.updateMany({
+      where: { id: bookingId, loyaltyAwardedAt: null },
+      data: { loyaltyAwardedAt: new Date() },
+    });
+    if (claim.count !== 1) return;
+
     const email = booking.customerDetail.email.toLowerCase().trim();
     const rawProgram = await db.$queryRawUnsafe<Array<{
       isEnabled: boolean;

@@ -6,6 +6,7 @@ import {
   calculateCancellationRefund,
   resolveOnlineChargeAmount,
   computeBookingCharge,
+  giftCardChargeableAmount,
 } from "./pricing";
 
 describe("toStripeCents", () => {
@@ -245,5 +246,76 @@ describe("computeBookingCharge — desconto de horário ocioso", () => {
       membershipCovered: true,
     });
     expect(r.amountDue).toBe(0);
+  });
+});
+
+/**
+ * O teto do gift card.
+ *
+ * Este bloco existe por causa de um bug real: o débito do vale era calculado
+ * fora do motor de preço e ignorava o desconto de horário ocioso. O cliente
+ * pagava 100 de saldo por um atendimento de 80, e os 20 sumiam.
+ */
+describe("giftCardChargeableAmount", () => {
+  it("desconta o horário ocioso antes de olhar para o vale", () => {
+    // O caso que estava errado em produção.
+    expect(giftCardChargeableAmount({ total: 100, offPeakDiscount: 20 })).toBe(80);
+  });
+
+  it("desconta plano e horário ocioso, nesta ordem", () => {
+    expect(
+      giftCardChargeableAmount({ total: 100, offPeakDiscount: 20, membershipDiscount: 8 })
+    ).toBe(72);
+  });
+
+  it("nunca fica negativo", () => {
+    expect(giftCardChargeableAmount({ total: 50, offPeakDiscount: 90 })).toBe(0);
+    expect(
+      giftCardChargeableAmount({ total: 50, offPeakDiscount: 30, membershipDiscount: 40 })
+    ).toBe(0);
+  });
+
+  it("sem descontos é o total cheio", () => {
+    expect(giftCardChargeableAmount({ total: 137.5 })).toBe(137.5);
+  });
+
+  it("é exatamente o valor devido antes do vale", () => {
+    /**
+     * A invariante que impede o bug de voltar: o teto do débito e a base da
+     * cascata precisam ser o MESMO número. Se alguém reescrever uma das duas
+     * contas, este caso quebra.
+     */
+    const cases = [
+      { total: 100, offPeakDiscount: 20, membershipDiscount: 0 },
+      { total: 100, offPeakDiscount: 0, membershipDiscount: 15 },
+      { total: 249.9, offPeakDiscount: 37.49, membershipDiscount: 12.25 },
+      { total: 80, offPeakDiscount: 80, membershipDiscount: 0 },
+    ];
+
+    for (const c of cases) {
+      const teto = giftCardChargeableAmount(c);
+      // Gastando exatamente o teto, não sobra nada a pagar e nada se perde.
+      const r = computeBookingCharge({
+        ...c,
+        membershipCovered: false,
+        giftCardDebit: teto,
+        requireDeposit: false,
+        depositPercentage: 0,
+      });
+      expect(r.amountDue).toBe(0);
+
+      // E um centavo a menos deixa exatamente um centavo devido — prova que o
+      // teto não está acima do devido.
+      if (teto > 0) {
+        const r2 = computeBookingCharge({
+          ...c,
+          membershipCovered: false,
+          giftCardDebit: teto - 0.01,
+          requireDeposit: false,
+          depositPercentage: 0,
+        });
+        expect(r2.amountDue).toBe(0.01);
+      }
+    }
   });
 });
