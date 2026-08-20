@@ -44,8 +44,8 @@ menor. As features abaixo defendem essa posição; não a substituem.
 | 13 | Estoque | ✅ **Concluído** — `f273dfb`, só o alerta | — |
 | 02 | Kreator Pass | ✅ **Concluído** — `4404d96` | — |
 | 11 | Drive-time & buffer de trânsito | ✅ **Concluído** — `6124589`, haversine | — |
-| 09 | Before/After Vault | **Fazer o cofre, não a IA** | 5–6 d |
-| 14 | Metas da equipe | **Fazer só o painel individual** | 3 d |
+| 09 | Before/After Vault | ✅ **Concluído** — `25d5424`, o cofre, sem a IA | — |
+| 14 | Metas da equipe | ✅ **Concluído** — `b77be8b` + `542c9d7` | — |
 | 01 | i18n autônoma | **Fazer depois** — DDI agora, cache de tradução depois | 4–6 d |
 | 10 | Family & Group Booking | **Reduzir escopo drasticamente** | 10–15 d |
 | 07 | AI WhatsApp Receptionist | **Por último**, como add-on licenciado | 20–30 d |
@@ -70,9 +70,9 @@ Os três atacavam perda direta de receita e risco de conta.
 Tudo calculado sobre dado que já existe. Nenhuma integração externa nova — e
 assim ficou: nenhum dos quatro precisou de serviço de terceiro.
 
-### Bloco 3 — Diferenciação (4–6 semanas) — **em andamento**
-~~`02 Kreator Pass`~~ → ~~`11 drive-time`~~ → `09 vault` →
-`14 painel individual`
+### Bloco 3 — Diferenciação — ✅ concluído
+~~`02 Kreator Pass`~~ → ~~`11 drive-time`~~ → ~~`09 vault`~~ →
+~~`14 painel individual`~~
 
 ### Bloco 4 — A aposta
 `07 AI Receptionist`, como módulo licenciado (`SystemModule` +
@@ -628,7 +628,7 @@ falsa precisão. Faz sentido como refinamento para quem paga, não como base.
 
 ---
 
-## 09. Before/After Vault
+## 09. Before/After Vault — ✅ CONCLUÍDO (`25d5424`, 2026-08-20)
 
 **Veredito: fazer o cofre. Não fazer a IA que "anota a fórmula".**
 
@@ -662,7 +662,7 @@ jurisdições. Requisitos mínimos:
 
 ---
 
-## 14. Metas da equipe
+## 14. Metas da equipe — ✅ CONCLUÍDO (`b77be8b` + `542c9d7`, 2026-08-20)
 
 **Veredito: fazer o painel individual. Ranking público, opcional e desligado por
 padrão.**
@@ -851,6 +851,19 @@ age sobre a conversão do trial, que é onde o funil vaza mais.
 
 ## Histórico
 
+- **2026-08-20** — Bloco 3 fechado e uma auditoria que mudou a prioridade do
+  dia. **Item 09** (`25d5424`): o cofre, sem a IA que "anota a fórmula pela
+  foto" — a fórmula não está na imagem, está na cabeça de quem aplicou.
+  **Item 14** (`b77be8b` + `542c9d7`): painel do dia contra a meta própria, com
+  ranking opcional cuja trava fica na consulta, não na tela.
+  **Auditoria**: o `prisma migrate deploy` num banco vazio não funcionava — dez
+  tabelas, `customer` entre elas, sem migration nenhuma; a cadeia morria na
+  migration 29. Também fechados um IDOR no atendimento de balcão e quatro
+  defeitos nos fluxos de dinheiro, três deles custando do cliente (saldo de
+  vale evaporando no desconto ocioso, vale e sessão perdidos no cancelamento,
+  estorno parcial calculado sobre o total errado, pontos de fidelidade em
+  dobro). Lição de método registrada: dois testes meus passavam com o furo
+  aberto — toda correção passou a ser verificada revertendo-a primeiro.
 - **2026-08-19 (noite, 2)** — **Item 11** concluído (`6124589`): reserva de
   tempo de viagem entre atendimentos consecutivos, em linha reta, sem Google.
   Três correções ao escopo da ficha — reserva nas duas pontas da janela, teto
