@@ -10,5 +10,10 @@ export default defineConfig({
   },
   datasource: {
     url: process.env["DATABASE_URL"],
+    // Banco descartável que o Prisma usa para reconstruir o histórico de
+    // migrations e comparar com o schema. Sem ele, `migrate diff
+    // --from-migrations` não roda — e foi justamente essa comparação que
+    // revelou nove tabelas no schema sem nenhuma migration que as criasse.
+    shadowDatabaseUrl: process.env["SHADOW_DATABASE_URL"],
   },
 });
