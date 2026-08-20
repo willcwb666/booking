@@ -46,8 +46,8 @@ menor. As features abaixo defendem essa posição; não a substituem.
 | 11 | Drive-time & buffer de trânsito | ✅ **Concluído** — `6124589`, haversine | — |
 | 09 | Before/After Vault | ✅ **Concluído** — `25d5424`, o cofre, sem a IA | — |
 | 14 | Metas da equipe | ✅ **Concluído** — `b77be8b` + `542c9d7` | — |
-| 01 | i18n autônoma | **Fazer depois** — DDI agora, cache de tradução depois | 4–6 d |
-| 10 | Family & Group Booking | **Reduzir escopo drasticamente** | 10–15 d |
+| 01 | i18n autônoma | ✅ **1.1 concluído** — `3168ce9`; 1.2 segue adiado | — |
+| 10 | Family & Group Booking | ✅ **v1 concluído** — `1e356ea` | — |
 | 07 | AI WhatsApp Receptionist | **Por último**, como add-on licenciado | 20–30 d |
 | 15 | Offline-first PWA | **Só leitura** — não fazer sync bidirecional | 1 d / — |
 
@@ -684,7 +684,7 @@ Deixar como chave por empresa, default off, e o dono decide.
 
 ---
 
-## 01. i18n autônoma
+## 01. i18n autônoma — ✅ 1.1 CONCLUÍDO (`3168ce9`, 2026-08-20)
 
 **Veredito: DDI agora (quase pronto), cache de tradução depois.**
 
@@ -729,7 +729,7 @@ Nunca dado de cliente.
 
 ---
 
-## 10. Family & Group Multi-Chair Booking
+## 10. Family & Group Multi-Chair Booking — ✅ v1 CONCLUÍDO (`1e356ea`, 2026-08-20)
 
 **Veredito: fazer, com escopo drasticamente menor que o proposto.**
 
@@ -745,6 +745,22 @@ Mesmo cliente, múltiplos serviços em sequência, um pagamento. Cobre
 "corte + barba" e boa parte de "pai e filho" na prática, porque na maioria dos
 casos não é preciso ser simultâneo. Reaproveita o `recurrenceGroupId` como
 padrão de agrupamento.
+
+### Correção ao escopo do v1
+`recurrenceGroupId` **não** foi reaproveitado. Um atendimento que ocupa N slots
+é **um** agendamento, não N — e isso dissolve sozinho os problemas listados
+acima como caros: não há cancelamento parcial, estorno parcial, comissão de
+quem, nem ponto de fidelidade para qual conta. Além disso `recurrenceGroupId`
+hoje é só escrito, nunca lido; a primeira funcionalidade que o ler vai definir
+o que ele significa, e carregá-lo com dois sentidos agora garantiria que essa
+funcionalidade nascesse errada.
+
+O v1 corrigiu de quebra um defeito que ninguém tinha visto: o fim do
+atendimento gravado era o fim do **slot da grade**, não a duração dos serviços.
+Noventa minutos de serviço ocupavam trinta, e os dois slots seguintes seguiam à
+venda. E `getAvailableSlots` bloqueava pelo horário de **início**, nunca pelo
+intervalo — o que só ficou visível quando o primeiro atendimento passou a
+ocupar mais de um slot.
 
 ### v2 — multi-cadeira simultâneo
 Só depois de o v1 estar em produção e o comportamento das operações derivadas
@@ -851,6 +867,13 @@ age sobre a conversão do trial, que é onde o funil vaza mais.
 
 ## Histórico
 
+- **2026-08-20 (noite)** — **Itens 01 e 10** fecham o roadmap. O 01 ganhou
+  inferência de mercado pelo DDI do telefone: a detecção por navegador erra
+  justamente em quem viaja ou tem o notebook em outro idioma, e o mercado
+  define moeda, que é carimbada em cada venda. O 10 entregou o v1 corrigindo um
+  defeito que ninguém tinha mapeado — a agenda vendia por cima de si mesma
+  sempre que o orçamento passava de um slot. Removidas 394 linhas de
+  `onboarding-client.tsx`, que não era importado por nada.
 - **2026-08-20** — Bloco 3 fechado e uma auditoria que mudou a prioridade do
   dia. **Item 09** (`25d5424`): o cofre, sem a IA que "anota a fórmula pela
   foto" — a fórmula não está na imagem, está na cabeça de quem aplicou.
