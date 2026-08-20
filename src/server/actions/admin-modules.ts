@@ -37,6 +37,48 @@ async function requireAdmin(): Promise<boolean> {
   return session?.user.role === "admin";
 }
 
+/**
+ * Forma das linhas do SQL cru.
+ *
+ * `$queryRawUnsafe` não é verificado pelo Prisma — o tipo aqui é uma DECLARAÇÃO
+ * do que a consulta devolve, e serve para o `.map()` abaixo ser conferido pelo
+ * compilador. Era `Array<any>`, que calava o compilador sobre o mapeamento
+ * inteiro: um nome de coluna trocado passava direto.
+ */
+type SystemModuleRow = {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  icon: string | null;
+  monthlyPrice: unknown;
+  lifetimePrice: unknown;
+  billingType: string | null;
+  category: string | null;
+  isActive: boolean | null;
+};
+
+type ActiveLicenseRow = {
+  id: string;
+  companyId: string;
+  companyName: string | null;
+  companySlug: string | null;
+  businessType: string | null;
+  moduleCode: string;
+  moduleName: string;
+  status: string;
+  expiresAt: Date | null;
+  grantedAt: Date | null;
+};
+
+type LicenseRow = {
+  id: string;
+  companyId: string;
+  moduleCode: string;
+  status: string;
+  expiresAt: Date | null;
+};
+
 async function ensureTablesExist() {
   await db.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "system_module" (
@@ -108,7 +150,7 @@ export async function getSystemModulesAction() {
       );
     }
 
-    const rows = await db.$queryRawUnsafe<Array<any>>(`SELECT * FROM "system_module" ORDER BY "name" ASC`);
+    const rows = await db.$queryRawUnsafe<Array<SystemModuleRow>>(`SELECT * FROM "system_module" ORDER BY "name" ASC`);
     const modules: SystemModule[] = rows.map((r) => ({
       id: r.id,
       code: r.code,
@@ -117,8 +159,8 @@ export async function getSystemModulesAction() {
       icon: r.icon || "Tag",
       monthlyPrice: Number(r.monthlyPrice || 0),
       lifetimePrice: Number(r.lifetimePrice || 0),
-      billingType: r.billingType || "SUBSCRIPTION",
-      category: r.category || "GROWTH",
+      billingType: (r.billingType || "SUBSCRIPTION") as SystemModule["billingType"],
+      category: (r.category || "GROWTH") as SystemModule["category"],
       isActive: r.isActive ?? true,
     }));
 
@@ -140,7 +182,7 @@ export async function getAllActiveCompanyLicensesAction(): Promise<{
 
   try {
     await ensureTablesExist();
-    const rows = await db.$queryRawUnsafe<Array<any>>(`
+    const rows = await db.$queryRawUnsafe<Array<ActiveLicenseRow>>(`
       SELECT 
         l.id,
         l."companyId",
@@ -167,7 +209,7 @@ export async function getAllActiveCompanyLicensesAction(): Promise<{
       businessType: r.businessType || "OTHER",
       moduleCode: r.moduleCode,
       moduleName: r.moduleName,
-      status: r.status,
+      status: r.status as ActiveCompanyLicenseRow["status"],
       expiresAt: r.expiresAt ? new Date(r.expiresAt).toISOString() : null,
       grantedAt: r.grantedAt ? new Date(r.grantedAt).toISOString() : new Date().toISOString(),
     }));
@@ -262,7 +304,7 @@ export async function renewModuleLicenseAction(
   if (!isAdmin) return { success: false, error: "Acesso não autorizado." };
 
   try {
-    const rows = await db.$queryRawUnsafe<Array<any>>(
+    const rows = await db.$queryRawUnsafe<Array<LicenseRow>>(
       `SELECT * FROM "company_module_license" WHERE "companyId" = $1 AND "moduleCode" = $2`,
       companyId,
       moduleCode

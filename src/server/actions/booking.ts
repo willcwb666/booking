@@ -35,6 +35,7 @@ import { getCustomerTrust } from "@/server/queries/customer-trust";
 import { randomUUID } from "crypto";
 import { enqueueNotification } from "@/lib/notification-outbox";
 import { enqueueReviewRequest } from "@/lib/review-request";
+import type { BookingStatus } from "@/generated/prisma/client";
 import {
   syncTravelBlocksForBooking,
   safeRefreshTravelBlocks,
@@ -889,8 +890,8 @@ export async function cancelBookingAction(formData: FormData): Promise<CancelRes
 
   // Calcular antecedência do cancelamento vs política da empresa
   const comp = booking.company;
-  const minNoticeHours = (comp as any).minCancellationNoticeHours ?? 24;
-  const cancelFeeAmount = Number((comp as any).cancellationFee ?? 0);
+  const minNoticeHours = comp.minCancellationNoticeHours ?? 24;
+  const cancelFeeAmount = Number(comp.cancellationFee ?? 0);
 
   const [sYear, sMonth, sDay] = booking.scheduledDate.split("-").map(Number);
   const [sHour, sMin] = booking.scheduledStartTime.split(":").map(Number);
@@ -1636,7 +1637,7 @@ export async function markBookingNoShowAction(payload: {
   await db.booking.update({
     where: { id: payload.bookingId },
     data: {
-      status: newStatus as any,
+      status: newStatus as BookingStatus,
       cancelledAt: new Date(),
       cancelledById: session.user.id,
       cancellationReason: reason,

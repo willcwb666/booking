@@ -164,6 +164,10 @@ export function CalendarTab({ companySlug, canEdit, bookingBaseUrl }: Props) {
                   <span>{isPending ? "Sincronizando..." : "Sincronizar Agora"}</span>
                 </button>
 
+{/* Navegação de DOCUMENTO, não de rota do app: `/api/auth/google-calendar`
+                    responde com um redirect para o consentimento do Google. `<Link>`
+                    faria navegação no cliente e o fluxo OAuth morreria no meio. */}
+                {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
                 <a
                   href="/api/auth/google-calendar"
                   className="text-xs font-bold text-[var(--color-text-subtle)] hover:text-[var(--color-text-heading)] hover:underline"
@@ -172,13 +176,17 @@ export function CalendarTab({ companySlug, canEdit, bookingBaseUrl }: Props) {
                 </a>
               </>
             ) : (
-              <a
-                href="/api/auth/google-calendar"
-                className="w-full text-center px-4 py-2.5 bg-[var(--color-info)] hover:bg-[var(--color-info)] text-white text-xs font-semibold rounded-[var(--radius-control)] transition-all shadow-xs inline-flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>Conectar com Google Calendar</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
+              <>
+                {/* Mesma razão do link acima: redirect de OAuth. */}
+                {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+                <a
+                  href="/api/auth/google-calendar"
+                  className="w-full text-center px-4 py-2.5 bg-[var(--color-info)] hover:bg-[var(--color-info)] text-white text-xs font-semibold rounded-[var(--radius-control)] transition-all shadow-xs inline-flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span>Conectar com Google Calendar</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </>
             )}
           </div>
         </div>

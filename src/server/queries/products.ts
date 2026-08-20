@@ -90,7 +90,7 @@ export async function getCompanyProducts(
   });
   if (!company) return { items: [], total: 0, page, pageSize, pageCount: 0 };
 
-  const where: any = {
+  const where: Record<string, unknown> = {
     companyId: company.id,
     isActive: true,
   };

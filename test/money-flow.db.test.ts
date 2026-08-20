@@ -174,13 +174,27 @@ async function seedBase() {
   });
 }
 
-/** Amanhã, para o cancelamento cair DENTRO da janela mínima (tardio). */
-function tomorrow(): string {
-  const d = new Date(Date.now() + 12 * 60 * 60 * 1000);
-  return d.toISOString().split("T")[0];
+/**
+ * Agendamento daqui a 3 horas — dentro da janela mínima de 24 h, portanto
+ * cancelamento TARDIO, que é o caminho do estorno parcial.
+ *
+ * A primeira versão devolvia só a data de "agora + 12 h" via `toISOString()`
+ * (UTC) e deixava a hora fixa em 10:00 (local). As duas se contradiziam: em
+ * fuso negativo, a data virava a de amanhã enquanto a hora continuava sendo a
+ * de hoje, e o agendamento caía 27 h à frente — fora da janela. O teste passava
+ * ou falhava conforme a HORA DO DIA em que a suíte rodasse.
+ */
+function soon(): { date: string; time: string } {
+  const t = new Date(Date.now() + 3 * 60 * 60 * 1000);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return {
+    date: `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())}`,
+    time: `${p(t.getHours())}:${p(t.getMinutes())}`,
+  };
 }
 
 async function makePaidBooking(opts: { giftAmount?: number; chargedAmount: number }) {
+  const when = soon();
   await db.estimate.create({
     data: {
       id: IDS.estimate,
@@ -201,9 +215,9 @@ async function makePaidBooking(opts: { giftAmount?: number; chargedAmount: numbe
       estimateId: IDS.estimate,
       bookingConfigId: IDS.config,
       agendaId: IDS.agenda,
-      scheduledDate: tomorrow(),
-      scheduledStartTime: "10:00",
-      scheduledEndTime: "11:00",
+      scheduledDate: when.date,
+      scheduledStartTime: when.time,
+      scheduledEndTime: when.time,
       status: "CONFIRMED",
       paymentMethod: "CARD",
       paymentStatus: "PAID",

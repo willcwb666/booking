@@ -51,7 +51,7 @@ export default function PrivacidadePage() {
           <section className="space-y-3">
             <h2 className="text-xl font-bold text-[var(--color-text-heading)]">1. Introdução e Compromisso</h2>
             <p>
-              A <strong>Kreator</strong> ("nós", "plataforma" ou "serviço") tem o compromisso inegociável de respeitar e proteger a sua privacidade. Esta Política de Privacidade descreve de forma clara e transparente como coletamos, utilizamos, armazenamos e protegemos os seus dados pessoais ao utilizar nossa plataforma SaaS de agendamentos, orçamentos e gestão.
+              A <strong>Kreator</strong> (&ldquo;nós&rdquo;, &ldquo;plataforma&rdquo; ou &ldquo;serviço&rdquo;) tem o compromisso inegociável de respeitar e proteger a sua privacidade. Esta Política de Privacidade descreve de forma clara e transparente como coletamos, utilizamos, armazenamos e protegemos os seus dados pessoais ao utilizar nossa plataforma SaaS de agendamentos, orçamentos e gestão.
             </p>
           </section>
 

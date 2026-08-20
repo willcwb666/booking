@@ -122,7 +122,7 @@ export function CustomersTab({
               <p className="text-xs text-[var(--color-warning)] leading-relaxed">
                 Ao selecionar o cliente em um novo agendamento, o sistema exibirá um aviso vermelho em destaque:
                 <strong className="block mt-1 font-bold text-[var(--color-warning)]">
-                  "⚠️ Atenção: Cliente com {maxAllowedNoShows} faltas sem aviso acumuladas."
+                  &ldquo;⚠️ Atenção: Cliente com {maxAllowedNoShows} faltas sem aviso acumuladas.&rdquo;
                 </strong>
               </p>
             </div>

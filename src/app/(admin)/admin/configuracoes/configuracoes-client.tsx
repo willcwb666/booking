@@ -432,7 +432,7 @@ export function AdminConfiguracoesClient({ initialSettings }: Props) {
                 </label>
                 <select
                   value={settings.maintenanceImpact}
-                  onChange={(e) => setSettings({ ...settings, maintenanceImpact: e.target.value as any })}
+                  onChange={(e) => setSettings({ ...settings, maintenanceImpact: e.target.value as typeof settings.maintenanceImpact })}
                   className="w-full px-4 py-2.5 bg-[var(--color-bg-subtle)] border border-[var(--color-border)] rounded-[var(--radius-control)] text-xs font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)]"
                 >
                   <option value="SLOW">Lento (Degradação de Desempenho)</option>

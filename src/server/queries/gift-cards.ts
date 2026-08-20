@@ -91,7 +91,7 @@ export async function getCompanyGiftCards(
   });
   if (!company) return { items: [], total: 0, page, pageSize, pageCount: 0 };
 
-  const where: any = {
+  const where: Record<string, unknown> = {
     companyId: company.id,
   };
 

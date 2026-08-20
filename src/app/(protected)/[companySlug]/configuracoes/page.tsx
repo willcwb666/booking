@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { findMarketByTimezone } from "@/lib/markets";
 import { auth } from "@/lib/auth";
 import { getCompanyBySlugForUser } from "@/server/queries/companies";
 import { db } from "@/lib/db";
@@ -74,7 +75,11 @@ export default async function ConfiguracoesPage({
         name: company.name,
         phone: company.phone ?? "",
         address: company.address ?? "",
-        country: (company as any).country || "BR",
+        // `Company` não tem campo `country`. Isto era `(company as any).country`,
+        // que compilava e devolvia `undefined` sempre — o seletor de país abria
+        // em "BR" para todo mundo, inclusive para empresa americana. O mercado
+        // é derivado do fuso, que é o dado que de fato existe.
+        country: findMarketByTimezone(company.timezone)?.code ?? "BR",
         timezone: company.timezone,
         currency: company.currency,
         locale: company.locale,

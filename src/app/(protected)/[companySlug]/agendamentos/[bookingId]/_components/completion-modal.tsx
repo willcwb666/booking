@@ -296,7 +296,7 @@ export function CompletionModal({
               <label className="block text-[var(--text-2xs)] text-[var(--color-text-muted)] mb-1">Tipo de Desconto</label>
               <select
                 value={discountType}
-                onChange={(e) => setDiscountType(e.target.value as any)}
+                onChange={(e) => setDiscountType(e.target.value as "PERCENTAGE" | "FIXED")}
                 className="w-full border border-[var(--color-border)] rounded-[var(--radius-control)] px-3 py-2 text-xs bg-[var(--color-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-medium"
               >
                 <option value="FIXED">Valor Fixo ({currency})</option>

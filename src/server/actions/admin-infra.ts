@@ -59,13 +59,13 @@ export async function getInfrastructureStatusAction() {
       message: `Conexão ativa com o banco PostgreSQL. Latência de resposta: ${dbLatency}ms`,
       lastChecked: nowStr,
     });
-  } catch (err: any) {
+  } catch (err) {
     services.push({
       name: "PostgreSQL Database (Primary)",
       category: "DATABASE",
       status: "DOWN",
       latencyMs: Date.now() - dbStart,
-      message: `Erro na conexão com o banco: ${err.message}`,
+      message: `Erro na conexão com o banco: ${err instanceof Error ? err.message : String(err)}`,
       lastChecked: nowStr,
     });
   }

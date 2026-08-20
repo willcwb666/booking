@@ -23,7 +23,7 @@ export function AIBookingCopilot({ companySlug, onApplyIntent }: Props) {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const SpeechRecognition =
-        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        window.SpeechRecognition || window.webkitSpeechRecognition;
       setHasSpeechSupport(Boolean(SpeechRecognition));
     }
   }, []);
@@ -31,7 +31,7 @@ export function AIBookingCopilot({ companySlug, onApplyIntent }: Props) {
   const handleToggleVoice = () => {
     if (typeof window === "undefined") return;
     const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       alert("Seu navegador não suporta reconhecimento de voz direto. Digite seu pedido no campo de texto.");
@@ -169,7 +169,7 @@ export function AIBookingCopilot({ companySlug, onApplyIntent }: Props) {
             }}
             className="text-[var(--text-2xs)] bg-[var(--color-bg-muted)] hover:bg-[var(--color-bg-muted)] text-[var(--color-text)] font-semibold px-3 py-1 rounded-full border border-[var(--color-border)] transition-colors"
           >
-            "{p}"
+            &ldquo;{p}&rdquo;
           </button>
         ))}
       </div>

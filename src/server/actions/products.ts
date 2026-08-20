@@ -93,8 +93,8 @@ export async function createProductAction(
     revalidatePath(`/${companySlug}/produtos`);
     revalidatePath(`/${companySlug}/pos`);
     return { success: true, data: product };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Erro ao criar produto" };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Erro ao criar produto" };
   }
 }
 
@@ -135,8 +135,8 @@ export async function updateProductAction(
     revalidatePath(`/${companySlug}/produtos`);
     revalidatePath(`/${companySlug}/pos`);
     return { success: true, data: product };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Erro ao atualizar produto" };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Erro ao atualizar produto" };
   }
 }
 
@@ -153,8 +153,8 @@ export async function deleteProductAction(companySlug: string, productId: string
     revalidatePath(`/${companySlug}/produtos`);
     revalidatePath(`/${companySlug}/pos`);
     return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Erro ao remover produto" };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Erro ao remover produto" };
   }
 }
 
@@ -211,7 +211,7 @@ export async function adjustStockAction(
     revalidatePath(`/${companySlug}/produtos`);
     revalidatePath(`/${companySlug}/pos`);
     return { success: true, newStock };
-  } catch (err: any) {
-    return { success: false, error: err.message || "Erro ao ajustar estoque" };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Erro ao ajustar estoque" };
   }
 }

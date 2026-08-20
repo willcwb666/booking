@@ -672,7 +672,10 @@ const langMenuRef = useRef<HTMLDivElement>(null);
   // Detect language and scroll for sticky mobile CTA
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const userBrowserLang = (navigator.language || (navigator as any).userLanguage || "").toLowerCase();
+      // `userLanguage` é a API legada do Internet Explorer: não está no tipo
+    // `Navigator` e não estará. O tipo local descreve exatamente o que se lê.
+    const legacyNav = navigator as Navigator & { userLanguage?: string };
+    const userBrowserLang = (legacyNav.language || legacyNav.userLanguage || "").toLowerCase();
       if (userBrowserLang.startsWith("pt")) setLang("pt");
       else if (userBrowserLang.startsWith("es")) setLang("es");
       else if (userBrowserLang.startsWith("it")) setLang("it");

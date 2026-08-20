@@ -263,8 +263,9 @@ export async function syncGoogleCalendarToBooking(
     });
 
     return { success: true, syncedCount: count };
-  } catch (err: any) {
+  } catch (err) {
     console.error("[syncGoogleCalendarToBooking] Falha:", err);
-    return { success: false, syncedCount: 0, error: err.message || "Erro na sincronização" };
+    const message = err instanceof Error ? err.message : "Erro na sincronização";
+    return { success: false, syncedCount: 0, error: message };
   }
 }

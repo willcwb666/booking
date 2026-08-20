@@ -6,6 +6,19 @@ import { auth } from "@/lib/auth";
 import { getCompanyBySlugForUser } from "@/server/queries/companies";
 import { revalidatePath } from "next/cache";
 
+/**
+ * Forma declarada das linhas do SQL cru — `$queryRawUnsafe` não é conferido
+ * pelo Prisma, e `Array<any>` calava o compilador sobre o mapeamento inteiro.
+ */
+type CompanyRoleRow = {
+  id: string;
+  companyId: string;
+  name: string;
+  description: string | null;
+  isPreset: boolean | null;
+};
+
+
 export type CompanyRoleItem = {
   id: string;
   companyId: string;
@@ -91,7 +104,7 @@ export async function getCompanyRolesAction(companySlug: string): Promise<Compan
     }
   }
 
-  const rows = await db.$queryRawUnsafe<Array<any>>(
+  const rows = await db.$queryRawUnsafe<Array<CompanyRoleRow>>(
     `SELECT * FROM "company_role" WHERE "companyId" = $1 ORDER BY "name" ASC`,
     company.id
   );

@@ -9,6 +9,30 @@ import { countActiveProfessionals } from "@/server/queries/professionals";
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/types";
 
+/**
+ * Forma declarada das linhas do SQL cru — `$queryRawUnsafe` não é conferido
+ * pelo Prisma, e `Array<any>` calava o compilador sobre o mapeamento inteiro.
+ */
+type ProfessionalRow = {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  bio: string | null;
+  avatarUrl: string | null;
+  roleTitle: string | null;
+  documentNumber: string | null;
+  pixKeyType: string | null;
+  pixKey: string | null;
+  instagram: string | null;
+  servicesJson: string | null;
+  commissionRate: unknown;
+  productCommissionRate: unknown;
+  showOnLanding: boolean | null;
+  isActive: boolean | null;
+};
+
+
 async function resolveCompany(slug: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return null;
@@ -79,7 +103,7 @@ export async function getProfessionalByIdAction(companySlug: string, professiona
   await ensureProfessionalColumnsExist();
 
   try {
-    const rows = await db.$queryRawUnsafe<Array<any>>(
+    const rows = await db.$queryRawUnsafe<Array<ProfessionalRow>>(
       `SELECT * FROM "professional" WHERE id = $1 AND "companyId" = $2 LIMIT 1`,
       professionalId,
       company.id

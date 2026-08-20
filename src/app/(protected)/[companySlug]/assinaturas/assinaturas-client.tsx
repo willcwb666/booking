@@ -406,7 +406,7 @@ export function AssinaturasClient({
                 Nenhum plano de assinatura cadastrado
               </h3>
               <p className="text-xs text-[var(--color-text-muted)] max-w-md mx-auto">
-                Crie planos recorrentes (ex: "Cabelo Ilimitado por R$ 79/mês") ou pacotes pré-pagos (ex: "Pacote 4 Sessões") para fidelizar clientes.
+                Crie planos recorrentes (ex: &ldquo;Cabelo Ilimitado por R$ 79/mês&rdquo;) ou pacotes pré-pagos (ex: &ldquo;Pacote 4 Sessões&rdquo;) para fidelizar clientes.
               </p>
               <button
                 type="button"

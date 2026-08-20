@@ -44,9 +44,9 @@ export default async function CompanyLayout({
   const isPlatformAdmin = session.user.role === "admin";
   const { settings } = await getPlatformSettingsAction();
   const access = evaluateSubscriptionAccess({
-    subscriptionStatus: (company as any).subscriptionStatus ?? null,
-    subscriptionPeriodEnd: (company as any).subscriptionPeriodEnd
-      ? new Date((company as any).subscriptionPeriodEnd)
+    subscriptionStatus: company.subscriptionStatus ?? null,
+    subscriptionPeriodEnd: company.subscriptionPeriodEnd
+      ? new Date(company.subscriptionPeriodEnd)
       : null,
     gracePeriodDays: settings.gracePeriodDays,
   });

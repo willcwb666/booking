@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { createPlanCheckoutAction } from "@/server/actions/subscription";
 import { logoutAction } from "@/server/actions/auth";
 
@@ -125,7 +126,7 @@ export function SubscriptionBlock({
         </div>
 
         <div className="mt-8 flex items-center justify-center gap-4 text-xs text-[var(--color-text-subtle)]">
-          <a href="/selecionar-empresa" className="hover:text-[var(--color-text-muted)]">Trocar de empresa</a>
+          <Link href="/selecionar-empresa" className="hover:text-[var(--color-text-muted)]">Trocar de empresa</Link>
           <span aria-hidden="true">·</span>
           <form action={logoutAction}>
             <button type="submit" className="hover:text-[var(--color-text-muted)]">Sair da conta</button>

@@ -14,7 +14,7 @@ export async function logAuditEvent(params: {
   companyId?: string | null;
   action: string;
   entity: string;
-  details?: Record<string, any> | string;
+  details?: Record<string, unknown> | string;
 }) {
   try {
     const reqHeaders = await headers();

@@ -324,7 +324,7 @@ export default async function TenantLandingPage({
                   </div>
                   {review.comment && (
                     <p className="text-xs sm:text-sm text-[var(--color-text)] leading-relaxed font-medium italic">
-                      "{review.comment}"
+                      &ldquo;{review.comment}&rdquo;
                     </p>
                   )}
                   <p className="text-xs font-bold text-[var(--color-text-heading)] pt-1">

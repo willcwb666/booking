@@ -142,7 +142,7 @@ export function LocalBusinessJsonLd({
   reviewCount?: number;
   businessType?: string;
 }) {
-  const schema: Record<string, any> = {
+  const schema: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": businessType || "LocalBusiness",
     name,

@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import type { CompanyUserRole } from "@/generated/prisma/client";
 
 export async function getUserCompanies(userId: string) {
   // 1. Tentar ver se o usuário é admin da plataforma
@@ -142,7 +143,7 @@ export async function getCompanyBySlugForUser(slug: string, userId: string) {
     });
 
     if (company && isPlatformAdmin && company.members.length === 0) {
-      company.members = [{ role: "OWNER" as any }];
+      company.members = [{ role: "OWNER" as CompanyUserRole }];
     }
 
     return company;
@@ -169,7 +170,9 @@ export async function getCompanyBySlugForUser(slug: string, userId: string) {
     if (compRows.length === 0) return null;
     const rawComp = compRows[0];
 
-    const memberRows = await db.$queryRawUnsafe<Array<{ role: string }>>(
+    // O papel vem do SQL cru como texto; o resto do app o consome como o enum
+    // `CompanyUserRole`. Declarar a forma aqui evita `as any` no consumidor.
+    const memberRows = await db.$queryRawUnsafe<Array<{ role: CompanyUserRole }>>(
       `SELECT role FROM "company_user" WHERE "companyId" = $1 AND "userId" = $2 AND "isActive" = true`,
       rawComp.id,
       userId
@@ -193,7 +196,7 @@ export async function getCompanyBySlugForUser(slug: string, userId: string) {
     return {
       ...rawComp,
       plan,
-      members: memberRows.length > 0 ? memberRows : (isPlatformAdmin ? [{ role: "OWNER" as any }] : []),
+      members: memberRows.length > 0 ? memberRows : (isPlatformAdmin ? [{ role: "OWNER" as CompanyUserRole }] : []),
     };
   }
 }

@@ -16,7 +16,7 @@ export async function updateCompanySubscriptionAction(
   }
 
   try {
-    const data: Record<string, any> = {
+    const data: Record<string, unknown> = {
       subscriptionStatus: newStatus,
     };
     if (newPlanId) {
