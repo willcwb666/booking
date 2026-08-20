@@ -3,7 +3,12 @@
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LogoUpload } from "@/components/ui/logo-upload";
-import { MARKETS, detectUserMarket, formatPhoneNumber } from "@/lib/markets";
+import {
+  MARKETS,
+  detectUserMarket,
+  findMarketByDialCode,
+  formatPhoneNumber,
+} from "@/lib/markets";
 import { createCompanyWizardAction, type WizardPayload } from "@/server/actions/company";
 import { toast } from "@/lib/toast-service";
 
@@ -103,6 +108,40 @@ export function OnboardingWizardClient({
       setTimezone(timezoneId);
     }
   }, []);
+
+  /**
+   * O telefone corrige o palpite do navegador.
+   *
+   * `detectUserMarket()` acerta na maioria das vezes, mas erra justamente em
+   * quem mais precisa: o dono brasileiro abrindo a conta em viagem, o notebook
+   * comprado nos EUA com `en-US` de fábrica, qualquer VPN. O número do negócio
+   * é o sinal mais forte de onde o negócio opera.
+   *
+   * Só age quando a pessoa digita ou cola um número COM `+`. Sem isso é um
+   * número nacional, que não carrega país — trocar a moeda por causa de um DDD
+   * seria pior que não inferir nada.
+   *
+   * E não sobrescreve o fuso já escolhido se ele continuar válido no mercado
+   * novo: quem selecionou "Denver" à mão não volta para "New York" por ter
+   * digitado o telefone depois.
+   */
+  function handlePhoneChange(raw: string) {
+    const inferred = findMarketByDialCode(raw, country);
+
+    if (inferred && inferred.code !== country) {
+      setCountry(inferred.code);
+      setTimezone((current) =>
+        inferred.timezones.some((t) => t.id === current) ? current : inferred.timezones[0].id
+      );
+      // O DDI já virou o prefixo à esquerda do campo; deixá-lo no valor
+      // digitado o mostraria duas vezes.
+      const national = raw.trim().slice(1).replace(/\D/g, "").slice(inferred.dialCode.length - 1);
+      setPhone(formatPhoneNumber(national, inferred.code));
+      return;
+    }
+
+    setPhone(formatPhoneNumber(raw, inferred?.code ?? country));
+  }
 
   useEffect(() => {
     async function loadSegments() {
@@ -446,7 +485,7 @@ export function OnboardingWizardClient({
                     <input
                       type="text"
                       value={phone}
-                      onChange={(e) => setPhone(formatPhoneNumber(e.target.value, country))}
+                      onChange={(e) => handlePhoneChange(e.target.value)}
                       placeholder={selectedMarket.phonePlaceholder}
                       className="w-full px-4 py-3 rounded-r-xl border border-[var(--color-border-strong)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-navy)]"
                     />

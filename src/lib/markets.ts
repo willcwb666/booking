@@ -140,6 +140,54 @@ export function findMarketByTimezone(tz: string): Market | undefined {
   return MARKETS.find((m) => m.timezones.some((t) => t.id === tz));
 }
 
+/**
+ * Mercado inferido pelo DDI que a pessoa digitou.
+ *
+ * ─── Por que o telefone e não o navegador ────────────────────────────────────
+ *
+ * `detectUserMarket()` adivinha pelo fuso e pelo idioma do navegador, e acerta
+ * na maioria das vezes. Mas erra exatamente em quem mais precisa de acerto: o
+ * dono brasileiro que abre a conta viajando, o notebook comprado nos EUA com
+ * `en-US` de fábrica, qualquer VPN. O número de telefone do negócio é o sinal
+ * mais forte de onde o negócio opera — quem atende em Curitiba não anuncia um
+ * número americano.
+ *
+ * ─── O empate do +1 ──────────────────────────────────────────────────────────
+ *
+ * Estados Unidos e Canadá dividem o mesmo DDI. Nenhuma quantidade de dígitos
+ * resolve isso, então a função não tenta: com `+1`, se o mercado atual já é um
+ * dos dois, ela o mantém — a escolha de quem está preenchendo vale mais que um
+ * palpite. Sem mercado atual, cai nos EUA, que é o maior dos dois.
+ *
+ * Devolve `undefined` quando não há `+`: número nacional não carrega país, e
+ * inventar um a partir de "41 99562-0999" trocaria a moeda da empresa por
+ * causa de um código de área.
+ */
+export function findMarketByDialCode(
+  input: string,
+  currentMarketCode?: string
+): Market | undefined {
+  const trimmed = input.trim();
+  if (!trimmed.startsWith("+")) return undefined;
+
+  const digits = trimmed.slice(1).replace(/\D/g, "");
+  if (!digits) return undefined;
+
+  // Prefixo mais longo primeiro: senão "+1" venceria "+55" para um número
+  // que começa com 1 por acaso, e "+34" perderia para um "+3" hipotético.
+  const byLength = [...MARKETS].sort((a, b) => b.dialCode.length - a.dialCode.length);
+  const matches = byLength.filter((m) => digits.startsWith(m.dialCode.slice(1)));
+  if (matches.length === 0) return undefined;
+
+  const longest = matches[0].dialCode.length;
+  const tied = matches.filter((m) => m.dialCode.length === longest);
+  if (tied.length === 1) return tied[0];
+
+  // Empate real (o +1): respeita a escolha de quem está preenchendo.
+  const current = tied.find((m) => m.code === currentMarketCode);
+  return current ?? tied[0];
+}
+
 export function isValidTimezoneForMarket(code: string, tz: string): boolean {
   const market = getMarket(code);
   return Boolean(market?.timezones.some((t) => t.id === tz));
