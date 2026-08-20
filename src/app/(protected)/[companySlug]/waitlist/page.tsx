@@ -1,3 +1,5 @@
+import { canAccessModule } from "@/lib/module-guard";
+import { MODULE_CODES } from "@/lib/module-codes";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { getCompanyBySlugForUser } from "@/server/queries/companies";
@@ -12,6 +14,13 @@ export default async function WaitlistPage({
   params: Promise<{ companySlug: string }>;
 }) {
   const { companySlug } = await params;
+
+  /**
+   * Modulo licenciado. Ate aqui a licenca so escondia o item do MENU — quem
+   * soubesse a URL entrava e usava a funcionalidade paga inteira.
+   */
+  const moduleAccess = await canAccessModule(companySlug, MODULE_CODES.waitlist);
+  if (!moduleAccess.ok) notFound();
   const session = await auth.api.getSession({ headers: await headers() });
   const company = await getCompanyBySlugForUser(companySlug, session!.user.id);
   if (!company) notFound();

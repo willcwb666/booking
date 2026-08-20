@@ -44,3 +44,38 @@ export async function canAccessModule(
 
   return { ok: true, companyId: access.companyId };
 }
+
+/**
+ * A licença do módulo, SEM exigir sessão.
+ *
+ * ─── Por que não dá para usar `canAccessModule` em tudo ──────────────────────
+ *
+ * Parte da superfície de um módulo é pública por natureza: o cliente entra na
+ * lista de espera pela página de agendamento, e valida o código do
+ * vale-presente no checkout, sem nunca ter feito login. `canAccessModule`
+ * começa por `canAccessCompany`, que exige sessão — usá-lo ali derrubaria o
+ * fluxo do cliente em vez de checar a licença.
+ *
+ * O que importa nesses caminhos é só uma coisa: se a empresa não contratou o
+ * módulo, ninguém entra na lista de espera dela nem gasta vale-presente,
+ * logado ou não.
+ */
+export async function isModuleLicensed(
+  companySlug: string,
+  moduleCode: string
+): Promise<boolean> {
+  const company = await db.company.findUnique({
+    where: { slug: companySlug },
+    select: { id: true },
+  });
+  if (!company) return false;
+
+  const license = await db.companyModuleLicense.findUnique({
+    where: { companyId_moduleCode: { companyId: company.id, moduleCode } },
+    select: { status: true, expiresAt: true },
+  });
+
+  if (!license || license.status !== "ACTIVE") return false;
+  if (license.expiresAt && license.expiresAt.getTime() <= Date.now()) return false;
+  return true;
+}

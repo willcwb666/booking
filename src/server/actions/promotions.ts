@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth";
 import { todayInTimezone } from "@/lib/company-date";
 import { headers } from "next/headers";
 import { getCompanyBySlugForUser } from "@/server/queries/companies";
+import { isModuleLicensed } from "@/lib/module-guard";
+import { MODULE_CODES } from "@/lib/module-codes";
 import { db } from "@/lib/db";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
@@ -33,7 +35,16 @@ async function resolveCompany(slug: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return null;
   const company = await getCompanyBySlugForUser(slug, session.user.id);
-  return company ?? null;
+  if (!company) return null;
+
+  /**
+   * Modulo licenciado. As quatro actions deste arquivo passam por aqui, entao
+   * a licenca e conferida em um lugar so — antes ela apenas escondia o item do
+   * menu, e a URL direta dava a funcionalidade paga inteira.
+   */
+  if (!(await isModuleLicensed(slug, MODULE_CODES.promotions))) return null;
+
+  return company;
 }
 
 export async function createPromotionAction(formData: FormData): Promise<ActionResult> {

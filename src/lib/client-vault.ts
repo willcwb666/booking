@@ -27,7 +27,9 @@
  * função async — o Next recusa o build, e o teste estático de superfície pega
  * antes disso.
  */
-export const VAULT_MODULE = "cofre_do_cliente";
+import { MODULE_CODES } from "@/lib/module-codes";
+
+export const VAULT_MODULE = MODULE_CODES.clientVault;
 
 export type PhotoKind = "BEFORE" | "AFTER";
 

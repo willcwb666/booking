@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { isModuleLicensed } from "@/lib/module-guard";
+import { MODULE_CODES } from "@/lib/module-codes";
 import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { checkCustomerMembershipCoverage } from "@/server/queries/memberships";
 
@@ -18,6 +20,15 @@ async function verifyCompanyAccess(
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) throw new Error("Não autenticado");
+
+  /**
+   * Modulo licenciado. Toda action deste arquivo passa por aqui, entao a
+   * licenca e conferida uma vez so — antes valia so para esconder o item do
+   * menu, e a URL direta dava acesso completo a funcionalidade paga.
+   */
+  if (!(await isModuleLicensed(companySlug, MODULE_CODES.memberships))) {
+    throw new Error("Modulo nao contratado: clube de assinaturas");
+  }
 
   const company = await db.company.findUnique({
     where: { slug: companySlug },

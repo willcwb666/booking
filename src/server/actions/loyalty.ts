@@ -1,8 +1,9 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { canAccessModule } from "@/lib/module-guard";
+import { MODULE_CODES } from "@/lib/module-codes";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
@@ -10,15 +11,34 @@ import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
  * Busca as configurações do Programa de Fidelidade da empresa.
  */
 export async function getCompanyLoyaltyProgramAction(companySlug: string) {
-  // Endpoint público: sem sessão para responsabilizar, o limite de taxa é a
-  // única barreira contra abuso e enumeração por slug.
+  /**
+   * ─── Isto NAO era um endpoint publico ──────────────────────────────────────
+   *
+   * O comentario que estava aqui dizia "endpoint publico: sem sessao para
+   * responsabilizar, o limite de taxa e a unica barreira". Nao era verdade —
+   * o unico chamador e a tela protegida `/[companySlug]/fidelidade`.
+   *
+   * E o que a funcao devolve, alem das regras do programa, e
+   * `topCustomers`: os 20 clientes com mais pontos, COM E-MAIL. Sem sessao e
+   * sem checar quem pergunta, bastava o slug — que e publico, esta na URL de
+   * agendamento de toda empresa — para levar a lista de clientes de qualquer
+   * salao da plataforma. O limite de taxa atrasa isso; nao impede.
+   *
+   * Server action e endpoint HTTP: nao herda a protecao do layout da pagina
+   * que a chama. Quem sabe o nome dela, chama.
+   */
+  const access = await canAccessModule(companySlug, MODULE_CODES.loyalty);
+  if (!access.ok) return { success: false, error: access.error, program: null };
+
+  // O limite de taxa fica: agora atras da sessao, mas continua sendo o freio
+  // contra automacao de dentro.
   const rlIp =
     (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   const rl = await enforceRateLimit(RATE_LIMITS.PUBLIC_COMPANY_INFO, rlIp);
   if (!rl.allowed) return { success: false, program: null };
 
   const company = await db.company.findFirst({
-    where: { slug: companySlug },
+    where: { id: access.companyId },
     select: { id: true, currency: true },
   });
 
@@ -97,15 +117,16 @@ export async function updateCompanyLoyaltyProgramAction(
     discountAmount: number;
   }
 ) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return { success: false, error: "Não autenticado" };
+  /**
+   * Checava sessao e mais nada: qualquer usuario logado — dono de outro salao,
+   * cliente cadastrado — reescrevia as regras de fidelidade de QUALQUER
+   * empresa passando o slug. `canAccessModule` cobre as duas coisas que
+   * faltavam: ser membro desta empresa, e a empresa ter o modulo contratado.
+   */
+  const access = await canAccessModule(companySlug, MODULE_CODES.loyalty);
+  if (!access.ok) return { success: false, error: access.error };
 
-  const company = await db.company.findFirst({
-    where: { slug: companySlug },
-    select: { id: true },
-  });
-
-  if (!company) return { success: false, error: "Empresa não encontrada" };
+  const company = { id: access.companyId };
 
   const id = `loy_${Date.now()}`;
   await db.$executeRawUnsafe(

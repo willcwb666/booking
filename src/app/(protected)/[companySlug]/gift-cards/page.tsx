@@ -1,3 +1,6 @@
+import { notFound } from "next/navigation";
+import { canAccessModule } from "@/lib/module-guard";
+import { MODULE_CODES } from "@/lib/module-codes";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
@@ -13,6 +16,13 @@ type Props = {
 export default async function GiftCardsPage({ params, searchParams }: Props) {
   const { companySlug } = await params;
   const { page, pageSize, q, status } = await searchParams;
+
+  /**
+   * Modulo licenciado. Ate aqui a licenca so escondia o item do MENU — quem
+   * soubesse a URL entrava e usava a funcionalidade paga inteira.
+   */
+  const moduleAccess = await canAccessModule(companySlug, MODULE_CODES.giftCards);
+  if (!moduleAccess.ok) notFound();
 
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/login");

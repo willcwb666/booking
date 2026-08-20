@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { isModuleLicensed } from "@/lib/module-guard";
+import { MODULE_CODES } from "@/lib/module-codes";
 import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { getGiftCardByCode } from "@/server/queries/gift-cards";
 
@@ -29,6 +31,15 @@ async function verifyCompanyAccess(
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) throw new Error("Não autenticado");
+
+  /**
+   * Modulo licenciado. Toda action deste arquivo passa por aqui, entao a
+   * licenca e conferida uma vez so — antes valia so para esconder o item do
+   * menu, e a URL direta dava acesso completo a funcionalidade paga.
+   */
+  if (!(await isModuleLicensed(companySlug, MODULE_CODES.giftCards))) {
+    throw new Error("Modulo nao contratado: vales-presente");
+  }
 
   const company = await db.company.findUnique({
     where: { slug: companySlug },
@@ -156,6 +167,16 @@ export async function validateGiftCardAction(companySlug: string, code: string) 
     const rl = await enforceRateLimit(RATE_LIMITS.GIFTCARD_VALIDATE, ip);
     if (!rl.allowed) {
       return { success: false, error: "Muitas tentativas. Aguarde um momento." };
+    }
+
+    /**
+     * Publica: o cliente valida o codigo no checkout sem estar logado. Por
+     * isso a checagem e so de licenca — `verifyCompanyAccess` exigiria sessao
+     * e derrubaria o fluxo do cliente. Empresa que nao contratou o modulo nao
+     * deve ter vale-presente valendo no checkout dela.
+     */
+    if (!(await isModuleLicensed(companySlug, MODULE_CODES.giftCards))) {
+      return { success: false, error: "Vale-presente nao disponivel" };
     }
 
     const card = await getGiftCardByCode(companySlug, code);

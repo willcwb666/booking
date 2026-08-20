@@ -1,6 +1,8 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { isModuleLicensed } from "@/lib/module-guard";
+import { MODULE_CODES } from "@/lib/module-codes";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { sendWaitlistNotificationEmail } from "@/lib/email";
@@ -18,6 +20,7 @@ export async function joinWaitlistAction(formData: FormData): Promise<Result> {
   if (!rl.allowed) {
     return { success: false, error: "Muitas tentativas. Aguarde um momento." };
   }
+
 
   const bookingConfigId = formData.get("bookingConfigId") as string;
   const preferredDate = formData.get("preferredDate") as string;
@@ -41,9 +44,22 @@ export async function joinWaitlistAction(formData: FormData): Promise<Result> {
 
   const config = await db.bookingConfig.findFirst({
     where: { id: bookingConfigId, status: "PUBLISHED" },
-    include: { company: { select: { id: true } } },
+    include: { company: { select: { id: true, slug: true } } },
   });
   if (!config) return { success: false, error: "Configuração não encontrada" };
+
+  /**
+   * Modulo licenciado. A checagem e so da licenca, e nao `canAccessModule`:
+   * quem entra na lista e o CLIENTE, sem login — exigir sessao derrubaria o
+   * proprio fluxo que o modulo existe para servir.
+   *
+   * Vai depois da busca da configuracao de proposito: a empresa desta action
+   * vem do `bookingConfigId`, nao de um slug no formulario. Conferir contra um
+   * slug que o formulario nao manda bloquearia todo mundo.
+   */
+  if (!(await isModuleLicensed(config.company.slug, MODULE_CODES.waitlist))) {
+    return { success: false, error: "Lista de espera indisponivel" };
+  }
 
   // Check if already on waitlist
   const existing = await db.waitlistEntry.findFirst({

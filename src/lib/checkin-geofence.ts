@@ -20,7 +20,9 @@
  */
 
 /** Código do módulo licenciado que abre a configuração da cerca. */
-export const CHECKIN_MODULE = "checkin_geofencing";
+import { MODULE_CODES } from "@/lib/module-codes";
+
+export const CHECKIN_MODULE = MODULE_CODES.checkin;
 
 export type GeofenceDecision =
   /** Empresa sem coordenadas: não há cerca a aplicar. */
