@@ -682,6 +682,10 @@ const langMenuRef = useRef<HTMLDivElement>(null);
     // `Navigator` e não estará. O tipo local descreve exatamente o que se lê.
     const legacyNav = navigator as Navigator & { userLanguage?: string };
     const userBrowserLang = (legacyNav.language || legacyNav.userLanguage || "").toLowerCase();
+      // Leitura do ambiente APÓS a hidratação: localStorage, matchMedia, navigator e rede não existem no servidor,
+      // então o estado inicial é o do servidor e o efeito o corrige na montagem. Trocar por useSyncExternalStore
+      // aqui seria refatoração grande com risco real, para um padrão que é o aceito neste caso.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (userBrowserLang.startsWith("pt")) setLang("pt");
       else if (userBrowserLang.startsWith("es")) setLang("es");
       else if (userBrowserLang.startsWith("it")) setLang("it");

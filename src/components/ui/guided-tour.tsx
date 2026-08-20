@@ -50,6 +50,10 @@ export function GuidedTour() {
     // Abre automaticamente apenas no primeiro acesso do usuário
     const hasSeenTour = localStorage.getItem("kreator_tour_seen");
     if (!hasSeenTour) {
+      // Leitura do ambiente APÓS a hidratação: localStorage, matchMedia, navigator e rede não existem no servidor,
+      // então o estado inicial é o do servidor e o efeito o corrige na montagem. Trocar por useSyncExternalStore
+      // aqui seria refatoração grande com risco real, para um padrão que é o aceito neste caso.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsOpen(true);
     }
   }, []);

@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "eslint src test && next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint src test",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:journey": "tsx scripts/test-full-journey.ts",

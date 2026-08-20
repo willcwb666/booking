@@ -39,6 +39,10 @@ export function ThemeSwitcher() {
   // O tema já foi aplicado pelo script inline do layout antes da primeira
   // pintura; aqui só sincronizamos o estado do React com o que está no DOM.
   useEffect(() => {
+    // Leitura do ambiente APÓS a hidratação: localStorage, matchMedia, navigator e rede não existem no servidor,
+    // então o estado inicial é o do servidor e o efeito o corrige na montagem. Trocar por useSyncExternalStore
+    // aqui seria refatoração grande com risco real, para um padrão que é o aceito neste caso.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     try {
       setTheme((localStorage.getItem("kreator_theme") as ThemeId) || "default");

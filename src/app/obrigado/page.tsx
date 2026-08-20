@@ -23,32 +23,45 @@ export default async function ObrigadoPage({
   const params = await searchParams;
   const targetBookingId = params.booking || params.bookingId;
 
-  let booking: any = null;
-
-  if (targetBookingId) {
-    booking = await db.booking.findUnique({
-      where: { id: targetBookingId },
-      include: {
-        company: true,
-        bookingConfig: true,
-        customerDetail: true,
-        estimate: {
-          include: {
-            serviceTypes: {
-              include: { serviceType: { select: { name: true } } },
-            },
-            extraServices: {
-              include: { extraService: { select: { name: true } } },
+  /**
+   * Sem `any`: o tipo vem do próprio `include`.
+   *
+   * Era `let booking: any`, e o compilador ficava calado sobre todo acesso —
+   * foi assim que campos inexistentes chegaram a esta tela e ficaram aqui,
+   * renderizando `undefined` para o cliente que acabou de agendar.
+   */
+  const booking = !targetBookingId
+    ? null
+    : await db.booking.findUnique({
+        where: { id: targetBookingId },
+        include: {
+          company: true,
+          bookingConfig: true,
+          customerDetail: true,
+          estimate: {
+            include: {
+              serviceTypes: {
+                include: { serviceType: { select: { name: true } } },
+              },
+              extraServices: {
+                include: { extraService: { select: { name: true } } },
+              },
             },
           },
+          professional: { select: { name: true } },
         },
-        professional: { select: { name: true } },
-      },
-    });
-  }
+      });
 
   const company = booking?.company;
   const customer = booking?.customerDetail;
+  /**
+   * `BookingCustomerDetail` guarda `firstName` e `lastName` — nunca `name`.
+   * A tela lia `customer.name` em dois lugares: mostrava "👤 undefined" ao
+   * cliente e mandava "Cliente: " vazio para o Google Agenda.
+   */
+  const customerName = customer
+    ? `${customer.firstName} ${customer.lastName}`.trim()
+    : "";
   const formattedDate = booking?.scheduledDate
     ? booking.scheduledDate.split("-").reverse().join("/")
     : null;
@@ -61,7 +74,7 @@ export default async function ObrigadoPage({
   if (booking && company) {
     const title = encodeURIComponent(`Agendamento - ${company.name}`);
     const details = encodeURIComponent(
-      `Agendamento confirmado com ${company.name}.\nCliente: ${customer?.name || ""}\nTelefone: ${company.phone || ""}`
+      `Agendamento confirmado com ${company.name}.\nCliente: ${customerName}\nTelefone: ${company.phone || ""}`
     );
     const location = encodeURIComponent(company.address || "");
     googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}`;
@@ -121,7 +134,7 @@ export default async function ObrigadoPage({
           </div>
 
           {/* Booking Summary Box (if booking found) */}
-          {booking && (
+          {booking && company && (
             <div className="bg-[var(--color-bg-subtle)] rounded-[var(--radius-card)] p-6 border border-[var(--color-border)] text-left space-y-4 shadow-2xs">
               <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-3">
                 <div>
@@ -139,7 +152,7 @@ export default async function ObrigadoPage({
                 <div>
                   <span className="text-[var(--color-text-muted)] block text-[var(--text-2xs)] font-bold">Data & Horário:</span>
                   <span className="font-semibold text-[var(--color-text-heading)]">
-                    📅 {formattedDate} às {booking.startTime}
+                    📅 {formattedDate} às {booking.scheduledStartTime}
                   </span>
                 </div>
 
@@ -147,7 +160,7 @@ export default async function ObrigadoPage({
                   <div>
                     <span className="text-[var(--color-text-muted)] block text-[var(--text-2xs)] font-bold">Cliente:</span>
                     <span className="font-bold text-[var(--color-text-heading)] truncate block">
-                      👤 {customer.name}
+                      👤 {customerName}
                     </span>
                   </div>
                 )}
@@ -157,12 +170,12 @@ export default async function ObrigadoPage({
               {booking.estimate?.serviceTypes && (
                 <div className="pt-2 border-t border-[var(--color-border)]">
                   <span className="text-[var(--color-text-muted)] block text-[var(--text-2xs)] font-bold mb-1">Serviço:</span>
-                  {booking.estimate.serviceTypes.map((st: any, i: number) => (
+                  {booking.estimate.serviceTypes.map((st, i: number) => (
                     <p key={i} className="font-bold text-[var(--color-text)] text-xs">
                       • {st.serviceType?.name}
                     </p>
                   ))}
-                  {booking.estimate.extraServices?.map((ex: any, i: number) => (
+                  {booking.estimate.extraServices?.map((ex, i: number) => (
                     <p key={i} className="font-medium text-[var(--color-primary)] text-xs">
                       + Extra: {ex.extraService?.name}
                     </p>
@@ -202,7 +215,7 @@ export default async function ObrigadoPage({
           </div>
 
           {/* Smart Geofenced Check-in Notice */}
-          {booking && (
+          {booking && company && (
             <div className="bg-[var(--color-success-light)] border border-[var(--color-success-border)] rounded-[var(--radius-card)] p-4 text-left flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
               <div className="space-y-0.5">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--color-success)]">
@@ -223,7 +236,7 @@ export default async function ObrigadoPage({
           )}
 
           {/* ── Dynamic Return Anchor: Garantia de Reagendamento ── */}
-          {booking && (
+          {booking && company && (
             <ReturnAnchorCard
               serviceName={booking.estimate?.serviceTypes?.[0]?.serviceType?.name || "Corte"}
               professionalName={booking.professional?.name}
@@ -268,7 +281,7 @@ export default async function ObrigadoPage({
               </a>
             )}
 
-            {booking && (
+            {booking && company && (
               <Link
                 href={`/receipt/${booking.id}`}
                 className="text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] flex items-center gap-1.5 hover:underline"

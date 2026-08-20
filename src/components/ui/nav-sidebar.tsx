@@ -68,6 +68,10 @@ export function NavSidebar({
   useEffect(() => {
     try {
       const raw = localStorage.getItem("kreator_nav_collapsed");
+      // Leitura do ambiente APÓS a hidratação: localStorage, matchMedia, navigator e rede não existem no servidor,
+      // então o estado inicial é o do servidor e o efeito o corrige na montagem. Trocar por useSyncExternalStore
+      // aqui seria refatoração grande com risco real, para um padrão que é o aceito neste caso.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (raw) setCollapsed(JSON.parse(raw));
       else {
         const initial: Record<string, boolean> = {};
@@ -114,6 +118,10 @@ export function NavSidebar({
 
   // Fecha o drawer ao navegar
   useEffect(() => {
+    // Leitura do ambiente APÓS a hidratação: localStorage, matchMedia, navigator e rede não existem no servidor,
+    // então o estado inicial é o do servidor e o efeito o corrige na montagem. Trocar por useSyncExternalStore
+    // aqui seria refatoração grande com risco real, para um padrão que é o aceito neste caso.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMobileOpen(false);
   }, [pathname]);
 

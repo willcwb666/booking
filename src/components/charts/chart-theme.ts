@@ -96,6 +96,10 @@ export function useChartTheme(): ChartTheme {
   const [theme, setTheme] = useState<ChartTheme>(FALLBACK);
 
   useEffect(() => {
+    // Leitura do ambiente APÓS a hidratação: localStorage, matchMedia, navigator e rede não existem no servidor,
+    // então o estado inicial é o do servidor e o efeito o corrige na montagem. Trocar por useSyncExternalStore
+    // aqui seria refatoração grande com risco real, para um padrão que é o aceito neste caso.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(read());
 
     const observer = new MutationObserver(() => setTheme(read()));
@@ -115,6 +119,10 @@ export function usePrefersReducedMotion(): boolean {
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    // Leitura do ambiente APÓS a hidratação: localStorage, matchMedia, navigator e rede não existem no servidor,
+    // então o estado inicial é o do servidor e o efeito o corrige na montagem. Trocar por useSyncExternalStore
+    // aqui seria refatoração grande com risco real, para um padrão que é o aceito neste caso.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setReduced(mq.matches);
     const onChange = (e: MediaQueryListEvent) => setReduced(e.matches);
     mq.addEventListener("change", onChange);

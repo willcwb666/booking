@@ -43,6 +43,10 @@ export function AdminSidebar({
   }, []);
 
   useEffect(() => {
+    // Leitura do ambiente APÓS a hidratação: localStorage, matchMedia, navigator e rede não existem no servidor,
+    // então o estado inicial é o do servidor e o efeito o corrige na montagem. Trocar por useSyncExternalStore
+    // aqui seria refatoração grande com risco real, para um padrão que é o aceito neste caso.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
 
     let timer: ReturnType<typeof setInterval> | null = null;

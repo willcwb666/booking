@@ -52,7 +52,17 @@ export function ResgateClient({ companySlug, customers }: Props) {
     return map;
   }, [customers]);
 
-  const cooldownCutoff = Date.now() - WIN_BACK_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
+  /**
+   * O corte da carência, congelado na montagem.
+   *
+   * `Date.now()` direto no corpo do componente é leitura impura: cada
+   * renderização produzia um corte diferente, e a lista podia mudar sozinha no
+   * meio de uma interação — um cliente somindo da tela entre o clique e o
+   * resultado. Com `useMemo` sem dependências, o valor vale para a visita.
+   */
+  const [cooldownCutoff] = useState(
+    () => Date.now() - WIN_BACK_COOLDOWN_DAYS * 24 * 60 * 60 * 1000
+  );
 
   const visible = useMemo(
     () =>
