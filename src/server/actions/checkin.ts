@@ -1,6 +1,7 @@
 "use server";
 
 import "server-only";
+import { evaluateGeofence } from "@/lib/checkin-geofence";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { calculateDistanceMeters, formatDistance } from "@/lib/geo/haversine";
@@ -36,7 +37,21 @@ export interface CheckinBookingData {
 
 export type CheckinStatusResult =
   | { success: true; message: string; distanceFormatted?: string; status: "CHECKED_IN" | "ALREADY_CHECKED_IN" }
-  | { success: false; error: string; code: "TOO_EARLY" | "TOO_LATE" | "OUT_OF_RANGE" | "INVALID_STATUS" | "ERROR"; distanceFormatted?: string; allowedDistance?: string; minutesLeft?: number };
+  | {
+      success: false;
+      error: string;
+      code:
+        | "TOO_EARLY"
+        | "TOO_LATE"
+        | "OUT_OF_RANGE"
+        /** Cerca configurada e o cliente não informou onde está. */
+        | "LOCATION_REQUIRED"
+        | "INVALID_STATUS"
+        | "ERROR";
+      distanceFormatted?: string;
+      allowedDistance?: string;
+      minutesLeft?: number;
+    };
 
 /**
  * Busca as informações do agendamento para a tela de Check-in
@@ -273,32 +288,47 @@ export async function performSmartCheckinAction(
     //    então qualquer estabelecimento fora dali recusava todos os clientes
     //    por "distância" — e um cliente em Curitiba passava em qualquer salão
     //    do país.
-    let calculatedDistance: number | undefined = undefined;
-    const { latitude: companyLat, longitude: companyLon } = booking.company;
-    const maxRadiusMeters = booking.company.checkinRadiusMeters;
+    /**
+     * A cerca.
+     *
+     * O `if` que existia aqui pulava a verificação inteira quando o navegador
+     * não mandava coordenadas — e a tela de check-in chamava esta action sem
+     * coordenadas assim que o GPS falhava. Negar a permissão de localização era
+     * o jeito mais fácil de burlar a cerca, e estava a um clique.
+     *
+     * A regra saiu para `evaluateGeofence`, onde é testável, e a ausência de
+     * posição passou a ser recusa quando há cerca configurada.
+     */
+    const decision = evaluateGeofence({
+      companyLatitude: booking.company.latitude,
+      companyLongitude: booking.company.longitude,
+      radiusMeters: booking.company.checkinRadiusMeters,
+      clientCoords,
+      distance: calculateDistanceMeters,
+    });
 
-    if (
-      companyLat != null &&
-      companyLon != null &&
-      clientCoords &&
-      Number.isFinite(clientCoords.latitude) &&
-      Number.isFinite(clientCoords.longitude)
-    ) {
-      calculatedDistance = calculateDistanceMeters(clientCoords, {
-        latitude: companyLat,
-        longitude: companyLon,
-      });
-
-      if (calculatedDistance > maxRadiusMeters) {
-        return {
-          success: false,
-          error: `Você está a ${formatDistance(calculatedDistance)} do local. Aproxime-se (o check-in vale num raio de ${formatDistance(maxRadiusMeters)}).`,
-          code: "OUT_OF_RANGE",
-          distanceFormatted: formatDistance(calculatedDistance),
-          allowedDistance: formatDistance(maxRadiusMeters),
-        };
-      }
+    if (decision.outcome === "location_required") {
+      return {
+        success: false,
+        error:
+          "Para confirmar a chegada, permita o acesso à localização no seu navegador. Se preferir, avise a recepção.",
+        code: "LOCATION_REQUIRED",
+        allowedDistance: formatDistance(decision.radiusMeters),
+      };
     }
+
+    if (decision.outcome === "outside") {
+      return {
+        success: false,
+        error: `Você está a ${formatDistance(decision.distanceMeters)} do local. Aproxime-se (o check-in vale num raio de ${formatDistance(decision.radiusMeters)}).`,
+        code: "OUT_OF_RANGE",
+        distanceFormatted: formatDistance(decision.distanceMeters),
+        allowedDistance: formatDistance(decision.radiusMeters),
+      };
+    }
+
+    const calculatedDistance =
+      decision.outcome === "inside" ? decision.distanceMeters : undefined;
 
     // 3. Registra a chegada. `updateMany` com guarda em `checkedInAt` nulo:
     //    dois toques rápidos no botão não geram duas escritas.

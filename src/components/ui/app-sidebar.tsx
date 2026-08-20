@@ -19,6 +19,7 @@ import {
   Globe,
   LayoutDashboard,
   LogOut,
+  MapPin,
   Package,
   Percent,
   Plus,
@@ -242,6 +243,19 @@ export function AppSidebar({
           icon: <Zap className={ICON} />,
           keywords: "add-ons extras contratar",
         },
+        ...(isLicensed("checkin_geofencing")
+          ? [
+              {
+                href: `${base}/check-in`,
+                label: "Check-in por proximidade",
+                // MapPin: nenhum outro item usa, e a tela é sobre um PONTO no
+                // mapa. O recurso passou anos invisível em parte por não ter
+                // entrada no menu.
+                icon: <MapPin className={ICON} />,
+                keywords: "chegada gps geofence proximidade raio localizacao localização",
+              },
+            ]
+          : []),
         ...(isLicensed("promocoes")
           ? [
               {

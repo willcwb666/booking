@@ -27,7 +27,19 @@ export function CheckinClient({ booking, token, expTimestamp }: Props) {
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<CheckinStatusResult | null>(null);
   const [gpsStatus, setGpsStatus] = useState<"idle" | "getting_location" | "ready" | "error">("idle");
-  const [simulateProximity, setSimulateProximity] = useState(true); // Facilita testes imediatos
+  /**
+   * Simulação de proximidade — só fora de produção.
+   *
+   * Isto vinha LIGADO por padrão e com um botão na tela do cliente. Ou seja:
+   * todo check-in enviava coordenadas fabricadas a 30 m da empresa, e usar o
+   * GPS de verdade era opcional. Era um atalho de desenvolvimento entregue ao
+   * cliente final, ao lado de um botão que o explicava.
+   *
+   * `NODE_ENV` é resolvido no build, então este bloco não chega ao pacote de
+   * produção.
+   */
+  const allowSimulation = process.env.NODE_ENV !== "production";
+  const [simulateProximity, setSimulateProximity] = useState(false);
 
   const scheduledDate = new Date(booking.scheduledTime);
   const formattedTime = scheduledDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -37,7 +49,7 @@ export function CheckinClient({ booking, token, expTimestamp }: Props) {
     setGpsStatus("getting_location");
 
     // Se estiver em modo de teste/simulação ou se o navegador não tiver GPS
-    if (simulateProximity || typeof window === "undefined" || !navigator.geolocation) {
+    if ((allowSimulation && simulateProximity) || typeof window === "undefined" || !navigator.geolocation) {
       setTimeout(() => {
         setGpsStatus("ready");
         startTransition(async () => {
@@ -66,9 +78,18 @@ export function CheckinClient({ booking, token, expTimestamp }: Props) {
           setResult(res);
         });
       },
-      (error) => {
+      () => {
         setGpsStatus("error");
-        // Em caso de bloqueio de GPS, tenta validação pelo horário
+        /**
+         * GPS negado NÃO é passe livre.
+         *
+         * A chamada segue sem coordenadas, e quem decide é o servidor: se a
+         * empresa configurou a cerca, ele recusa com `LOCATION_REQUIRED`; se
+         * não configurou, o check-in passa como sempre passou.
+         *
+         * Antes o comentário aqui dizia "tenta validação pelo horário", o que
+         * descrevia bem o efeito: negar a permissão pulava a cerca.
+         */
         startTransition(async () => {
           const res = await performSmartCheckinAction(booking.id, undefined, token, expTimestamp);
           setResult(res);
@@ -221,7 +242,8 @@ export function CheckinClient({ booking, token, expTimestamp }: Props) {
             </div>
           )}
 
-          {/* Toggle de Simulação para Teste Imediato */}
+          {/* Simulação de GPS — some do pacote de produção. */}
+          {allowSimulation && (
           <div className="pt-4 border-t border-[var(--color-border)] flex items-center justify-between text-[var(--text-2xs)] text-[var(--color-text-subtle)]">
             <span className="font-mono">Modo de Teste (Mock GPS):</span>
             <button
@@ -236,6 +258,7 @@ export function CheckinClient({ booking, token, expTimestamp }: Props) {
               {simulateProximity ? "Simular Proximidade (35m) Ativo" : "Usar GPS Real do Celular"}
             </button>
           </div>
+          )}
         </div>
       </div>
     </div>
