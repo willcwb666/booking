@@ -321,6 +321,147 @@ d("autorização das server actions (integração)", () => {
   });
 
   /**
+   * Atendimento de balcão com serviço de outra empresa.
+   *
+   * `createWalkInBookingAction` buscava o `ServiceType` só pelo id. Um membro
+   * legítimo de A passava o id de um serviço de B e o atendimento nascia com o
+   * NOME e o PREÇO de B, com o item do orçamento apontando para uma linha que
+   * A não enxerga nem edita — e servia de leitura da tabela de preços alheia.
+   */
+  describe("atendimento de balcão", () => {
+    const svc = { service: `${P}-service-b`, type: `${P}-servicetype-b` };
+    const own = {
+      agenda: `${P}-agenda-a`,
+      config: `${P}-config-a`,
+      service: `${P}-service-a`,
+      type: `${P}-servicetype-a`,
+    };
+
+    beforeAll(async () => {
+      /**
+       * A empresa A precisa estar COMPLETA — agenda ativa, configuração
+       * publicada e serviço próprio.
+       *
+       * Sem isso a action falharia em "é necessário ter ao menos uma agenda",
+       * o teste passaria verde e não estaria testando escopo nenhum. Foi
+       * exatamente o que aconteceu na primeira versão deste caso: ele passava
+       * com o furo aberto.
+       */
+      await db.agenda.upsert({
+        where: { id: own.agenda },
+        update: { status: "ACTIVE" },
+        create: {
+          id: own.agenda,
+          companyId: A.company,
+          name: "Balcão",
+          status: "ACTIVE",
+          startDate: "2026-01-01",
+          workingDays: [0, 1, 2, 3, 4, 5, 6],
+          startTime: "00:00",
+          endTime: "23:00",
+          intervalMinutes: 30,
+          createdById: A.user,
+        },
+      });
+      await db.bookingConfig.upsert({
+        where: { id: own.config },
+        update: { status: "PUBLISHED" },
+        create: {
+          id: own.config,
+          companyId: A.company,
+          agendaId: own.agenda,
+          name: "Balcão",
+          status: "PUBLISHED",
+          createdById: A.user,
+        },
+      });
+      await db.service.upsert({
+        where: { id: own.service },
+        update: {},
+        create: { id: own.service, companyId: A.company, name: "Corte próprio" },
+      });
+      await db.serviceType.upsert({
+        where: { id: own.type },
+        update: {},
+        create: {
+          id: own.type,
+          companyId: A.company,
+          serviceId: own.service,
+          name: "Simples",
+          price: "50.00",
+          estimatedMinutes: 30,
+        },
+      });
+      await db.service.upsert({
+        where: { id: svc.service },
+        update: {},
+        create: { id: svc.service, companyId: B.company, name: "Corte da concorrente" },
+      });
+      await db.serviceType.upsert({
+        where: { id: svc.type },
+        update: {},
+        create: {
+          id: svc.type,
+          companyId: B.company,
+          serviceId: svc.service,
+          name: "Premium da concorrente",
+          price: "999.00",
+          estimatedMinutes: 60,
+        },
+      });
+    });
+
+    afterEach(async () => {
+      await db.bookingSlot.deleteMany({ where: { agendaId: own.agenda } });
+      await db.booking.deleteMany({ where: { companyId: A.company } });
+      await db.estimate.deleteMany({ where: { companyId: A.company } });
+    });
+
+    afterAll(async () => {
+      await db.bookingSlot.deleteMany({ where: { agendaId: own.agenda } });
+      await db.booking.deleteMany({ where: { companyId: A.company } });
+      await db.estimate.deleteMany({ where: { companyId: A.company } });
+      await db.bookingConfig.deleteMany({ where: { id: own.config } });
+      await db.agenda.deleteMany({ where: { id: own.agenda } });
+      await db.serviceType.deleteMany({ where: { id: { in: [svc.type, own.type] } } });
+      await db.service.deleteMany({ where: { id: { in: [svc.service, own.service] } } });
+    });
+
+    const payload = (serviceTypeId: string) =>
+      ({
+        companySlug: A.slug,
+        serviceTypeId,
+        customerName: "Cliente de balcão",
+        customerPhone: "41999999999",
+        status: "CONFIRMED",
+        paymentMethod: "CASH_CHECK",
+      }) as never;
+
+    it("com o serviço da própria empresa, funciona", async () => {
+      // Este caso é o que dá sentido ao seguinte: prova que a action chega até
+      // o fim, e que a recusa lá embaixo é pelo escopo, não por falta de setup.
+      const m = await import("@/server/actions/booking");
+      currentUser = { id: A.user, email: "a@vitest.local", name: "A" };
+
+      const res = await m.createWalkInBookingAction(payload(own.type));
+      expect(res.success).toBe(true);
+      expect(await db.booking.count({ where: { companyId: A.company } })).toBe(1);
+    });
+
+    it("recusa serviço que pertence a outra empresa", async () => {
+      const m = await import("@/server/actions/booking");
+      currentUser = { id: A.user, email: "a@vitest.local", name: "A" };
+
+      const res = await m.createWalkInBookingAction(payload(svc.type));
+
+      expect(res.success).toBe(false);
+      // E nada nasceu com o preço da outra empresa.
+      expect(await db.booking.count({ where: { companyId: A.company } })).toBe(0);
+      expect(await db.estimate.count({ where: { companyId: A.company } })).toBe(0);
+    });
+  });
+
+  /**
    * Perfil pessoal ("Kreator Pass").
    *
    * O perfil guarda nome, telefone e endereço. Se alguma action aceitasse

@@ -1293,8 +1293,20 @@ export async function createWalkInBookingAction(
     return { success: false, errors: { _: ["Acesso negado"] } };
   }
 
-  const serviceType = await db.serviceType.findUnique({
-    where: { id: payload.serviceTypeId },
+  /**
+   * O serviço precisa ser DESTA empresa.
+   *
+   * Sem o filtro por `companyId`, um id de serviço de outra empresa era aceito:
+   * o atendimento de balcão nascia com o nome e o PREÇO dela, e o item do
+   * orçamento ficava apontando para uma linha que esta empresa não enxerga nem
+   * edita. Também servia como leitura da tabela de preços alheia — bastava
+   * tentar ids até um responder.
+   *
+   * É a mesma classe de falha fechada em 2026-08-18 em oito lugares. Ver
+   * `test/authorization.db.test.ts` para o padrão.
+   */
+  const serviceType = await db.serviceType.findFirst({
+    where: { id: payload.serviceTypeId, companyId: company.id },
   });
   if (!serviceType) {
     return { success: false, errors: { _: ["Serviço selecionado não encontrado"] } };
