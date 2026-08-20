@@ -1411,13 +1411,25 @@ export async function completeBookingWithAdjustmentsAction(
 
   void enqueueNotification({ kind: "STATUS_CHANGED", bookingId: payload.bookingId, payload: { newStatus: "COMPLETED" } });
   void enqueueReviewRequest(payload.bookingId);
-  void notifyBookingCompletedWithInvoice(
-    payload.bookingId,
-    originalTotal,
-    payload.additionalItems,
-    discountAmount,
-    finalTotal
-  );
+  /**
+   * A fatura vai para a FILA, não por chamada direta.
+   *
+   * O tipo `BOOKING_COMPLETED_INVOICE` existia na fila e não era enfileirado
+   * por ninguém — o disparo real era este `void`, que numa função serverless
+   * pode ser cortado logo depois da resposta. Somado ao `catch` que engolia o
+   * erro, o cliente concluía o atendimento e a fatura podia simplesmente não
+   * sair, sem erro em lugar nenhum.
+   */
+  void enqueueNotification({
+    kind: "BOOKING_COMPLETED_INVOICE",
+    bookingId: payload.bookingId,
+    payload: {
+      basePrice: originalTotal,
+      additionalItems: payload.additionalItems,
+      discountAmount,
+      finalTotal,
+    },
+  });
   void triggerWebhooks(booking.companyId, "BOOKING_COMPLETED", { bookingId: payload.bookingId });
 
   return { success: true };

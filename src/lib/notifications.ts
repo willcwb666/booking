@@ -86,6 +86,10 @@ export async function notifyBookingConfirmed(bookingId: string) {
     );
   } catch (err) {
     console.error("[notifications] notifyBookingConfirmed failed:", err);
+    // Relança: quem chama é a fila, e ela precisa SABER que falhou
+    // para reenviar. Engolindo aqui, `processOutbox` marcava SENT e a
+    // máquina de retry — tentativas, backoff, FAILED — nunca disparava.
+    throw err;
   }
 }
 
@@ -149,6 +153,10 @@ export async function notifyBookingReminder(bookingId: string) {
     );
   } catch (err) {
     console.error("[notifications] notifyBookingReminder failed:", err);
+    // Relança: quem chama é a fila, e ela precisa SABER que falhou
+    // para reenviar. Engolindo aqui, `processOutbox` marcava SENT e a
+    // máquina de retry — tentativas, backoff, FAILED — nunca disparava.
+    throw err;
   }
 }
 
@@ -202,6 +210,10 @@ export async function notifyBookingCancelled(bookingId: string) {
     );
   } catch (err) {
     console.error("[notifications] notifyBookingCancelled failed:", err);
+    // Relança: quem chama é a fila, e ela precisa SABER que falhou
+    // para reenviar. Engolindo aqui, `processOutbox` marcava SENT e a
+    // máquina de retry — tentativas, backoff, FAILED — nunca disparava.
+    throw err;
   }
 }
 
@@ -246,6 +258,10 @@ export async function notifyCompanyNewBooking(bookingId: string) {
     );
   } catch (err) {
     console.error("[notifications] notifyCompanyNewBooking failed:", err);
+    // Relança: quem chama é a fila, e ela precisa SABER que falhou
+    // para reenviar. Engolindo aqui, `processOutbox` marcava SENT e a
+    // máquina de retry — tentativas, backoff, FAILED — nunca disparava.
+    throw err;
   }
 }
 
@@ -274,6 +290,10 @@ export async function notifyStatusChanged(bookingId: string, newStatus: string) 
     );
   } catch (err) {
     console.error("[notifications] notifyStatusChanged failed:", err);
+    // Relança: quem chama é a fila, e ela precisa SABER que falhou
+    // para reenviar. Engolindo aqui, `processOutbox` marcava SENT e a
+    // máquina de retry — tentativas, backoff, FAILED — nunca disparava.
+    throw err;
   }
 }
 
@@ -322,6 +342,10 @@ export async function notifyBookingCompletedWithInvoice(
     void awardLoyaltyPointsForBooking(bookingId, finalTotal);
   } catch (err) {
     console.error("[notifications] notifyBookingCompletedWithInvoice failed:", err);
+    // Relança: quem chama é a fila, e ela precisa SABER que falhou
+    // para reenviar. Engolindo aqui, `processOutbox` marcava SENT e a
+    // máquina de retry — tentativas, backoff, FAILED — nunca disparava.
+    throw err;
   }
 }
 

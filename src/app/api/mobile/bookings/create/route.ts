@@ -5,6 +5,7 @@ import { notifyBookingConfirmed, notifyCompanyNewBooking } from "@/lib/notificat
 import { getMobileSession } from "../../_auth";
 import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { isSlotAvailable, resolveProfessionalForSlot, slotProfessionalKey } from "@/lib/agenda";
+import { enqueueNotification } from "@/lib/notification-outbox";
 
 export async function POST(req: NextRequest) {
   const session = await getMobileSession(req);
@@ -185,8 +186,10 @@ export async function POST(req: NextRequest) {
     });
 
     // Fire-and-forget notifications
-    void notifyBookingConfirmed(booking.id);
-    void notifyCompanyNewBooking(booking.id);
+    // Pela FILA, como o fluxo web. Chamada direta aqui significava: e-mail que
+    // falha é e-mail perdido, sem tentativa nova e sem registro.
+    void enqueueNotification({ kind: "BOOKING_CONFIRMED", bookingId: booking.id });
+    void enqueueNotification({ kind: "COMPANY_NEW_BOOKING", bookingId: booking.id });
 
     return NextResponse.json({ bookingId: booking.id });
   } catch (e: unknown) {
