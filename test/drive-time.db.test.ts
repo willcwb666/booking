@@ -351,6 +351,96 @@ d("bloqueio de deslocamento (integração)", () => {
     expect(qualquer.map((s) => s.startTime)).toContain("12:00");
   });
 
+  it("atendimento longo ocupa todos os slots que precisa", async () => {
+    /**
+     * O defeito do item 10: o fim gravado era o fim do SLOT DA GRADE, não a
+     * duração dos serviços. Um atendimento de 3 horas numa grade de 60 minutos
+     * ocupava um slot só, e os dois seguintes continuavam à venda — com o
+     * profissional ainda trabalhando no primeiro cliente.
+     *
+     * Aqui o agendamento é criado com três linhas de `booking_slot`, e a grade
+     * precisa refletir isso.
+     */
+    const { slotProfessionalKey } = await import("@/lib/agenda");
+
+    await db.booking.create({
+      data: {
+        id: IDS.manha,
+        companyId: IDS.company,
+        bookingConfigId: IDS.config,
+        agendaId: IDS.agenda,
+        professionalId: IDS.prof,
+        scheduledDate: DATE,
+        scheduledStartTime: "09:00",
+        scheduledEndTime: "12:00",
+        status: "CONFIRMED",
+        paymentMethod: "CASH_CHECK",
+      },
+    });
+    for (const [start, end] of [["09:00", "10:00"], ["10:00", "11:00"], ["11:00", "12:00"]]) {
+      await db.bookingSlot.create({
+        data: {
+          bookingId: IDS.manha,
+          agendaId: IDS.agenda,
+          date: DATE,
+          startTime: start,
+          endTime: end,
+          professionalId: slotProfessionalKey(IDS.prof),
+        },
+      });
+    }
+
+    // Três linhas para um agendamento: era impossível antes, o bookingId era
+    // UNIQUE em booking_slot.
+    expect(await db.bookingSlot.count({ where: { bookingId: IDS.manha } })).toBe(3);
+
+    const livres = (await getAvailableSlots(IDS.agenda, DATE, IDS.prof)).map((s) => s.startTime);
+    expect(livres).not.toContain("09:00");
+    expect(livres).not.toContain("10:00");
+    expect(livres).not.toContain("11:00");
+    expect(livres).toContain("12:00");
+  });
+
+  it("só oferece início onde a corrida inteira cabe", async () => {
+    const { getAvailableStartSlots, slotProfessionalKey } = await import("@/lib/agenda");
+
+    // Um atendimento das 12:00 às 13:00 no meio do dia parte a grade em duas.
+    await db.booking.create({
+      data: {
+        id: IDS.tarde,
+        companyId: IDS.company,
+        bookingConfigId: IDS.config,
+        agendaId: IDS.agenda,
+        professionalId: IDS.prof,
+        scheduledDate: DATE,
+        scheduledStartTime: "12:00",
+        scheduledEndTime: "13:00",
+        status: "CONFIRMED",
+        paymentMethod: "CASH_CHECK",
+      },
+    });
+    await db.bookingSlot.create({
+      data: {
+        bookingId: IDS.tarde,
+        agendaId: IDS.agenda,
+        date: DATE,
+        startTime: "12:00",
+        endTime: "13:00",
+        professionalId: slotProfessionalKey(IDS.prof),
+      },
+    });
+
+    // Um serviço de 1 slot pode começar às 11:00; um de 2 slots, não — ele
+    // atravessaria o atendimento das 12:00.
+    const um = await getAvailableStartSlots(IDS.agenda, DATE, IDS.prof, 1);
+    const dois = await getAvailableStartSlots(IDS.agenda, DATE, IDS.prof, 2);
+
+    expect(um.map((s) => s.startTime)).toContain("11:00");
+    expect(dois.map((s) => s.startTime)).not.toContain("11:00");
+    // E às 13:00 os dois cabem de novo.
+    expect(dois.map((s) => s.startTime)).toContain("13:00");
+  });
+
   it("sem profissional não grava bloqueio — ele não protegeria horário nenhum", async () => {
     await createBooking(IDS.manha, "09:00", "10:00", CENTRO);
     await createBooking(IDS.tarde, "14:00", "15:00", NORTE);

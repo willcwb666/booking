@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { slotRunFrom, startableSlots } from "@/lib/booking-duration";
 
 export type TimeSlot = {
   date: string;      // "YYYY-MM-DD"
@@ -141,15 +142,30 @@ export async function getAvailableSlots(
       }),
     ]);
 
-    const bookedTimes = new Set(bookedForProf.map((b) => b.scheduledStartTime));
+    /**
+     * Ocupação por INTERVALO, não por horário de início.
+     *
+     * A versão anterior montava um conjunto com `scheduledStartTime` e
+     * bloqueava só ele. Um atendimento das 09:00 às 12:00 deixava 10:00 e 11:00
+     * à venda — o profissional estava com o cliente na cadeira e o sistema
+     * dizia que o horário estava livre.
+     *
+     * Enquanto todo atendimento cabia num slot da grade, início e intervalo
+     * eram a mesma coisa e o defeito não aparecia. Com serviços que ocupam
+     * vários slots, aparece na primeira semana.
+     */
+    const overlapsBooking = (slot: TimeSlot) =>
+      bookedForProf.some(
+        (b) => slot.startTime < b.scheduledEndTime && slot.endTime > b.scheduledStartTime
+      );
 
     const today = new Date().toISOString().split("T")[0];
     const now = new Date();
     const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
 
     return allSlots.filter((slot) => {
-      // 1. Bloqueio por agendamento existente
-      if (bookedTimes.has(slot.startTime)) return false;
+      // 1. Bloqueio por agendamento existente — o intervalo inteiro dele
+      if (overlapsBooking(slot)) return false;
 
       // 2. Bloqueio por evento externo (Google Calendar / iCal / Bloqueio Manual)
       for (const ev of scheduleEvents) {
@@ -177,7 +193,7 @@ export async function getAvailableSlots(
         scheduledDate: date,
         status: { notIn: ["CANCELLED"] },
       },
-      select: { scheduledStartTime: true, professionalId: true },
+      select: { scheduledStartTime: true, scheduledEndTime: true, professionalId: true },
     }),
     db.scheduleEvent.findMany({
       where: {
@@ -207,8 +223,12 @@ export async function getAvailableSlots(
     let busyProfCount = 0;
 
     for (const profId of activeProfIds) {
+      // Mesmo motivo do ramo acima: compara INTERVALOS, não horários de início.
       const isBooked = bookingsOnDate.some(
-        (b) => b.professionalId === profId && b.scheduledStartTime === slot.startTime
+        (b) =>
+          b.professionalId === profId &&
+          slot.startTime < b.scheduledEndTime &&
+          slot.endTime > b.scheduledStartTime
       );
       if (isBooked) {
         busyProfCount++;
@@ -288,19 +308,67 @@ export function slotProfessionalKey(professionalId: string | null | undefined): 
 }
 
 /**
+ * Horários que podem INICIAR um atendimento de `slotsNeeded` slots.
+ *
+ * A grade bruta responde "este horário está livre?". Um atendimento de 90
+ * minutos numa grade de 30 precisa de outra pergunta: "este horário e os dois
+ * seguintes estão livres, e são contíguos?". Oferecer o primeiro sem os outros
+ * vende um horário que atravessa o almoço ou o cliente seguinte.
+ */
+export async function getAvailableStartSlots(
+  agendaId: string,
+  date: string,
+  professionalId: string | null | undefined,
+  slotsNeeded: number
+): Promise<TimeSlot[]> {
+  const available = await getAvailableSlots(agendaId, date, professionalId);
+  return startableSlots(available, slotsNeeded);
+}
+
+/**
  * Valida no servidor um horário enviado pelo cliente: precisa coincidir
  * exatamente com um slot disponível da grade (impede horários arbitrários,
  * overlaps, dias bloqueados e datas fora da agenda).
+ *
+ * Com `slotsNeeded > 1`, valida a CORRIDA inteira: os N slots existem, são
+ * contíguos, e o fim do último é o fim informado. Validar só o primeiro deixaria
+ * o navegador escolher onde o atendimento termina.
  */
 export async function isSlotAvailable(
   agendaId: string,
   date: string,
   startTime: string,
   endTime: string,
-  professionalId?: string | null
+  professionalId?: string | null,
+  slotsNeeded = 1
 ): Promise<boolean> {
   const available = await getAvailableSlots(agendaId, date, professionalId);
-  return available.some((s) => s.startTime === startTime && s.endTime === endTime);
+
+  if (slotsNeeded <= 1) {
+    return available.some((s) => s.startTime === startTime && s.endTime === endTime);
+  }
+
+  const run = slotRunFrom(available, startTime, slotsNeeded);
+  return run.length === slotsNeeded && run[run.length - 1].endTime === endTime;
+}
+
+/**
+ * A corrida de slots que o atendimento vai ocupar — para gravar uma linha de
+ * `booking_slot` por slot.
+ *
+ * Devolve vazio quando a corrida não fecha. Meia reserva é o pior estado
+ * possível: o cliente sai achando que marcou e a segunda metade continua à
+ * venda.
+ */
+export async function resolveSlotRun(
+  agendaId: string,
+  date: string,
+  startTime: string,
+  professionalId: string | null | undefined,
+  slotsNeeded: number
+): Promise<TimeSlot[]> {
+  const available = await getAvailableSlots(agendaId, date, professionalId);
+  return slotRunFrom(available, startTime, Math.max(1, slotsNeeded));
 }
 
 /**

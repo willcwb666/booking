@@ -896,7 +896,7 @@ model Booking {
   recurrenceGroupId      String?
   recurrenceFrequency    EstimateFrequency?
   recurrenceEndDate      String?
-  slot                   BookingSlot?
+  slots                  BookingSlot[]
   customerDetail         BookingCustomerDetail?
   homeAccess             BookingHomeAccess?
   review                 Review?
@@ -917,7 +917,12 @@ model Booking {
 
 model BookingSlot {
   id             String  @id @default(cuid())
-  bookingId      String  @unique
+  /// Um agendamento ocupa TANTOS slots quanto os serviços dele exigem.
+  ///
+  /// Era `@unique`, um slot por agendamento — e por isso um orçamento de 90
+  /// minutos ocupava um slot de 30 na grade, deixando os dois seguintes à
+  /// venda enquanto o profissional ainda estava trabalhando.
+  bookingId      String
   booking        Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   agendaId       String
   agenda         Agenda  @relation(fields: [agendaId], references: [id])
@@ -933,6 +938,7 @@ model BookingSlot {
   // com 3 barbeiros só conseguiria vender um horário das 10:00.
   @@unique([agendaId, date, startTime, professionalId])
   @@index([agendaId, date])
+  @@index([bookingId])
   @@map("booking_slot")
 }
 

@@ -12,7 +12,13 @@ import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { createPixPayment } from "@/lib/mercadopago";
 import { triggerWebhooks } from "@/lib/webhooks";
 import { createCalendarEvent } from "@/lib/google-calendar";
-import { isSlotAvailable, resolveProfessionalForSlot, slotProfessionalKey } from "@/lib/agenda";
+import {
+  isSlotAvailable,
+  resolveProfessionalForSlot,
+  resolveSlotRun,
+  slotProfessionalKey,
+} from "@/lib/agenda";
+import { slotsNeeded, totalServiceMinutes } from "@/lib/booking-duration";
 import {
   calculateCancellationRefund,
   computeBookingCharge,
@@ -94,7 +100,18 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
   // Load estimate
   const estimate = await db.estimate.findFirst({
     where: { id: estimateId, status: "PENDING" },
-    include: { bookingConfig: true, company: { select: { currency: true } } },
+    include: {
+      bookingConfig: true,
+      company: { select: { currency: true } },
+      // A duração do atendimento sai daqui: é o que foi VENDIDO que define
+      // quanto tempo da agenda o cliente ocupa.
+      serviceTypes: {
+        select: { quantity: true, serviceType: { select: { estimatedMinutes: true } } },
+      },
+      extraServices: {
+        select: { quantity: true, extraService: { select: { estimatedMinutes: true } } },
+      },
+    },
   });
   if (!estimate) {
     return { success: false, errors: { _: ["Orçamento não encontrado ou expirado"] } };
@@ -138,19 +155,57 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
 
   const chosenProfessionalId = (formData.get("professionalId") as string) || null;
 
+  /**
+   * Quantos slots este atendimento realmente ocupa.
+   *
+   * Antes, o fim gravado era o fim do SLOT DA GRADE, viesse o orçamento com um
+   * serviço ou com cinco. Corte + barba + hidratação — 90 minutos — ocupavam um
+   * slot de 30, e os dois seguintes continuavam à venda: o profissional estava
+   * na metade do primeiro cliente quando o segundo chegava, marcado por um
+   * sistema que dizia que o horário estava livre.
+   *
+   * A duração sai do ORÇAMENTO, no servidor. O navegador informa só onde
+   * começa; onde termina é consequência do que foi vendido.
+   */
+  const serviceMinutes = totalServiceMinutes([
+    ...estimate.serviceTypes.map((st) => ({
+      estimatedMinutes: st.serviceType.estimatedMinutes,
+      quantity: st.quantity,
+    })),
+    ...estimate.extraServices.map((es) => ({
+      estimatedMinutes: es.extraService.estimatedMinutes,
+      quantity: es.quantity,
+    })),
+  ]);
+  const neededSlots = slotsNeeded(serviceMinutes, agenda.intervalMinutes);
+
   // Server-side slot validation: o horário precisa coincidir com um slot
   // disponível da grade (bloqueia horários arbitrários, overlaps, dias
-  // bloqueados e datas fora da agenda)
-  const slotOk = await isSlotAvailable(
+  // bloqueados e datas fora da agenda). Com mais de um slot, a corrida inteira
+  // precisa estar livre e contígua.
+  const slotRun = await resolveSlotRun(
     agendaId,
     scheduledDate,
     scheduledStartTime,
-    scheduledEndTime,
-    chosenProfessionalId
+    chosenProfessionalId,
+    neededSlots
   );
-  if (!slotOk) {
-    return { success: false, errors: { _: ["Horário indisponível. Por favor, escolha outro horário."] } };
+  if (slotRun.length !== neededSlots) {
+    return {
+      success: false,
+      errors: {
+        _: [
+          neededSlots > 1
+            ? `Este atendimento leva ${serviceMinutes} minutos e não cabe a partir deste horário. Escolha outro.`
+            : "Horário indisponível. Por favor, escolha outro horário.",
+        ],
+      },
+    };
   }
+
+  // O fim real do atendimento é o fim do ÚLTIMO slot da corrida, não o que o
+  // navegador mandou.
+  const resolvedEndTime = slotRun[slotRun.length - 1].endTime;
 
   // Validação de Política Anti-No-Show e Bloqueio de Clientes
   const companyPolicy = await db.company.findUnique({
@@ -286,7 +341,7 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
           professionalId: finalProfessionalId,
           scheduledDate,
           scheduledStartTime,
-          scheduledEndTime,
+          scheduledEndTime: resolvedEndTime,
           status: bookingStatus,
           paymentMethod,
           paymentStatus: "PENDING",
@@ -299,16 +354,20 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
       // Trava atômica do horário: pode lançar P2002 se o MESMO profissional já
       // estiver ocupado nesse slot — intencional, é o que impede duplo
       // agendamento em corrida. Outros profissionais da agenda seguem livres.
-      await tx.bookingSlot.create({
-        data: {
-          bookingId: newBooking.id,
-          agendaId,
-          date: scheduledDate,
-          startTime: scheduledStartTime,
-          endTime: scheduledEndTime,
-          professionalId: slotProfessionalKey(finalProfessionalId),
-        },
-      });
+      // Uma linha por slot da corrida. Se QUALQUER uma colidir, o P2002
+      // derruba a transação inteira — meia reserva não existe.
+      for (const s of slotRun) {
+        await tx.bookingSlot.create({
+          data: {
+            bookingId: newBooking.id,
+            agendaId,
+            date: s.date,
+            startTime: s.startTime,
+            endTime: s.endTime,
+            professionalId: slotProfessionalKey(finalProfessionalId),
+          },
+        });
+      }
 
       await tx.bookingCustomerDetail.create({
         data: {
@@ -528,14 +587,17 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
         // Ocorrência só é criada se cair em slot válido da grade PARA O MESMO
         // profissional (respeita dias de funcionamento, exceções e ocupados) —
         // sem passar o profissional, a série cairia em horários já vendidos.
-        const occurrenceOk = await isSlotAvailable(
+        // A ocorrência precisa caber com a MESMA duração da primeira: uma
+        // série de atendimentos de 90 minutos que reserva 30 na semana que vem
+        // é a mesma venda em dobro, adiada.
+        const occurrenceRun = await resolveSlotRun(
           agendaId,
           nextDateStr,
           scheduledStartTime,
-          scheduledEndTime,
-          finalProfessionalId
+          finalProfessionalId,
+          neededSlots
         );
-        if (!occurrenceOk) continue;
+        if (occurrenceRun.length !== neededSlots) continue;
 
         try {
           const recBooking = await db.booking.create({
@@ -547,7 +609,7 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
               professionalId: finalProfessionalId,
               scheduledDate: nextDateStr,
               scheduledStartTime,
-              scheduledEndTime,
+              scheduledEndTime: occurrenceRun[occurrenceRun.length - 1].endTime,
               status: bookingStatus,
               paymentMethod,
               paymentStatus: "PENDING",
@@ -556,16 +618,18 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
               recurrenceFrequency,
             },
           });
-          await db.bookingSlot.create({
-            data: {
-              bookingId: recBooking.id,
-              agendaId,
-              date: nextDateStr,
-              startTime: scheduledStartTime,
-              endTime: scheduledEndTime,
-              professionalId: slotProfessionalKey(finalProfessionalId),
-            },
-          });
+          for (const s of occurrenceRun) {
+            await db.bookingSlot.create({
+              data: {
+                bookingId: recBooking.id,
+                agendaId,
+                date: s.date,
+                startTime: s.startTime,
+                endTime: s.endTime,
+                professionalId: slotProfessionalKey(finalProfessionalId),
+              },
+            });
+          }
           seriesBookingIds.push(recBooking.id);
           // Copy customer detail and home access from primary booking
           await db.bookingCustomerDetail.create({
@@ -1079,38 +1143,60 @@ export async function rescheduleBookingAction(
   // Server-side slot validation (grade da agenda + exceções + ocupados) para o
   // profissional DESTE agendamento — validar contra "qualquer profissional"
   // deixaria reagendar por cima de um horário que ele já tem vendido.
-  const slotOk = await isSlotAvailable(
+  /**
+   * Remarcar preserva a DURAÇÃO do atendimento.
+   *
+   * Um atendimento de 90 minutos remarcado para outro horário continua levando
+   * 90 minutos. Reservar um slot de 30 no destino seria vender de novo os dois
+   * seguintes — o mesmo defeito que a criação tinha, adiado para o reagendamento.
+   *
+   * A contagem sai dos slots que ele JÁ ocupa, não de um recálculo do orçamento:
+   * é o que a agenda de fato reservou, e é o que precisa continuar reservado.
+   */
+  const currentSlots = await db.bookingSlot.count({ where: { bookingId } });
+  const neededSlots = Math.max(1, currentSlots);
+
+  const slotRun = await resolveSlotRun(
     booking.agendaId,
     newDate,
     newStartTime,
-    newEndTime,
-    booking.professionalId
+    booking.professionalId,
+    neededSlots
   );
-  if (!slotOk) {
-    return { success: false, error: "Horário indisponível. Escolha outro horário." };
+  if (slotRun.length !== neededSlots) {
+    return {
+      success: false,
+      error:
+        neededSlots > 1
+          ? "Este atendimento não cabe a partir desse horário. Escolha outro."
+          : "Horário indisponível. Escolha outro horário.",
+    };
   }
+  const resolvedNewEnd = slotRun[slotRun.length - 1].endTime;
 
   try {
     await db.$transaction(async (tx) => {
       // Release old slot
       await tx.bookingSlot.deleteMany({ where: { bookingId } });
-      // Create new slot (throws P2002 if taken)
-      await tx.bookingSlot.create({
-        data: {
-          bookingId,
-          agendaId: booking.agendaId,
-          date: newDate,
-          startTime: newStartTime,
-          endTime: newEndTime,
-          professionalId: slotProfessionalKey(booking.professionalId),
-        },
-      });
+      // Uma linha por slot (lança P2002 se qualquer um estiver ocupado)
+      for (const s of slotRun) {
+        await tx.bookingSlot.create({
+          data: {
+            bookingId,
+            agendaId: booking.agendaId,
+            date: s.date,
+            startTime: s.startTime,
+            endTime: s.endTime,
+            professionalId: slotProfessionalKey(booking.professionalId),
+          },
+        });
+      }
       await tx.booking.update({
         where: { id: bookingId },
         data: {
           scheduledDate: newDate,
           scheduledStartTime: newStartTime,
-          scheduledEndTime: newEndTime,
+          scheduledEndTime: resolvedNewEnd,
           rescheduledAt: new Date(),
           status: "CONFIRMED",
         },

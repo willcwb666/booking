@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { slotsNeeded, totalServiceMinutes } from "@/lib/booking-duration";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
@@ -41,10 +42,14 @@ export default async function CheckoutPage({
         },
       },
       serviceTypes: {
-        include: { serviceType: { select: { name: true, service: { select: { name: true } } } } },
+        include: {
+          serviceType: {
+            select: { name: true, estimatedMinutes: true, service: { select: { name: true } } },
+          },
+        },
       },
       extraServices: {
-        include: { extraService: { select: { name: true } } },
+        include: { extraService: { select: { name: true, estimatedMinutes: true } } },
       },
     },
   });
@@ -133,6 +138,26 @@ export default async function CheckoutPage({
     ? await db.userProfile.findUnique({ where: { userId: session.user.id } })
     : null;
 
+  /**
+   * Quanto tempo de agenda este orçamento consome.
+   *
+   * A grade só pode oferecer horários onde a corrida inteira cabe. Sem isto, o
+   * cliente escolhia as 17:30 para um atendimento de 90 minutos numa casa que
+   * fecha às 18:00 — e o servidor recusava depois de ele já ter preenchido o
+   * formulário todo.
+   */
+  const serviceMinutes = totalServiceMinutes([
+    ...estimate.serviceTypes.map((st) => ({
+      estimatedMinutes: st.serviceType.estimatedMinutes,
+      quantity: st.quantity,
+    })),
+    ...estimate.extraServices.map((es) => ({
+      estimatedMinutes: es.extraService.estimatedMinutes,
+      quantity: es.quantity,
+    })),
+  ]);
+  const neededSlots = slotsNeeded(serviceMinutes, config.agenda.intervalMinutes);
+
   const prefill = session
     ? {
         firstName: profile?.firstName ?? session.user.name?.split(" ")[0] ?? "",
@@ -209,6 +234,8 @@ export default async function CheckoutPage({
       prefill={prefill}
       requireDeposit={depositPolicy.percentage > 0}
       depositPercentage={depositPolicy.percentage}
+      slotsNeeded={neededSlots}
+      serviceMinutes={serviceMinutes}
       agendaConfig={{
         startDate: agenda.startDate,
         endDate: agenda.endDate,

@@ -66,6 +66,10 @@ type Props = {
   businessType?: string;
   /** Empresa que reserva tempo de viagem — ver `isHomeService` abaixo. */
   driveTimeEnabled?: boolean;
+  /** Slots consecutivos que este orçamento ocupa na grade. */
+  slotsNeeded?: number;
+  /** Duração total dos serviços, em minutos — para dizer isso ao cliente. */
+  serviceMinutes?: number;
   offPeakWindows?: OffPeakWindow[];
   /** Dados do perfil do usuário logado, para preencher o formulário. */
   prefill?: {
@@ -297,6 +301,8 @@ export function CheckoutClient({
   locale,
   businessType,
   driveTimeEnabled = false,
+  slotsNeeded = 1,
+  serviceMinutes = 0,
   offPeakWindows = [],
   prefill = null,
   requireDeposit,
@@ -457,7 +463,7 @@ export function CheckoutClient({
     setSelectedSlot(null);
     setAvailableSlots([]);
     startSlotTransition(async () => {
-      const slots = await getAvailableSlotsAction(agendaId, dateStr, profId);
+      const slots = await getAvailableSlotsAction(agendaId, dateStr, profId, slotsNeeded);
       setAvailableSlots(slots);
     });
   }
@@ -795,6 +801,18 @@ export function CheckoutClient({
                         >
                           {t("firstAvailable")}
                         </button>
+                        {slotsNeeded > 1 && serviceMinutes > 0 && (
+                          /* O cliente precisa saber por que sobraram menos
+                             horários que ele esperava. Sem esta linha, "por que
+                             não tem 17:30?" não tem resposta na tela. */
+                          <p
+                            className="text-[var(--color-text-muted)] mb-2"
+                            style={{ fontSize: "var(--text-2xs)" }}
+                          >
+                            Este atendimento leva cerca de {serviceMinutes} minutos, então
+                            aparecem só os horários com esse tempo livre.
+                          </p>
+                        )}
                         <div
                           className="grid grid-cols-3 sm:grid-cols-4 gap-2"
                           role="group"
