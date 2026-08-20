@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { calculateCommission } from "@/lib/pricing";
-import { resolveRates } from "@/lib/commission-rates";
+import { resolveBookingCommission, resolveRates } from "@/lib/commission-rates";
 
 /**
  * Extrato de comissão por profissional.
@@ -51,6 +51,13 @@ export type ProfessionalCommissionSummary = {
   service: CommissionBreakdown;
   product: CommissionBreakdown;
   completedBookingsCount: number;
+  /**
+   * Quantos dos concluídos ainda não têm comissão carimbada.
+   *
+   * Existe para a tela poder ser honesta: esses valores ainda se movem se a
+   * taxa do profissional mudar, e o dono precisa saber quais.
+   */
+  unstampedBookingsCount: number;
   posSalesCount: number;
   totalRevenueGenerated: number;
   totalCommissionAmount: number;
@@ -105,7 +112,15 @@ export async function getCompanyCommissionReport(
     db.$queryRawUnsafe<Array<Record<string, unknown>>>(
       `SELECT b."professionalId" AS pid,
               COUNT(*)::int AS bookings,
-              COALESCE(SUM(e."total"), 0)::float8 AS revenue
+              COALESCE(SUM(e."total"), 0)::float8 AS revenue,
+              -- Comissão carimbada na conclusão: é o valor que de fato foi
+              -- combinado, e não muda quando a taxa do profissional muda.
+              COALESCE(SUM(b."commissionAmount"), 0)::float8 AS stamped_commission,
+              -- Receita dos agendamentos SEM carimbo (anteriores a ele). Só
+              -- essa parte ainda é recalculada com a taxa atual.
+              COALESCE(SUM(CASE WHEN b."commissionAmount" IS NULL THEN e."total" ELSE 0 END), 0)::float8
+                AS unstamped_revenue,
+              COUNT(*) FILTER (WHERE b."commissionAmount" IS NULL)::int AS unstamped_count
          FROM "booking" b
          LEFT JOIN "estimate" e ON e.id = b."estimateId"
         WHERE b."companyId" = $1
@@ -152,6 +167,8 @@ export async function getCompanyCommissionReport(
         id: true,
         professionalId: true,
         scheduledDate: true,
+        commissionAmount: true,
+        commissionRate: true,
         customerDetail: { select: { firstName: true, lastName: true } },
         estimate: {
           select: {
@@ -197,6 +214,7 @@ export async function getCompanyCommissionReport(
       service: { revenue: 0, commission: 0 },
       product: { revenue: 0, commission: 0 },
       completedBookingsCount: 0,
+      unstampedBookingsCount: 0,
       posSalesCount: 0,
       totalRevenueGenerated: 0,
       totalCommissionAmount: 0,
@@ -205,13 +223,29 @@ export async function getCompanyCommissionReport(
     });
   }
 
-  // Agendamentos concluídos → coluna de serviço.
+  /**
+   * Agendamentos concluídos → coluna de serviço.
+   *
+   * A comissão sai do CARIMBO. Antes, o extrato recalculava tudo com a taxa
+   * atual do profissional toda vez que a tela abria — mudar a taxa de alguém
+   * reescrevia o que ele já tinha ganhado, e o fechamento da quinzena passada
+   * mudava de valor sozinho depois de pago.
+   *
+   * O que não tem carimbo é anterior a ele, e continua sendo calculado com a
+   * taxa atual: não existe registro histórico das taxas para reconstruir, e
+   * inventar um número para o passado seria pior que assumir o recurso.
+   */
   for (const row of bookingRows) {
     const s = summaries.get(String(row.pid));
     if (!s) continue;
     const revenue = num(row.revenue);
-    const { commission } = calculateCommission(revenue, s.serviceRate);
+    const unstampedRevenue = num(row.unstamped_revenue);
+    const commission =
+      num(row.stamped_commission) +
+      calculateCommission(unstampedRevenue, s.serviceRate).commission;
+
     s.completedBookingsCount += num(row.bookings);
+    s.unstampedBookingsCount += num(row.unstamped_count);
     s.service.revenue += revenue;
     s.service.commission += commission;
   }
@@ -246,7 +280,12 @@ export async function getCompanyCommissionReport(
       scheduledDate: row.scheduledDate,
       serviceName: row.estimate?.serviceTypes?.[0]?.serviceType?.name ?? "Serviço",
       total,
-      commission: calculateCommission(total, s.serviceRate).commission,
+      commission: resolveBookingCommission({
+        stampedAmount: row.commissionAmount,
+        stampedRate: row.commissionRate,
+        total,
+        currentRate: s.serviceRate,
+      }).commission,
     });
   }
 

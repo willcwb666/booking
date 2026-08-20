@@ -877,6 +877,16 @@ model Booking {
   /// Ponto é moeda: sem esta marca, concluir o mesmo atendimento duas vezes
   /// creditava duas vezes.
   loyaltyAwardedAt       DateTime?
+  /// Comissão do profissional, CARIMBADA na conclusão do atendimento.
+  ///
+  /// Sem ela, o extrato recalculava com a taxa ATUAL do profissional — e mudar
+  /// a taxa reescrevia retroativamente o que ele já tinha ganhado. A venda de
+  /// balcão já carimbava desde `c01e462`; o agendamento ficou como dívida
+  /// anotada, e é esta.
+  commissionAmount       Decimal?               @db.Decimal(10, 2)
+  /// A taxa aplicada no momento da conclusão. Guardada junto do valor para o
+  /// extrato poder explicar a conta, não só exibir o resultado.
+  commissionRate         Decimal?               @db.Decimal(5, 2)
   refundedAt             DateTime?
   // Chegada confirmada pelo cliente. Sem este campo o check-in não deixava
   // rastro: o estado "já fez check-in" era inalcançável e o operador não

@@ -28,6 +28,7 @@ import {
 } from "@/lib/pricing";
 import { notifyWaitlistForDate } from "@/lib/waitlist-notify";
 import { restoreBookingCredits } from "@/lib/booking-reversal";
+import { stampBookingCommission } from "@/lib/commission-stamp";
 import { resolveDeposit } from "@/lib/trust-tier";
 import { findOffPeakDiscount } from "@/lib/off-peak";
 import { getCustomerTrust } from "@/server/queries/customer-trust";
@@ -1273,6 +1274,10 @@ export async function updateBookingStatusAction(
 
   void enqueueNotification({ kind: "STATUS_CHANGED", bookingId: bookingId, payload: { newStatus: newStatus } });
   if (newStatus === "COMPLETED") {
+    // Carimba a comissão com a taxa VIGENTE agora. Sem isto, o extrato
+    // recalcula com a taxa atual toda vez que alguém abre a tela — e mudar a
+    // taxa de alguém reescreve o que ele já ganhou.
+    await stampBookingCommission(bookingId);
     void enqueueReviewRequest(bookingId);
     void triggerWebhooks(booking.companyId, "BOOKING_COMPLETED", { bookingId });
   } else if (newStatus === "CONFIRMED") {
@@ -1398,6 +1403,10 @@ export async function completeBookingWithAdjustmentsAction(
       },
     });
   });
+
+  // Depois da transação: o total do orçamento já foi ajustado, e é sobre ele
+  // que a comissão incide. Carimbar dentro dela leria o valor antigo.
+  await stampBookingCommission(payload.bookingId);
 
   void enqueueNotification({ kind: "STATUS_CHANGED", bookingId: payload.bookingId, payload: { newStatus: "COMPLETED" } });
   void enqueueReviewRequest(payload.bookingId);

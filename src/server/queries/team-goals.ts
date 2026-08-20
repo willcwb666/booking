@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { resolveRates } from "@/lib/commission-rates";
+import { resolveBookingCommission, resolveRates } from "@/lib/commission-rates";
 import { computeGoalProgress, rankTeam, projectDayTotal, type GoalProgress, type RankedEntry } from "@/lib/team-goals";
 import { todayInTimezone, minutesIntoDayInTimezone } from "@/lib/company-date";
 
@@ -103,6 +103,8 @@ export async function getProfessionalDayPanel(input: {
         scheduledStartTime: true,
         scheduledEndTime: true,
         status: true,
+        commissionAmount: true,
+        commissionRate: true,
         customerDetail: { select: { firstName: true, lastName: true } },
         bookingConfig: { select: { name: true } },
         estimate: { select: { total: true } },
@@ -135,7 +137,22 @@ export async function getProfessionalDayPanel(input: {
 
   const completed = bookings.filter((b) => b.status === "COMPLETED");
   const bookingRevenue = completed.reduce((acc, b) => acc + num(b.estimate?.total), 0);
-  const bookingCommission = (bookingRevenue * rates.service) / 100;
+
+  // A comissão sai do CARIMBO gravado na conclusão, com recurso à taxa atual só
+  // nos agendamentos anteriores a ele. Calcular aqui de um jeito e no extrato de
+  // outro é como o item 12 encontrou três respostas para "quanto este
+  // profissional ganha".
+  const bookingCommission = completed.reduce(
+    (acc, b) =>
+      acc +
+      resolveBookingCommission({
+        stampedAmount: b.commissionAmount,
+        stampedRate: b.commissionRate,
+        total: num(b.estimate?.total),
+        currentRate: rates.service,
+      }).commission,
+    0
+  );
 
   const posRevenue = num(posRows[0]?.revenue);
   const posCommission = num(posRows[0]?.commission);

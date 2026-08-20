@@ -209,9 +209,12 @@ d("painel de metas (integração)", () => {
       where: { id: IDS.company },
       data: { showTeamRanking: false },
     });
+    // Restaura META e TAXA aqui, não no fim do `it`: um caso que falha no meio
+    // nunca chega ao fim, e o resíduo contamina a execução seguinte da suíte —
+    // que foi exatamente o que aconteceu ao verificar o carimbo.
     await db.professional.update({
       where: { id: IDS.profA },
-      data: { dailyGoal: "300.00" },
+      data: { dailyGoal: "300.00", commissionRate: "40.00" },
     });
   });
 
@@ -281,6 +284,84 @@ d("painel de metas (integração)", () => {
         date: DATE,
       });
       expect(panel).toBeNull();
+    });
+  });
+
+  describe("carimbo de comissão", () => {
+    /**
+     * O extrato calculava a comissão do agendamento com a taxa ATUAL do
+     * profissional, toda vez que alguém abria a tela. Mudar a taxa reescrevia o
+     * que ele já tinha ganhado: o fechamento da quinzena passada mudava de
+     * valor sozinho, depois de pago.
+     *
+     * A venda de balcão nunca teve esse problema — congela a comissão no ato.
+     * O agendamento ficou anotado como dívida no item 12; isto a fecha.
+     */
+    it("mudar a taxa NÃO reescreve o que já foi ganho", async () => {
+      const { getProfessionalDayPanel } = await import("@/server/queries/team-goals");
+      const { stampBookingCommission } = await import("@/lib/commission-stamp");
+
+      // Ana está com 40%. Um atendimento de 200 concluído hoje: 80 de comissão.
+      await addBooking(IDS.profA, 200, "COMPLETED", "09:00");
+      const bookingId = await db.booking
+        .findFirst({ where: { professionalId: IDS.profA }, select: { id: true } })
+        .then((b) => b!.id);
+      await stampBookingCommission(bookingId);
+
+      const carimbado = await db.booking.findUnique({ where: { id: bookingId } });
+      expect(Number(carimbado?.commissionAmount)).toBe(80);
+      expect(Number(carimbado?.commissionRate)).toBe(40);
+
+      // O dono corta a taxa dela para 10% amanhã.
+      await db.professional.update({
+        where: { id: IDS.profA },
+        data: { commissionRate: "10.00" },
+      });
+
+      const panel = await getProfessionalDayPanel({
+        companyId: IDS.company,
+        professionalId: IDS.profA,
+        date: DATE,
+      });
+      // Continua 80. Sem o carimbo, viraria 20.
+      expect(panel?.commission).toBe(80);
+
+    });
+
+    it("carimbar duas vezes não muda o valor", async () => {
+      // Concluir de novo, ou reprocessar, não pode reescrever um carimbo — é o
+      // ponto inteiro dele.
+      const { stampBookingCommission } = await import("@/lib/commission-stamp");
+      await addBooking(IDS.profA, 200, "COMPLETED", "09:00");
+      const bookingId = await db.booking
+        .findFirst({ where: { professionalId: IDS.profA }, select: { id: true } })
+        .then((b) => b!.id);
+
+      await stampBookingCommission(bookingId);
+      await db.professional.update({
+        where: { id: IDS.profA },
+        data: { commissionRate: "90.00" },
+      });
+      await stampBookingCommission(bookingId);
+
+      const b = await db.booking.findUnique({ where: { id: bookingId } });
+      expect(Number(b?.commissionAmount)).toBe(80);
+
+    });
+
+    it("agendamento sem carimbo continua usando a taxa atual", async () => {
+      // As linhas anteriores ao carimbo não têm o valor, e não existe registro
+      // histórico das taxas para reconstruí-lo. O recurso é o comportamento
+      // antigo — o melhor disponível.
+      const { getProfessionalDayPanel } = await import("@/server/queries/team-goals");
+      await addBooking(IDS.profA, 200, "COMPLETED", "09:00");
+
+      const panel = await getProfessionalDayPanel({
+        companyId: IDS.company,
+        professionalId: IDS.profA,
+        date: DATE,
+      });
+      expect(panel?.commission).toBe(80);
     });
   });
 
