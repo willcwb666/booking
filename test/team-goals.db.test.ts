@@ -365,6 +365,107 @@ d("painel de metas (integração)", () => {
     });
   });
 
+  describe("série recorrente", () => {
+    /**
+     * `recurrenceGroupId` era gravado e NUNCA lido. A série de doze semanas era
+     * criada e depois cada ocorrência vivia sozinha: nada dizia que ela fazia
+     * parte de um conjunto, e cancelar as restantes era abrir uma por uma.
+     *
+     * O que este bloco trava é a regra que custa dinheiro se errar: cancelar a
+     * série NÃO pode tocar no passado. O atendimento de três semanas atrás foi
+     * prestado e, se concluído, tem comissão carimbada.
+     */
+    const GROUP = `${P}-grupo`;
+    const ontem = "2026-05-04";
+    const amanha = "2027-09-09";
+
+    async function serie() {
+      for (const [i, [data, status]] of [
+        [ontem, "COMPLETED"],
+        // Passado ainda CONFIRMADO: o cliente não apareceu e ninguém fechou a
+        // comanda. É ESTE que o corte por data protege — o filtro de status
+        // sozinho o deixaria passar, e cancelá-lo reescreveria a agenda de
+        // três semanas atrás.
+        [DATE, "CONFIRMED"],
+        [amanha, "CONFIRMED"],
+      ].entries()) {
+        await db.booking.create({
+          data: {
+            id: `${GROUP}-${i}`,
+            companyId: IDS.company,
+            bookingConfigId: IDS.config,
+            agendaId: IDS.agenda,
+            professionalId: IDS.profA,
+            scheduledDate: data as string,
+            scheduledStartTime: "09:00",
+            scheduledEndTime: "10:00",
+            status: status as never,
+            paymentMethod: "CASH_CHECK",
+            recurrenceGroupId: GROUP,
+            recurrenceFrequency: "WEEKLY",
+          },
+        });
+      }
+    }
+
+    it("o resumo conta o total e só o que ainda pode ser cancelado", async () => {
+      const { getSeriesSummary } = await import("@/server/queries/bookings");
+      await serie();
+
+      const sum = await getSeriesSummary({
+        companyId: IDS.company,
+        groupId: GROUP,
+        today: "2026-06-01",
+      });
+      expect(sum?.total).toBe(3);
+      // O concluído de ontem e o de DATE (passado) ficam fora; sobra o de 2027.
+      expect(sum?.upcoming).toBe(1);
+      expect(sum?.lastDate).toBe(amanha);
+    });
+
+    it("cancelar a série não toca no que já aconteceu", async () => {
+      const m = await import("@/server/actions/recurrence");
+      await serie();
+
+      const res = await m.cancelRecurrenceSeriesAction(`${P}-slug`, `${GROUP}-2`);
+      expect(res.success).toBe(true);
+
+      const concluido = await db.booking.findUnique({ where: { id: `${GROUP}-0` } });
+      const passadoAberto = await db.booking.findUnique({ where: { id: `${GROUP}-1` } });
+      const futuro = await db.booking.findUnique({ where: { id: `${GROUP}-2` } });
+
+      // O passado fica como estava — histórico, não agenda.
+      expect(concluido?.status).toBe("COMPLETED");
+      // E o passado que ficou ABERTO também: é o caso que só o corte por data
+      // protege, porque o filtro de status o deixaria passar.
+      expect(passadoAberto?.status).toBe("CONFIRMED");
+      expect(futuro?.status).toBe("CANCELLED");
+      expect(res.success && res.cancelled).toBe(1);
+    });
+
+    it("EMPLOYEE não cancela série", async () => {
+      const m = await import("@/server/actions/recurrence");
+      await serie();
+      currentUser = {
+        id: IDS.employeeUser,
+        email: `${IDS.employeeUser}@vitest.local`,
+        name: "Funcionário",
+      };
+
+      expect((await m.cancelRecurrenceSeriesAction(`${P}-slug`, `${GROUP}-2`)).success).toBe(false);
+      expect((await db.booking.findUnique({ where: { id: `${GROUP}-2` } }))?.status).toBe(
+        "CONFIRMED"
+      );
+    });
+
+    it("agendamento sem série é recusado", async () => {
+      const m = await import("@/server/actions/recurrence");
+      await addBooking(IDS.profA, 100, "CONFIRMED", "09:00");
+      const solo = await db.booking.findFirst({ where: { recurrenceGroupId: null } });
+      expect((await m.cancelRecurrenceSeriesAction(`${P}-slug`, solo!.id)).success).toBe(false);
+    });
+  });
+
   describe("ranking", () => {
     it("desligado não devolve nada — a trava é na consulta", async () => {
       /**

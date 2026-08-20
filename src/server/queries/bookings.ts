@@ -344,3 +344,58 @@ export async function getCrossCompanyBookings(input: {
     locale: b.company.locale,
   }));
 }
+
+export type SeriesSummary = {
+  groupId: string;
+  frequency: string | null;
+  /** Total de ocorrências da série, incluindo esta. */
+  total: number;
+  /** As que ainda podem ser canceladas: futuras e não concluídas. */
+  upcoming: number;
+  /** Data da última ocorrência ainda por vir. */
+  lastDate: string | null;
+};
+
+/**
+ * A série de que este agendamento faz parte.
+ *
+ * ─── Por que isto não existia ────────────────────────────────────────────────
+ *
+ * `recurrenceGroupId` era gravado e NUNCA lido. A série de doze semanas era
+ * criada, e depois cada ocorrência vivia sozinha: nada na tela dizia que ela
+ * fazia parte de um conjunto, e cancelar as onze restantes era abrir uma por
+ * uma. O cliente que desiste do pacote ligava, e alguém no balcão passava dez
+ * minutos clicando.
+ *
+ * ─── "Ainda por vir" é por DATA, não por status ──────────────────────────────
+ *
+ * Cancelar uma série não pode tocar no que já aconteceu: o atendimento de três
+ * semanas atrás foi prestado e, se estiver marcado como concluído, tem comissão
+ * carimbada. O corte é a data de hoje — o passado é histórico, não agenda.
+ */
+export async function getSeriesSummary(input: {
+  companyId: string;
+  groupId: string;
+  today: string;
+}): Promise<SeriesSummary | null> {
+  const occurrences = await db.booking.findMany({
+    where: { companyId: input.companyId, recurrenceGroupId: input.groupId },
+    select: { scheduledDate: true, status: true, recurrenceFrequency: true },
+    orderBy: { scheduledDate: "asc" },
+  });
+  if (occurrences.length === 0) return null;
+
+  const cancellable = occurrences.filter(
+    (o) =>
+      o.scheduledDate >= input.today &&
+      (o.status === "PENDING" || o.status === "CONFIRMED")
+  );
+
+  return {
+    groupId: input.groupId,
+    frequency: occurrences[0].recurrenceFrequency ?? null,
+    total: occurrences.length,
+    upcoming: cancellable.length,
+    lastDate: cancellable.length > 0 ? cancellable[cancellable.length - 1].scheduledDate : null,
+  };
+}

@@ -1,7 +1,8 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { getCompanyBySlugForUser } from "@/server/queries/companies";
-import { getBookingDetail } from "@/server/queries/bookings";
+import { getBookingDetail, getSeriesSummary } from "@/server/queries/bookings";
+import { todayInTimezone } from "@/lib/company-date";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { CancelDialog } from "./_components/cancel-dialog";
@@ -9,6 +10,7 @@ import { StatusActions } from "./_components/status-actions";
 import { RescheduleDialog } from "./_components/reschedule-dialog";
 import { RefundButton } from "./_components/refund-button";
 import { MarkPaidButton } from "./_components/mark-paid-button";
+import { SeriesCard } from "./_components/series-card";
 import { formatMoney } from "@/lib/format";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -51,6 +53,20 @@ export default async function BookingDetailPage({
   if (!booking) notFound();
 
   const { customerDetail: customer, homeAccess, estimate } = booking;
+
+  /**
+   * A série de que este agendamento faz parte.
+   *
+   * `recurrenceGroupId` era gravado e nunca lido: a série existia no banco e
+   * era invisível na tela.
+   */
+  const series = booking.recurrenceGroupId
+    ? await getSeriesSummary({
+        companyId: company.id,
+        groupId: booking.recurrenceGroupId,
+        today: todayInTimezone(company.timezone),
+      })
+    : null;
   const canCancel = booking.status === "PENDING" || booking.status === "CONFIRMED";
   const canReschedule = booking.status === "CONFIRMED" || booking.status === "PENDING";
   const canRefund = booking.paymentMethod === "CARD" && booking.paymentStatus === "PAID";
@@ -137,6 +153,10 @@ export default async function BookingDetailPage({
           </div>
         </div>
       </div>
+
+      {series && (
+        <SeriesCard companySlug={companySlug} bookingId={bookingId} series={series} />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Booking info */}
