@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { canAccessCompany } from "@/lib/admin-guard";
 import { stripe } from "@/lib/stripe";
 import { encrypt } from "@/lib/encrypt";
 import { headers } from "next/headers";
@@ -1640,11 +1641,21 @@ export async function markBookingNoShowAction(payload: {
   companySlug: string;
   didNotify: boolean;
 }): Promise<{ success: boolean; error?: string }> {
+  /**
+   * O `findFirst` amarrava o agendamento ao slug, mas nada amarrava o USUARIO
+   * ao slug: bastava estar logado em qualquer conta para marcar falta — ou
+   * CANCELAR, que e o outro ramo — em agendamento de qualquer empresa.
+   */
+  const access = await canAccessCompany(payload.companySlug);
+  if (!access.ok) return { success: false, error: access.error };
+
+  // Quem cancelou fica registrado no agendamento — a sessao continua sendo
+  // lida para isso, agora depois de a permissao ter sido conferida.
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return { success: false, error: "Não autenticado" };
 
   const booking = await db.booking.findFirst({
-    where: { id: payload.bookingId, company: { slug: payload.companySlug } },
+    where: { id: payload.bookingId, companyId: access.companyId },
     include: { company: true },
   });
 

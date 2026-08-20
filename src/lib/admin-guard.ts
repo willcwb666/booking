@@ -41,7 +41,14 @@ export async function assertSuperAdmin(): Promise<string> {
  * qualquer slug permitiria ler dados de outra empresa.
  */
 export async function canAccessCompany(
-  companySlugOrId: string
+  companySlugOrId: string,
+  /**
+   * Papel mínimo exigido. O padrão continua sendo EMPLOYEE — qualquer membro
+   * ativo — para não mudar o comportamento de quem já chamava sem este
+   * argumento. Configuração que muda a cara pública da empresa ou como ela
+   * recebe dinheiro pede MANAGER.
+   */
+  minRole: "EMPLOYEE" | "MANAGER" | "OWNER" = "EMPLOYEE"
 ): Promise<{ ok: true; companyId: string } | { ok: false; error: string }> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return { ok: false, error: "Não autenticado" };
@@ -58,10 +65,17 @@ export async function canAccessCompany(
     where: {
       companyId_userId: { companyId: company.id, userId: session.user.id },
     },
-    select: { isActive: true },
+    select: { isActive: true, role: true },
   });
   if (!member || !member.isActive) {
     return { ok: false, error: "Sem permissão para esta empresa" };
+  }
+
+  if (minRole === "OWNER" && member.role !== "OWNER") {
+    return { ok: false, error: "Ação restrita ao proprietário da empresa" };
+  }
+  if (minRole === "MANAGER" && member.role !== "OWNER" && member.role !== "MANAGER") {
+    return { ok: false, error: "Ação restrita a gerentes e ao proprietário" };
   }
 
   return { ok: true, companyId: company.id };

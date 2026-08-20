@@ -1,10 +1,9 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { logAuditEvent } from "@/lib/audit-log";
+import { canAccessCompany } from "@/lib/admin-guard";
 
 export async function updateCompanyLandingSettingsAction(
   companySlug: string,
@@ -18,15 +17,14 @@ export async function updateCompanyLandingSettingsAction(
     socialFacebook: string;
   }
 ) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return { success: false, error: "Não autenticado" };
-
-  const company = await db.company.findFirst({
-    where: { slug: companySlug },
-    select: { id: true },
-  });
-
-  if (!company) return { success: false, error: "Empresa não encontrada" };
+  /**
+   * So checava sessao. Titulo, subtitulo, cor, capa e redes sociais sao a
+   * PAGINA PUBLICA da empresa — qualquer usuario logado podia reescrever a
+   * vitrine de qualquer salao passando o slug. Pichacao com uma chamada.
+   */
+  const access = await canAccessCompany(companySlug, "MANAGER");
+  if (!access.ok) return { success: false, error: access.error };
+  const company = { id: access.companyId };
 
   try {
     await db.$executeRawUnsafe(`

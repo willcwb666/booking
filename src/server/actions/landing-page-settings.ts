@@ -2,10 +2,10 @@
 
 import { db } from "@/lib/db";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { canAccessCompany } from "@/lib/admin-guard";
 export type CompanyLandingPageConfig = {
   heroTitle: string;
   heroSubtitle: string;
@@ -137,15 +137,10 @@ export async function updateCompanyLandingPageConfigAction(
   companySlug: string,
   config: CompanyLandingPageConfig
 ) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return { success: false, error: "Não autenticado" };
-
-  const company = await db.company.findFirst({
-    where: { slug: companySlug },
-    select: { id: true },
-  });
-
-  if (!company) return { success: false, error: "Empresa não encontrada" };
+  // Mesmo defeito de `company-landing.ts`: sessao sem vinculo. Ver la.
+  const access = await canAccessCompany(companySlug, "MANAGER");
+  if (!access.ok) return { success: false, error: access.error };
+  const company = { id: access.companyId };
 
   try {
     await db.$executeRawUnsafe(`

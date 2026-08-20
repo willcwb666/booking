@@ -86,6 +86,68 @@ const NO_RATE_LIMIT_NEEDED: Record<string, string> = {
   "professionals.ts:deleteProfessionalAction": "delega para action guardada",
 };
 
+/**
+ * Sinais de que a action amarra o usuário A ESTA empresa.
+ *
+ * `GUARD_HINTS` responde "autentica?". Estes respondem a pergunta seguinte,
+ * que é outra: "autoriza?". Cinco actions passavam na primeira e falhavam na
+ * segunda — confirmavam que havia sessão e iam direto ao banco pelo slug, que
+ * é público. Com uma conta qualquer da plataforma dava para reescrever o
+ * gateway de pagamento, pichar a página pública ou cancelar o agendamento de
+ * qualquer empresa.
+ */
+const AUTHZ_HINTS = [
+  "canAccessCompany",
+  "canAccessModule",
+  "isModuleLicensed",
+  "getCompanyBySlugForUser",
+  "withCompanyAuth",
+  "requireSuperAdmin",
+  "assertSuperAdmin",
+  "requireAdmin",
+  "resolveCompanyForManage",
+  "companyUser.find",
+  // Checagem de super admin escrita na mão, sem auxiliar
+  'user.role !== "admin"',
+  'user.role === "admin"',
+];
+
+/** A action recebe um identificador de empresa? Então tem de amarrá-lo. */
+const COMPANY_PARAM =
+  /company(Slug|Id)\s*[:,)]|formData\.get\(\s*["']company(Slug|Id)["']/;
+
+/**
+ * Actions que recebem a empresa e legitimamente NÃO amarram o usuário a ela.
+ *
+ * Mesmo espírito de `PUBLIC_ACTIONS`: a saída é declarar o motivo, não afrouxar
+ * a regra.
+ */
+const UNSCOPED_ACTIONS: Record<string, string> = {
+  // Fluxo do cliente final, que não é membro de empresa nenhuma
+  "booking.ts:createBookingAction": "o cliente agenda sem login",
+  "booking.ts:checkPixPaymentAction": "polling do PIX no checkout público",
+  "estimate.ts:upsertEstimateAction": "orçamento público",
+  "estimate.ts:submitEstimateAction": "orçamento público; empresa vem do bookingConfigId",
+  "ghost-slot-buster.ts:getActiveGhostSlotsAction": "vagas de última hora na página pública",
+  "memberships.ts:checkCustomerMembershipCoverageAction": "cobertura do clube no checkout",
+
+  // Leitura de dado que a página pública já exibe
+  "landing-page-settings.ts:getCompanyLandingPageConfigAction": "aparência da página pública",
+  "payment-gateways.ts:getCompanyPaymentGatewaysAction": "meios de pagamento no checkout",
+
+  // Token assinado na URL faz o papel da sessão
+  "checkin.ts:getBookingCheckinInfoAction": "token assinado",
+  "checkin.ts:performSmartCheckinAction": "token assinado",
+  "review-request.ts:getReviewLinkInfoAction": "token assinado no e-mail",
+
+  // Amarra por outro eixo que não a empresa
+  "review.ts:submitReviewAction": "confere que o agendamento é do próprio usuário",
+  "ai-copilot.ts:parseAIBookingIntentAction": "exige sessão e rate limit por usuário; só lê nomes de serviço",
+
+  // Não há empresa a que pertencer ainda
+  "company.ts:createCompanyWizardAction": "cria a empresa",
+};
+
 type Action = { file: string; name: string; body: string; key: string };
 
 function collectActions(): { actions: Action[]; sources: Map<string, string> } {
@@ -99,14 +161,26 @@ function collectActions(): { actions: Action[]; sources: Map<string, string> } {
     }
     sources.set(file, src);
 
-    // Auxiliares do próprio arquivo que já contêm verificação
+    /**
+     * Auxiliares do próprio arquivo que já contêm verificação.
+     *
+     * Dois conjuntos, porque são duas perguntas. `guardedHelpers` carrega
+     * autenticação; `authzHelpers`, o vínculo com a empresa. Um auxiliar como
+     * `verifyCompanyAccess` faz as duas coisas, mas um que só chama
+     * `getSession` faz apenas a primeira — e tratar os dois como o mesmo
+     * conjunto daria por autorizadas 41 actions que não são.
+     */
     const guardedHelpers = new Set<string>();
+    const authzHelpers = new Set<string>();
     for (const m of src.matchAll(/^(?:async )?function (\w+)/gm)) {
       const after = src.slice(m.index! + m[0].length);
       const nextIdx = after.search(/^(?:export )?(?:async )?function /m);
       const helperBody = nextIdx === -1 ? after : after.slice(0, nextIdx);
       if (GUARD_HINTS.some((h) => helperBody.includes(h))) {
         guardedHelpers.add(m[1]);
+      }
+      if (AUTHZ_HINTS.some((h) => helperBody.includes(h))) {
+        authzHelpers.add(m[1]);
       }
     }
 
@@ -117,6 +191,9 @@ function collectActions(): { actions: Action[]; sources: Map<string, string> } {
       // Auxiliar guardado chamado no corpo conta como guarda
       for (const helper of guardedHelpers) {
         if (new RegExp(`\\b${helper}\\s*\\(`).test(body)) body += "\n/*guarded*/getSession";
+      }
+      for (const helper of authzHelpers) {
+        if (new RegExp(`\\b${helper}\\s*\\(`).test(body)) body += "\n/*authz*/canAccessCompany";
       }
       actions.push({ file, name: m[1], body, key: `${file}:${m[1]}` });
     }
@@ -172,6 +249,32 @@ describe("superfície de server actions", () => {
       (key) => !actions.some((a) => a.key === key)
     );
     expect(stale, "Entrada de PUBLIC_ACTIONS sem action correspondente").toEqual([]);
+  });
+
+  it("action que recebe empresa amarra o usuário a ela, ou declara por quê", () => {
+    const unscoped = actions
+      .filter((a) => COMPANY_PARAM.test(a.body))
+      .filter((a) => !AUTHZ_HINTS.some((h) => a.body.includes(h)))
+      .filter((a) => !(a.key in UNSCOPED_ACTIONS))
+      .map((a) => a.key);
+
+    expect(
+      unscoped,
+      `Action recebe o slug/id da empresa e não confere se o usuário pertence a ela.
+` +
+        `"Tem sessão" não é "tem permissão": o slug é público, está na URL de
+` +
+        `agendamento de toda empresa. Use canAccessCompany/canAccessModule/
+` +
+        `withCompanyAuth, ou registre em UNSCOPED_ACTIONS com o motivo.`
+    ).toEqual([]);
+  });
+
+  it("UNSCOPED_ACTIONS não guarda entradas obsoletas", () => {
+    const stale = Object.keys(UNSCOPED_ACTIONS).filter(
+      (key) => !actions.some((a) => a.key === key)
+    );
+    expect(stale, "Entrada de UNSCOPED_ACTIONS sem action correspondente").toEqual([]);
   });
 
   it("nenhum arquivo de action exporta algo que não seja função async", () => {

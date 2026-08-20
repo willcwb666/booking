@@ -38,8 +38,17 @@ export async function updateCompanySubscriptionAction(
 }
 
 export async function cancelDuplicateSubscriptionsAction(companySlug: string) {
+  /**
+   * Esta e a UNICA action do arquivo que nao conferia o papel — a irma logo
+   * acima, `updateCompanySubscriptionAction`, sempre conferiu. Sem isso,
+   * qualquer usuario logado cancelava assinatura do Stripe de qualquer
+   * empresa passando o slug: derrubar o faturamento do concorrente custava
+   * uma chamada.
+   */
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return { success: false, error: "Não autenticado" };
+  if (!session || session.user.role !== "admin") {
+    return { success: false, error: "Acesso negado — Apenas Super Admin da Plataforma" };
+  }
 
   const company = await db.company.findFirst({
     where: { slug: companySlug },
