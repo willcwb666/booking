@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/lib/auth";
+import { todayInTimezone } from "@/lib/company-date";
 import { headers } from "next/headers";
 import { getCompanyBySlugForUser } from "@/server/queries/companies";
 import { db } from "@/lib/db";
@@ -153,10 +154,6 @@ const emailComposeSchema = z.object({
   description: z.string().min(1, "Descrição obrigatória").max(1000, "Máximo 1000 caracteres"),
 });
 
-function todayInTz(timezone: string): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
-}
-
 /**
  * "Criar e-mail": monta o e-mail com título/descrição do gestor + todas as
  * promoções vigentes da empresa e envia para os usuários com opt-in de marketing.
@@ -184,7 +181,7 @@ export async function sendPromotionEmailAction(formData: FormData): Promise<Send
   });
 
   // Só promoções vigentes hoje (fuso da empresa)
-  const today = todayInTz(companyInfo.timezone);
+  const today = todayInTimezone(companyInfo.timezone);
   const promotions = await db.promotion.findMany({
     where: {
       companyId: company.id,

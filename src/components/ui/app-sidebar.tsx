@@ -29,6 +29,7 @@ import {
   Settings,
   Star,
   Tag,
+  Target,
   User,
   UserCheck,
   UserCog,
@@ -197,6 +198,14 @@ export function AppSidebar({
           label: "Comissões",
           icon: <Scale className={ICON} />,
           keywords: "repasse pagamento equipe",
+        },
+        {
+          href: `${base}/meu-painel`,
+          label: "Meu painel",
+          // Target: a tela é sobre a META. Nenhum outro item usa, e Award já é
+          // Cargos — ícone repetido não ajuda ninguém a achar nada.
+          icon: <Target className={ICON} />,
+          keywords: "meta objetivo dia comissão comissao ranking desempenho",
         },
         ...(isLicensed("split_pagamentos")
           ? [

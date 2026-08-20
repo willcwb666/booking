@@ -477,7 +477,9 @@ d("autorização das server actions (integração)", () => {
       const m = await import("@/server/actions/user-profile");
       currentUser = null;
       expect((await m.saveUserProfileAction({ phone: "11999999999" })).success).toBe(false);
-      expect(await db.userProfile.count()).toBe(0);
+      expect(
+        await db.userProfile.count({ where: { userId: { in: [A.user, B.user] } } })
+      ).toBe(0);
     });
 
     it("salva no próprio perfil, identificado pela sessão", async () => {

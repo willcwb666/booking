@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { todayInTimezone } from "@/lib/company-date";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
@@ -43,15 +44,10 @@ async function loadConfig(bookingConfigId: string) {
   });
 }
 
-function todayInTz(timezone: string): string {
-  // en-CA → "YYYY-MM-DD"
-  return new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
-}
-
 /** Preço promocional vigente por serviceTypeId (menor valor se houver sobreposição). */
 async function loadPromoMap(companyId: string, serviceTypeIds: string[], timezone: string) {
   if (serviceTypeIds.length === 0) return new Map<string, number>();
-  const today = todayInTz(timezone);
+  const today = todayInTimezone(timezone);
   const promos = await db.promotion.findMany({
     where: {
       companyId,

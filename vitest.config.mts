@@ -11,6 +11,19 @@ export default defineConfig({
     // Carrega o .env antes dos módulos de teste — os testes de integração
     // (RUN_DB_TESTS=1) precisam de DATABASE_URL já no import de @/lib/db.
     setupFiles: ["./test/setup-env.ts"],
+    /**
+     * Um arquivo de teste por vez.
+     *
+     * Os testes de integração compartilham o MESMO Postgres. Rodando em
+     * paralelo, um arquivo enxerga as linhas que outro acabou de criar, e uma
+     * asserção falha por causa de dado que não é dela — falha que some sozinha
+     * na execução seguinte e faz perder tempo procurando bug onde não há.
+     *
+     * O custo é alguns segundos a mais numa suíte que roda em menos de um
+     * minuto. Barato pelo que compra: quando ela fica vermelha, é bug de
+     * verdade.
+     */
+    fileParallelism: false,
   },
   resolve: {
     alias: {

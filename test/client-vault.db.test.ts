@@ -178,7 +178,7 @@ d("cofre do cliente (integração)", () => {
 
       const res = await m.addClientPhotoAction(A.slug, photoInput());
       expect(res.success).toBe(false);
-      expect(await db.clientPhoto.count()).toBe(0);
+      expect(await db.clientPhoto.count({ where: { companyId: A.company } })).toBe(0);
     });
 
     it("licença revogada vale como não contratada", async () => {
@@ -223,7 +223,7 @@ d("cofre do cliente (integração)", () => {
         photoInput({ consentConfirmed: false }) as never
       );
       expect(res.success).toBe(false);
-      expect(await db.clientPhoto.count()).toBe(0);
+      expect(await db.clientPhoto.count({ where: { companyId: A.company } })).toBe(0);
     });
 
     it("momento inválido é recusado", async () => {
@@ -329,7 +329,7 @@ d("cofre do cliente (integração)", () => {
       const m = await import("@/server/actions/client-vault");
       const res = await m.saveServiceRecordAction(A.slug, { customerId: A.customer, notes: "  " });
       expect(res.success).toBe(false);
-      expect(await db.serviceRecord.count()).toBe(0);
+      expect(await db.serviceRecord.count({ where: { companyId: A.company } })).toBe(0);
     });
 
     it("um campo preenchido já é ficha, e campo vazio vira nulo", async () => {
