@@ -1451,6 +1451,13 @@ model SystemNotification {
   id              String   @id @default(cuid())
   companyId       String?
   recipientUserId String? // Null para broadcast de Super Admin global
+  /// Quem disparou o aviso. Nulo quando é do sistema, não de uma pessoa.
+  ///
+  /// A coluna existia no BANCO e não no schema: `broadcast-updates.ts` a
+  /// escreve, e criava a tabela com ela por `CREATE TABLE IF NOT EXISTS` em
+  /// runtime. O schema é que estava incompleto — apagar a coluna para "alinhar"
+  /// teria quebrado quem escreve nela.
+  senderUserId    String?
   title           String
   message         String
   type            String   @default("INFO") // PRESET_RESET_REQUEST | INFO | ALERT

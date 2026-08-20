@@ -7,13 +7,11 @@ import { decrypt } from "@/lib/encrypt";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { notifyBookingCompletedWithInvoice } from "@/lib/notifications";
 import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { createPixPayment } from "@/lib/mercadopago";
 import { triggerWebhooks } from "@/lib/webhooks";
 import { createCalendarEvent } from "@/lib/google-calendar";
 import {
-  isSlotAvailable,
   resolveProfessionalForSlot,
   resolveSlotRun,
   slotProfessionalKey,

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { encrypt } from "@/lib/encrypt";
-import { notifyBookingConfirmed, notifyCompanyNewBooking } from "@/lib/notifications";
 import { getMobileSession } from "../../_auth";
 import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { isSlotAvailable, resolveProfessionalForSlot, slotProfessionalKey } from "@/lib/agenda";
