@@ -85,7 +85,8 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({ success: true, key: sanitizedKey });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Erro ao salvar arquivo local";
+    console.error("[api/upload/local]", err);
+    const msg = "Erro ao salvar arquivo";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

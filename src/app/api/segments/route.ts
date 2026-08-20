@@ -9,7 +9,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const segments = await getAdminSegments(onlyActive);
     return NextResponse.json({ segments });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Erro ao buscar segmentos";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    // Rota pública — ver a nota em `api/presets`.
+    console.error("[api/segments]", err);
+    return NextResponse.json({ error: "Erro ao buscar segmentos" }, { status: 500 });
   }
 }

@@ -129,8 +129,13 @@ export async function getAvailableSlots(
       db.scheduleEvent.findMany({
         where: {
           companyId: agenda.companyId,
-          professionalId,
           date,
+          // Evento SEM profissional é bloqueio da empresa inteira — feriado,
+          // dedetização, reunião de equipe. Antes o filtro exigia
+          // `professionalId` igual ao escolhido, então esses eventos não
+          // batiam com ninguém: o dono cadastrava o feriado, via o bloco na
+          // agenda, e a página pública continuava vendendo o dia.
+          OR: [{ professionalId }, { professionalId: null }],
         },
         select: { startTime: true, endTime: true },
       }),
@@ -177,8 +182,8 @@ export async function getAvailableSlots(
     db.scheduleEvent.findMany({
       where: {
         companyId: agenda.companyId,
-        professionalId: { in: activeProfIds },
         date,
+        OR: [{ professionalId: { in: activeProfIds } }, { professionalId: null }],
       },
       select: { startTime: true, endTime: true, professionalId: true },
     }),
@@ -188,7 +193,16 @@ export async function getAvailableSlots(
   const now = new Date();
   const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
 
+  // Bloqueios da empresa inteira: valem para todo mundo, então não entram na
+  // contagem de "quantos profissionais estão ocupados" — eles fecham o horário
+  // sozinhos, mesmo numa agenda com dez pessoas livres.
+  const companyWideEvents = externalEventsOnDate.filter((ev) => ev.professionalId === null);
+
   return allSlots.filter((slot) => {
+    for (const ev of companyWideEvents) {
+      if (slot.startTime < ev.endTime && slot.endTime > ev.startTime) return false;
+    }
+
     // Conta quantos profissionais estão ocupados neste slot (seja por booking ou por evento externo)
     let busyProfCount = 0;
 

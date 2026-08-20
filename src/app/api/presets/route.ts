@@ -13,7 +13,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const presets = await getActivePresetsByBusinessType(businessType);
     return NextResponse.json({ presets });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Erro ao buscar presets";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    // A mensagem do erro fica no log do servidor, não na resposta. Esta rota
+    // é pública e sem sessão: devolver `err.message` entrega nome de coluna,
+    // trecho de SQL e caminho de arquivo a quem só precisou provocar um 500.
+    console.error("[api/presets]", err);
+    return NextResponse.json({ error: "Erro ao buscar presets" }, { status: 500 });
   }
 }

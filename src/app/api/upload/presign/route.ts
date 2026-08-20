@@ -41,7 +41,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const result = await generatePresignedUploadUrl(type as UploadType, contentType, safeExt);
     return NextResponse.json(result);
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Erro ao gerar URL";
-    return NextResponse.json({ error: msg }, { status: 400 });
+    // O content-type já foi validado contra EXT_MAP logo acima, então o que
+    // chega aqui é falha de infraestrutura — credencial de R2 ausente, endpoint
+    // fora do ar. Nada disso deve ser descrito para quem chamou.
+    console.error("[api/upload/presign]", err);
+    return NextResponse.json({ error: "Erro ao preparar o envio" }, { status: 500 });
   }
 }

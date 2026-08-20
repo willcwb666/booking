@@ -315,6 +315,42 @@ d("bloqueio de deslocamento (integração)", () => {
     expect(manual?.title).toBe("Almoço");
   });
 
+  it("bloqueio da empresa inteira fecha o horário para todo mundo", async () => {
+    /**
+     * Evento sem profissional é o feriado, a dedetização, a reunião de equipe.
+     *
+     * O filtro de slots exigia `professionalId` igual ao escolhido, então esses
+     * eventos não batiam com ninguém: o dono cadastrava, via o bloco na agenda,
+     * e a página pública seguia vendendo o dia. Zero linhas assim existiam no
+     * banco quando isto foi encontrado — mas a tela de agenda deixa criar.
+     */
+    await db.scheduleEvent.create({
+      data: {
+        companyId: IDS.company,
+        professionalId: null,
+        date: DATE,
+        startTime: "09:00",
+        endTime: "12:00",
+        title: "Feriado — empresa fechada",
+        type: "EVENT",
+        source: "MANUAL",
+        createdById: IDS.user,
+      },
+    });
+
+    // Com profissional escolhido.
+    const doProf = await getAvailableSlots(IDS.agenda, DATE, IDS.prof);
+    expect(doProf.map((s) => s.startTime)).not.toContain("09:00");
+    expect(doProf.map((s) => s.startTime)).not.toContain("11:00");
+    expect(doProf.map((s) => s.startTime)).toContain("12:00");
+
+    // E em "qualquer profissional", onde o bloqueio não pode ser contado como
+    // "mais um ocupado" — ele fecha sozinho, mesmo com a equipe toda livre.
+    const qualquer = await getAvailableSlots(IDS.agenda, DATE, null);
+    expect(qualquer.map((s) => s.startTime)).not.toContain("09:00");
+    expect(qualquer.map((s) => s.startTime)).toContain("12:00");
+  });
+
   it("sem profissional não grava bloqueio — ele não protegeria horário nenhum", async () => {
     await createBooking(IDS.manha, "09:00", "10:00", CENTRO);
     await createBooking(IDS.tarde, "14:00", "15:00", NORTE);
