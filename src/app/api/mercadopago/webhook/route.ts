@@ -7,6 +7,7 @@ import { triggerWebhooks } from "@/lib/webhooks";
 import { revertAndCancelUnpaidBooking } from "@/lib/booking-reversal";
 import { createHmac, timingSafeEqual } from "crypto";
 import { enqueueNotification } from "@/lib/notification-outbox";
+import { verifyChargeAmount } from "@/lib/online-charge";
 
 /**
  * Valida a assinatura HMAC do header `x-signature` do Mercado Pago.
@@ -99,6 +100,47 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const payment = await paymentApi.get({ id: paymentId });
 
     if (payment.status === "approved") {
+      /**
+       * Aprovado não basta: tem que ter pago o que devia.
+       *
+       * O pagamento é buscado por id e o `transaction_amount` vem do gateway —
+       * diferente do Stripe, onde o valor é o do PaymentIntent que nós mesmos
+       * criamos. Confirmar só pelo status marcava como integralmente pago um
+       * agendamento pago por menos.
+       */
+      const check = verifyChargeAmount(
+        booking.onlineChargeAmount === null ? null : Number(booking.onlineChargeAmount),
+        payment.transaction_amount
+      );
+
+      if (check.outcome === "short") {
+        /**
+         * Fica PENDENTE de propósito, e não FALHOU.
+         *
+         * Há dinheiro real do lado do cliente: transformar isso em falha
+         * dispararia o estorno de vale-presente e o cancelamento automático
+         * sobre um pagamento que existe. Pendente mantém o agendamento vivo e
+         * visível para alguém decidir — e a rotina de não-pagos continua sendo
+         * a rede de baixo, liberando o horário se ninguém resolver.
+         */
+        console.error(
+          "[mp-webhook] pagamento aprovado por valor MENOR que o devido — booking nao confirmado",
+          { bookingId: booking.id, paymentId, esperado: check.expected, pago: check.paid }
+        );
+        return NextResponse.json({ ok: true });
+      }
+
+      if (check.outcome === "unverifiable") {
+        // Agendamento anterior à coluna, ou gateway que não devolveu o valor.
+        // Confirma como antes — recusar puniria o cliente por lacuna nossa —
+        // mas deixa rastro de que este não foi conferido.
+        console.warn("[mp-webhook] valor nao conferido", {
+          bookingId: booking.id,
+          paymentId,
+          motivo: check.reason,
+        });
+      }
+
       // Idempotente: só notifica na primeira confirmação — o MP pode reentregar
       // o mesmo evento mais de uma vez.
       const alreadyPaid = booking.paymentStatus === "PAID";

@@ -868,6 +868,16 @@ model Booking {
   paymentConfirmedBy     User?                  @relation("BookingPaymentConfirmedBy", fields: [paymentConfirmedById], references: [id])
   stripePaymentIntentId  String?
   mercadoPagoPaymentId   String?
+  /// Quanto este agendamento devia cobrar ONLINE, gravado no instante em que a
+  /// cobranca foi aberta no gateway.
+  ///
+  /// Existe por causa do PIX. No Stripe o webhook recebe o valor do proprio
+  /// PaymentIntent que nos criamos, entao o numero nao tem como divergir do
+  /// combinado. No Mercado Pago o pagamento e buscado por id e o
+  /// `transaction_amount` que volta e so um dado — sem este campo nao havia
+  /// contra o que conferir, e qualquer pagamento aprovado marcava o
+  /// agendamento como integralmente pago, inclusive por valor menor.
+  onlineChargeAmount     Decimal?               @db.Decimal(10, 2)
   cancelledAt            DateTime?
   cancelledById          String?
   cancelledBy            User?                  @relation("BookingCancelledBy", fields: [cancelledById], references: [id])

@@ -3,7 +3,6 @@
 import { db } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import { encrypt } from "@/lib/encrypt";
-import { decrypt } from "@/lib/encrypt";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -728,9 +727,18 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
         payerName: `${firstName} ${lastName}`,
       });
 
+      /**
+       * `onlineChargeAmount` grava o que esta cobranca DEVE receber.
+       *
+       * O webhook do MP busca o pagamento por id e recebe o valor de volta do
+       * gateway; sem este registro nao havia contra o que conferir, e um
+       * pagamento aprovado por menos marcava o agendamento como pago por
+       * inteiro. Gravado junto do id do pagamento, na mesma escrita, para nao
+       * existir janela em que o webhook encontre um sem o outro.
+       */
       await db.booking.update({
         where: { id: booking.id },
-        data: { mercadoPagoPaymentId: pixResult.id },
+        data: { mercadoPagoPaymentId: pixResult.id, onlineChargeAmount: onlineCharge },
       });
 
       return {
@@ -752,7 +760,10 @@ export async function createBookingAction(formData: FormData): Promise<CreateRes
 
     await db.booking.update({
       where: { id: booking.id },
-      data: { stripePaymentIntentId: pi.id },
+      // O Stripe nao precisa desta conferencia — o evento vem amarrado ao
+      // PaymentIntent que criamos acima — mas o valor devido gravado no
+      // agendamento serve ao extrato e a conciliacao, e custa a mesma escrita.
+      data: { stripePaymentIntentId: pi.id, onlineChargeAmount: onlineCharge },
     });
 
     return {

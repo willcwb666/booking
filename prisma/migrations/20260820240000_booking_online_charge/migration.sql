@@ -1,0 +1,11 @@
+-- Valor que o agendamento devia cobrar online, gravado quando a cobranca e
+-- aberta no gateway.
+--
+-- Sem ele o webhook do Mercado Pago nao tinha contra o que conferir o
+-- `transaction_amount` do pagamento, e confirmava o agendamento como
+-- integralmente pago olhando apenas para o status.
+--
+-- Nulo e permitido de proposito: agendamentos criados antes desta migration
+-- nao tem o valor esperado, e o webhook trata esse caso explicitamente em vez
+-- de assumir zero.
+ALTER TABLE "booking" ADD COLUMN IF NOT EXISTS "onlineChargeAmount" DECIMAL(10,2);
