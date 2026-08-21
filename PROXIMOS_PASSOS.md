@@ -46,6 +46,8 @@ Semanas, não dias. Onboarding com KYC, verificação de conta, `application_fee
 
 ## 🟠 2. Orçamentos invisíveis para o estabelecimento
 
+> **Assumido pelo dono do projeto.** Vai ser trabalhado à mão, com revisão marcada para **21/08/2026**. Não mexer nesta parte sem combinar antes — o levantamento abaixo fica como contexto da revisão, não como tarefa a executar.
+
 **O que existe:** o orçamento funciona ponta a ponta. Toda reserva nasce de um `estimate`; o cliente monta, salva, imprime e tem a tela dele em `/orcamentos`, linkada no painel do cliente.
 
 **O que não existe:** o outro lado. `grep db.estimate` no painel inteiro da empresa retorna **zero**. Não há tela, não há item na sidebar (`app-sidebar.tsx` não menciona orçamento).
@@ -60,7 +62,7 @@ Semanas, não dias. Onboarding com KYC, verificação de conta, `application_fee
 - Item na sidebar, na seção de vendas;
 - Indicador no dashboard: "X orçamentos abertos, somando R$ Y".
 
-**Sem bloqueio.** É trabalho direto.
+**Sem bloqueio técnico** — o que existe é a decisão de que este item é manual.
 
 ---
 
