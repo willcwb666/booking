@@ -47,21 +47,6 @@ export async function broadcastPlatformUpdatesAction(payload: BroadcastPayload) 
 
     // 2. Disparar notificação do sistema (Sino) para cada empresa se selecionado
     if (payload.channels.systemNotification) {
-      await db.$executeRawUnsafe(`
-        CREATE TABLE IF NOT EXISTS "system_notification" (
-          "id" TEXT PRIMARY KEY,
-          "companyId" TEXT,
-          "recipientUserId" TEXT,
-          "senderUserId" TEXT,
-          "title" TEXT NOT NULL,
-          "message" TEXT NOT NULL,
-          "type" TEXT NOT NULL DEFAULT 'INFO',
-          "payload" TEXT,
-          "isRead" BOOLEAN NOT NULL DEFAULT false,
-          "isResolved" BOOLEAN NOT NULL DEFAULT false,
-          "createdAt" TIMESTAMP NOT NULL DEFAULT NOW()
-        );
-      `);
 
       for (const comp of companies) {
         const notifId = `bcast_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;

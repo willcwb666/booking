@@ -57,28 +57,7 @@ export async function getSystemNotificationsAction(): Promise<{
   const userId = session.user.id;
 
   try {
-    await db.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "system_notification" (
-        "id" TEXT PRIMARY KEY,
-        "companyId" TEXT,
-        "recipientUserId" TEXT,
-        "senderUserId" TEXT,
-        "title" TEXT NOT NULL,
-        "message" TEXT NOT NULL,
-        "type" TEXT NOT NULL DEFAULT 'INFO',
-        "payload" TEXT,
-        "isRead" BOOLEAN NOT NULL DEFAULT false,
-        "isResolved" BOOLEAN NOT NULL DEFAULT false,
-        "createdAt" TIMESTAMP NOT NULL DEFAULT NOW()
-      );
-    `);
 
-    // Garantir coluna senderUserId se a tabela já existia
-    try {
-      await db.$executeRawUnsafe(`ALTER TABLE "system_notification" ADD COLUMN IF NOT EXISTS "senderUserId" TEXT`);
-    } catch {
-      // ignora
-    }
 
     const rows = await db.$queryRawUnsafe<Array<{
       id: string;

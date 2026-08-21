@@ -486,6 +486,8 @@ model Company {
   bookings                   Booking[]
   reviews                    Review[]
   paymentSettings            CompanyPaymentSettings?
+  paymentGateway             CompanyPaymentGateway?
+  landingConfig              CompanyLandingConfig?
   paymentMethods             CompanyPaymentMethod[]
   waitlistEntries            WaitlistEntry[]
   webhooks                   CompanyWebhook[]
@@ -611,6 +613,13 @@ model Professional {
   pixKey                String?
   pixKeyType            String?
   roleTitle             String?
+  /// Documento do profissional (CPF/SSN). Existia SO como
+  /// `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` disparado pela action de
+  /// cadastro: a primeira criacao de profissional alterava a tabela em
+  /// producao e deixava duas colunas que o Prisma nao conhecia — drift
+  /// permanente, que o `migrate diff` leria como colunas a DERRUBAR.
+  documentNumber        String?
+  instagram             String?
   servicesJson          String?
   showOnLanding         Boolean? @default(true)
   isActive              Boolean  @default(true)
@@ -1231,6 +1240,46 @@ model CompanyPaymentMethod {
 
   @@index([companyId, isActive])
   @@map("company_payment_method")
+}
+
+/// Metodos de pagamento internacionais oferecidos no checkout da empresa.
+///
+/// Esta tabela existia SO como `CREATE TABLE IF NOT EXISTS` dentro da server
+/// action, executado a cada requisicao — inclusive na leitura, que e publica.
+/// Nao estava no schema, nao tinha migration, e por isso era invisivel para o
+/// `migrate diff`: a analise de drift desta base nunca a viu. Quem a criava era
+/// o primeiro visitante anonimo a abrir um checkout.
+model CompanyPaymentGateway {
+  companyId     String   @id
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  autoDetectGeo Boolean  @default(true)
+  /// JSON dos metodos ativos. Guardado como texto porque a forma do metodo
+  /// muda por regiao e por gateway; validar isso no banco engessaria sem
+  /// ganho — quem valida e o Zod na action.
+  activeMethods String   @default("[]")
+  updatedAt     DateTime @updatedAt
+
+  @@map("company_payment_gateway")
+}
+
+/// Aparencia da pagina publica da empresa (heroi, cores, destaques).
+///
+/// Mesmo caso de `CompanyPaymentGateway`: existia so como DDL em tempo de
+/// execucao dentro da action.
+model CompanyLandingConfig {
+  companyId            String   @id
+  company              Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  heroTitle            String
+  heroSubtitle         String
+  bannerUrl            String   @default("")
+  accentColor          String   @default("#635bff")
+  /// JSON com os ids dos servicos em destaque.
+  featuredServiceIds   String   @default("[]")
+  showTestimonials     Boolean  @default(true)
+  customWelcomeMessage String   @default("")
+  updatedAt            DateTime @updatedAt
+
+  @@map("company_landing_config")
 }
 
 model CompanyPaymentSettings {

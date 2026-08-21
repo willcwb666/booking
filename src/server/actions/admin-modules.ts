@@ -79,43 +79,12 @@ type LicenseRow = {
   expiresAt: Date | null;
 };
 
-async function ensureTablesExist() {
-  await db.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS "system_module" (
-      "id" TEXT PRIMARY KEY,
-      "code" TEXT UNIQUE NOT NULL,
-      "name" TEXT NOT NULL,
-      "description" TEXT NOT NULL,
-      "icon" TEXT NOT NULL DEFAULT 'Tag',
-      "monthlyPrice" DECIMAL(10,2) NOT NULL DEFAULT 0,
-      "lifetimePrice" DECIMAL(10,2) NOT NULL DEFAULT 0,
-      "billingType" TEXT NOT NULL DEFAULT 'SUBSCRIPTION',
-      "category" TEXT NOT NULL DEFAULT 'GROWTH',
-      "isActive" BOOLEAN NOT NULL DEFAULT true,
-      "createdAt" TIMESTAMP NOT NULL DEFAULT NOW()
-    );
-
-    CREATE TABLE IF NOT EXISTS "company_module_license" (
-      "id" TEXT PRIMARY KEY,
-      "companyId" TEXT NOT NULL,
-      "moduleCode" TEXT NOT NULL,
-      "status" TEXT NOT NULL DEFAULT 'ACTIVE',
-      "expiresAt" TIMESTAMP,
-      "grantedAt" TIMESTAMP NOT NULL DEFAULT NOW(),
-      "grantedBy" TEXT NOT NULL DEFAULT 'SYSTEM',
-      CONSTRAINT "uniq_company_module" UNIQUE ("companyId", "moduleCode")
-    );
-  `);
-}
-
 export async function getSystemModulesAction() {
   // Catálogo com preços dos add-ons: dado de administração.
   const admin = await requireSuperAdmin();
   if (!admin.ok) return { success: false, modules: [] as SystemModule[], error: admin.error };
 
   try {
-    await ensureTablesExist();
-
     const defaultModules = [
       { code: "promocoes", name: "Promoções & Cupons Estratégicos", description: "Crie campanhas e cupons de desconto estratégicos para datas sazonais e retenção.", icon: "Tag", monthlyPrice: 29.9, lifetimePrice: 199.0, billingType: "BOTH", category: "GROWTH" },
       { code: "fidelidade", name: "Fidelidade & Pontos de Recompensa", description: "Programa de recompensas, cashback e acúmulo de pontos para recorrência.", icon: "Award", monthlyPrice: 39.9, lifetimePrice: 299.0, billingType: "BOTH", category: "GROWTH" },
@@ -181,7 +150,6 @@ export async function getAllActiveCompanyLicensesAction(): Promise<{
   if (!admin.ok) return { success: false, licenses: [] };
 
   try {
-    await ensureTablesExist();
     const rows = await db.$queryRawUnsafe<Array<ActiveLicenseRow>>(`
       SELECT 
         l.id,
@@ -236,8 +204,6 @@ export async function getCompanyLicensedModuleCodesAction(
     const access = await canAccessCompany(companySlugOrId);
     if (!access.ok) return [];
 
-    await ensureTablesExist();
-
     const rows = await db.$queryRawUnsafe<Array<{ moduleCode: string }>>(
       `SELECT "moduleCode"
        FROM "company_module_license"
@@ -261,8 +227,6 @@ export async function grantBatchModuleLicensesAction(
   if (!isAdmin) return { success: false, error: "Acesso não autorizado." };
 
   try {
-    await ensureTablesExist();
-
     for (const companyId of companyIds) {
       for (const config of moduleConfigs) {
         const expiresAt = config.isTrial

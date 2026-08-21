@@ -114,24 +114,6 @@ export async function submitPresetResetRequestAction(companySlug: string, observ
     };
   }
 
-  try {
-    await db.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "system_notification" (
-        "id" TEXT PRIMARY KEY,
-        "companyId" TEXT,
-        "recipientUserId" TEXT,
-        "title" TEXT NOT NULL,
-        "message" TEXT NOT NULL,
-        "type" TEXT NOT NULL DEFAULT 'INFO',
-        "payload" TEXT,
-        "isRead" BOOLEAN NOT NULL DEFAULT false,
-        "isResolved" BOOLEAN NOT NULL DEFAULT false,
-        "createdAt" TIMESTAMP NOT NULL DEFAULT NOW()
-      );
-    `);
-  } catch {
-    // ignora
-  }
 
   const notificationId = `snot_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
   const payload = JSON.stringify({

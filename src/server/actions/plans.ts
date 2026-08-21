@@ -139,19 +139,19 @@ export async function setPopularPlanAction(popularPlanId: string) {
   if (!(await requireAdmin())) return { success: false, error: "Acesso negado" };
 
   try {
-    // Garante coluna no banco
-    await db.$executeRawUnsafe(`
-      ALTER TABLE "plan" ADD COLUMN IF NOT EXISTS "isPopular" BOOLEAN NOT NULL DEFAULT false;
-    `);
-
-    // Reseta todos para false
-    await db.$executeRawUnsafe(`UPDATE "plan" SET "isPopular" = false`);
-
-    // Define apenas o plano selecionado para true
-    await db.$executeRawUnsafe(
-      `UPDATE "plan" SET "isPopular" = true WHERE id = $1`,
-      popularPlanId
-    );
+    /**
+     * O `ALTER TABLE ... ADD COLUMN IF NOT EXISTS "isPopular"` que rodava aqui
+     * saiu: a coluna nasce em `prisma/migrations`, como todas as outras. DDL em
+     * caminho de requisicao pega lock de tabela para nao fazer nada.
+     *
+     * As duas escritas correm em transacao porque "so um plano em destaque" e
+     * a regra inteira: entre zerar e marcar havia uma janela em que a landing
+     * nao destacava nenhum.
+     */
+    await db.$transaction([
+      db.plan.updateMany({ where: { isPopular: true }, data: { isPopular: false } }),
+      db.plan.update({ where: { id: popularPlanId }, data: { isPopular: true } }),
+    ]);
 
     revalidatePath("/admin/plans");
     revalidatePath("/", "layout");

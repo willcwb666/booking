@@ -45,19 +45,16 @@ export async function getCompanyPaymentGatewaysAction(companySlug: string): Prom
       };
     }
 
-    await db.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "company_payment_gateway" (
-        "companyId" TEXT PRIMARY KEY,
-        "autoDetectGeo" BOOLEAN NOT NULL DEFAULT true,
-        "activeMethods" TEXT NOT NULL DEFAULT '[]',
-        "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
-      );
-    `);
-
-    const rows = await db.$queryRawUnsafe<Array<{
-      autoDetectGeo: boolean;
-      activeMethods: string;
-    }>>(`SELECT * FROM "company_payment_gateway" WHERE "companyId" = $1 LIMIT 1`, company.id);
+    /**
+     * Antes daqui saia um `CREATE TABLE IF NOT EXISTS` a cada chamada — e esta
+     * chamada e PUBLICA, entao quem criava a tabela era o primeiro visitante
+     * anonimo a abrir um checkout. A tabela agora nasce em
+     * `prisma/migrations`, como todas as outras.
+     */
+    const row = await db.companyPaymentGateway.findUnique({
+      where: { companyId: company.id },
+      select: { autoDetectGeo: true, activeMethods: true },
+    });
 
     const defaultMethods: PaymentGatewayMethod[] = [
       { id: "pix", name: "Pix (Brasil)", region: "BR", enabled: true, accountDetails: "" },
@@ -69,22 +66,27 @@ export async function getCompanyPaymentGatewaysAction(companySlug: string): Prom
       { id: "sepa", name: "SEPA Direct Debit (Europa)", region: "EU", enabled: false },
     ];
 
-    if (rows.length === 0) {
+    if (!row) {
       return {
         success: true,
         config: { autoDetectGeo: true, activeMethods: defaultMethods },
       };
     }
 
+    // JSON gravado por nos, mas ainda assim de fora do processo: se estiver
+    // corrompido, o checkout cai nos metodos padrao em vez de quebrar.
     let parsedMethods: PaymentGatewayMethod[] = [];
     try {
-      parsedMethods = JSON.parse(rows[0].activeMethods);
-    } catch {}
+      const parsed: unknown = JSON.parse(row.activeMethods);
+      if (Array.isArray(parsed)) parsedMethods = parsed as PaymentGatewayMethod[];
+    } catch {
+      console.error("[payment-gateways] activeMethods invalido", company.id);
+    }
 
     return {
       success: true,
       config: {
-        autoDetectGeo: rows[0].autoDetectGeo ?? true,
+        autoDetectGeo: row.autoDetectGeo,
         activeMethods: parsedMethods.length > 0 ? parsedMethods : defaultMethods,
       },
     };
@@ -113,33 +115,20 @@ export async function updateCompanyPaymentGatewaysAction(
   const company = { id: access.companyId };
 
   try {
-    await db.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "company_payment_gateway" (
-        "companyId" TEXT PRIMARY KEY,
-        "autoDetectGeo" BOOLEAN NOT NULL DEFAULT true,
-        "activeMethods" TEXT NOT NULL DEFAULT '[]',
-        "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
-      );
-    `);
+    const jsonMethods = JSON.stringify(config.activeMethods ?? []);
 
-    const jsonMethods = JSON.stringify(config.activeMethods || []);
-
-    await db.$executeRawUnsafe(
-      `
-      INSERT INTO "company_payment_gateway" (
-        "companyId", "autoDetectGeo", "activeMethods", "updatedAt"
-      ) VALUES (
-        $1, $2, $3, NOW()
-      )
-      ON CONFLICT ("companyId") DO UPDATE SET
-        "autoDetectGeo" = EXCLUDED."autoDetectGeo",
-        "activeMethods" = EXCLUDED."activeMethods",
-        "updatedAt" = NOW()
-    `,
-      company.id,
-      config.autoDetectGeo,
-      jsonMethods
-    );
+    await db.companyPaymentGateway.upsert({
+      where: { companyId: company.id },
+      create: {
+        companyId: company.id,
+        autoDetectGeo: config.autoDetectGeo,
+        activeMethods: jsonMethods,
+      },
+      update: {
+        autoDetectGeo: config.autoDetectGeo,
+        activeMethods: jsonMethods,
+      },
+    });
 
     revalidatePath(`/${companySlug}/configuracoes`);
     revalidatePath(`/booking/${companySlug}`);

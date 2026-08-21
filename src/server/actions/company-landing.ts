@@ -27,16 +27,6 @@ export async function updateCompanyLandingSettingsAction(
   const company = { id: access.companyId };
 
   try {
-    await db.$executeRawUnsafe(`
-      ALTER TABLE "company"
-      ADD COLUMN IF NOT EXISTS "heroTitle" TEXT,
-      ADD COLUMN IF NOT EXISTS "heroSubtitle" TEXT,
-      ADD COLUMN IF NOT EXISTS "brandColor" TEXT DEFAULT '#0f172a',
-      ADD COLUMN IF NOT EXISTS "coverImageUrl" TEXT,
-      ADD COLUMN IF NOT EXISTS "socialInstagram" TEXT,
-      ADD COLUMN IF NOT EXISTS "socialWhatsapp" TEXT,
-      ADD COLUMN IF NOT EXISTS "socialFacebook" TEXT;
-    `);
   } catch {
     // ignora se colunas já existirem
   }

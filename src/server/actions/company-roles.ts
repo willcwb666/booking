@@ -45,23 +45,6 @@ async function resolveCompanyForManage(slug: string) {
   return company;
 }
 
-async function ensureTableExist() {
-  try {
-    await db.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "company_role" (
-        "id" TEXT PRIMARY KEY,
-        "companyId" TEXT NOT NULL,
-        "name" TEXT NOT NULL,
-        "description" TEXT,
-        "isPreset" BOOLEAN NOT NULL DEFAULT false,
-        "createdAt" TIMESTAMP NOT NULL DEFAULT NOW()
-      );
-    `);
-  } catch (err) {
-    console.error("Erro ao criar tabela company_role:", err);
-  }
-}
-
 const PRESET_ROLES_BY_SEGMENT: Record<string, string[]> = {
   HOME_CLEANING: ["House Cleaner", "Helper", "Líder de Equipe", "Supervisor de Qualidade"],
   BARBER: ["Barbeiro Master", "Barbeiro Junior", "Colorista Masculino"],
@@ -78,8 +61,6 @@ const PRESET_ROLES_BY_SEGMENT: Record<string, string[]> = {
 export async function getCompanyRolesAction(companySlug: string): Promise<CompanyRoleItem[]> {
   const company = await resolveCompany(companySlug);
   if (!company) return [];
-
-  await ensureTableExist();
 
   // Verifica se a empresa já possui cargos cadastrados
   const countRows = await db.$queryRawUnsafe<Array<{ count: bigint }>>(
@@ -128,8 +109,6 @@ export async function createCompanyRoleAction(formData: FormData) {
   const company = await resolveCompanyForManage(slug);
   if (!company) return { success: false, error: "Não autorizado." };
 
-  await ensureTableExist();
-
   const id = `role_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
   await db.$executeRawUnsafe(
     `INSERT INTO "company_role" ("id", "companyId", "name", "description", "isPreset", "createdAt")
@@ -149,7 +128,6 @@ export async function deleteCompanyRoleAction(companySlug: string, roleId: strin
   const company = await resolveCompanyForManage(companySlug);
   if (!company) return { success: false, error: "Não autorizado." };
 
-  await ensureTableExist();
   await db.$executeRawUnsafe(
     `DELETE FROM "company_role" WHERE id = $1 AND "companyId" = $2`,
     roleId,

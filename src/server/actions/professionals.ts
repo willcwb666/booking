@@ -54,28 +54,6 @@ async function resolveCompanyForManage(slug: string) {
   return company;
 }
 
-async function ensureProfessionalColumnsExist() {
-  const statements = [
-    `ALTER TABLE "professional" ADD COLUMN IF NOT EXISTS "roleTitle" TEXT`,
-    `ALTER TABLE "professional" ADD COLUMN IF NOT EXISTS "documentNumber" TEXT`,
-    `ALTER TABLE "professional" ADD COLUMN IF NOT EXISTS "commissionRate" DECIMAL(5,2) DEFAULT 0`,
-    `ALTER TABLE "professional" ADD COLUMN IF NOT EXISTS "productCommissionRate" DECIMAL(5,2) DEFAULT 0`,
-    `ALTER TABLE "professional" ADD COLUMN IF NOT EXISTS "pixKeyType" TEXT`,
-    `ALTER TABLE "professional" ADD COLUMN IF NOT EXISTS "pixKey" TEXT`,
-    `ALTER TABLE "professional" ADD COLUMN IF NOT EXISTS "instagram" TEXT`,
-    `ALTER TABLE "professional" ADD COLUMN IF NOT EXISTS "showOnLanding" BOOLEAN DEFAULT true`,
-    `ALTER TABLE "professional" ADD COLUMN IF NOT EXISTS "servicesJson" TEXT`,
-  ];
-
-  for (const stmt of statements) {
-    try {
-      await db.$executeRawUnsafe(stmt);
-    } catch (err) {
-      // Ignora warning se a coluna já existe
-    }
-  }
-}
-
 export type FullProfessionalData = {
   id: string;
   name: string;
@@ -99,8 +77,6 @@ export async function getProfessionalByIdAction(companySlug: string, professiona
   // Devolve comissão, documento e chave PIX — leitura restrita à gestão
   const company = await resolveCompanyForManage(companySlug);
   if (!company) return null;
-
-  await ensureProfessionalColumnsExist();
 
   try {
     const rows = await db.$queryRawUnsafe<Array<ProfessionalRow>>(
@@ -164,8 +140,6 @@ export async function createProfessionalAction(
   const company = await resolveCompanyForManage(slug);
   if (!company) return { success: false, errors: { _: ["Não autorizado"] } };
 
-  await ensureProfessionalColumnsExist();
-
   // Feature flag: max_professionals
   const feature = await checkFeature(company.id, "max_professionals");
   if (!feature.enabled)
@@ -206,19 +180,22 @@ export async function createProfessionalAction(
 
   const id = `pro_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
 
-  try {
-    await db.$executeRawUnsafe(
-      `
-      INSERT INTO "professional" (
-        "id", "companyId", "name", "email", "phone", "bio", "roleTitle", "documentNumber",
-        "commissionRate", "productCommissionRate", "pixKeyType", "pixKey", "instagram",
-        "showOnLanding", "servicesJson", "isActive", "createdAt", "updatedAt"
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, true, NOW(), NOW()
-      )
-    `,
+  /**
+   * Era um INSERT em SQL bruto com um `catch` que caia para o Prisma.
+   *
+   * O fallback gravava so nome, e-mail, telefone e bio — comissao, chave PIX,
+   * documento, Instagram, servicos e visibilidade na vitrine iam para o lixo
+   * em silencio, e a tela dizia "salvo". Como o INSERT citava duas colunas que
+   * nao existiam no schema, o caminho de fallback era o normal, nao a excecao.
+   *
+   * Com as colunas no schema, o `create` do Prisma grava tudo e falha alto se
+   * algo estiver errado.
+   */
+  await db.professional.create({
+    data: {
       id,
-      company.id,
+      // companyId sempre da empresa resolvida pela sessao, nunca do formulario
+      companyId: company.id,
       name,
       email,
       phone,
@@ -231,23 +208,10 @@ export async function createProfessionalAction(
       pixKey,
       instagram,
       showOnLanding,
-      servicesJson
-    );
-  } catch (err) {
-    console.error("Erro no insert SQL de profissional, executando fallback Prisma:", err);
-    await db.professional.create({
-      data: {
-        id,
-        // companyId sempre da empresa resolvida pela sessão, nunca do formulário
-        companyId: company.id,
-        name,
-        email,
-        phone,
-        bio,
-        isActive: true,
-      },
-    });
-  }
+      servicesJson,
+      isActive: true,
+    },
+  });
 
   revalidatePath(`/${slug}/profissionais`);
   return { success: true };
@@ -260,8 +224,6 @@ export async function updateProfessionalAction(
   const id = formData.get("id") as string;
   const company = await resolveCompanyForManage(slug);
   if (!company) return { success: false, errors: { _: ["Não autorizado"] } };
-
-  await ensureProfessionalColumnsExist();
 
   const name = (formData.get("name") as string || "").trim();
   if (!name) {

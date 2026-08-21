@@ -32,18 +32,6 @@ export async function getPlatformAuditLogsAction(): Promise<{
   }
 
   try {
-    await db.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "audit_log" (
-        "id" TEXT PRIMARY KEY,
-        "companyId" TEXT,
-        "userId" TEXT,
-        "action" TEXT NOT NULL,
-        "entity" TEXT NOT NULL,
-        "details" TEXT,
-        "ipAddress" TEXT,
-        "createdAt" TIMESTAMP NOT NULL DEFAULT NOW()
-      );
-    `);
 
     const rows = await db.$queryRawUnsafe<Array<{
       id: string;

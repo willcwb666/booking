@@ -61,31 +61,15 @@ export async function getCompanyLandingPageConfigAction(companySlug: string): Pr
       };
     }
 
-    await db.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "company_landing_config" (
-        "companyId" TEXT PRIMARY KEY,
-        "heroTitle" TEXT NOT NULL,
-        "heroSubtitle" TEXT NOT NULL,
-        "bannerUrl" TEXT NOT NULL DEFAULT '',
-        "accentColor" TEXT NOT NULL DEFAULT '#635bff',
-        "featuredServiceIds" TEXT NOT NULL DEFAULT '[]',
-        "showTestimonials" BOOLEAN NOT NULL DEFAULT true,
-        "customWelcomeMessage" TEXT NOT NULL DEFAULT '',
-        "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
-      );
-    `);
+    /**
+     * Antes daqui saia um `CREATE TABLE IF NOT EXISTS` a cada chamada. A tabela
+     * agora nasce em `prisma/migrations`, como todas as outras.
+     */
+    const row = await db.companyLandingConfig.findUnique({
+      where: { companyId: company.id },
+    });
 
-    const rows = await db.$queryRawUnsafe<Array<{
-      heroTitle: string;
-      heroSubtitle: string;
-      bannerUrl: string;
-      accentColor: string;
-      featuredServiceIds: string;
-      showTestimonials: boolean;
-      customWelcomeMessage: string;
-    }>>(`SELECT * FROM "company_landing_config" WHERE "companyId" = $1 LIMIT 1`, company.id);
-
-    if (rows.length === 0) {
+    if (!row) {
       const defaultConfig: CompanyLandingPageConfig = {
         heroTitle: `Seja Bem-vindo à ${company.name}`,
         heroSubtitle: "Escolha o melhor dia e horário para o seu atendimento em poucos cliques.",
@@ -98,11 +82,13 @@ export async function getCompanyLandingPageConfigAction(companySlug: string): Pr
       return { success: true, config: defaultConfig };
     }
 
-    const row = rows[0];
     let featuredIds: string[] = [];
     try {
-      featuredIds = JSON.parse(row.featuredServiceIds);
-    } catch {}
+      const parsed: unknown = JSON.parse(row.featuredServiceIds);
+      if (Array.isArray(parsed)) featuredIds = parsed as string[];
+    } catch {
+      console.error("[landing-config] featuredServiceIds invalido", company.id);
+    }
 
     return {
       success: true,
@@ -111,8 +97,8 @@ export async function getCompanyLandingPageConfigAction(companySlug: string): Pr
         heroSubtitle: row.heroSubtitle,
         bannerUrl: row.bannerUrl || "",
         accentColor: row.accentColor || "#635bff",
-        featuredServiceIds: Array.isArray(featuredIds) ? featuredIds : [],
-        showTestimonials: row.showTestimonials ?? true,
+        featuredServiceIds: featuredIds,
+        showTestimonials: row.showTestimonials,
         customWelcomeMessage: row.customWelcomeMessage || "",
       },
     };
@@ -143,48 +129,21 @@ export async function updateCompanyLandingPageConfigAction(
   const company = { id: access.companyId };
 
   try {
-    await db.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "company_landing_config" (
-        "companyId" TEXT PRIMARY KEY,
-        "heroTitle" TEXT NOT NULL,
-        "heroSubtitle" TEXT NOT NULL,
-        "bannerUrl" TEXT NOT NULL DEFAULT '',
-        "accentColor" TEXT NOT NULL DEFAULT '#635bff',
-        "featuredServiceIds" TEXT NOT NULL DEFAULT '[]',
-        "showTestimonials" BOOLEAN NOT NULL DEFAULT true,
-        "customWelcomeMessage" TEXT NOT NULL DEFAULT '',
-        "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
-      );
-    `);
+    const dados = {
+      heroTitle: config.heroTitle,
+      heroSubtitle: config.heroSubtitle,
+      bannerUrl: config.bannerUrl,
+      accentColor: config.accentColor,
+      featuredServiceIds: JSON.stringify(config.featuredServiceIds ?? []),
+      showTestimonials: config.showTestimonials,
+      customWelcomeMessage: config.customWelcomeMessage,
+    };
 
-    const jsonServiceIds = JSON.stringify(config.featuredServiceIds || []);
-
-    await db.$executeRawUnsafe(
-      `
-      INSERT INTO "company_landing_config" (
-        "companyId", "heroTitle", "heroSubtitle", "bannerUrl", "accentColor", "featuredServiceIds", "showTestimonials", "customWelcomeMessage", "updatedAt"
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, NOW()
-      )
-      ON CONFLICT ("companyId") DO UPDATE SET
-        "heroTitle" = EXCLUDED."heroTitle",
-        "heroSubtitle" = EXCLUDED."heroSubtitle",
-        "bannerUrl" = EXCLUDED."bannerUrl",
-        "accentColor" = EXCLUDED."accentColor",
-        "featuredServiceIds" = EXCLUDED."featuredServiceIds",
-        "showTestimonials" = EXCLUDED."showTestimonials",
-        "customWelcomeMessage" = EXCLUDED."customWelcomeMessage",
-        "updatedAt" = NOW()
-    `,
-      company.id,
-      config.heroTitle,
-      config.heroSubtitle,
-      config.bannerUrl,
-      config.accentColor,
-      jsonServiceIds,
-      config.showTestimonials,
-      config.customWelcomeMessage
-    );
+    await db.companyLandingConfig.upsert({
+      where: { companyId: company.id },
+      create: { companyId: company.id, ...dados },
+      update: dados,
+    });
 
     revalidatePath(`/${companySlug}/configuracoes`);
     revalidatePath(`/booking/${companySlug}`);

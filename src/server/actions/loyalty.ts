@@ -44,32 +44,6 @@ export async function getCompanyLoyaltyProgramAction(companySlug: string) {
 
   if (!company) return { success: false, error: "Empresa não encontrada" };
 
-  try {
-    // Garante que a tabela exista via DDL resiliente
-    await db.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "loyalty_program" (
-        "id" TEXT PRIMARY KEY,
-        "companyId" TEXT UNIQUE NOT NULL,
-        "isEnabled" BOOLEAN NOT NULL DEFAULT true,
-        "pointsPerCurrency" DECIMAL(10,2) NOT NULL DEFAULT 1.0,
-        "rewardThreshold" INT NOT NULL DEFAULT 100,
-        "discountAmount" DECIMAL(10,2) NOT NULL DEFAULT 20.00,
-        "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
-        "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
-      );
-      CREATE TABLE IF NOT EXISTS "loyalty_account" (
-        "id" TEXT PRIMARY KEY,
-        "companyId" TEXT NOT NULL,
-        "customerEmail" TEXT NOT NULL,
-        "points" INT NOT NULL DEFAULT 0,
-        "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
-        "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW(),
-        UNIQUE("companyId", "customerEmail")
-      );
-    `);
-  } catch {
-    // ignora
-  }
 
   const rawProgram = await db.$queryRawUnsafe<Array<{
     id: string;
