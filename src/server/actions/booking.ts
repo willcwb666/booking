@@ -1,5 +1,7 @@
 "use server";
 
+import { z } from "zod";
+import { todayInTimezone } from "@/lib/company-date";
 import { db } from "@/lib/db";
 import { canAccessCompany } from "@/lib/admin-guard";
 import { stripe } from "@/lib/stripe";
@@ -1032,6 +1034,7 @@ export async function refundBookingAction(
 
   const booking = await db.booking.findFirst({
     where: { id: bookingId, company: { slug: companySlug } },
+    include: { company: { select: { timezone: true } } },
   });
   if (!booking) return { success: false, error: "Agendamento não encontrado" };
   if (!booking.stripePaymentIntentId) return { success: false, error: "Pagamento não foi por cartão" };
@@ -1235,7 +1238,10 @@ export async function rescheduleBookingAction(
 
 // ─── Status lifecycle ─────────────────────────────────────────────────────────
 
-type StatusResult = { success: true } | { success: false; error: string };
+type StatusResult =
+  /** `warning` avisa o operador de algo que ficou pendente sem derrubar a ação. */
+  | { success: true; warning?: string }
+  | { success: false; error: string };
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   CONFIRMED: ["IN_PROGRESS"],
@@ -1261,6 +1267,7 @@ export async function updateBookingStatusAction(
 
   const booking = await db.booking.findFirst({
     where: { id: bookingId, company: { slug: companySlug } },
+    include: { company: { select: { timezone: true } } },
   });
   if (!booking) return { success: false, error: "Agendamento não encontrado" };
 
@@ -1269,8 +1276,15 @@ export async function updateBookingStatusAction(
     return { success: false, error: "Transição de status não permitida" };
   }
 
-  // Validação de integridade de data: Agendamentos futuros NÃO podem ser iniciados nem concluídos
-  const todayStr = new Date().toISOString().split("T")[0];
+  /**
+   * "Hoje" tem que ser o da EMPRESA, nao o do servidor.
+   *
+   * `new Date().toISOString()` e UTC. O servidor vira o dia antes do salao em
+   * qualquer fuso negativo — as 18h de Denver ja e o dia seguinte em UTC —, e
+   * a trava passava a liberar a conclusao de atendimento marcado para AMANHA.
+   * `todayInTimezone` existe nesta base exatamente para isto.
+   */
+  const todayStr = todayInTimezone(booking.company.timezone);
   if ((newStatus === "IN_PROGRESS" || newStatus === "COMPLETED") && booking.scheduledDate > todayStr) {
     return {
       success: false,
@@ -1291,9 +1305,12 @@ export async function updateBookingStatusAction(
     await stampBookingCommission(bookingId);
     void enqueueReviewRequest(bookingId);
     void triggerWebhooks(booking.companyId, "BOOKING_COMPLETED", { bookingId });
-  } else if (newStatus === "CONFIRMED") {
-    void triggerWebhooks(booking.companyId, "BOOKING_CONFIRMED", { bookingId });
   }
+  // Nao ha ramo para CONFIRMED aqui: `ALLOWED_TRANSITIONS` so permite
+  // CONFIRMED->IN_PROGRESS e IN_PROGRESS->COMPLETED, entao `newStatus` nunca
+  // chega valendo "CONFIRMED". O `else if` que existia era inalcancavel — e
+  // dava a impressao de que o webhook de confirmacao saia por aqui. Ele sai da
+  // criacao do agendamento e do webhook de pagamento.
   return { success: true };
 }
 
@@ -1313,6 +1330,40 @@ export type CompleteBookingAdjustmentsPayload = {
   discountReason?: string;
 };
 
+/**
+ * Limites do fechamento.
+ *
+ * O teto de item adicional e de desconto fixo existe para que um erro de
+ * digitacao (uma tecla presa) nao vire um lancamento de milhoes que depois
+ * alguem precisa caçar no extrato.
+ */
+const MAX_ITEM_AMOUNT = 1_000_000;
+
+const completionSchema = z.object({
+  bookingId: z.string().min(1),
+  companySlug: z.string().min(1),
+  additionalItems: z
+    .array(
+      z.object({
+        description: z.string().trim().min(1, "Item sem descrição").max(200),
+        amount: z
+          .number()
+          .finite()
+          .min(0, "Item adicional não pode ter valor negativo")
+          .max(MAX_ITEM_AMOUNT),
+        category: z.enum(["SURCHARGE", "PRODUCT"]).optional(),
+        parentServiceName: z.string().max(200).optional(),
+      })
+    )
+    .max(50, "Itens adicionais demais"),
+  discountType: z.enum(["FIXED", "PERCENTAGE"]),
+  discountValue: z.number().finite().min(0, "Desconto não pode ser negativo"),
+  discountReason: z.string().max(300).optional(),
+}).refine(
+  (d) => d.discountType !== "PERCENTAGE" || d.discountValue <= 100,
+  { message: "Desconto percentual não pode passar de 100%", path: ["discountValue"] }
+);
+
 export async function completeBookingWithAdjustmentsAction(
   payload: CompleteBookingAdjustmentsPayload
 ): Promise<StatusResult> {
@@ -1328,9 +1379,25 @@ export async function completeBookingWithAdjustmentsAction(
   });
   if (!member) return { success: false, error: "Acesso negado" };
 
+  /**
+   * Validacao do fechamento — nao existia nenhuma.
+   *
+   * Server action e endpoint HTTP: os numeros chegam de fora, nao do
+   * formulario. Sem trava, um membro qualquer da empresa podia mandar
+   * `discountType: "PERCENTAGE"` com valor 999 (total zerado e estorno do
+   * valor cheio), valor NEGATIVO (que INFLA a conta, porque
+   * `subtotal - (-500)` e `subtotal + 500`), ou um item adicional de valor
+   * negativo. E a comissao e carimbada sobre o total resultante — inflar a
+   * conta inflava junto a propria comissao de quem fechou.
+   */
+  const parsed = completionSchema.safeParse(payload);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+  }
+
   const booking = await db.booking.findFirst({
     where: { id: payload.bookingId, company: { slug: payload.companySlug } },
-    include: { estimate: true },
+    include: { estimate: true, company: { select: { timezone: true } } },
   });
   if (!booking) return { success: false, error: "Agendamento não encontrado" };
 
@@ -1345,8 +1412,8 @@ export async function completeBookingWithAdjustmentsAction(
     return { success: false, error: "Este atendimento já foi concluído." };
   }
 
-  // Validação de integridade de data: Agendamentos futuros NÃO podem ser concluídos
-  const todayStr = new Date().toISOString().split("T")[0];
+  // "Hoje" da EMPRESA, nao o do servidor em UTC — ver `updateBookingStatusAction`.
+  const todayStr = todayInTimezone(booking.company.timezone);
   if (booking.scheduledDate > todayStr) {
     return {
       success: false,
@@ -1368,21 +1435,6 @@ export async function completeBookingWithAdjustmentsAction(
 
   const finalTotal = Math.max(0, subtotal - discountAmount);
   const diffAmount = finalTotal - originalTotal;
-
-  // Se houver desconto que diminuiu o valor total pago antecipado pelo cliente por cartão no Stripe
-  if (diffAmount < 0 && booking.stripePaymentIntentId && booking.paymentStatus === "PAID") {
-    try {
-      const refundCents = Math.round(Math.abs(diffAmount) * 100);
-      if (refundCents > 0) {
-        await stripe.refunds.create({
-          payment_intent: booking.stripePaymentIntentId,
-          amount: refundCents,
-        });
-      }
-    } catch (e) {
-      console.error("[Stripe Refund Error on Completion]:", e);
-    }
-  }
 
   const adjustmentsJson = JSON.stringify({
     additionalItems: payload.additionalItems,
@@ -1419,6 +1471,56 @@ export async function completeBookingWithAdjustmentsAction(
   // que a comissão incide. Carimbar dentro dela leria o valor antigo.
   await stampBookingCommission(payload.bookingId);
 
+  /**
+   * Devolucao da diferenca quando o fechamento saiu MAIS BARATO que o cobrado.
+   *
+   * Duas coisas mudaram aqui, e as duas custavam dinheiro de verdade.
+   *
+   * A primeira: o valor devolvido era `originalTotal - finalTotal`, calculado
+   * sobre o total do ORCAMENTO. Mas o que entrou no cartao pode ser bem menos —
+   * com sinal de 30% sobre 100, o Stripe recebeu 30. Um desconto de 50 no
+   * fechamento pedia estorno de 50 sobre uma cobranca de 30, o Stripe recusava,
+   * e o `catch` engolia: a tela dizia "concluido", o cliente nunca via o
+   * dinheiro. E o mesmo defeito que ja tinha sido corrigido no cancelamento —
+   * aqui ele continuava de pe. `amount_received` e a autoridade sobre quanto
+   * entrou.
+   *
+   * A segunda: o estorno rodava ANTES da transacao. Se a gravacao falhasse
+   * depois, o dinheiro tinha voltado e o atendimento continuava em aberto pelo
+   * valor cheio. Estorno nao tem desfazer; gravacao tem. Primeiro grava.
+   */
+  let refundWarning: string | undefined;
+  if (diffAmount < 0 && booking.stripePaymentIntentId && booking.paymentStatus === "PAID") {
+    try {
+      const pi = await stripe.paymentIntents.retrieve(booking.stripePaymentIntentId);
+      const chargedCents = pi.amount_received ?? 0;
+      const wantedCents = Math.round(Math.abs(diffAmount) * 100);
+      // Nunca pedir mais do que entrou: o excedente foi pago por vale-presente
+      // ou plano, e nao ha o que estornar no cartao.
+      const refundCents = Math.min(wantedCents, chargedCents);
+
+      if (refundCents > 0) {
+        await stripe.refunds.create({
+          payment_intent: booking.stripePaymentIntentId,
+          amount: refundCents,
+        });
+        await db.booking.update({
+          where: { id: payload.bookingId },
+          data: { refundAmount: refundCents / 100, refundedAt: new Date() },
+        });
+      }
+    } catch (e) {
+      /**
+       * O atendimento JA esta concluido — voltar atras agora seria pior. Mas
+       * a falha nao pode mais sumir: quem fechou precisa saber que a devolucao
+       * ficou pendente, senao o cliente cobra e ninguem sabe do que se trata.
+       */
+      console.error("[completeBooking] falha ao estornar a diferenca:", e);
+      refundWarning =
+        "Atendimento concluído, mas a devolução da diferença falhou. Faça o estorno manualmente.";
+    }
+  }
+
   void enqueueNotification({ kind: "STATUS_CHANGED", bookingId: payload.bookingId, payload: { newStatus: "COMPLETED" } });
   void enqueueReviewRequest(payload.bookingId);
   /**
@@ -1442,7 +1544,7 @@ export async function completeBookingWithAdjustmentsAction(
   });
   void triggerWebhooks(booking.companyId, "BOOKING_COMPLETED", { bookingId: payload.bookingId });
 
-  return { success: true };
+  return refundWarning ? { success: true, warning: refundWarning } : { success: true };
 }
 
 export type WalkInPayload = {
