@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { slotAlreadyPassed } from "@/lib/company-date";
 import { slotRunFrom, startableSlots } from "@/lib/booking-duration";
 
 export type TimeSlot = {
@@ -92,9 +93,36 @@ export async function getAvailableSlots(
       professionals: {
         include: { professional: true },
       },
+      // O fuso decide o que ja passou. Ver `agora()` mais abaixo.
+      company: { select: { timezone: true } },
     },
   });
   if (!agenda) return [];
+
+  /**
+   * "Hoje" e "agora" no fuso da EMPRESA — e os dois no MESMO fuso.
+   *
+   * ─── O defeito ─────────────────────────────────────────────────────────────
+   *
+   * Era assim, nos dois ramos desta funcao:
+   *
+   *     const today = new Date().toISOString().split("T")[0];   // UTC
+   *     const currentTime = `${now.getHours()}:${now.getMinutes()}`; // LOCAL
+   *
+   * Duas fontes de tempo diferentes comparadas entre si. As 21h de Denver, o
+   * UTC ja virou: `today` valia AMANHA, enquanto `currentTime` continuava
+   * sendo 21:00 de hoje. O filtro "horario ja passou hoje" entao rodava sobre
+   * a grade de AMANHA e escondia tudo antes das 21h.
+   *
+   * Ou seja: toda noite, a partir do momento em que o UTC virava, a manha e a
+   * tarde do dia seguinte sumiam da pagina publica de agendamento. O cliente
+   * via um punhado de horarios noturnos e concluia que o salao estava lotado.
+   * Em fuso negativo — o mercado americano deste produto — isso acontecia
+   * TODO dia.
+   */
+  const timezone = agenda.company.timezone;
+  const jaPassou = (slot: TimeSlot) =>
+    slotAlreadyPassed({ slotDate: date, slotStartTime: slot.startTime, timezone });
 
   const exception = await db.agendaException.findUnique({
     where: { agendaId_date: { agendaId, date } },
@@ -159,10 +187,6 @@ export async function getAvailableSlots(
         (b) => slot.startTime < b.scheduledEndTime && slot.endTime > b.scheduledStartTime
       );
 
-    const today = new Date().toISOString().split("T")[0];
-    const now = new Date();
-    const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-
     return allSlots.filter((slot) => {
       // 1. Bloqueio por agendamento existente — o intervalo inteiro dele
       if (overlapsBooking(slot)) return false;
@@ -174,8 +198,8 @@ export async function getAvailableSlots(
         }
       }
 
-      // 3. Horário já passado hoje
-      if (date === today && slot.startTime <= currentTime) return false;
+      // 3. Horário já passado hoje, no fuso da empresa
+      if (jaPassou(slot)) return false;
       return true;
     });
   }
@@ -204,10 +228,6 @@ export async function getAvailableSlots(
       select: { startTime: true, endTime: true, professionalId: true },
     }),
   ]);
-
-  const today = new Date().toISOString().split("T")[0];
-  const now = new Date();
-  const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
 
   // Bloqueios da empresa inteira: valem para todo mundo, então não entram na
   // contagem de "quantos profissionais estão ocupados" — eles fecham o horário
@@ -244,7 +264,7 @@ export async function getAvailableSlots(
     }
 
     if (busyProfCount >= activeStaffCount) return false;
-    if (date === today && slot.startTime <= currentTime) return false;
+    if (jaPassou(slot)) return false;
     return true;
   });
 }

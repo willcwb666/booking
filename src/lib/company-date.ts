@@ -17,9 +17,9 @@
  * datas de agendamento são gravadas. Qualquer outro exigiria remontar a string
  * a partir das partes, que é onde a troca de mês por dia costuma acontecer.
  */
-export function todayInTimezone(timezone: string): string {
+export function todayInTimezone(timezone: string, now: Date = new Date()): string {
   try {
-    return new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
+    return new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(now);
   } catch {
     // Fuso inválido no cadastro não pode derrubar a tela. Cair para UTC mostra
     // um dia possivelmente errado; lançar não mostraria dia nenhum.
@@ -34,14 +34,14 @@ export function todayInTimezone(timezone: string): string {
  * mesmo fuso do dia, senão a projeção compara o faturamento de hoje com a hora
  * de outro lugar.
  */
-export function minutesIntoDayInTimezone(timezone: string): number {
+export function minutesIntoDayInTimezone(timezone: string, now: Date = new Date()): number {
   try {
     const parts = new Intl.DateTimeFormat("en-GB", {
       timeZone: timezone,
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
-    }).formatToParts(new Date());
+    }).formatToParts(now);
 
     const hour = Number(parts.find((p) => p.type === "hour")?.value ?? 0);
     const minute = Number(parts.find((p) => p.type === "minute")?.value ?? 0);
@@ -52,4 +52,43 @@ export function minutesIntoDayInTimezone(timezone: string): number {
     const now = new Date();
     return now.getUTCHours() * 60 + now.getUTCMinutes();
   }
+}
+
+
+/**
+ * O horário do slot já passou, do ponto de vista da empresa?
+ *
+ * ─── O defeito que isto substitui ────────────────────────────────────────────
+ *
+ * A grade de disponibilidade decidia isso com DUAS fontes de tempo diferentes,
+ * comparadas entre si:
+ *
+ *     const today = new Date().toISOString().split("T")[0];       // UTC
+ *     const currentTime = `${now.getHours()}:${now.getMinutes()}`; // local
+ *     if (date === today && slot.startTime <= currentTime) …
+ *
+ * Às 21h de Denver o UTC já virou: `today` valia AMANHÃ, enquanto
+ * `currentTime` continuava sendo 21:00 de hoje. O filtro então rodava sobre a
+ * grade de amanhã e escondia tudo antes das 21h — a manhã e a tarde do dia
+ * seguinte sumiam da página pública. Toda noite, em qualquer fuso negativo.
+ *
+ * `now` é injetável para o teste poder fixar o instante: um defeito que só
+ * aparece em certa hora do dia não pode ser testado com o relógio real.
+ */
+export function slotAlreadyPassed(params: {
+  /** Data do slot, "YYYY-MM-DD". */
+  slotDate: string;
+  /** Início do slot, "HH:MM". */
+  slotStartTime: string;
+  timezone: string;
+  now?: Date;
+}): boolean {
+  const now = params.now ?? new Date();
+  // Só faz sentido comparar hora quando a data é a de hoje NA EMPRESA. Em
+  // qualquer outro dia, passado ou futuro, a hora do relógio é irrelevante.
+  if (params.slotDate !== todayInTimezone(params.timezone, now)) return false;
+
+  const [h, m] = params.slotStartTime.split(":").map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return false;
+  return h * 60 + m <= minutesIntoDayInTimezone(params.timezone, now);
 }
