@@ -892,6 +892,18 @@ model Booking {
   cancelledBy            User?                  @relation("BookingCancelledBy", fields: [cancelledById], references: [id])
   cancellationReason     String?
   refundAmount           Decimal?               @db.Decimal(10, 2)
+  /// Marcas de que o lembrete ja foi ENFILEIRADO — uma por janela.
+  ///
+  /// O cron varre "agendamentos de amanha" e "daqui a 2h" e enfileirava sem
+  /// conferir nada. A janela de 2h tem 15 minutos de largura, o que so faz
+  /// sentido rodando a cada 15 minutos: nessa cadencia um agendamento de
+  /// amanha recebia 96 lembretes ate chegar o dia.
+  ///
+  /// A marca e de ENFILEIRAMENTO, nao de envio, porque a entrega quem garante
+  /// e a fila — que reprocessa sozinha. Marcar no envio faria o lembrete ser
+  /// reenfileirado a cada passada enquanto o provedor estivesse fora.
+  reminder24hQueuedAt    DateTime?
+  reminder2hQueuedAt     DateTime?
   /// Marca de que os pontos de fidelidade deste atendimento já foram creditados.
   /// Ponto é moeda: sem esta marca, concluir o mesmo atendimento duas vezes
   /// creditava duas vezes.

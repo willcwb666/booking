@@ -66,13 +66,20 @@ export async function GET(req: NextRequest) {
     const windowEnd = new Date(twoHoursLater.getTime() + 15 * 60 * 1000);
     const endHHMM = `${String(windowEnd.getHours()).padStart(2, "0")}:${String(windowEnd.getMinutes()).padStart(2, "0")}`;
 
-    // 24h reminders — bookings happening tomorrow (no fuso da empresa)
+    /**
+     * `reminder*QueuedAt: null` e a parte que faltava.
+     *
+     * Sem ela, cada passada do cron enfileirava de novo TODOS os agendamentos
+     * de amanha. Com a janela de 2h de 15 minutos — que so faz sentido rodando
+     * a cada 15 minutos — isso davam 96 lembretes por agendamento.
+     */
     const tomorrowBookings = await db.booking.findMany({
       where: {
         scheduledDate: tomorrowStr,
         status: { in: ["CONFIRMED", "PENDING"] },
         customerDetail: { sendReminders: true },
         company: { timezone: tz },
+        reminder24hQueuedAt: null,
       },
       select: { id: true },
     });
@@ -85,6 +92,7 @@ export async function GET(req: NextRequest) {
         status: { in: ["CONFIRMED"] },
         customerDetail: { sendReminders: true },
         company: { timezone: tz },
+        reminder2hQueuedAt: null,
       },
       select: { id: true },
     });
@@ -93,14 +101,33 @@ export async function GET(req: NextRequest) {
     // no momento do cron, o lembrete é reenviado na próxima passada em vez de
     // se perder. Antes, um `Promise.all` de envios diretos jogava fora tudo
     // que falhasse.
-    const all = [...tomorrowBookings, ...soonBookings];
-    await Promise.all(
-      all.map((b) =>
-        enqueueNotification({ kind: "BOOKING_REMINDER", bookingId: b.id })
-      )
-    );
-    queued24h += tomorrowBookings.length;
-    queued2h += soonBookings.length;
+    /**
+     * Marca ANTES de enfileirar, e com `updateMany` condicionado ao nulo.
+     *
+     * Antes: se dois workers rodassem juntos, os dois liam a mesma lista e os
+     * dois enfileiravam. A escrita condicional resolve — quem marcar primeiro
+     * leva, e `count` diz quem foi. Marcar depois de enfileirar deixaria a
+     * mesma janela aberta.
+     */
+    for (const b of tomorrowBookings) {
+      const claim = await db.booking.updateMany({
+        where: { id: b.id, reminder24hQueuedAt: null },
+        data: { reminder24hQueuedAt: new Date() },
+      });
+      if (claim.count === 0) continue;
+      await enqueueNotification({ kind: "BOOKING_REMINDER", bookingId: b.id });
+      queued24h++;
+    }
+
+    for (const b of soonBookings) {
+      const claim = await db.booking.updateMany({
+        where: { id: b.id, reminder2hQueuedAt: null },
+        data: { reminder2hQueuedAt: new Date() },
+      });
+      if (claim.count === 0) continue;
+      await enqueueNotification({ kind: "BOOKING_REMINDER", bookingId: b.id });
+      queued2h++;
+    }
   }
 
   // Drena a fila na mesma execução — inclui o que ficou de rodadas anteriores.

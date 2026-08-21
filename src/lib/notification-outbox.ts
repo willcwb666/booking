@@ -32,9 +32,35 @@ export type NotificationKind =
   | "BOOKING_COMPLETED_INVOICE"
   | "REVIEW_REQUEST";
 
-/** Espera antes da tentativa N: 1min, 5min, 15min, 1h, 6h. */
+/** Espera DEPOIS da tentativa N que falhou: 1min, 5min, 15min, 1h, 6h. */
 const BACKOFF_MINUTES = [1, 5, 15, 60, 360];
-const MAX_ATTEMPTS = BACKOFF_MINUTES.length;
+
+/**
+ * Tentativas antes de desistir.
+ *
+ * Sao as cinco esperas acima mais a tentativa que vem depois da ultima: seis.
+ * Era `BACKOFF_MINUTES.length`, e com o indice tambem errado por um o
+ * resultado era outro: a primeira reentrega esperava 5 minutos em vez de 1, e
+ * as esperas de 1min e de 6h nunca eram usadas.
+ */
+const MAX_ATTEMPTS = BACKOFF_MINUTES.length + 1;
+
+/**
+ * Depois de quanto tempo uma linha em SENDING e considerada abandonada.
+ *
+ * `attempts` e incrementado na reserva, entao a linha vira SENDING antes do
+ * envio. Se o processo morre no meio — deploy, timeout de funcao serverless,
+ * OOM — a linha fica SENDING para sempre: `processOutbox` so procura PENDING,
+ * e ninguem mais olha para ela. A notificacao some sem erro e sem rastro, e o
+ * proprio schema documenta os status como "PENDING | SENT | FAILED", sinal de
+ * que SENDING nunca foi pensado como estado em que se pode ficar preso.
+ *
+ * Quinze minutos e folgado para um envio de e-mail. O risco do resgate e
+ * mandar duas vezes se o worker original estava so lento; o risco de nao
+ * resgatar e nao mandar nunca. Entre um incomodo possivel e uma perda certa,
+ * escolhe-se o incomodo.
+ */
+const STALE_SENDING_MINUTES = 15;
 
 type EnqueueInput = {
   kind: NotificationKind;
@@ -125,6 +151,8 @@ export type OutboxRunResult = {
   sent: number;
   failed: number;
   exhausted: number;
+  /** Linhas devolvidas de SENDING para PENDING por abandono. */
+  rescued: number;
 };
 
 /**
@@ -137,6 +165,18 @@ export type OutboxRunResult = {
 export async function processOutbox(limit = 25): Promise<OutboxRunResult> {
   const now = new Date();
 
+  // Resgata o que ficou preso em SENDING — ver `STALE_SENDING_MINUTES`.
+  const rescued = await db.notificationOutbox.updateMany({
+    where: {
+      status: "SENDING",
+      updatedAt: { lt: new Date(now.getTime() - STALE_SENDING_MINUTES * 60_000) },
+    },
+    data: { status: "PENDING", nextAttemptAt: now },
+  });
+  if (rescued.count > 0) {
+    console.warn("[outbox] resgatadas do estado SENDING:", rescued.count);
+  }
+
   const candidates = await db.notificationOutbox.findMany({
     where: { status: "PENDING", nextAttemptAt: { lte: now } },
     orderBy: { nextAttemptAt: "asc" },
@@ -144,7 +184,13 @@ export async function processOutbox(limit = 25): Promise<OutboxRunResult> {
     select: { id: true },
   });
 
-  const result: OutboxRunResult = { claimed: 0, sent: 0, failed: 0, exhausted: 0 };
+  const result: OutboxRunResult = {
+    claimed: 0,
+    sent: 0,
+    failed: 0,
+    exhausted: 0,
+    rescued: rescued.count,
+  };
 
   for (const { id } of candidates) {
     // Reserva atômica: só processa quem conseguiu virar a linha de PENDING
@@ -177,9 +223,13 @@ export async function processOutbox(limit = 25): Promise<OutboxRunResult> {
           : {
               status: "PENDING",
               lastError: message,
+              // `attempts` ja foi incrementado na reserva: a primeira falha
+              // chega aqui com 1, e a primeira espera e a de indice 0.
               nextAttemptAt: new Date(
                 Date.now() +
-                  BACKOFF_MINUTES[Math.min(row.attempts, MAX_ATTEMPTS - 1)] * 60_000
+                  BACKOFF_MINUTES[
+                    Math.min(row.attempts - 1, BACKOFF_MINUTES.length - 1)
+                  ] * 60_000
               ),
             },
       });

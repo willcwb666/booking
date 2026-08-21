@@ -67,7 +67,15 @@ vi.mock("@/lib/rate-limit", async (importOriginal) => {
   };
 });
 
-const P = "vitest-authz";
+/**
+ * Prefixo proprio, distinto do de `authorization.db.test.ts`.
+ *
+ * Os dois arquivos nasceram com "vitest-authz". Os ids nao colidiam por pouco
+ * ("-company" contra "-company-a"), mas um `deleteMany` por prefixo em
+ * qualquer um dos dois passaria a apagar dado do outro — e o sintoma seria uma
+ * falha intermitente num arquivo que ninguem tocou.
+ */
+const P = "vitest-actauthz";
 const IDS = {
   company: `${P}-company`,
   owner: `${P}-owner`,
