@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getCompanyBySlugForUser } from "@/server/queries/companies";
 import { db } from "@/lib/db";
-import { agendaSchema } from "@/schemas/agenda.schema";
+import { makeAgendaSchema } from "@/schemas/agenda.schema";
 import { invalidateSlotCache } from "@/lib/agenda";
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/types";
@@ -105,7 +105,7 @@ export async function createAgendaAction(
 
   const intent = formData.get("intent") as "draft" | "publish";
   const raw = parseFormData(formData);
-  const parsed = agendaSchema.safeParse(raw);
+  const parsed = makeAgendaSchema({ timezone: ctx.company.timezone }).safeParse(raw);
   if (!parsed.success)
     return { success: false, errors: parsed.error.flatten().fieldErrors };
 
@@ -179,7 +179,13 @@ export async function updateAgendaAction(
 
   const intent = formData.get("intent") as "draft" | "publish";
   const raw = parseFormData(formData);
-  const parsed = agendaSchema.safeParse(raw);
+  const parsed = makeAgendaSchema({
+    timezone: ctx.company.timezone,
+    // Manter a data de inicio que ja esta gravada continua valendo, mesmo que
+    // ela seja passada — do contrario nenhuma agenda em uso poderia ser
+    // editada.
+    currentStartDate: existing.startDate,
+  }).safeParse(raw);
   if (!parsed.success)
     return { success: false, errors: parsed.error.flatten().fieldErrors };
 
